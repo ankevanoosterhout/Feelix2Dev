@@ -1,0 +1,544 @@
+ul {
+  margin:0;
+  padding:0;
+  list-style-type: none;
+}
+
+
+
+#motor-control-section {
+  position: absolute;
+  display: inline-block;
+  width: calc(100% - 44px);
+  height:100%;
+  top:0;
+  right:0;
+  overflow-x:hidden;
+  overflow-y: scroll;
+}
+
+#motor-control-section.wide {
+  width: 100%;
+}
+
+
+#motor-list {
+  position: relative;
+  display: inline-block;
+  width: calc(100% - 6px);
+  height:auto;
+  padding: 20px 0;
+}
+
+
+/* width */
+#motor-control-section::-webkit-scrollbar {
+  width: 6px;
+}
+
+/* Track */
+#motor-control-section::-webkit-scrollbar-track {
+  background: 'transparent';
+}
+
+/* Handle */
+#motor-control-section::-webkit-scrollbar-thumb {
+  background: #1c1c1c;
+}
+
+/* Handle on hover */
+#motor-control-section::-webkit-scrollbar-thumb:hover {
+  background: #111;
+}
+
+
+#motor-list li {
+  position: relative;
+  display:inline-block;
+  width: 100%;
+  height: auto;
+  box-sizing: border-box;
+  padding: 0px 10px 20px;
+  vertical-align: top;
+}
+
+#motor-list.small li {
+  padding: 0 10px;
+  height: auto;
+}
+
+.small-font {
+  font-size: 10px;
+  line-height: 16px;
+}
+
+.info {
+  display: inline-block;
+  position: relative;
+  top:0;
+  left:0;
+  width: calc(100% - 7px);
+  height: 26px;
+  margin: 0;
+  padding: 2px 1px;
+  box-sizing: border-box;
+  z-index: 100;
+  overflow: visible;
+  cursor: default;
+}
+
+.column-visualization {
+  position: relative;
+  display:inline-block;
+  width: calc(100% - 10px);
+  margin-left: 5px;
+  height: auto;
+  cursor:default;
+}
+
+.row {
+  position: relative;
+  display: inline-block;
+}
+
+
+.collection-order-buttons {
+  position:absolute;
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: space-between;
+  left: 0;
+  margin-left: -5px;
+  height:30px;
+  width: 8px;
+  top: 50%;
+  transform: translateY(-100%);
+}
+
+.collection-order-buttons.large {
+  transform: translateY(-67%);
+}
+
+.collection-order-buttons .arrow {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-top: 1px solid #999;
+  border-right: 1px solid #999;
+  cursor: pointer;
+}
+
+.collection-order-buttons .arrow:hover {
+  border-top: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+}
+.collection-order-buttons .arrow:active {
+  margin-top: 1px;
+}
+
+.collection-order-buttons .arrow.up {
+  transform: rotate(-45deg);
+}
+
+.collection-order-buttons .arrow.down {
+  transform: rotate(135deg);
+}
+
+
+
+.motor-control-rows {
+  display: inline-block;
+  width: auto;
+  /* cursor: grab; */
+}
+
+.motor-control-rows.active {
+  padding-top: 8px;
+  margin-top: 8px;
+  border-top: 1px solid #999;
+}
+
+
+.stop-square {
+  display:inline-block;
+  position: absolute;
+  margin: 5px 6px;
+  width: 8px;
+  height: 8px;
+  background: #ccc;
+}
+
+.play-arrow {
+  width: 0;
+  height: 0;
+  margin: 4px 6px;
+  display:inline-block;
+  position: absolute;
+  border-left: 9px solid #ccc;
+  border-bottom: 5px solid transparent;
+  border-top: 5px solid transparent;
+}
+
+.PID-control {
+  position:relative;
+  display:inline-block;
+  width: 60px;
+  height: 180px;
+  vertical-align: middle;
+}
+
+#PID-controller li {
+  display: inline-block;
+  width: 60px;
+  height: 20px;
+  padding: 0;
+  margin: 5px 10px;
+  line-height: 20px;
+}
+
+.PID-control input {
+  width: 25px;
+  font-size: 10px;
+  padding: 4px;
+}
+
+.PID-control label {
+  width: 20px;
+}
+
+.collection_pid {
+  margin-top: -2px;
+  margin-left: 5px;
+}
+
+.comport, .PID-name, .motor-info {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 11px;
+  color:#eee;
+}
+.comport, .motor-info {
+  display:inline-block;
+  position:relative;
+  vertical-align: top;
+}
+
+.motor-info {
+  float:right;
+  color: #FF9100;
+  margin-left: 7px;
+  margin-top: 2px;
+  width: 35px;
+  text-align: right;
+}
+
+.motor-info.posUnits {
+  margin: 0 2px 0 4px;
+  width: auto;
+}
+
+.motor-info.posUnits.current_sense {
+  margin: 2px 2px 0 4px;
+}
+
+.selectList {
+  display: inline-block;
+  vertical-align:top;
+  cursor: default;
+  width: 135px;
+  height: 17px;
+  margin-top: -2px;
+  z-index: 100;
+}
+
+
+.dropdown {
+  margin: 0;
+  padding: 0;
+  list-style-type:none;
+  position: absolute;
+  display: inline-block;
+  top:16px;
+  left: 35px;
+  width: auto;
+  background: #4a4a4a;
+  border: 1px solid #999;
+  z-index: 110;
+}
+
+.dropdown li, .selectedPort {
+  display: block;
+  position: relative;
+  height: 18px;
+  width: 120px;
+  font-size: 12px;
+  line-height: 18px;
+  padding: 2px 10px 2px 5px;
+  color: #ccc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.selectedPort  {
+  line-height: 11px;
+}
+.dropdown li:hover {
+  background: #4a4a4a;
+  color: #ccc;
+}
+
+.dropdown-arrow {
+  position: absolute;
+  top: 5px;
+  margin-left: 132px;
+  width: 4px;
+  height: 4px;
+  border-bottom: 1px solid #ccc;
+  border-left: 1px solid #ccc;
+  transform: rotate(-45deg);
+  vertical-align:top;
+}
+
+.selectedPort {
+  padding-right: 12px;
+  padding-left: 6px;
+  color: #ccc;
+  width: 115px;
+}
+
+#buttonsMotorControl .dropdown-buttons {
+  list-style-type: none;
+  position: relative;
+  left: 15px;
+  height: 20px;
+  vertical-align: top;
+  display: inline-block;
+}
+
+#buttonsMotorControl .dropdown-buttons li {
+  display: inline-block;
+  position: relative;
+  vertical-align: top;
+  width: 20px;
+  height: 20px;
+  border: 1px solid #1c1c1c;
+  background: #3a3a3a;
+  opacity: 0.6;
+  margin-right: 6px;
+  margin-top: -3px;
+  padding:0;
+}
+
+#buttonsMotorControl .dropdown-buttons li:hover {
+  opacity: 0.8;
+  background: #4a4a4a;
+}
+
+#buttonsMotorControl .dropdown-buttons li img {
+  position:absolute;
+  width: 76%;
+  height: 76%;
+  padding: 12%;
+}
+
+#buttonsMotorControl .dropdown-buttons li:active, #buttonsMotorControl .dropdown-buttons li.active {
+  opacity: 1;
+  border: 1px solid #df9b08;
+}
+
+
+#buttonsMotorControl .dropdown-buttons li.disabled, #buttonsMotorControl .dropdown-buttons li.disabled:hover  {
+  opacity: 0.3;
+  background: #3a3a3a;
+}
+
+#buttonsMotorControl, #rangeValues, #coll-layers-row, #visualizationType  {
+  position:relative;
+  width: auto;
+  height: 17px;
+  display: inline-block;
+}
+#buttonsMotorControl {
+   margin-right: 0;
+}
+
+#rangeValues, #coll-layers-row, #PID_angle, #PID_velocity, #max, .collection_pid {
+  font-size: 11px;
+  color: #ccc;
+  margin-left: 20px;
+  vertical-align: top;
+  margin-top: -2px;
+}
+
+#PID_angle, #PID_velocity, #max {
+  margin-left: 18px;
+  margin-top: 0;
+}
+
+#coll-layers-row label {
+  position:relative;
+  vertical-align: middle;
+  margin-top: -2px;
+}
+
+#rangeValues {
+  margin-right: -8px;
+}
+
+#visualizationType {
+  height: auto;
+  margin-left: 0;
+  font-size: 11px;
+  color: #ccc;
+  vertical-align: top;
+  text-align: right;
+}
+
+input {
+  width: 30px;
+  -webkit-appearance: none;
+  background: #3a3a3a;
+  padding: 2px 4px;
+  border: 1px solid #2c2c2c;
+  border-radius: 0;
+  font-size: 11px;
+  margin: 0;
+  text-align: right;
+  z-index: 110;
+  user-select: auto !important;
+  pointer-events: auto !important;
+  vertical-align: top;
+  color: #999;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border: 1px solid #df9b08;
+}
+
+
+
+input#collection-name {
+  background: transparent;
+  border:none;
+  color: #ccc;
+  text-align: left;
+  left:0;
+  width: 75px;
+  margin-top: -1px;
+}
+
+input#collection-PID {
+  width: 19px;
+  padding: 3px 4px;
+  margin-top: -3px;
+  margin-left: 4px;
+}
+
+#range-end, #range-start {
+  margin-left:5px;
+  margin-top: -1px;
+  padding: 3px 4px;
+}
+
+.form-row {
+  padding: 0;
+  width: auto;
+  float: right;
+  margin-right: -8px;
+}
+.form-row.left {
+  float:none;
+}
+
+
+select {
+  -webkit-appearance:none;
+  display: inline-block;
+  padding: 3px 8px;
+  width: 48px;
+  font-size: 11px;
+  font-family: Arial, sans-serif;
+  background: #3a3a3a;
+  border: 1px solid #2c2c2c;
+  border-radius: 0;
+  box-shadow:none;
+  margin: -3px 0 0 15px;
+  vertical-align: top;
+  text-align: right;
+  color:#ccc;
+}
+
+select#comport, select#unitsDropdown {
+  width: 80px;
+  padding: 3px 5px;
+}
+
+select#unitsDropdown {
+  margin: -1px 0 0 5px;
+  width: 33px;
+}
+
+select#motorID {
+  width: 28px;
+  padding: 3px 5px;
+}
+select#visualizationType {
+  width: 55px;
+  padding: 3px 5px;
+  margin-left: 15px;
+  margin-top: -3px;
+}
+
+select option {
+  height: 30px;
+}
+
+select:after {
+  content:"";
+  position: absolute;
+  left: 80px;
+  /* top: 0; */
+  vertical-align: top;
+  margin-top:11px;
+  border-top:5px solid #666;
+  border-left:5px solid transparent;
+  border-right:5px solid transparent;
+  pointer-events: none;
+}
+
+
+ul#coll-layers {
+  width: auto;
+  height: 21px;
+  display: inline-block;
+  position: relative;
+  margin: 0 2px;
+}
+
+ul#coll-layers li {
+  display: inline-block !important;
+  position: relative !important;
+  width: 19px !important;
+  height: 19px !important;
+  padding: 3px !important;
+  margin: 0;
+  text-align: center;
+  opacity: 0.2;
+}
+
+ul#coll-layers li:hover {
+  opacity: 0.3;
+}
+
+ul#coll-layers li:active {
+  opacity: 1;
+}
+
+ul#coll-layers li.active {
+  opacity: 0.9;
+}
+
+ul#coll-layers li img {
+  width: auto;
+  height: 100%;
+}

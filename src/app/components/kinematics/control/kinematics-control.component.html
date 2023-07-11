@@ -1,0 +1,246 @@
+<div id="controls" (mouseover)="onControlsMouseover()" (mouseout)="onControlsMouseout()">
+  <div class="attach-toolbar"><div class="attach-arrow" [ngClass]="{ hidden: !visible[0] }" (click)="visible[0] = !visible[0]"></div><div class="label title">controls</div></div>
+
+  <ul class="menu" [ngClass]="{ open: visible[0] }">
+
+
+    <li id="general-item">
+      <div class="opencloseArrow" [ngClass]="{ open: visible[7] }" (click)="visible[7] = !visible[7]"><div></div></div>
+      <label class="label header">general</label>
+
+      <ul class="content" [ngClass]="{ open: visible[7] }">
+        <li>
+          <div class="row">
+            <div class="labelRow">animate</div>
+            <label class="radio-container inline">
+              <input type="checkbox" class="type" id="animate" name="animate" [ngModel]="this.ikService.ikConfig.animate">
+              <span class="checkmark radio inline"></span>
+            </label>
+          </div>
+
+          <div class="row">
+            <div class="labelRow">display models</div>
+            <label class="radio-container inline">
+              <input type="checkbox" class="type" id="display_models" name="display_models" value="true" (change)="displayModels()">
+              <span class="checkmark radio inline"></span>
+            </label>
+          </div>
+
+          <div class="row">
+            <div class="labelRow">display IK</div>
+            <label class="radio-container inline">
+              <input type="checkbox" class="type" id="display_ik" name="display_ik" value="this.ikService.ikConfig.screen.displayIK" (change)="showRootsHelper()">
+              <span class="checkmark radio inline"></span>
+            </label>
+          </div>
+
+          <div class="row">
+            <div class="labelRow">iterations</div>
+            <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="iterations" name="iterations" [ngModel]="this.ikService.ikConfig.iterations">
+          </div>
+        </li>
+      </ul>
+    </li>
+
+
+
+    <li id="model-item">
+      <div class="opencloseArrow" [ngClass]="{ open: visible[4] }" (click)="visible[4] = !visible[4]"><div></div></div>
+      <label class="label header">models</label>
+
+      <ul class="content" [ngClass]="{ open: visible[4] }">
+        <div class="row">
+          <ul id="models">
+            <li *ngFor="let model of this.models">
+              <div id="item-{{ model.id }}" class="model-item" (click)="addFrame(model)"><img src="./assets/images/models_png/{{ model.thumbnail }}"></div>
+            </li>
+          </ul>
+        </div>
+      </ul>
+
+      <!-- <ul class="content" [ngClass]="{ open: visible[4] }">
+        <div class="row"><label class="label header">links</label></div>
+        <div class="row">
+          <ul id="models">
+            <li *ngFor="let model of this.linkModels">
+              <div id="item-{{ model.id }}" class="model-item" (click)="addLink(model)"><img src="./assets/images/models_png/{{ model.thumbnail }}"></div>
+            </li>
+          </ul>
+        </div>
+      </ul> -->
+
+      <!-- <ul class="content" [ngClass]="{ open: visible[4] }">
+        <div class="row">
+          <ul id="models">
+            <li *ngFor="let model of this.models">
+              <div id="item-{{ model.id }}" class="model-item" (click)="addModel(model)"><img src="./assets/images/models_png/{{ model.thumbnail }}"></div>
+            </li>
+          </ul>
+        </div>
+      </ul> -->
+    </li>
+
+    <li id="component-item">
+      <div class="opencloseArrow" [ngClass]="{ open: visible[5] }" (click)="visible[5] = !visible[5]"><div></div></div>
+      <label class="label header">parts</label>
+
+      <ul class="content" [ngClass]="{ open: visible[5] }">
+        <li *ngFor="let frame of this.kinematicService.frames; let i = index" [attr.data-index]="i">
+          <!-- <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="text" class="wide" id="name" name="name" [(ngModel)]="frame.name"> -->
+
+
+          <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="text" class="wide" [ngClass]="{ blue: frame.selected }" id="name" name="name" [(ngModel)]="frame.name">
+
+          <div class="buttons">
+            <div id="rotate" class="svg-button" (click)="rotate()"><img src="./assets/icons/buttons/rotate.svg"></div>
+            <div id="move" class="svg-button" (click)="move()"><img src="./assets/icons/buttons/move2.svg"></div>
+            <div id="not-visible" class="svg-button" *ngIf="frame.object3D.hidden"><img src="./assets/icons/layers/not-visible-icon.svg"></div>
+            <div id="visible" class="svg-button" *ngIf="!frame.object3D.hidden"><img src="./assets/icons/layers/visible-icon.svg"></div>
+            <div id="locked" class="svg-button" *ngIf="frame.object3D.lock"><img src="./assets/icons/layers/locked-icon.svg"></div>
+            <div id="lock" class="svg-button" *ngIf="!frame.object3D.lock"><img src="./assets/icons/layers/lock-icon.svg"></div>
+          </div>
+        </li>
+      </ul>
+    </li>
+
+
+    <li id="detail-item">
+      <div class="opencloseArrow" [ngClass]="{ open: visible[1] }" (click)="visible[1] = !visible[1]"><div></div></div>
+
+      <label class="label header">details</label>
+
+      <ul class="content" [ngClass]="{ open: visible[1] }" *ngIf="this.kinematicService.selectedFrames">
+        <li *ngIf="this.kinematicService.selectedFrames.length === 0">no items selected </li>
+        <li *ngIf="this.kinematicService.selectedFrames.length > 1">multiple items selected</li>
+        <li *ngIf="this.kinematicService.selectedFrames.length === 1">
+
+          <div class="row" *ngIf="this.kinematicService.selectedFrames[0].angle !== 'undefined'">
+            <div class="label">angle</div>
+             <p> </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="angle{{ this.kinematicService.selectedFrames[0].id }}" name="angle{{ this.kinematicService.selectedFrames[0].id }}"
+                [(ngModel)]="this.kinematicService.selectedFrames[0].angle" (change)="this.updateJointAngle(this.kinematicService.selectedFrames[0])">
+          </div>
+
+          <div class="row" *ngIf="this.kinematicService.selectedFrames[0].limits">
+            <div class="label">limits</div>
+            <div class="values">
+              <p> </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="limits_min{{ this.kinematicService.selectedFrames[0].id }}" name="limits_min{{ this.kinematicService.selectedFrames[0].id }}"
+               [(ngModel)]="this.kinematicService.selectedFrames[0].limits.min" (change)="updateJoint(this.kinematicService.selectedFrames[0])">
+              <p> </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="limits_max{{ this.kinematicService.selectedFrames[0].id }}" name="limits_max{{ this.kinematicService.selectedFrames[0].id }}"
+               [(ngModel)]="this.kinematicService.selectedFrames[0].limits.max" (change)="updateJoint(this.kinematicService.selectedFrames[0])">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="label">position</div>
+            <div class="values">
+              <p>x </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="pos_x{{ this.kinematicService.selectedFrames[0].id }}" name="pos_x{{ this.kinematicService.selectedFrames[0].id }}" [(ngModel)]="this.kinematicService.selectedFrames[0].dimensions.origin.x" (change)="updateJoint(this.kinematicService.selectedFrames[0])">
+              <p>y </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="pos_y{{ this.kinematicService.selectedFrames[0].id }}" name="pos_y{{ this.kinematicService.selectedFrames[0].id }}" [(ngModel)]="this.kinematicService.selectedFrames[0].dimensions.origin.y" (change)="updateJoint(this.kinematicService.selectedFrames[0])">
+              <p>z </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="pos_z{{ this.kinematicService.selectedFrames[0].id }}" name="pos_z{{ this.kinematicService.selectedFrames[0].id }}" [(ngModel)]="this.kinematicService.selectedFrames[0].dimensions.origin.z" (change)="updateJoint(this.kinematicService.selectedFrames[0])">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="label">rotation</div>
+            <div class="values">
+              <p>x </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="rot_x{{ this.kinematicService.selectedFrames[0].id }}" name="rot_x{{ this.kinematicService.selectedFrames[0].id }}" [(ngModel)]="this.kinematicService.selectedFrames[0].dimensions.rpy.x" (change)="updateJoint(this.kinematicService.selectedFrames[0])">
+              <p>y </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="rot_y{{ this.kinematicService.selectedFrames[0].id }}" name="rot_y{{ this.kinematicService.selectedFrames[0].id }}" [(ngModel)]="this.kinematicService.selectedFrames[0].dimensions.rpy.y" (change)="updateJoint(this.kinematicService.selectedFrames[0])">
+              <p>z </p><input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="rot_z{{ this.kinematicService.selectedFrames[0].id }}" name="rot_z{{ this.kinematicService.selectedFrames[0].id }}" [(ngModel)]="this.kinematicService.selectedFrames[0].dimensions.rpy.z" (change)="updateJoint(this.kinematicService.selectedFrames[0])">
+            </div>
+          </div>
+
+          <!-- <div class="row">
+            <label class="label">name</label>
+            <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="text" class="blue wide input-column" id="name" name="name" [(ngModel)]="this.kinematicService.selectedFrames[0].name">
+          </div> -->
+
+
+          <!-- <div class="row">
+              <div class="row">
+                <div class="opencloseArrow" [ngClass]="{ open: visible[6] }" (click)="visible[6] = !visible[6]"><div></div></div>
+                <label class="label header">Connection points</label>
+              </div>
+              <div class="row">
+                <ul class="content" [ngClass]="{ open: visible[6] }">
+                  <li *ngFor="let point of this.kinematicService.selectedJoints[0].connectors">
+                    <div class="row">
+                      <div class="label">{{ point.plane }}</div>
+                      <span *ngIf="point.plane !== 'Z' && this.kinematicService.selectedJoints[0].isJoint">
+                        <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="angle_{{ point.id }}" name="angle_{{ point.id }}" [(ngModel)]="point.angle" (change)="this.updatePointAngle(point)">
+                      </span>
+                      <span *ngIf="this.kinematicService.selectedJoints[0].isJoint">
+                        <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="size_{{ point.id }}" name="size_{{ point.id }}" [(ngModel)]="point.size.value" (change)="this.updatePointSize(this.kinematicService.selectedJoints[0].id, point)">
+                      </span>
+                      <div class="buttons">
+                        <div id="linked" class="svg-button" [ngClass]="{ active: point.connected }"><img src="./assets/icons/effects/link-icon.svg"></div>
+                        <div id="outside" class="svg-button" *ngIf="point.plane === 'Y' && this.kinematicService.selectedJoints[0].isJoint" (click)="this.updatePointType(this.kinematicService.selectedJoints[0].id, point)"><img src="./assets/icons/buttons/outside.svg"></div>
+                        <div id="inside" class="svg-button" *ngIf="point.plane === 'X' && this.kinematicService.selectedJoints[0].isJoint" (click)="this.updatePointType(this.kinematicService.selectedJoints[0].id, point)"><img src="./assets/icons/buttons/inside.svg"></div>
+                        <div id="delete" class="svg-button" *ngIf="point.plane !== 'Z' && this.kinematicService.selectedJoints[0].isJoint" (click)="this.deletePoint(this.kinematicService.selectedJoints[0].id, point.id)"><img src="./assets/icons/buttons/bin.svg"></div>
+                      </div>
+                    </div>
+                  </li>
+                  <li *ngIf="this.kinematicService.selectedJoints[0].isJoint">
+                    <div class="button" (click)="this.kinematicService.addPoint(this.kinematicService.selectedJoints[0].id)">add</div>
+                  </li>
+                </ul>
+              </div>
+          </div> -->
+
+          <div class="row" *ngIf="this.kinematicService.selectedFrames[0].config">
+            <label class="radio-container inline">
+              <input type="checkbox" class="type" id="joint_active" name="joint_active"
+              [(ngModel)]="this.kinematicService.selectedFrames[0].config.grounded" [checked]="this.kinematicService.selectedFrames[0].grounded" (change)="updateJoint(this.kinematicService.selectedFrames[0])">
+              <span class="checkmark radio inline"></span> lock position
+            </label>
+          </div>
+
+
+
+          <div class="row" *ngIf="this.kinematicService.selectedFrames[0].config">
+            <select class="form-control playWindow microcontroller" id="microcontroller" name="microcontroller" [(ngModel)]="this.kinematicService.selectedFrames[0].config.control">
+              <option class="placeholder" value="" selected>-- select microcontroller --</option>
+              <option *ngFor="let item of this.hardwareService.microcontrollers" [ngValue]="item">{{ item.name }}</option>
+            </select>
+
+            <select *ngIf="this.kinematicService.selectedFrames[0].control" class="form-control playWindow microcontroller small" id="motor" name="motor" [(ngModel)]="this.kinematicService.selectedFrames[0].motor"
+              (change)="updateJoint(this.kinematicService.selectedFrames[0])">
+              <option *ngFor="let motor of this.kinematicService.selectedFrames[0].control.motors" [ngValue]="motor.index">{{ motor.id }}</option>
+            </select>
+          </div>
+
+          <div class="row" *ngIf="this.kinematicService.selectedFrames[0].control">
+            <div class="label">encoder</div>
+            <input (focus)="inputActive(true)" (focusout)="inputActive(false)" type="number" class="small" id="encoder" name="encoder"
+            [(ngModel)]="this.kinematicService.selectedFrames[0].control.motors[0].state.position.current">
+          </div>
+
+
+
+          <div class="row" *ngIf="this.kinematicService.selectedFrames[0].size">
+            <div class="label">length</div>
+            <input (focus)="inputActive(true)" (focusout)="inputActive(false)" min="this.kinematicService.selectedFrames[0].size.offset" type="number" class="small" id="size{{ this.kinematicService.selectedFrames[0].id }}"
+              name="size_{{ this.kinematicService.selectedFrames[0].id }}" [(ngModel)]="this.kinematicService.selectedFrames[0].size.value" (change)="this.changeSize(this.kinematicService.selectedFrames[0])">
+          </div>
+
+        </li>
+      </ul>
+    </li>
+
+        <!-- <li id="state-item">
+      <div class="opencloseArrow" [ngClass]="{ open: visible[2] }" (click)="visible[2] = !visible[2]"><div></div></div>
+      <label class="label header">states</label>
+
+      <ul class="content" [ngClass]="{ open: visible[2] }">
+      </ul>
+    </li>
+
+    <li id="expression-item">
+      <div class="opencloseArrow" [ngClass]="{ open: visible[3] }" (click)="visible[3] = !visible[3]"><div></div></div>
+      <label class="label header">expressions</label>
+
+      <ul class="content" [ngClass]="{ open: visible[3] }">
+      </ul>
+    </li> -->
+
+
+  </ul>
+</div>
