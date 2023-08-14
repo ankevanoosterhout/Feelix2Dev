@@ -31,7 +31,8 @@ export class EffectsComponent implements OnInit, AfterViewInit {
 
   tabs = [ { id: 0, name: 'Effects', selected: true, disabled: false },
            { id: 1, name: 'Library', selected: false, disabled: false  },
-           { id: 2, name: 'Details', selected: false, disabled: false  }  ];
+           { id: 2, name: 'Details', selected: false, disabled: false  } ];
+          //  {id: 3, name: 'TorqueTuner', selected: false, disabled: false } ];
 
   buttons = [ { name: 'add', icon: '../../src/assets/icons/buttons/add.svg' },
               { name: 'remove', icon: '../../src/assets/icons/buttons/bin.svg' }];

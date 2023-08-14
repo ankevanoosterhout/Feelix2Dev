@@ -89,7 +89,7 @@ function ifSerialAvailable(serialData, portlist, connect) {
     if (portAvailable.length > 0) {
       if (connect) {
         if (selectedPort) {
-          console.log("OPEN IF NOT OPEN " + selectedPort.sp.IsOpen + " or " + selectedPort.sp.opening);
+          // console.log("OPEN IF NOT OPEN " + selectedPort.sp.IsOpen + " or " + selectedPort.sp.opening);
           if (selectedPort.sp && !activePorts.includes(selectedPort.COM)) {
             selectedPort.sp.open();
           } //!selectedPort.sp.opening
@@ -158,9 +158,9 @@ class newSerialPort {
           return;
         }
         //uncomment to read what is printed on the serial port
-        else {
-           console.log('written ', data);
-        }
+        // else {
+        //    console.log('written ', data);
+        // }
     });
   }
 
@@ -226,10 +226,11 @@ class newSerialPort {
 
       parser.on('data', (d) => {
 
-        // console.log('received data ', d);
-        if (d.charAt(0) === '#') {
-          console.log('received data ', d);
-        } else if (d.charAt(0) === '*') {
+        // uncomment to print incoming data
+        // if (d.charAt(0) === '#') {
+        //   console.log('received data ', d);
+        // } else
+        if (d.charAt(0) === '*') {
           if (dataSendWaitList.filter(d => d.port === this.COM).length > 0) {
             uploadFromWaitList(ports.filter(p => p.COM === this.COM)[0]);
           }
@@ -529,7 +530,7 @@ function prepareEffectData(uploadContent, motor, datalist) {
     }
     datalist.unshift('FE' + motor.id + i + effect.datasize.identifier + ':' + effect.datasize.value);
     datalist.unshift('FE' + motor.id + i + effect.quality.identifier + ':' + effect.quality.value);
-    datalist.unshift('FE' + motor.id + i + 'C:' + effect.position.value[0].toFixed(5));
+    datalist.unshift('FE' + motor.id + i + 'C:' + effect.position.value[0]);
     datalist.unshift('FE' + motor.id + i + 'R:' + effect.pointer);
 
     if (effect.repeat) {

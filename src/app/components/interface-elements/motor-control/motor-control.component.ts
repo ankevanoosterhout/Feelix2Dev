@@ -336,7 +336,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       uploadModel.newMCU = newMCU;
 
       // console.log('upload to ' + microcontroller.serialPort.path + 'newMCU ' + newMCU);
-      console.log(uploadModel);
+      // console.log(uploadModel);
       this.electronService.ipcRenderer.send('upload', uploadModel);
 
     } else {
@@ -611,7 +611,6 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
   }
 
   saveCollection(collection: Collection) {
-    console.log(collection.motorID);
     this.motorControlService.updateCollection(collection);
   }
 
@@ -694,7 +693,8 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     this.motorControlService.config.tmpEffect = null;
   }
 
-
+  // this function checks wheter there is a tmpEffect being dragged onto the collection
+  // when an effect is detected its details are copied into array of effects of the collection item it is dropped upon
   public drop(e: any) {
     e.preventDefault();
     if (this.draggingListItem === null) {

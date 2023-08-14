@@ -144,6 +144,4 @@ export class GridService {
 
     return { x: gridX, y: gridY };
   }
-
-
 }
