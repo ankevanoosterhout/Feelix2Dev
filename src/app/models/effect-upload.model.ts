@@ -80,6 +80,7 @@ export class EffectModel {
   datasize: Model = null;
   pointer: number = null;
   quality: Model = null;
+  midi_config: Model = null;
 
   constructor(collEffect: Details, effect: any, units: string, motorID: string) {
     this.id = effect.id;
@@ -87,7 +88,7 @@ export class EffectModel {
     [ Math.round(collEffect.position.x) !== collEffect.position.x ? collEffect.position.x.toFixed(5) : collEffect.position.x,
       Math.round(collEffect.position.y) !== collEffect.position.y ? (collEffect.position.y / 100).toFixed(5) : (collEffect.position.y / 100) ]);
 
-    this.angle = new Model('A', collEffect.position.width.toFixed(7))
+    this.angle = new Model('A', collEffect.position.width.toFixed(7));
 
     if (units === 'rad') {
       this.angle.value *= (180 / Math.PI);
@@ -104,6 +105,8 @@ export class EffectModel {
 
     const middleLine = (((collEffect.position.top - collEffect.position.bottom) / 2 + collEffect.position.bottom) / 100) * (collEffect.scale.y / 100) + (collEffect.position.y / 100);
     this.flip = new Model('F', [ collEffect.flip.x ? 1 : 0, collEffect.flip.y ? 1 : 0, middleLine.toFixed(6) ]);
+
+    this.midi_config = new Model('M', [effect.midi_config.channel, effect.midi_config.message_type, effect.midi_config.data1]);
 
     this.direction = new Model('D', [ (collEffect.direction.cw ? 1 : 0), (collEffect.direction.ccw? 1 : 0) ]);
 

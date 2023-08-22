@@ -4,7 +4,7 @@ import { ElectronService } from 'ngx-electron';
 import { FileService } from 'src/app/services/file.service';
 import { v4 as uuid } from 'uuid';
 import { Router } from '@angular/router';
-import { Effect, Unit } from 'src/app/models/effect.model';
+import { Effect, Midi, Unit } from 'src/app/models/effect.model';
 import { EffectType, EffectTypeColor, EffectTypeLabelMapping } from 'src/app/models/configuration.model';
 
 
@@ -31,7 +31,8 @@ import { EffectType, EffectTypeColor, EffectTypeLabelMapping } from 'src/app/mod
                   </select>
                 </div>
 
-                <div class="form-row" *ngIf="!this.updateMode && effect.type < 2">
+                <!-- unit options for velocity and pneumatic effects -->
+                <div class="form-row" *ngIf="!this.updateMode && (effect.type !== 2 || effect.type !== 3)">
                     <label class="select units">Units</label>
                     <select class="form-control" id="select-units"
                         (change)="updateRotationRange()" [(ngModel)]="effect.grid.xUnit" name="xUnit" [compareWith]="compareUnits">
@@ -39,7 +40,8 @@ import { EffectType, EffectTypeColor, EffectTypeLabelMapping } from 'src/app/mod
                     </select>
                 </div>
 
-                <div class="form-row" *ngIf="!this.updateMode && (effect.type >= 2)">
+                <!-- unit options for velocity and pneumatic effects -->
+                <div class="form-row" *ngIf="!this.updateMode && (effect.type === 2 || effect.type === 3)">
                     <label class="select units">Units</label>
                     <select class="form-control" id="select-units"
                         (change)="updateRotationRange()" [(ngModel)]="effect.grid.xUnit" name="xUnit" [compareWith]="compareUnits">
@@ -131,6 +133,11 @@ export class EffectSettingsComponent implements OnInit {
       // this.prevUnits = { name: 'ms', PR: 1000 };
       this.effect.grid.xUnit = { name: 'deg', PR: 360 };
       this.updateRotationRange();
+    } else if (this.effect.type === EffectType.midi) {
+      this.effect = new Midi(this.effect.id, EffectType.midi);
+      this.effect.grid.yUnit = { name: 'v', PR: 128 };
+      this.effect.range_y.start = 0;
+      this.effect.range_y.end = 128;
     }
   }
 
@@ -141,8 +148,11 @@ export class EffectSettingsComponent implements OnInit {
         this.effect.grid.yUnit = new Unit('%', 100);
         this.effect.range_y.start = -100;
         this.effect.range_y.end = 100;
-      } else if (this.effect.type === EffectType.position || this.effect.type === EffectType.pneumatic) {
+      } else if (this.effect.type === EffectType.position || this.effect.type === EffectType.pneumatic || this.effect.type === EffectType.midi) {
         this.effect.range_y.start = 0;
+        if (this.effect.type === EffectType.midi) {
+          this.effect.range_y.end = 128;
+        }
       }
       this.fileService.addEffect(this.effect);
     } else {
@@ -172,7 +182,7 @@ export class EffectSettingsComponent implements OnInit {
       if (this.electronService.isElectronApp) {
         this.electronService.ipcRenderer.send('getNumberOfNewFiles');
       }
-      this.effect = new Effect(uuid());
+      this.effect = new Effect(uuid(), EffectType.torque);
       this.effect.name = 'effect-' + (file.effects.length + 1);
     }
   }

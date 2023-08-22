@@ -50,6 +50,7 @@ export class SliderDrawplane {
   inner = new Slider();
   outer = new Slider();
   ratio = 0.8;
+  dragPos = null;
 }
 
 
@@ -69,6 +70,7 @@ export class DrawingPlaneConfig {
   pathSVG: any;
   planeSVG: any;
   cpSVG: any;
+  blocksSVG: any;
   bbox: any;
   gridSVG: any;
   svgDx = innerWidth;
@@ -104,6 +106,7 @@ export class DrawingPlaneConfig {
   newControlPoints: Array<Node> = [];
   slider = new ReferenceBox();
   sliderDrawplane = new SliderDrawplane();
+  sliderDrawplaneVertical = new SliderDrawplane();
   timeCursor = 0;
   playing = false;
   activeInput = null;

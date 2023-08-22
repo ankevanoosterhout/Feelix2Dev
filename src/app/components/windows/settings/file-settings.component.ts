@@ -9,6 +9,7 @@ import { DrawingService } from 'src/app/services/drawing.service';
 import { Collection } from 'src/app/models/collection.model';
 import { Effect } from 'src/app/models/effect.model';
 import { ModelFile } from 'src/app/models/kinematic.model';
+import { EffectType } from 'src/app/models/configuration.model';
 
 
 @Component({
@@ -76,7 +77,7 @@ export class FileSettingsComponent implements OnInit {
           // console.log(this.file.collections);
         }
         if (this.file.effects.length === 0) {
-          this.file.effects.push(new Effect(uuid()));
+          this.file.effects.push(new Effect(uuid(), EffectType.torque));
           this.file.activeEffect = this.file.effects[0];
         }
         this.fileService.add(this.file);

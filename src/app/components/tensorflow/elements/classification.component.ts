@@ -6,7 +6,7 @@ import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service'
 @Component({
   selector: 'app-classification',
   templateUrl: 'classification.component.html',
-  styleUrls: ['../../windows/effects/effects.component.css', './../tensorFlowJS.component.css'],
+  styleUrls: ['../../windows/effects/effects.component.css', './../tensorflowJS.component.css'],
 })
 export class ClassificationComponent {
 

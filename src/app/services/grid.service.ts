@@ -16,7 +16,11 @@ export class GridService {
 
   drawGrid(gridSettings: any) {
 
+    console.log(gridSettings);
+    
     this.config.svg.selectAll('.gridSVG').remove();
+
+    const audioVis = this.drawingService.audioVisualization();
 
     if (this.drawingService.file.activeEffect.grid.visible) {
 
@@ -43,22 +47,24 @@ export class GridService {
         .style('opacity', 0.6)
         .attr('pointer-events', 'none');
 
-      this.config.gridSVG.selectAll('line.gridY')
-        .data(gridData.y)
-        .enter()
-        .append('line')
-        .attr('class', 'gridY')
-        .attr('x1', this.nodeService.scale.scaleX(this.config.editBounds.xMin))
-        .attr('x2', this.nodeService.scale.scaleX(this.config.editBounds.xMax))
-        .attr('y1', (d) => this.nodeService.scale.scaleY(d))
-        .attr('y2', (d) => this.nodeService.scale.scaleY(d))
-        .style('stroke', gridSettings.color.hash)
-        .style('stroke-width', 0.5)
-        .style('shape-rendering', 'crispEdges')
-        .style('opacity', 0.6)
-        .attr('pointer-events', 'none');
+      if (!audioVis) {
+        this.config.gridSVG.selectAll('line.gridY')
+          .data(gridData.y)
+          .enter()
+          .append('line')
+          .attr('class', 'gridY')
+          .attr('x1', this.nodeService.scale.scaleX(this.config.editBounds.xMin))
+          .attr('x2', this.nodeService.scale.scaleX(this.config.editBounds.xMax))
+          .attr('y1', (d) => this.nodeService.scale.scaleY(d))
+          .attr('y2', (d) => this.nodeService.scale.scaleY(d))
+          .style('stroke', gridSettings.color.hash)
+          .style('stroke-width', 0.5)
+          .style('shape-rendering', 'crispEdges')
+          .style('opacity', 0.6)
+          .attr('pointer-events', 'none');
+      }
 
-      if (this.drawingService.file.activeEffect.scale && this.drawingService.file.activeEffect.scale.k >= 1) {
+      if (this.drawingService.file.activeEffect.scale && this.drawingService.file.activeEffect.scale.k >= 1 || audioVis) {
 
         const subDivisions = this.calculateGridSubDivisions(gridSettings);
 
@@ -77,6 +83,8 @@ export class GridService {
           .style('opacity', 0.4)
           .attr('pointer-events', 'none');
 
+        if (!audioVis) {
+
         this.config.gridSVG.selectAll('line.subDivisionY')
           .data(subDivisions.y)
           .enter()
@@ -91,6 +99,7 @@ export class GridService {
           .style('shape-rendering', 'crispEdges')
           .style('opacity', 0.4)
           .attr('pointer-events', 'none');
+        }
 
       }
     }
@@ -144,4 +153,6 @@ export class GridService {
 
     return { x: gridX, y: gridY };
   }
+
+
 }

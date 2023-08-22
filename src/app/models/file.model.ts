@@ -1,6 +1,6 @@
 import { Configuration } from './configuration.model';
 import { Collection } from './collection.model';
-import { Details, Effect } from './effect.model';
+import { Details, Effect, Midi } from './effect.model';
 import { Model, DataSet } from './tensorflow.model';
 
 export class Dates {
@@ -21,8 +21,8 @@ export class File {
   date = new Dates();
   configuration = new Configuration();
   collections: Array<Collection> = [];
-  effects: Array<Effect> = [];
-  activeEffect: Effect = null;
+  effects: Array<any> = [];
+  activeEffect: any = null;
   activeCollection: Collection = null;
   activeCollectionEffect: Details = null;
   tensorflow: {

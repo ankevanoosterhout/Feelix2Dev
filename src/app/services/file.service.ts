@@ -7,7 +7,7 @@ import { Subject } from 'rxjs';
 import { FileSaverService } from 'ngx-filesaver';
 import { NodeService } from './node.service';
 import { Collection } from '../models/collection.model';
-import { Configuration, OpenTab } from '../models/configuration.model';
+import { Configuration, EffectType, OpenTab } from '../models/configuration.model';
 import { HistoryService } from './history.service';
 import { CloneService } from './clone.service';
 
@@ -85,7 +85,7 @@ export class FileService {
     const defaultFile = new File(name, uuid(), true);
     const collection = new Collection(uuid(), 'Collection-' + (defaultFile.collections.length + 1));
     // console.log(collection);
-    const defaultEffect = new Effect(uuid());
+    const defaultEffect = new Effect(uuid(), EffectType.torque);
     defaultFile.collections.push(collection);
     defaultFile.effects.push(defaultEffect);
     defaultFile.activeEffect = defaultEffect;
@@ -206,15 +206,17 @@ export class FileService {
   closeEffectTab(effectID: string) {
     const activeFile = this.files.filter(f => f.isActive)[0];
     if (activeFile) {
-      const openTab = activeFile.configuration.openTabs.filter(t => t.id === effectID)[0];
-      if (openTab) {
-        const tabActive = openTab.isActive;
-        const tabIndex = activeFile.configuration.openTabs.indexOf(openTab);
-        activeFile.configuration.openTabs.splice(tabIndex, 1);
-        if (tabActive) {
-          this.setAnyEffectActive();
-        } else {
-          this.store();
+      if (activeFile.configuration.openTabs.length > 0) {
+        const openTab = activeFile.configuration.openTabs.filter(t => t.id === effectID)[0];
+        if (openTab) {
+          const tabActive = openTab.isActive;
+          const tabIndex = activeFile.configuration.openTabs.indexOf(openTab);
+          activeFile.configuration.openTabs.splice(tabIndex, 1);
+          if (tabActive) {
+            this.setAnyEffectActive();
+          } else {
+            this.store();
+          }
         }
       }
     }
@@ -247,7 +249,6 @@ export class FileService {
         file.effects.filter(e => e.id === file.activeEffect.id)[0].range_y = this.cloneService.deepClone(file.activeEffect.range_y);
         file.effects.filter(e => e.id === file.activeEffect.id)[0].date.modified = new Date().getTime();
         file.effects.filter(e => e.id === file.activeEffect.id)[0].grid = this.cloneService.deepClone(file.activeEffect.grid);
-        file.effects.filter(e => e.id === file.activeEffect.id)[0].colors = this.cloneService.deepClone(file.activeEffect.colors);
       }
     }
   }

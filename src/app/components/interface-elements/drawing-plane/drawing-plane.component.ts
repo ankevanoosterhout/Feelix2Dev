@@ -21,6 +21,10 @@ import { HardwareService } from 'src/app/services/hardware.service';
 import { CloneService } from 'src/app/services/clone.service';
 import { GridService } from 'src/app/services/grid.service';
 import { PlaySequenceComponent } from '../../windows/play-sequence.component';
+import { EffectType } from 'src/app/models/configuration.model';
+import { DrawAudioService } from 'src/app/services/draw-audio.service';
+import { MidiDataType } from 'src/app/models/audio.model';
+import { MidiDataService } from 'src/app/services/midi-data.service';
 
 @Component({
   selector: 'app-drawing-plane',
@@ -43,7 +47,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
               private drawingService: DrawingService, private drawElements: DrawElementsService, private bboxService: BBoxService,
               private effectLibraryService: EffectLibraryService, public dialog: MatDialog, private cloneService: CloneService,
               private motorControlService: MotorControlService, private hardwareService: HardwareService, private historyService: HistoryService,
-              private gridService: GridService) {
+              private gridService: GridService, private drawAudioService: DrawAudioService, private midiDataService: MidiDataService) {
 
     this.config = this.drawingService.config;
 
@@ -387,7 +391,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
         };
 
         if (this.config.newNode === null && (this.config.cursor.slug === 'pen' && this.config.cursor.selectedSubcursor !== 'add' ||
-            this.config.cursor.slug === 'brush') && 0 !== null) {
+            this.config.cursor.slug === 'brush')) {
 
 
           if (coords.x > this.config.editBounds.xMin &&
@@ -413,8 +417,18 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
         } else if (this.config.cursor.slug === 'sel' || this.config.cursor.slug === 'dsel') {
           if (this.config.mouseDown.x >= this.config.margin.left && this.config.mouseDown.y > this.config.margin.offsetTop &&
               this.config.mouseDown.y < window.innerHeight - 45) {
-            this.config.selectionStartPoint = { x: this.config.mouseDown.x - this.config.margin.left, y: this.config.mouseDown.y - this.config.margin.offsetTop };
-            this.config.activeSelection = true;
+
+            if (this.drawingService.audioVisualization()) {
+
+              const blockWidth = this.file.activeEffect.grid.settings.spacingX / this.file.activeEffect.grid.settings.subDivisionsX;
+              this.midiDataService.createNewDataBlock(Math.floor(coords.x / blockWidth) * blockWidth, Math.floor(coords.y), blockWidth);
+              this.drawFileData();
+
+            } else {
+
+              this.config.selectionStartPoint = { x: this.config.mouseDown.x - this.config.margin.left, y: this.config.mouseDown.y - this.config.margin.offsetTop };
+              this.config.activeSelection = true;
+            }
           }
         }
       }
@@ -772,19 +786,35 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
 
     if (this.file.configuration.horizontalScreenDivision < (100 / window.innerHeight) * (window.innerHeight - 50)) {
-      this.config.svg.selectAll('.planeSVG, .cpSVG, .pathSVG, .nodesSVG, .bbox, .gridSVG, .forceNodeSVG').remove();
+      this.config.svg.selectAll('.planeSVG, .cpSVG, .pathSVG, .nodesSVG, .blocksSVG, .bbox, .gridSVG, .forceNodeSVG').remove();
 
       if (this.file.activeEffect) {
-        if (this.file.activeEffect.grid.visible) {
+
+
+
+        if (this.file.activeEffect.grid.visible || (this.file.activeEffect.type === EffectType.midi && this.file.activeEffect.activeDataType === MidiDataType.notes)) {
           // this.drawingService.drawGrid(this.file.activeEffect.grid.settings);
+          this.file.activeEffect.grid.settings.spacingX = 20;
+          this.file.activeEffect.grid.settings.subDivisionsX = 4;
+          this.file.activeEffect.grid.visible = true;
+
           this.gridService.drawGrid(this.file.activeEffect.grid.settings);
+        }
+
+        if (this.drawingService.audioVisualization()) {
+          this.drawAudioService.drawKeys();
         }
 
         if (this.config.rulerVisible) {
           this.drawingService.drawAllGuides(this.file.activeEffect.grid.guides);
         }
 
-        this.drawElements.redraw();
+        if (this.drawingService.audioVisualization()) {
+          this.drawAudioService.drawBlocks();
+        } else {
+          this.drawElements.redraw();
+        }
+
 
         if (this.nodeService.selectedPaths.length > 0 && this.nodeService.selectedNodes.length === 0 && this.config.cursor.slug === 'sel') {
           this.bboxService.drawBoundingBox();

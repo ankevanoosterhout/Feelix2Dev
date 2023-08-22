@@ -10,7 +10,7 @@ import { TensorFlowTrainService } from 'src/app/services/tensorflow-train.servic
 @Component({
   selector: 'app-model',
   templateUrl: 'model.component.html',
-  styleUrls: ['../../windows/effects/effects.component.css', './../tensorFlowJS.component.css'],
+  styleUrls: ['../../windows/effects/effects.component.css', './../tensorflowJS.component.css'],
 })
 export class ModelComponent {
 
@@ -101,7 +101,7 @@ export class ModelComponent {
 
   initializeRegression_Model() {
     if (!this.d.processing) {
-      
+
     }
   }
 

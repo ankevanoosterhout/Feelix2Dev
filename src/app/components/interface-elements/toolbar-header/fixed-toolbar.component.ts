@@ -9,6 +9,7 @@ import { EffectLibraryService } from 'src/app/services/effect-library.service';
 import { Unit } from 'src/app/models/effect.model';
 import { CloneService } from 'src/app/services/clone.service';
 import { EffectType, EffectTypeLabelMapping } from 'src/app/models/configuration.model';
+import { MidiDataType, MidiDataTypeLabelMapping } from 'src/app/models/audio.model';
 
 @Component({
   selector: 'app-fixed-toolbar',
@@ -18,6 +19,7 @@ import { EffectType, EffectTypeLabelMapping } from 'src/app/models/configuration
 export class FixedToolbarComponent implements OnInit {
 
   public EffectTypeLabelMapping = EffectTypeLabelMapping;
+  public MidiDataTypeLabelMapping = MidiDataTypeLabelMapping;
 
   toolbar = new Toolbar();
   public innerHeight: number;
@@ -39,6 +41,7 @@ export class FixedToolbarComponent implements OnInit {
 
   // typeOptions = [EffectType.torque, EffectType.position, EffectType.velocity, EffectType.pneumatic];
   public typeOptions = Object.values(EffectType).filter(value => typeof value === 'number');
+  public midiDataTypeOptions = Object.values(MidiDataType).filter(value => typeof value === 'number');
   rotationOptions = ['independent', 'dependent'];
 
   referencePoints = [
@@ -274,8 +277,13 @@ export class FixedToolbarComponent implements OnInit {
     this.drawingService.redraw();
   }
 
-  updateEquation() {
 
+  updateCC(){
+    this.drawingService.updateActiveEffect(this.drawingService.file);
+    console.log(this.drawingService.file.activeEffect);
   }
+
+
+  updateEquation() { }
 
 }
