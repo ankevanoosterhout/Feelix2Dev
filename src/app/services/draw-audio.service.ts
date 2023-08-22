@@ -108,7 +108,7 @@ export class DrawAudioService {
       .append('rect')
       .attr('class', 'gridRectBgY')
       .attr('x', this.nodeService.scale.scaleX(this.config.editBounds.xMin))
-      .attr('width', this.nodeService.scale.scaleX(this.config.editBounds.xMax))
+      .attr('width', this.nodeService.scale.scaleX(this.config.editBounds.xMax) - this.nodeService.scale.scaleX(this.config.editBounds.xMin))
       .attr('y', (d: any, i: number) => i * this.smallKeyHeight)
       .attr('height', this.smallKeyHeight)
       .style('shape-rendering', 'crispEdges')
@@ -121,7 +121,7 @@ export class DrawAudioService {
       .enter()
       .append('line')
       .attr('class', 'gridY')
-      .attr('x1', this.keyWidth)
+      .attr('x1', this.nodeService.scale.scaleX(this.config.editBounds.xMin))
       .attr('x2', this.nodeService.scale.scaleX(this.config.editBounds.xMax))
       .attr('y1', (d: any, i: number) => i * this.smallKeyHeight)
       .attr('y2', (d: any, i: number) => i * this.smallKeyHeight)
@@ -185,8 +185,21 @@ export class DrawAudioService {
 
       const dragBlock = d3.drag()
 
-        .on('start', (event: any, d: any) => { })
-        .on('drag', (event: any, d: any) => { })
+        .on('start', (event: any, d: any) => {
+          // event.stopPropagation();
+        })
+        .on('drag', (event: any, d: any) => {
+          const coords = this.drawingService.calculateBlockSnapPoint(this.nodeService.scale.scaleX.invert(event.x + 80), this.nodeService.scale.scaleY.invert(event.y));
+          if (coords.x !== d.vis.x || coords.y !== d.vis.y) {
+            d.vis.x = coords.x;
+            d.vis.y = coords.y;
+            d3.select('#block_id_' + d.id).attr('x', this.nodeService.scale.scaleX(d.vis.x) - 79).attr('y', this.nodeService.scale.scaleY(d.vis.y + 1) + 1);
+            d3.select('#left_block_id_' + d.id).attr('y', (d: { vis: { y: number; }; }) => this.nodeService.scale.scaleY(d.vis.y + 1) + 1)
+              .attr('x', (d: { vis: { x: number; width: number; }; }) => this.nodeService.scale.scaleX(d.vis.x) - ((this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - this.nodeService.scale.scaleX(d.vis.x)) / 8) - 80)
+            d3.select('#right_block_id_' + d.id).attr('x', (d: { vis: { x: number; width: number; }; }) => this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - ((this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - this.nodeService.scale.scaleX(d.vis.x)) / 8) - 80)
+              .attr('y', (d: { vis: { y: number; }; }) => this.nodeService.scale.scaleY(d.vis.y + 1) + 1)
+          }
+        })
         .on('end', (d: any) => { });
 
       this.config.blocksSVG.selectAll('rect.blocks')
@@ -206,15 +219,13 @@ export class DrawAudioService {
         .style('shape-rendering', 'crispEdges')
         .on('mouseenter', (event: any, d: { id: string}) => {
           if (this.config.cursor.slug === 'dsel' || this.config.cursor.slug === 'sel') {
-            //select block
-            this.config.blocksSVG.selectAll('block_id_' + d.id).style('fill', '#3a81b5').style('stroke', '#a7d2f2');
+            this.config.blocksSVG.selectAll('#block_id_' + d.id).style('fill', '#3a81b5').style('stroke', '#a7d2f2');
           }
         })
         .on('mouseleave', (event: any, d: { id: string; path: string; pos: { x: number; y: number; };  }) => {
 
           if (this.config.cursor.slug === 'dsel' || this.config.cursor.slug === 'sel') {
-            //select block
-            this.config.blocksSVG.selectAll('block_id_' + d.id).style('fill', '#5993bd').style('stroke', '#7fbdeb');
+            this.config.blocksSVG.selectAll('#block_id_' + d.id).style('fill', '#5993bd').style('stroke', '#7fbdeb');
           }
         })
         .call(dragBlock);
@@ -222,27 +233,38 @@ export class DrawAudioService {
 
       const resizeWidthBlockLeft = d3.drag()
 
-        .on('start', (event: any, d: any) => { })
-        .on('drag', (event: any, d: any) => {
-          const coordX = this.nodeService.scale.scaleX.invert(event.x);
-          //snap value to min-block width
-          //update block x pos and width
+        .on('start', (event: any, d: any) => {
+          //play sound effect
+          // event.stopPropagation();
         })
-        .on('end', (d: any) => {
-          //save data in midi data service
+        .on('drag', (event: any, d: any) => {
+          const coords = this.drawingService.calculateBlockSnapPoint(this.nodeService.scale.scaleX.invert(event.x + 80), this.nodeService.scale.scaleY.invert(event.y));
+          const difference = d.vis.x - coords.x;
+          if (coords.x !== d.vis.x && d.vis.width + difference > 0) {
+            d.vis.x -= difference;
+            d.vis.width += difference;
+            d3.select('#block_id_' + d.id)
+              .attr('x', this.nodeService.scale.scaleX(d.vis.x) - 79)
+              .attr('width', (this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - this.nodeService.scale.scaleX(d.vis.x)));
+            d3.select('#left_block_id_' + d.id).attr('x', (d: { vis: { x: number; width: number; }; }) => this.nodeService.scale.scaleX(d.vis.x) - 85);
+          }
         });
 
 
       const resizeWidthBlockRight = d3.drag()
 
-        .on('start', (event: any, d: any) => { })
-        .on('drag', (event: any, d: any) => {
-          const coordX = this.nodeService.scale.scaleX.invert(event.x);
-          //snap value to min-block width
-          //update block width
+        .on('start', (event: any, d: any) => {
+          //play sound effect
+          // event.stopPropagation();
         })
-        .on('end', (d: any) => {
-          //save data in midi data service
+        .on('drag', (event: any, d: any) => {
+          const coords = this.drawingService.calculateBlockSnapPoint(this.nodeService.scale.scaleX.invert(event.x + 80), this.nodeService.scale.scaleY.invert(event.y));
+          const difference = (d.vis.x + d.vis.width) - coords.x;
+          if (coords.x !== d.vis.x + d.vis.width && d.vis.width - difference > 0) {
+            d.vis.width -= difference;
+            d3.select('#block_id_' + d.id).attr('width', (this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - this.nodeService.scale.scaleX(d.vis.x)));
+            d3.select('#right_block_id_' + d.id).attr('x', (d: { vis: { x: number; width: number; }; }) => this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - 85);
+          }
         });
 
       this.config.blocksSVG.selectAll('rect.side-left')
@@ -251,9 +273,9 @@ export class DrawAudioService {
         .append('rect')
         .attr('id', (d: { id: string; path: string }) => 'left_block_id_' + d.id)
         .attr('class', 'blocks')
-        .attr('width',  (d: { vis: { x: number; width: number; }; }) => (this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - this.nodeService.scale.scaleX(d.vis.x)) / 4)
+        .attr('width',  10)
         .attr('height', this.smallKeyHeight - 2)
-        .attr('x', (d: { vis: { x: number; width: number; }; }) => this.nodeService.scale.scaleX(d.vis.x) - ((this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - this.nodeService.scale.scaleX(d.vis.x)) / 8) - 80)
+        .attr('x', (d: { vis: { x: number; }; }) => this.nodeService.scale.scaleX(d.vis.x) - 85)
         .attr('y', (d: { vis: { y: number; }; }) => this.nodeService.scale.scaleY(d.vis.y + 1) + 1)
         .attr('pointer-events', (d: any) => !this.config.zoomable ? 'auto' : 'none')
         .style('fill', 'transparent')
@@ -271,9 +293,9 @@ export class DrawAudioService {
         .append('rect')
         .attr('id', (d: { id: string; path: string }) => 'right_block_id_' + d.id)
         .attr('class', 'blocks')
-        .attr('width',  (d: { vis: { x: number; width: number; }; }) => (this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - this.nodeService.scale.scaleX(d.vis.x)) / 4)
+        .attr('width', 10)
         .attr('height', this.smallKeyHeight - 2)
-        .attr('x', (d: { vis: { x: number; width: number; }; }) => this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - ((this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - this.nodeService.scale.scaleX(d.vis.x)) / 8) - 80)
+        .attr('x', (d: { vis: { x: number; width: number; }; }) => this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - 85)
         .attr('y', (d: { vis: { y: number; }; }) => this.nodeService.scale.scaleY(d.vis.y + 1) + 1)
         .attr('pointer-events', (d: any) => !this.config.zoomable ? 'auto' : 'none')
         .style('fill', 'transparent')

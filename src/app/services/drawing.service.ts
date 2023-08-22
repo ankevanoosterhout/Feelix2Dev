@@ -722,6 +722,13 @@ export class DrawingService {
     return 0;
   }
 
+  calculateBlockSnapPoint(_x: number, _y: number) {
+    console.log(_x, _y);
+    const blockWidth = this.file.activeEffect.grid.settings.spacingX / this.file.activeEffect.grid.settings.subDivisionsX;
+    console.log({ x: Math.floor(_x / blockWidth) * blockWidth, y: Math.floor(_y) })
+    return { x: Math.floor(_x / blockWidth) * blockWidth, y: Math.floor(_y) };
+  }
+
   drawRulers() {
     this.config.rulerWidth = 13;
 

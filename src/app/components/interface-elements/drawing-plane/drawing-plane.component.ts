@@ -536,11 +536,12 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
     if (!this.config.zoomable) {
       const key = e.key;
       if (key === ' ') {
-        if (this.config.activeInput === null && !this.nodeService.inputFieldsActive) {
+        if (this.config.activeInput === null && !this.nodeService.inputFieldsActive && !this.drawingService.audioVisualization()) {
           this.drawingService.deselectAllElements();
           this.config.svg.call(this.config.zoom);
           this.drawingService.setCursor('url(./assets/icons/tools/cursor-move.png), none');
           this.config.zoomable = true;
+
         }
 
       } else if (key === 'ArrowUp' || key === 'ArrowDown' || key === 'ArrowLeft' || key === 'ArrowRight' ) {
@@ -628,12 +629,11 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
   @HostListener('window:keyup', ['$event'])
   onKeyUp(e: KeyboardEvent) {
     const key = e.key;
-    if (key === ' ') {
-      if (this.config.zoomable) {
-        this.config.zoomable = false;
-        this.config.svg.on('.zoom', null);
-        this.drawingService.setCursor(this.config.cursor.cursor);
-      }
+    if (key === ' ' && this.config.zoomable) {
+      this.config.zoomable = false;
+      this.config.svg.on('.zoom', null);
+      this.drawingService.setCursor(this.config.cursor.cursor);
+
     } else if ((key === 'p' || key === 'v' || key === 'a' || key === 'l' ||
       key === 'd' || key === 's' || key === 'i' || key === 'q') && !(e.ctrlKey || e.metaKey))  {
       this.electronService.ipcRenderer.send('selectCursor', key);
