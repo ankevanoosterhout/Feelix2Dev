@@ -228,6 +228,7 @@ export class FileService {
     if (activeFile) {
       if (activeFile.configuration.openTabs.length > 0) {
         const openTab = activeFile.configuration.openTabs.filter(t => t.id === effectID)[0];
+
         if (openTab) {
           const tabActive = openTab.isActive;
           const tabIndex = activeFile.configuration.openTabs.indexOf(openTab);
@@ -239,6 +240,7 @@ export class FileService {
               this.store();
             }
           }
+          this.historyService.clearHistoryEffect(effectID);
         }
       }
     }
@@ -353,7 +355,9 @@ export class FileService {
           }
         }
       } else {
-        this.updateActiveEffectData(activeFile);
+        if (activeFile.activeEffect) {
+          this.updateActiveEffectData(activeFile);
+        }
         this.nodeService.reset();
         activeFile.activeEffect = null;
         this.store();
@@ -431,24 +435,34 @@ export class FileService {
             }
           }
         }
+        this.closeEffectTab(effectID);
+        // const openTab = activeFile.configuration.openTabs.filter(t => t.id === effectID)[0];
+        // if (openTab) {
+        //   if (openTab.isActive) {
+        //     activeFile.activeEffect = null;
+        //     this.nodeService.reset();
+        //   }
+        //   const tabIndex = activeFile.configuration.openTabs.indexOf(openTab);
+        //   activeFile.configuration.openTabs.splice(tabIndex, 1);
+        // }
+        if (effect.type === EffectType.midi && effect.dataType === MidiDataType.notes) {
+          for (const item of effect.data) {
+            const openTabMidi = activeFile.configuration.openTabs.filter(t => t.id === item.effect.id)[0];
+
+            if (openTabMidi) {
+
+              this.closeEffectTab(item.effect.id)
+            }
+          }
+        }
         const effectIndex = activeFile.effects.indexOf(effect);
         activeFile.effects.splice(effectIndex, 1);
-        const openTab = activeFile.configuration.openTabs.filter(t => t.id === effectID)[0];
-        if (openTab) {
-          if (openTab.isActive) {
-            activeFile.activeEffect = null;
-            this.nodeService.reset();
-          }
-          const tabIndex = activeFile.configuration.openTabs.indexOf(openTab);
-          activeFile.configuration.openTabs.splice(tabIndex, 1);
-        }
+
         if (!activeFile.activeEffect) {
           this.setAnyEffectActive();
         } else {
           this.store();
         }
-
-        this.historyService.clearHistoryEffect(effectID);
       }
     }
   }

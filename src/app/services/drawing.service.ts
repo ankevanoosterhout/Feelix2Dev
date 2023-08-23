@@ -229,8 +229,13 @@ export class DrawingService {
       const t = this.audioVisualization() ? d3.zoomIdentity.translate(this.file.activeEffect.scale.x, this.file.activeEffect.scale.y).scale(this.file.activeEffect.scale.k) :
       d3.zoomIdentity.translate(this.file.activeEffect.scale.x, 0).scale(this.file.activeEffect.scale.k);
       const newScaleX = t.rescaleX(this.config.xScale);
-      const newScaleY = t.rescaleY(this.config.yScale);
-      this.nodeService.setScale(newScaleX, newScaleY);
+      if (this.audioVisualization()) {
+        const newScaleY = t.rescaleY(this.config.yScale);
+        this.nodeService.setScale(newScaleX, newScaleY);
+      } else {
+        this.nodeService.setScale(newScaleX, this.config.yScale);
+      }
+
     }
     this.setZoom();
   }
@@ -281,8 +286,12 @@ export class DrawingService {
 
   scaleContent(transform: any) {
     const newScale = transform.rescaleX(this.config.xScale);
-    const newScaleY = transform.rescaleY(this.config.yScale);
-    this.nodeService.setScale(newScale, this.audioVisualization() ? newScaleY : this.config.yScale);
+    if (this.audioVisualization()) {
+      const newScaleY = transform.rescaleY(this.config.yScale);
+      this.nodeService.setScale(newScale, newScaleY);
+    } else {
+      this.nodeService.setScale(newScale, this.config.yScale);
+    }
 
     if (this.config.rulerVisible) {
       this.config.xAxisBottom.call(this.config.xAxis.scale(newScale));
