@@ -124,6 +124,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
       if (data.tmp === false) {
         this.fileService.updateActiveEffectData(this.file);
+        this.fileService.store();
       }
     });
 
@@ -188,6 +189,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
     this.electronService.ipcRenderer.on('saveData', () => {
       if (this.file.activeEffect) {
         this.fileService.updateActiveEffectData(this.file);
+        this.fileService.store();
       }
     });
 
@@ -390,12 +392,10 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
           y: this.nodeService.scale.scaleY.invert(e.clientY - this.config.margin.top - this.config.margin.offsetTop)
         };
 
-        if (this.config.newNode === null && (this.config.cursor.slug === 'pen' && this.config.cursor.selectedSubcursor !== 'add' ||
-            this.config.cursor.slug === 'brush')) {
+        if (this.config.newNode === null && ((this.config.cursor.slug === 'pen' && this.config.cursor.selectedSubcursor !== 'add') || this.config.cursor.slug === 'brush') && !this.drawingService.audioVisualization()) {
 
 
-          if (coords.x > this.config.editBounds.xMin &&
-              (coords.y > this.config.editBounds.yMin && coords.y < this.config.editBounds.yMax)) {
+          if (coords.x > this.config.editBounds.xMin && coords.x < this.config.editBounds.xMax && coords.y > this.config.editBounds.yMin && coords.y < this.config.editBounds.yMax) {
 
             if (this.config.cursor.slug === 'pen') {
 
@@ -415,13 +415,16 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
           }
         } else if (this.config.cursor.slug === 'sel' || this.config.cursor.slug === 'dsel') {
-          if (this.config.mouseDown.x >= this.config.margin.left && this.config.mouseDown.y > this.config.margin.offsetTop &&
+          if (coords.x >= this.config.editBounds.xMin && coords.x < this.config.editBounds.xMax && this.config.mouseDown.y > this.config.margin.offsetTop &&
               this.config.mouseDown.y < window.innerHeight - 45) {
 
             if (this.drawingService.audioVisualization()) {
 
               const blockWidth = this.file.activeEffect.grid.settings.spacingX / this.file.activeEffect.grid.settings.subDivisionsX;
-              this.midiDataService.createNewDataBlock(Math.floor(coords.x / blockWidth) * blockWidth, Math.floor(coords.y), blockWidth);
+              const newBlock = this.midiDataService.createNewDataBlock(Math.floor(coords.x / blockWidth) * blockWidth, Math.floor(coords.y), blockWidth);
+              newBlock.effect.name = this.file.activeEffect.name + '-CC-' + Math.floor(coords.y);
+              this.file.activeEffect.data.push(newBlock);
+              this.fileService.updateEffect(this.file.activeEffect);
               this.drawFileData();
 
             } else {
@@ -541,9 +544,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
           this.config.svg.call(this.config.zoom);
           this.drawingService.setCursor('url(./assets/icons/tools/cursor-move.png), none');
           this.config.zoomable = true;
-
         }
-
       } else if (key === 'ArrowUp' || key === 'ArrowDown' || key === 'ArrowLeft' || key === 'ArrowRight' ) {
         if (!this.nodeService.inputFieldsActive && this.config.activeInput === null) {
           if (this.nodeService.selectedPaths.length > 0 || this.nodeService.selectedNodes.length > 0) {
@@ -642,6 +643,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
       if (!this.nodeService.inputFieldsActive && this.config.activeInput === null) {
 
+        // if (!this.drawingService.audioVisualization())
         const activeSelection = this.dataService.activeSelection();
         const nrSelectedNodes = this.nodeService.selectedNodes.length;
 
@@ -662,6 +664,10 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
               //   if (box !== null) { pathel.box = box.path.box; }
               // }
             }
+          }
+
+          if (this.drawingService.audioVisualization()) {
+            this.drawingService.deleteSelectedBlocks();
           }
 
           this.drawingService.deselectAllElements();
@@ -770,6 +776,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       const bboxSize = this.bboxService.getBBox(path);
       if (bboxSize) {
         this.fileService.updateActiveEffectData(this.file);
+        this.fileService.store();
         path = bboxSize.path;
       }
       this.nodeService.deselectAll();
@@ -792,9 +799,8 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
 
 
-        if (this.file.activeEffect.grid.visible || (this.file.activeEffect.type === EffectType.midi && this.file.activeEffect.activeDataType === MidiDataType.notes)) {
-          // this.drawingService.drawGrid(this.file.activeEffect.grid.settings);
-          this.file.activeEffect.grid.settings.spacingX = 20;
+        if (this.file.activeEffect.grid.visible || (this.file.activeEffect.type === EffectType.midi && this.file.activeEffect.dataType === MidiDataType.notes)) {
+          // this.file.activeEffect.grid.settings.spacingX = 20;
           this.file.activeEffect.grid.settings.subDivisionsX = 4;
           this.file.activeEffect.grid.visible = true;
 
@@ -810,7 +816,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
         }
 
         if (this.drawingService.audioVisualization()) {
-          this.drawAudioService.drawBlocks();
+          this.drawAudioService.drawBlocks(this.file.activeEffect.data, this.file.activeEffect.name);
         } else {
           this.drawElements.redraw();
         }

@@ -16,8 +16,6 @@ export class GridService {
 
   drawGrid(gridSettings: any) {
 
-    console.log(gridSettings);
-    
     this.config.svg.selectAll('.gridSVG').remove();
 
     const audioVis = this.drawingService.audioVisualization();

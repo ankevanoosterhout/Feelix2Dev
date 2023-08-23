@@ -265,7 +265,7 @@ class newSerialPort {
 
           main.visualizaPressureMotorData(incomingData);
 
-        } else if (d.charAt(0) === 'Z') { // receive custom variable
+        } else if (d.charAt(0) === 'Z') { // receive calibration values motor
 
           const dataArray = d.substr(1).split(':');
           const data = {
@@ -276,7 +276,7 @@ class newSerialPort {
           };
           main.updateZeroElectricAngle(data);
 
-        } else if (d.charAt(0) === 'C') { // receive custom variable
+        } else if (d.charAt(0) === 'C') { // receive calibration values current sense
           const dataArray = d.substr(1).split(':');
           const data = {
               motorID: dataArray[0],
@@ -285,20 +285,20 @@ class newSerialPort {
           };
           main.updateCurrentSenseCalibration(data);
 
-        } else if (d.charAt(0) === 'M') { // receive custom variable
+        } else if (d.charAt(0) === 'M') { // receive variable
           updateProgress(progress, 'Maximum data size reached');
 
-        } else if (d.charAt(0) === 'V') { // receive custom variable
+        } else if (d.charAt(0) === 'V') { // receive variable
           updateProgress(progress, 'Motor stopped automatically because it reached a high velocity');
 
-        } else if (d.charAt(0) === 'O') { // receive custom variable
+        } else if (d.charAt(0) === 'O') { // receive variable
           updateProgress(progress, 'Overheat protection activitated');
 
-        } else if (d.charAt(0) === 'L') { // receive custom variable
+        } else if (d.charAt(0) === 'L') { // receive variable
           // console.log('listed devices ' + d.substr(1));
           updateProgress(progress, d.substr(1));
 
-        } else if (d.charAt(0) === 'S') { // receive custom variable
+        } else if (d.charAt(0) === 'S') { // receive software version data
           const dataArray = d.substr(1).split('.');
           const data = {
               major: parseInt(dataArray[0]),
@@ -325,7 +325,7 @@ class newSerialPort {
           main.returnData(data);
           main.updateSerialProgress({ progress: 100, str: 'value received' });
 
-        } else if (d.charAt(0) === 'H') {
+        } else if (d.charAt(0) === 'H') { // check if the microcontroller is using the right firmware
           sendDataStr([ 'FS' ],  this.COM, true);
           this.connected = true;
           main.updateSerialStatus({ microcontroller: this.portData, connected: this.connected });

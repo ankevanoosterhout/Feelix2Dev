@@ -10,6 +10,7 @@ import { Collection } from '../models/collection.model';
 import { Configuration, EffectType, OpenTab } from '../models/configuration.model';
 import { HistoryService } from './history.service';
 import { CloneService } from './clone.service';
+import { Midi, MidiChannel, MidiDataType } from '../models/audio.model';
 
 @Injectable()
 export class FileService {
@@ -177,29 +178,48 @@ export class FileService {
     const activeFile = this.files.filter(f => f.isActive)[0];
     if (activeFile) {
       activeFile.effects.push(effect);
-
-      const tab = new OpenTab(effect.id, effect.name);
-      const tabIndex = activeFile.configuration.openTabs.indexOf(tab);
-      if (tabIndex === -1) {
-        activeFile.configuration.openTabs.push(tab);
-      }
+      this.addTab(activeFile, effect.id, effect.name);
       this.setEffectActive(effect);
       this.sortEffects(activeFile.configuration.sortType);
-
     }
   }
+
+
+  addMidiEffect(effect: MidiChannel) {
+    const activeFile = this.files.filter(f => f.isActive)[0];
+    if (activeFile) {
+      this.addTab(activeFile, effect.id, effect.name);
+      this.setEffectActive(effect);
+    }
+  }
+
+  addTab(file: File, effectID: string, effectName: string) {
+    const openTab = file.configuration.openTabs.filter(t => t.id === effectID)[0];
+    if (!openTab) {
+      const tab = new OpenTab(effectID, effectName);
+      file.configuration.openTabs.push(tab);
+    } else {
+      openTab.name = effectName;
+    }
+  }
+
 
   openEffect(effectID: string) {
     const activeFile = this.files.filter(f => f.isActive)[0];
     if (activeFile && activeFile.effects.length > 0) {
 
-      const effect = activeFile.effects.filter(e => e.id === effectID)[0];
-      const tab = activeFile.configuration.openTabs.filter(t => t.id === effectID)[0];
-      if (!tab) {
-        const newTab = new OpenTab(effect.id, effect.name);
-        activeFile.configuration.openTabs.push(newTab);
+      // const effect = activeFile.effects.filter(e => e.id === effectID)[0];
+      const effect = this.getEffect(effectID, activeFile);
+      if (effect) {
+        const tab = activeFile.configuration.openTabs.filter(t => t.id === effectID)[0];
+        if (!tab) {
+          const newTab = new OpenTab(effect.id, effect.name);
+          activeFile.configuration.openTabs.push(newTab);
+        } else {
+          tab.name = effect.name;
+        }
+        this.setEffectActive(effect);
       }
-      this.setEffectActive(effect);
     }
   }
 
@@ -211,11 +231,13 @@ export class FileService {
         if (openTab) {
           const tabActive = openTab.isActive;
           const tabIndex = activeFile.configuration.openTabs.indexOf(openTab);
-          activeFile.configuration.openTabs.splice(tabIndex, 1);
-          if (tabActive) {
-            this.setAnyEffectActive();
-          } else {
-            this.store();
+          if (tabIndex > -1) {
+            activeFile.configuration.openTabs.splice(tabIndex, 1);
+            if (tabActive) {
+              this.setAnyEffectActive();
+            } else {
+              this.store();
+            }
           }
         }
       }
@@ -224,38 +246,86 @@ export class FileService {
 
   updateActiveEffectData(file: File) {
     if (file.activeEffect) {
-      file.activeEffect.paths = this.nodeService.getAll();
-      file.activeEffect.size = this.getPathEffectSize(file.activeEffect);
-      for (const collection of file.collections) {
-        const multiply = collection.rotation.units.PR / file.activeEffect.grid.xUnit.PR;
-        for (const collEffect of collection.effects) {
-          if (collEffect.effectID === file.activeEffect.id) {
-            const newWidth = file.activeEffect.size.width * multiply;
-            collEffect.position.width = newWidth * (collEffect.scale.x/100);
-            collEffect.position.height = file.activeEffect.size.height * (collEffect.scale.y/100);
-            collEffect.position.top = file.activeEffect.size.top;
-            collEffect.position.bottom = file.activeEffect.size.bottom;
+      if (file.activeEffect.type === EffectType.midi && file.activeEffect.dataType === MidiDataType.notes) {
+        let midiEffect = file.effects.filter(e => e.id === file.activeEffect.id)[0];
+        if (midiEffect) {
+          midiEffect.data = JSON.parse(JSON.stringify(file.activeEffect.data));
+        }
+      } else {
+        file.activeEffect.paths = this.nodeService.getAll();
+        file.activeEffect.size = this.getPathEffectSize(file.activeEffect);
+
+        for (const collection of file.collections) {
+          const multiply = collection.rotation.units.PR / file.activeEffect.grid.xUnit.PR;
+          for (const collEffect of collection.effects) {
+            if (collEffect.effectID === file.activeEffect.id) {
+              const newWidth = file.activeEffect.size.width * multiply;
+              collEffect.position.width = newWidth * (collEffect.scale.x/100);
+              collEffect.position.height = file.activeEffect.size.height * (collEffect.scale.y/100);
+              collEffect.position.top = file.activeEffect.size.top;
+              collEffect.position.bottom = file.activeEffect.size.bottom;
+            }
           }
         }
-      }
-      let effect = file.effects.filter(e => e.id === file.activeEffect.id)[0];
-      if (effect) {
-        file.effects.filter(e => e.id === file.activeEffect.id)[0] = this.cloneService.deepClone(file.activeEffect);
-        file.effects.filter(e => e.id === file.activeEffect.id)[0].paths = this.cloneService.deepClone(file.activeEffect.paths);
-        file.effects.filter(e => e.id === file.activeEffect.id)[0].size = this.cloneService.deepClone(file.activeEffect.size);
-        file.effects.filter(e => e.id === file.activeEffect.id)[0].type = file.activeEffect.type;
-        file.effects.filter(e => e.id === file.activeEffect.id)[0].rotation = file.activeEffect.rotation;
-        file.effects.filter(e => e.id === file.activeEffect.id)[0].range = this.cloneService.deepClone(file.activeEffect.range);
-        file.effects.filter(e => e.id === file.activeEffect.id)[0].range_y = this.cloneService.deepClone(file.activeEffect.range_y);
-        file.effects.filter(e => e.id === file.activeEffect.id)[0].date.modified = new Date().getTime();
-        file.effects.filter(e => e.id === file.activeEffect.id)[0].grid = this.cloneService.deepClone(file.activeEffect.grid);
+        // let effect = file.effects.filter(e => e.id === file.activeEffect.id)[0];
+        let effect = this.getEffect(file.activeEffect.id, file);
+        if (effect && effect.type !== EffectType.midi) {
+          effect = this.cloneService.deepClone(file.activeEffect);
+          effect.paths = this.cloneService.deepClone(file.activeEffect.paths);
+          effect.size = this.cloneService.deepClone(file.activeEffect.size);
+          effect.type = file.activeEffect.type;
+          effect.rotation = file.activeEffect.rotation;
+          effect.range = this.cloneService.deepClone(file.activeEffect.range);
+          effect.range_y = this.cloneService.deepClone(file.activeEffect.range_y);
+          effect.date.modified = new Date().getTime();
+          effect.grid = this.cloneService.deepClone(file.activeEffect.grid);
+
+        } else if (effect && effect.type === EffectType.midi) {
+          const parent = this.getParentEffect(effect.id, file);
+          if (parent && parent.data.filter(p => p.effect.id === effect.id)[0]) {
+            parent.data.filter(p => p.effect.id === effect.id)[0].effect = this.cloneService.deepClone(file.activeEffect);
+            parent.data.filter(p => p.effect.id === effect.id)[0].effect.paths = this.cloneService.deepClone(file.activeEffect.paths);
+            parent.data.filter(p => p.effect.id === effect.id)[0].effect.size = this.cloneService.deepClone(file.activeEffect.size);
+            parent.data.filter(p => p.effect.id === effect.id)[0].effect.type = file.activeEffect.type;
+            parent.data.filter(p => p.effect.id === effect.id)[0].effect.range = this.cloneService.deepClone(file.activeEffect.range);
+            parent.data.filter(p => p.effect.id === effect.id)[0].effect.range_y = this.cloneService.deepClone(file.activeEffect.range_y);
+            parent.data.filter(p => p.effect.id === effect.id)[0].effect.date.modified = new Date().getTime();
+            parent.data.filter(p => p.effect.id === effect.id)[0].effect.grid = this.cloneService.deepClone(file.activeEffect.grid);
+          }
+        }
       }
     }
   }
 
+
+
+  getEffect(id: string, file: File) {
+    for (const effect of file.effects) {
+      if (effect.id === id) {
+        return effect;
+      } else if (effect.type === EffectType.midi && effect.dataType === MidiDataType.notes) {
+        const midiEffect = effect.data.filter(d => d.effect.id === id)[0];
+        if (midiEffect) {
+          return midiEffect.effect;
+        }
+      }
+    }
+    return;
+  }
+
+  getParentEffect(child: string, file: File) {
+    for (const effect of file.effects) {
+      if (effect.type === EffectType.midi && effect.dataType === MidiDataType.notes) {
+        if (effect.data.filter(d => d.effect.id === child).length > 0) {
+          return effect;
+        }
+      }
+    }
+  }
+
+
   setEffectActive(effect: Effect) {
     const activeFile = this.files.filter(f => f.isActive)[0];
-
     if (activeFile) {
       this.updateActiveEffectData(activeFile);
 

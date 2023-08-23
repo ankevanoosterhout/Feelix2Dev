@@ -9,10 +9,12 @@ import { Cursor } from '../models/tool.model';
 import { Subject } from 'rxjs';
 import { FileService } from './file.service';
 import { EffectVisualizationService } from './effect-visualization.service';
-import { Details, Effect, Midi, Unit } from '../models/effect.model';
+import { Details, Effect, Unit } from '../models/effect.model';
+import { Midi } from '../models/audio.model';
 import { Collection } from '../models/collection.model';
 import { Configuration, EffectType } from '../models/configuration.model';
 import { MidiDataType } from '../models/audio.model';
+import { MidiDataService } from './midi-data.service';
 
 
 
@@ -32,7 +34,7 @@ export class DrawingService {
 
 
 
-  constructor(@Inject(DOCUMENT) private document: Document, public nodeService: NodeService,
+  constructor(@Inject(DOCUMENT) private document: Document, public nodeService: NodeService, private midiDataService: MidiDataService,
               private dataService: DataService, private fileService: FileService, private effectVisualizationService: EffectVisualizationService) {
 
     this.config = new DrawingPlaneConfig();
@@ -81,9 +83,9 @@ export class DrawingService {
 
       const innerContainer = this.config.svg.append('rect')
         .attr('width', this.nodeService.scale.scaleX(this.config.editBounds.xMax) - this.nodeService.scale.scaleX(this.config.editBounds.xMin))
-        .attr('height', (this.nodeService.scale.scaleY(this.config.editBounds.yMin) - this.nodeService.scale.scaleY(this.config.editBounds.yMax)) - 0.5)
+        .attr('height', this.config.chartDy)
         .attr('x', this.nodeService.scale.scaleX(this.config.editBounds.xMin))
-        .attr('y', this.nodeService.scale.scaleY(this.config.editBounds.yMax) - 0.25)
+        .attr('y', 0)
         .attr('clip-path', 'url(#clip)')
         .attr('transform', 'translate(0, ' + this.config.margin.top + ')')
         .attr('class', 'innerContainer')
@@ -164,7 +166,20 @@ export class DrawingService {
   }
 
   audioVisualization() {
-    return this.file.activeEffect && this.file.activeEffect.type === EffectType.midi && this.file.activeEffect.activeDataType === MidiDataType.notes ? true : false;
+    return this.file.activeEffect && this.file.activeEffect.type === EffectType.midi && this.file.activeEffect.dataType === MidiDataType.notes ? true : false;
+  }
+
+  deleteSelectedBlocks() {
+    for (const block of this.midiDataService.selectedBlocks) {
+      const blockItem = this.file.activeEffect.data.filter(b => b.id === block)[0];
+      if (blockItem) {
+        const index = this.file.activeEffect.data.indexOf(blockItem);
+        if (index > -1) {
+          this.file.activeEffect.data.splice(index, 1);
+        }
+      }
+    }
+    this.midiDataService.deselectAllBlocks();
   }
 
 
@@ -211,9 +226,11 @@ export class DrawingService {
     if (!this.file.activeEffect || (this.file.activeEffect && !this.file.activeEffect.scale)) {
       this.nodeService.setScale(this.config.xScale, this.config.yScale);
     } else {
-      const t = d3.zoomIdentity.translate(this.file.activeEffect.scale.x, this.file.activeEffect.scale.y).scale(this.file.activeEffect.scale.k);
+      const t = this.audioVisualization() ? d3.zoomIdentity.translate(this.file.activeEffect.scale.x, this.file.activeEffect.scale.y).scale(this.file.activeEffect.scale.k) :
+      d3.zoomIdentity.translate(this.file.activeEffect.scale.x, 0).scale(this.file.activeEffect.scale.k);
       const newScaleX = t.rescaleX(this.config.xScale);
-      this.nodeService.setScale(newScaleX, this.config.yScale);
+      const newScaleY = t.rescaleY(this.config.yScale);
+      this.nodeService.setScale(newScaleX, newScaleY);
     }
     this.setZoom();
   }
@@ -233,6 +250,10 @@ export class DrawingService {
 
           this.scaleContent(transform);
           this.updateSlider(transform, this.config.sliderDrawplane, 'x');
+          if (this.audioVisualization()) {
+            this.updateSlider(transform, this.config.sliderDrawplaneVertical, 'y');
+          }
+
         }
       });
   }
@@ -261,6 +282,7 @@ export class DrawingService {
   scaleContent(transform: any) {
     const newScale = transform.rescaleX(this.config.xScale);
     const newScaleY = transform.rescaleY(this.config.yScale);
+    this.nodeService.setScale(newScale, this.audioVisualization() ? newScaleY : this.config.yScale);
 
     if (this.config.rulerVisible) {
       this.config.xAxisBottom.call(this.config.xAxis.scale(newScale));
@@ -275,13 +297,11 @@ export class DrawingService {
     this.file.activeEffect.scale = transform;
     this.updateScaleBox(transform.k);
 
-    this.nodeService.setScale(newScale, newScaleY);
-
     this.config.svg.select('.innerContainer')
       .attr('x', this.nodeService.scale.scaleX(this.config.editBounds.xMin))
+      .attr('y', this.nodeService.scale.scaleY(this.config.editBounds.yMax))
       .attr('width', this.nodeService.scale.scaleX(this.config.editBounds.xMax) -
-                     this.nodeService.scale.scaleX(this.config.editBounds.xMin))
-      .attr('y', this.nodeService.scale.scaleY(this.config.editBounds.yMax));
+                     this.nodeService.scale.scaleX(this.config.editBounds.xMin));
 
     this.config.svg.select('.zeroLine')
       .attr('x1', this.nodeService.scale.scaleX(this.config.editBounds.xMin))
@@ -307,7 +327,7 @@ export class DrawingService {
       scale = this.file.activeEffect.scale.k;
       scaleOffset = axis === 'x' ? this.file.activeEffect.scale.x : this.file.activeEffect.scale.y;
     }
-    const planeSize = axis === 'x' ? this.config.chartDx * 2 * scale : this.config.chartDy * scale;
+    const planeSize = axis === 'x' ? this.config.chartDx * 2 * scale : this.config.chartDy;
     offset = ((scaleOffset - ((axis === 'x' ? this.config.chartDx * 0.5 * scale : 0))) * -1) / planeSize * length;
     let sliderWidth = axis === 'x' ? (0.5 / scale) * length : ((slider.outer.max - slider.outer.min) / planeSize) * (slider.outer.max - slider.outer.min); // .72
     if (sliderWidth < 20) { sliderWidth = 20; }
@@ -325,7 +345,7 @@ export class DrawingService {
     let planeSize = axis === 'x' ? this.config.chartDx * 2 * transform.k : this.config.chartDy;
     const length = slider.outer.max - slider.outer.min;
 
-    let offset = ((transform.x - (this.config.chartDx * 0.5 * transform.k)) * -1) / planeSize * length;
+    let offset = ((transform.x - (axis === 'x' ? (this.config.chartDx * 0.5 * transform.k) : 0)) * -1) / planeSize * length;
 
     let sliderLength = (0.5 / transform.k) * length; // .72
     if (sliderLength < 20) { sliderLength = 20; }
@@ -339,6 +359,10 @@ export class DrawingService {
       this.config.svg.select('.innerRoundRectSlider-x')
         .attr('x', slider.inner.min - 6)
         .attr('width', sliderLength);
+    } else {
+      this.config.svg.select('.innerRoundRectSlider-y')
+        .attr('y', slider.inner.min - 6)
+        .attr('height', sliderLength);
     }
   }
 
@@ -350,7 +374,7 @@ export class DrawingService {
     const scale = axis === 'x' ? transform.k : 1;
     let offset = axis === 'x' ?
         ((slider.outer.min - slider.inner.min) / (slider.outer.max - slider.outer.min)) * (size * 2 * scale) + (size * 0.5 * scale) :
-        ((slider.outer.min - slider.inner.min) / (slider.outer.max - slider.outer.min)) * (size * scale);
+        ((slider.outer.min - slider.inner.min) / (slider.outer.max - slider.outer.min)) * (size);
 
     const t = d3.zoomIdentity.translate((axis === 'x' ? offset : transform.x), (axis === 'y' ? offset : transform.y)).scale(transform.k);
     this.config.svg.call(this.config.zoom.transform, t);
@@ -702,11 +726,17 @@ export class DrawingService {
 
   updateActiveEffect(file: File) {
     this.fileService.updateActiveEffectData(file);
+    this.fileService.store();
   }
 
   updateConfigActiveFile(config: Configuration) {
     this.fileService.updateConfig(config);
   }
+
+  openEffect(effect: any) {
+    this.fileService.addMidiEffect(effect);
+  }
+
 
   getBoxSizeActivePaths() {
     this.getBBoxSize.next();
@@ -723,9 +753,7 @@ export class DrawingService {
   }
 
   calculateBlockSnapPoint(_x: number, _y: number) {
-    console.log(_x, _y);
     const blockWidth = this.file.activeEffect.grid.settings.spacingX / this.file.activeEffect.grid.settings.subDivisionsX;
-    console.log({ x: Math.floor(_x / blockWidth) * blockWidth, y: Math.floor(_y) })
     return { x: Math.floor(_x / blockWidth) * blockWidth, y: Math.floor(_y) };
   }
 
@@ -1106,10 +1134,10 @@ export class DrawingService {
       }
       this.file.activeEffect.range.start = 0;
       this.file.activeEffect.range.end = 1000;
+
     } else if (this.file.activeEffect.type === EffectType.midi) {
       this.file.activeEffect = new Midi(this.file.activeEffect.id, EffectType.midi);
       this.file.activeEffect.grid.yUnit = new Unit('v', 128);
-
     } else {
       if (this.file.activeEffect.grid.xUnit.name === 'ms' || this.file.activeEffect.grid.xUnit.name === 'sec') {
         this.file.activeEffect.grid.xUnit = new Unit('deg', 360);

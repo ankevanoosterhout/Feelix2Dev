@@ -3,10 +3,10 @@ import { FileService } from 'src/app/services/file.service';
 import { File } from '../../models/file.model';
 import { MatDialog } from '@angular/material/dialog';
 import { DOCUMENT } from '@angular/common';
-import { v4 as uuid } from 'uuid';
-import { Effect } from 'src/app/models/effect.model';
 import { ElectronService } from 'ngx-electron';
 import { DataService } from 'src/app/services/data.service';
+import { EffectType } from 'src/app/models/configuration.model';
+import { MidiDataType } from 'src/app/models/audio.model';
 
 
 @Component({
@@ -60,7 +60,7 @@ export class EffectListComponent implements OnInit {
   }
 
   selectTab(tab: any) {
-    const effect = this.file.effects.filter(e => e.id === tab.id)[0];
+    let effect = this.getEffect(tab);
     if (effect) {
       this.fileService.setEffectActive(effect);
       this.dataService.deselectAll();
@@ -73,8 +73,21 @@ export class EffectListComponent implements OnInit {
 
         this.electronService.ipcRenderer.send('updateToolbar', { type: effect.type });
       }
-
     }
+  }
+
+  getEffect(tab: any) {
+    for (const effect of this.file.effects) {
+      if (effect.id === tab.id) {
+        return effect;
+      } else if (effect.type === EffectType.midi && effect.dataType === MidiDataType.notes) {
+        const midiEffect = effect.data.filter(d => d.effect.id === tab.id)[0];
+        if (midiEffect) {
+          return midiEffect.effect;
+        }
+      }
+    }
+    return;
   }
 
   closeTab(tab: any) {

@@ -1443,6 +1443,9 @@ function visualizaMotorData(data) {
 
 function visualizaPressureMotorData(data) {
   mainWindow.webContents.send('playDataPressure', data);
+  if (tensorflowWindow !== null) {
+    tensorflowWindow.webContents.send('pneumaticDataPressure', data);
+  }
 }
 
 

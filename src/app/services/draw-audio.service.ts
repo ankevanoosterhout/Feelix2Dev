@@ -5,6 +5,8 @@ import * as d3 from 'd3';
 import { DrawingService } from './drawing.service';
 import { NodeService } from './node.service';
 import { MidiDataService } from './midi-data.service';
+import { DataService } from './data.service';
+import { Range } from '../models/effect.model';
 
 
 @Injectable()
@@ -45,7 +47,7 @@ export class DrawAudioService {
 
   chordsGroup: any;
 
-  constructor(private nodeService: NodeService, private drawingService: DrawingService, private midiDataService: MidiDataService) {
+  constructor(private nodeService: NodeService, private drawingService: DrawingService, private midiDataService: MidiDataService, private dataService: DataService) {
     this.config = this.drawingService.config;
   }
 
@@ -171,22 +173,31 @@ export class DrawAudioService {
 
 
 
-  drawBlocks() {
+  drawBlocks(data: any, effectname: string) {
 
     this.config.svg.selectAll('#blocksSVG').remove();
 
-    if (this.midiDataService.data.length > 0) {
+    let moving = false;
+
+    if (data.length > 0) {
+
+      const clipPath = this.config.svg.append('clipPath')
+        .attr('id', 'clipPathAudioBlocks')
+        .append('svg:rect')
+        .attr('class', 'clipPath')
+        .attr('width', this.config.chartDx - this.keyWidth - 20)
+        .attr('height', this.config.svgDy - this.config.margin.bottom - this.config.margin.top);
+
 
       this.config.blocksSVG = this.config.svg.append('g')
         .attr('id', 'blocksSVG')
         .attr('class', 'blocksSVG')
-        .attr('clip-path', 'url(#clipPathAudio)')
+        .attr('clip-path', 'url(#clipPathAudioBlocks)')
         .attr('transform', 'translate(80, ' + this.config.margin.top + ')');
 
       const dragBlock = d3.drag()
-
         .on('start', (event: any, d: any) => {
-          // event.stopPropagation();
+          this.dataService.selectElement(d.id, d.vis.x, d.vis.y, d.vis.width, null);
         })
         .on('drag', (event: any, d: any) => {
           const coords = this.drawingService.calculateBlockSnapPoint(this.nodeService.scale.scaleX.invert(event.x + 80), this.nodeService.scale.scaleY.invert(event.y));
@@ -197,44 +208,63 @@ export class DrawAudioService {
             d3.select('#left_block_id_' + d.id).attr('y', (d: { vis: { y: number; }; }) => this.nodeService.scale.scaleY(d.vis.y + 1) + 1)
               .attr('x', (d: { vis: { x: number; width: number; }; }) => this.nodeService.scale.scaleX(d.vis.x) - ((this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - this.nodeService.scale.scaleX(d.vis.x)) / 8) - 80)
             d3.select('#right_block_id_' + d.id).attr('x', (d: { vis: { x: number; width: number; }; }) => this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - ((this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - this.nodeService.scale.scaleX(d.vis.x)) / 8) - 80)
-              .attr('y', (d: { vis: { y: number; }; }) => this.nodeService.scale.scaleY(d.vis.y + 1) + 1)
+              .attr('y', (d: { vis: { y: number; }; }) => this.nodeService.scale.scaleY(d.vis.y + 1) + 1);
+
+            this.dataService.selectElement(d.id, d.vis.x, d.vis.y, d.vis.width, null);
           }
-        })
-        .on('end', (d: any) => { });
+        });
 
       this.config.blocksSVG.selectAll('rect.blocks')
-        .data(this.midiDataService.data)
+        .data(data)
         .enter()
         .append('rect')
         .attr('id', (d: { id: string; path: string }) => 'block_id_' + d.id)
         .attr('class', 'blocks')
         .attr('width',  (d: { vis: { x: number; width: number; }; }) => this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - this.nodeService.scale.scaleX(d.vis.x) - 2)
         .attr('height', this.smallKeyHeight - 2)
-        .attr('x', (d: { vis: { x: number; };  }) => this.nodeService.scale.scaleX(d.vis.x) - 79)
+        .attr('x', (d: { vis: { x: number; }; }) => this.nodeService.scale.scaleX(d.vis.x) - 79)
         .attr('y', (d: { vis: { y: number; }; }) => this.nodeService.scale.scaleY(d.vis.y + 1) + 1)
-        .attr('pointer-events', (d: any) => !this.config.zoomable ? 'auto' : 'none')
-        .style('fill', '#5993bd')
-        .style('stroke', '#7fbdeb')
+        .style('fill', (d: { id: string }) => this.midiDataService.isSelected(d.id) ? '#0970ba' : '#5993bd')
+        .style('stroke', (d: { id: string }) => this.midiDataService.isSelected(d.id) ? '#87c2ed' : '#7fbdeb')
         .style('stroke-width', 1)
         .style('shape-rendering', 'crispEdges')
-        .on('mouseenter', (event: any, d: { id: string}) => {
+        .on('mouseenter', (event: any, d: { id: string; }) => {
           if (this.config.cursor.slug === 'dsel' || this.config.cursor.slug === 'sel') {
-            this.config.blocksSVG.selectAll('#block_id_' + d.id).style('fill', '#3a81b5').style('stroke', '#a7d2f2');
+            this.config.blocksSVG.select('#block_id_' + d.id).style('fill', '#0970ba').style('stroke', '#87c2ed');
           }
         })
-        .on('mouseleave', (event: any, d: { id: string; path: string; pos: { x: number; y: number; };  }) => {
+        .on('mouseleave', (event: any, d: { id: string; }) => {
+          if (this.config.cursor.slug === 'dsel' || this.config.cursor.slug === 'sel') {
+            if (!this.midiDataService.isSelected(d.id)) {
+              this.config.blocksSVG.selectAll('#block_id_' + d.id).style('fill', '#5993bd').style('stroke', '#7fbdeb');
+            }
+          }
+        })
+        .on('mousedown', (event: any, d: { id: string; vis: any; effect: any; }) => {
+          if (this.config.cursor.slug === 'dsel' || this.config.cursor.slug === 'sel') {
+            event.stopPropagation();
+            if (event.ctrlKey) {
+              //show drawing canvas
+              d.effect.name = effectname + '-CC-' + d.vis.y;
+              d.effect.range = new Range(0, d.vis.width);
 
-          if (this.config.cursor.slug === 'dsel' || this.config.cursor.slug === 'sel') {
-            this.config.blocksSVG.selectAll('#block_id_' + d.id).style('fill', '#5993bd').style('stroke', '#7fbdeb');
+              this.drawingService.openEffect(d.effect);
+            }
+            this.midiDataService.selectBlock(d.id, event.shiftKey);
+            if (!event.shiftKey) {
+              this.config.blocksSVG.selectAll('.blocks').style('fill', '#5993bd').style('stroke', '#7fbdeb');
+              this.config.blocksSVG.select('#block_id_' + d.id).style('fill', '#0970ba').style('stroke', '#87c2ed');
+            }
           }
         })
-        .call(dragBlock);
+        .call(dragBlock)
+        .append('svg:title')
+        .text(() => 'Ctrl + Click to edit');
 
 
       const resizeWidthBlockLeft = d3.drag()
 
         .on('start', (event: any, d: any) => {
-          //play sound effect
           // event.stopPropagation();
         })
         .on('drag', (event: any, d: any) => {
@@ -249,7 +279,6 @@ export class DrawAudioService {
             d3.select('#left_block_id_' + d.id).attr('x', (d: { vis: { x: number; width: number; }; }) => this.nodeService.scale.scaleX(d.vis.x) - 85);
           }
         });
-
 
       const resizeWidthBlockRight = d3.drag()
 
@@ -268,11 +297,11 @@ export class DrawAudioService {
         });
 
       this.config.blocksSVG.selectAll('rect.side-left')
-        .data(this.midiDataService.data)
+        .data(data)
         .enter()
         .append('rect')
         .attr('id', (d: { id: string; path: string }) => 'left_block_id_' + d.id)
-        .attr('class', 'blocks')
+        .attr('class', 'block_resize')
         .attr('width',  10)
         .attr('height', this.smallKeyHeight - 2)
         .attr('x', (d: { vis: { x: number; }; }) => this.nodeService.scale.scaleX(d.vis.x) - 85)
@@ -288,11 +317,11 @@ export class DrawAudioService {
         .call(resizeWidthBlockLeft);
 
       this.config.blocksSVG.selectAll('rect.side-right')
-        .data(this.midiDataService.data)
+        .data(data)
         .enter()
         .append('rect')
         .attr('id', (d: { id: string; path: string }) => 'right_block_id_' + d.id)
-        .attr('class', 'blocks')
+        .attr('class', 'block_resize')
         .attr('width', 10)
         .attr('height', this.smallKeyHeight - 2)
         .attr('x', (d: { vis: { x: number; width: number; }; }) => this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - 85)

@@ -4,8 +4,9 @@ import { ElectronService } from 'ngx-electron';
 import { FileService } from 'src/app/services/file.service';
 import { v4 as uuid } from 'uuid';
 import { Router } from '@angular/router';
-import { Effect, Midi, Unit } from 'src/app/models/effect.model';
-import { EffectType, EffectTypeColor, EffectTypeLabelMapping } from 'src/app/models/configuration.model';
+import { Effect, Unit } from 'src/app/models/effect.model';
+import { Midi } from 'src/app/models/audio.model';
+import { EffectType, EffectTypeLabelMapping } from 'src/app/models/configuration.model';
 
 
 @Component({

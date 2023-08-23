@@ -1,6 +1,6 @@
 import { Configuration } from './configuration.model';
 import { Collection } from './collection.model';
-import { Details, Effect, Midi } from './effect.model';
+import { Details } from './effect.model';
 import { Model, DataSet } from './tensorflow.model';
 
 export class Dates {

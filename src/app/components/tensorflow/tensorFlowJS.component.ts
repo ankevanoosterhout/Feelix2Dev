@@ -90,6 +90,10 @@ export class TensorFlowJSComponent implements OnInit {
         }
       });
 
+      this.electronService.ipcRenderer.on('pneumaticDataPressure', (event: Event, data: any) => {
+        console.log(data);
+      });
+
 
       this.electronService.ipcRenderer.on('export-dataset-model', (event: Event, data: any) => {
         this.tensorflowService.saveDataNN();
