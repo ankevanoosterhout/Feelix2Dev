@@ -250,8 +250,10 @@ export class FileService {
     if (file.activeEffect) {
       if (file.activeEffect.type === EffectType.midi && file.activeEffect.dataType === MidiDataType.notes) {
         let midiEffect = file.effects.filter(e => e.id === file.activeEffect.id)[0];
-        if (midiEffect) {
+        if (midiEffect && midiEffect.data) {
           midiEffect.data = JSON.parse(JSON.stringify(file.activeEffect.data));
+        } else if (midiEffect) {
+          midiEffect.data = [];
         }
       } else {
         file.activeEffect.paths = this.nodeService.getAll();
@@ -306,9 +308,11 @@ export class FileService {
       if (effect.id === id) {
         return effect;
       } else if (effect.type === EffectType.midi && effect.dataType === MidiDataType.notes) {
-        const midiEffect = effect.data.filter(d => d.effect.id === id)[0];
-        if (midiEffect) {
-          return midiEffect.effect;
+        if (effect.data && effect.data.length > 0) {
+          const midiEffect = effect.data.filter(d => d.effect.id === id)[0];
+          if (midiEffect) {
+            return midiEffect.effect;
+          }
         }
       }
     }
@@ -318,8 +322,10 @@ export class FileService {
   getParentEffect(child: string, file: File) {
     for (const effect of file.effects) {
       if (effect.type === EffectType.midi && effect.dataType === MidiDataType.notes) {
-        if (effect.data.filter(d => d.effect.id === child).length > 0) {
-          return effect;
+        if (effect.data && effect.data.length > 0) {
+          if (effect.data.filter(d => d.effect.id === child).length > 0) {
+            return effect;
+          }
         }
       }
     }

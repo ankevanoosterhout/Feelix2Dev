@@ -81,9 +81,11 @@ export class EffectListComponent implements OnInit {
       if (effect.id === tab.id) {
         return effect;
       } else if (effect.type === EffectType.midi && effect.dataType === MidiDataType.notes) {
-        const midiEffect = effect.data.filter(d => d.effect.id === tab.id)[0];
-        if (midiEffect) {
-          return midiEffect.effect;
+        if (effect.data && effect.data.length > 0) {
+          const midiEffect = effect.data.filter(d => d.effect.id === tab.id)[0];
+          if (midiEffect) {
+            return midiEffect.effect;
+          }
         }
       }
     }

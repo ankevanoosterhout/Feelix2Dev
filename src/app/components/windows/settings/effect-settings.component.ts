@@ -32,8 +32,8 @@ import { EffectType, EffectTypeLabelMapping } from 'src/app/models/configuration
                   </select>
                 </div>
 
-                <!-- unit options for velocity and pneumatic effects -->
-                <div class="form-row" *ngIf="!this.updateMode && (effect.type !== 2 || effect.type !== 3)">
+                <!-- unit options for rotation  effects -->
+                <div class="form-row" *ngIf="!this.updateMode && (effect.type !== 2 && effect.type !== 3)">
                     <label class="select units">Units</label>
                     <select class="form-control" id="select-units"
                         (change)="updateRotationRange()" [(ngModel)]="effect.grid.xUnit" name="xUnit" [compareWith]="compareUnits">

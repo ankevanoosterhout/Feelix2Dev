@@ -80,7 +80,7 @@
     </div>
 
 
-    <div class="form-row" *ngIf="this.drawingService.file.activeEffect.type === 4 && this.drawingService.file.activeEffect.dataType === 1" title="CC value 0 - 255">
+    <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type === 4 && this.drawingService.file.activeEffect.midi_config && this.drawingService.file.activeEffect.dataType === 1" title="CC value 0 - 255">
       <label class="axes">cc </label>
       <input type="number" class="small" id="cc-value" name="cc-value" [(ngModel)]="this.drawingService.file.activeEffect.midi_config.data1" (click)="updateCC()">
     </div>

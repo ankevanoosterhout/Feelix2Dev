@@ -237,13 +237,15 @@ class newSerialPort {
         } else if (d.charAt(0) === 'A') {
           const dataArray = d.substr(1).split(':');
           let incomingData;
-          const vel = parseFloat(dataArray[2]);
+          const vel = parseFloat(dataArray[2]); // store velocity
+          // add preset input data
           const dataList = [ { name: 'angle', val: parseFloat(dataArray[1]), slug: 'A' },
                              { name: 'velocity', val: vel, slug: 'V' },
                              { name: 'direction', val: vel === 0.0 ? 0 : vel > 0.0 ? 1 : -1, slug: 'D' },
                              { name: 'target', val: parseFloat(dataArray[4]), slug: 'G' },
                              { name: 'time', val: parseFloat(dataArray[3]), slug: 'T' } ];
 
+          // process custom input data
           if (dataArray.length > 5) {
             for (let i = 5; i < dataArray.length; i++) {
               dataList.push({ name: 'val-' + (i - 5), val: parseFloat(dataArray[i]), slug: 'V' + (i - 5) });
@@ -252,7 +254,7 @@ class newSerialPort {
           incomingData = { d: dataList, motorID: dataArray[0], serialPath: this.COM };
           main.visualizaMotorData(incomingData);
 
-        } else if (d.charAt(0) === 'J') {
+        } else if (d.charAt(0) === 'J') { //pneumatic data
           const dataArray = d.substr(1).split(':');
           let incomingData = {
             serialPath: this.COM,
@@ -260,9 +262,12 @@ class newSerialPort {
           };
           for (const el of dataArray) {
             const subArray = el.split('&');
-            incomingData.list.push({ motorID: subArray[0], pressure: parseFloat(subArray[1]), time: parseInt(subArray[2]) });
-          }
+            const dataList = [ { name: 'pressure', val: parseFloat(subArray[1]), slug: 'P' },
+                               { name: 'time', val: parseInt(subArray[2]), slug: 'T' } ];
 
+            incomingData.list.push({ motorID: subArray[0], d: dataList });
+            // incomingData.list.push({ motorID: subArray[0], pressure: parseFloat(subArray[1]), time: parseInt(subArray[2]) });
+          }
           main.visualizaPressureMotorData(incomingData);
 
         } else if (d.charAt(0) === 'Z') { // receive calibration values motor

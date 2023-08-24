@@ -71,6 +71,7 @@ export class DrawingPlaneConfig {
   planeSVG: any;
   cpSVG: any;
   blocksSVG: any;
+  midiSVG: any;
   bbox: any;
   gridSVG: any;
   svgDx = innerWidth;

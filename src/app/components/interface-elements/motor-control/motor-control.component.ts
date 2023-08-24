@@ -88,30 +88,30 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     });
 
     this.electronService.ipcRenderer.on('playDataPressure', (event: Event, data: any) => {
-      for (const el of data.list) {
-        const selectedCollection = this.motorControlService.file.collections.filter(c => c.microcontroller && c.microcontroller.serialPort.path === data.serialPath && c.motorID && c.motorID.name === el.motorID)[0];
+      for (const item of data.list) {
+        const selectedCollection = this.motorControlService.file.collections.filter(c => c.microcontroller && c.microcontroller.serialPort.path === data.serialPath && c.motorID && c.motorID.name === item.motorID)[0];
 
         if (selectedCollection) {
 
           const motor = selectedCollection.microcontroller.motors.filter(m => m.id === selectedCollection.motorID.name)[0];
-          if (motor) {
-            motor.state.pressure = el.pressure;
-          }
-          selectedCollection.time = el.time;
+          const pressure = item.d.filter((i: { name: string; }) => i.name === 'pressure')[0].val;
+          selectedCollection.time = item.d.filter((i: { name: string; }) => i.name === 'time')[0].val;
+
+          if (motor) { motor.state.pressure = pressure; }
 
           if (this.document.getElementById('pressure-' + selectedCollection.id) !== null) {
-            (this.document.getElementById('pressure-' + selectedCollection.id) as HTMLElement).innerHTML = (Math.round(el.pressure * 100) / 100) + ' ';
+            (this.document.getElementById('pressure-' + selectedCollection.id) as HTMLElement).innerHTML = (Math.round(pressure * 100) / 100) + ' ';
           }
           if (this.document.getElementById('time-' + selectedCollection.id) !== null) {
             (this.document.getElementById('time-' + selectedCollection.id) as HTMLElement).innerHTML = selectedCollection.time + ' ';
           }
           this.motorControlService.drawCursor(selectedCollection);
 
-          if (selectedCollection.rotation.loop && selectedCollection.feedbackData.length > 0 && selectedCollection.feedbackData[selectedCollection.feedbackData.length - 1].time > el.time) {
+          if (selectedCollection.rotation.loop && selectedCollection.feedbackData.length > 0 && selectedCollection.feedbackData[selectedCollection.feedbackData.length - 1].time > selectedCollection.time) {
             selectedCollection.feedbackData = [];
           }
 
-          selectedCollection.feedbackData.push({ value: (el.pressure / motor.config.pressureLimit) * 100, time: el.time });
+          selectedCollection.feedbackData.push({ value: pressure * 100, time: selectedCollection.time });
 
           this.motorControlService.drawCollectionFeedbackData(selectedCollection);
         }
@@ -120,8 +120,8 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
 
     this.electronService.ipcRenderer.on('playData', (event: Event, data: any) => {
-      const d_angle = data.d.filter(d => d.name === 'angle')[0];
-      const d_velocity = data.d.filter(d => d.name === 'velocity')[0];
+      const d_angle = data.d.filter((d: { name: string; }) => d.name === 'angle')[0];
+      const d_velocity = data.d.filter((d: { name: string; }) => d.name === 'velocity')[0];
       const selectedCollection = this.motorControlService.file.collections.filter(c => c.microcontroller && c.microcontroller.serialPort.path === data.serialPath && c.playing && c.motorID && c.motorID.name === data.motorID)[0];
 
       if (selectedCollection && d_angle && d_velocity) {
@@ -147,7 +147,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
         const velocity = selectedCollection.rotation.units.name === 'deg' ? d_velocity.val * (180/Math.PI) : d_velocity.val;
         selectedCollection.microcontroller.motors.filter(m => m.id === selectedCollection.motorID.name)[0].state.speed = velocity;
 
-        selectedCollection.time = data.d.filter(d => d.name === 'time')[0].val;
+        selectedCollection.time = data.d.filter((d: { name: string; }) => d.name === 'time')[0].val;
 
         if (this.document.getElementById('position-' + selectedCollection.id) !== null && selectedCollection.rotation.units.name !== 'ms' && selectedCollection.rotation.units.name !== 'sec') {
           (this.document.getElementById('position-' + selectedCollection.id) as HTMLElement).innerHTML = (Math.round(angle * 100) / 100) + ' ';

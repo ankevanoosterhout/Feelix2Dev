@@ -37,61 +37,16 @@ export class TensorFlowJSComponent implements OnInit {
 
       this.electronService.ipcRenderer.on('motorData', (event: Event, data: any) => {
 
-        if (this.d.recording.active && this.d.recording.starttime === null && (data.velocity > 0.03 || data.velocity < -0.03)) {
-          this.d.recording.starttime = new Date().getTime();
-        }
-
-        if (this.d.recording.starttime !== null) {
-
-          if (data.velocity === 0.0) { this.stopRecordingCounter++; } else if (data.velocity > 0.03 || data.velocity < -0.03) { this.stopRecordingCounter = 0; }
-
-          if (this.stopRecordingCounter < 10) {
-
-            const dataSetEl = !this.d.classify ? this.d.selectedDataset : this.d.predictionDataset;
-
-            if (dataSetEl.m && dataSetEl.m.length > 0) {
-              const motorEl = dataSetEl.m.filter(m => m.mcu.serialPath === data.serialPath && m.id === data.motorID)[0];
-
-              if (motorEl) {
-                const dataObject = new Data();
-
-                for (const input of this.d.selectedModel.inputs) {
-                  const dataItem = data.d.filter(d => d.input.slug === input.slug)[0];
-
-                  if (dataItem) {
-                    const inputItem = new InputItem(input.name);
-                    inputItem.value = dataItem.val;
-                    dataObject.inputs.push(inputItem);
-
-                    this.checkBounds(inputItem.value);
-                  }
-                }
-
-                const time = new Date().getTime() - this.d.recording.starttime;
-                dataObject.time = time;
-
-                motorEl.d.push(dataObject);
-
-                if (this.d.classify) {
-                  this.tensorflowTrainService.predictOutput();
-                }
-
-                if (!this.d.classify && time > dataSetEl.bounds.xMax - 500) {
-                  dataSetEl.bounds.xMax = dataSetEl.bounds.xMax < 3000 ?
-                    Math.ceil(dataSetEl.bounds.xMax * 0.006) * 200 : Math.ceil(dataSetEl.bounds.xMax * 0.0024) * 500;
-
-                  this.tensorflowDrawService.updateBounds(dataSetEl.bounds);
-                }
-                this.tensorflowDrawService.drawGraph();
-                this.tensorflowDrawService.drawTensorFlowGraphData(dataSetEl, this.d.selectedModel, this.d.trimLinesVisible ? this.d.trimLines : null);
-              }
-            }
-          }
-        }
+        this.handleIncomingData(data.velocity, data.serialPath, data.motorID, data.d);
       });
 
       this.electronService.ipcRenderer.on('pneumaticDataPressure', (event: Event, data: any) => {
-        console.log(data);
+
+        for (const item of data.list) {
+          console.log(item);
+          const pressure = item.d.filter(i => i.name === 'pressure')[0].val;
+          this.handleIncomingData(pressure, data.serialPath, item.motorID, item.d);
+        }
       });
 
 
@@ -211,6 +166,76 @@ export class TensorFlowJSComponent implements OnInit {
     this.d.selectedModel.outputs.push(new Classifier(uuid(), 'Classifier-' + (this.d.selectedModel.outputs.length + 1)));
     this.d.selectedModel.outputs[0].active = true;
     this.tensorflowService.addLabelToClassifier(0);
+  }
+
+
+  startRecording(data: number) {
+    if (this.d.recording.active && this.d.recording.starttime === null && (data > 0.03 || data < -0.03)) {
+      this.d.recording.starttime = new Date().getTime();
+    }
+  }
+
+  processRecordedData(dataSetEl: any, time: number) {
+    if (this.d.classify) {
+      this.tensorflowTrainService.predictOutput();
+    }
+
+    if (!this.d.classify && time > dataSetEl.bounds.xMax - 500) {
+      dataSetEl.bounds.xMax = dataSetEl.bounds.xMax < 3000 ?
+        Math.ceil(dataSetEl.bounds.xMax * 0.006) * 200 : Math.ceil(dataSetEl.bounds.xMax * 0.0024) * 500;
+
+      this.tensorflowDrawService.updateBounds(dataSetEl.bounds);
+    }
+    this.tensorflowDrawService.drawGraph();
+    this.tensorflowDrawService.drawTensorFlowGraphData(dataSetEl, this.d.selectedModel, this.d.trimLinesVisible ? this.d.trimLines : null);
+  }
+
+
+  handleIncomingData(referenceData: number, serialPath: string, motorID: string, receivedData: any) {
+
+    this.startRecording(referenceData); //data.velocity
+
+    if (this.d.recording.starttime !== null) {
+
+      this.updateRecording(referenceData); //data.velocity
+
+      if (this.stopRecordingCounter < 10) {
+
+        const dataSetEl = !this.d.classify ? this.d.selectedDataset : this.d.predictionDataset;
+
+        if (dataSetEl.m && dataSetEl.m.length > 0) {
+          const motorEl = dataSetEl.m.filter(m => m.mcu.serialPath === serialPath && m.id === motorID)[0]; //data.serialPath, data.motorID
+
+          if (motorEl) {
+            const dataObject = new Data();
+
+            for (const input of this.d.selectedModel.inputs) {
+              const dataItem = receivedData.filter(d => d.input.slug === input.slug)[0]; //data.d
+
+              if (dataItem) {
+                const inputItem = new InputItem(input.name);
+                inputItem.value = dataItem.val;
+                dataObject.inputs.push(inputItem);
+
+                this.checkBounds(inputItem.value);
+              }
+            }
+
+            const time = new Date().getTime() - this.d.recording.starttime;
+            dataObject.time = time;
+
+            motorEl.d.push(dataObject);
+
+            this.processRecordedData(dataSetEl, time);
+          }
+        }
+      }
+    }
+  }
+
+
+  updateRecording(data: number) {
+    if (data === 0.0) { this.stopRecordingCounter++; } else if (data > 0.03 || data < -0.03) { this.stopRecordingCounter = 0; }
   }
 
   checkIfHasLabel(classifier: Classifier, label: Label) {

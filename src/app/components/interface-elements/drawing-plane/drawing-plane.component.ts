@@ -793,11 +793,9 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
 
     if (this.file.configuration.horizontalScreenDivision < (100 / window.innerHeight) * (window.innerHeight - 50)) {
-      this.config.svg.selectAll('.planeSVG, .cpSVG, .pathSVG, .nodesSVG, .blocksSVG, .bbox, .gridSVG, .forceNodeSVG').remove();
+      this.config.svg.selectAll('.planeSVG, .cpSVG, .pathSVG, .nodesSVG, .blocksSVG, .midiSVG, .bbox, .gridSVG, .forceNodeSVG').remove();
 
       if (this.file.activeEffect) {
-
-
 
         if (this.file.activeEffect.grid.visible || (this.file.activeEffect.type === EffectType.midi && this.file.activeEffect.dataType === MidiDataType.notes)) {
           // this.file.activeEffect.grid.settings.spacingX = 20;

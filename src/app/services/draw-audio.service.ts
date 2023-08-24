@@ -45,8 +45,6 @@ export class DrawAudioService {
   keyWidth = 80;
   smallKeyWidth = 50;
 
-  chordsGroup: any;
-
   constructor(private nodeService: NodeService, private drawingService: DrawingService, private midiDataService: MidiDataService, private dataService: DataService) {
     this.config = this.drawingService.config;
   }
@@ -55,7 +53,7 @@ export class DrawAudioService {
 
   drawKeys() {
 
-    this.config.svg.selectAll('#clipPathAudio, #chords, #gridChords').remove();
+    this.config.svg.selectAll('#clipPathAudio, #midiSVG').remove();
 
     let i = 0;
     this.keyHeight = Math.abs(this.nodeService.scale.scaleY(0) - this.nodeService.scale.scaleY(2));
@@ -69,9 +67,9 @@ export class DrawAudioService {
       .attr('width', this.config.chartDx)
       .attr('height', this.config.svgDy - this.config.margin.bottom - this.config.margin.top);
 
-    this.chordsGroup = this.config.svg.append('g')
-      .attr('id', 'chords')
-      .attr('class', 'chord')
+    this.config.midiSVG = this.config.svg.append('g')
+      .attr('id', 'midiSVG')
+      .attr('class', 'midiSVG')
       .attr('clip-path', 'url(#clipPathAudio)')
       .attr('transform', 'translate(0, ' + (this.config.margin.top) + ')');
 
@@ -99,7 +97,7 @@ export class DrawAudioService {
 
     const height = (this.keyHeightEdge * 4) + (this.keyHeight * ((data.length / 2) - 3));
 
-    const chords = this.chordsGroup.append('g')
+    const chords = this.config.midiSVG.append('g')
       .attr('id', 'chord-' + name)
       .attr('class', 'chordSection')
       .attr('transform', 'translate(0, ' + (index === 0 ? this.nodeService.scale.scaleY(this.config.editBounds.yMax) : this.nodeService.scale.scaleY(this.config.editBounds.yMax) + (height * index) - (this.keyHeight * 2)) + ')');
@@ -175,11 +173,9 @@ export class DrawAudioService {
 
   drawBlocks(data: any, effectname: string) {
 
-    this.config.svg.selectAll('#blocksSVG').remove();
+    this.config.svg.selectAll('#blocksSVG, #clipPathAudioBlocks').remove();
 
-    let moving = false;
-
-    if (data.length > 0) {
+    if (data && data.length > 0) {
 
       const clipPath = this.config.svg.append('clipPath')
         .attr('id', 'clipPathAudioBlocks')
@@ -206,8 +202,8 @@ export class DrawAudioService {
             d.vis.y = coords.y;
             d3.select('#block_id_' + d.id).attr('x', this.nodeService.scale.scaleX(d.vis.x) - 79).attr('y', this.nodeService.scale.scaleY(d.vis.y + 1) + 1);
             d3.select('#left_block_id_' + d.id).attr('y', (d: { vis: { y: number; }; }) => this.nodeService.scale.scaleY(d.vis.y + 1) + 1)
-              .attr('x', (d: { vis: { x: number; width: number; }; }) => this.nodeService.scale.scaleX(d.vis.x) - ((this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - this.nodeService.scale.scaleX(d.vis.x)) / 8) - 80)
-            d3.select('#right_block_id_' + d.id).attr('x', (d: { vis: { x: number; width: number; }; }) => this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - ((this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - this.nodeService.scale.scaleX(d.vis.x)) / 8) - 80)
+              .attr('x', (d: { vis: { x: number; width: number; }; }) => this.nodeService.scale.scaleX(d.vis.x) - 85)
+            d3.select('#right_block_id_' + d.id).attr('x', (d: { vis: { x: number; width: number; }; }) => this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - 85)
               .attr('y', (d: { vis: { y: number; }; }) => this.nodeService.scale.scaleY(d.vis.y + 1) + 1);
 
             this.dataService.selectElement(d.id, d.vis.x, d.vis.y, d.vis.width, null);
@@ -266,10 +262,13 @@ export class DrawAudioService {
 
         .on('start', (event: any, d: any) => {
           // event.stopPropagation();
+          this.midiDataService.selectBlock(d.id);
+          this.dataService.selectElement(d.id, d.vis.x, d.vis.y, d.vis.width, null);
         })
         .on('drag', (event: any, d: any) => {
           const coords = this.drawingService.calculateBlockSnapPoint(this.nodeService.scale.scaleX.invert(event.x + 80), this.nodeService.scale.scaleY.invert(event.y));
           const difference = d.vis.x - coords.x;
+
           if (coords.x !== d.vis.x && d.vis.width + difference > 0) {
             d.vis.x -= difference;
             d.vis.width += difference;
@@ -277,14 +276,16 @@ export class DrawAudioService {
               .attr('x', this.nodeService.scale.scaleX(d.vis.x) - 79)
               .attr('width', (this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - this.nodeService.scale.scaleX(d.vis.x)));
             d3.select('#left_block_id_' + d.id).attr('x', (d: { vis: { x: number; width: number; }; }) => this.nodeService.scale.scaleX(d.vis.x) - 85);
+
+            this.dataService.selectElement(d.id, d.vis.x, d.vis.y, d.vis.width, null);
           }
         });
 
       const resizeWidthBlockRight = d3.drag()
 
         .on('start', (event: any, d: any) => {
-          //play sound effect
-          // event.stopPropagation();
+          this.midiDataService.selectBlock(d.id);
+          this.dataService.selectElement(d.id, d.vis.x, d.vis.y, d.vis.width, null);
         })
         .on('drag', (event: any, d: any) => {
           const coords = this.drawingService.calculateBlockSnapPoint(this.nodeService.scale.scaleX.invert(event.x + 80), this.nodeService.scale.scaleY.invert(event.y));
@@ -294,6 +295,7 @@ export class DrawAudioService {
             d3.select('#block_id_' + d.id).attr('width', (this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - this.nodeService.scale.scaleX(d.vis.x)));
             d3.select('#right_block_id_' + d.id).attr('x', (d: { vis: { x: number; width: number; }; }) => this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - 85);
           }
+          this.dataService.selectElement(d.id, d.vis.x, d.vis.y, d.vis.width, null);
         });
 
       this.config.blocksSVG.selectAll('rect.side-left')
