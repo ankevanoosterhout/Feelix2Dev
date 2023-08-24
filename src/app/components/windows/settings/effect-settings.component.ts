@@ -5,7 +5,7 @@ import { FileService } from 'src/app/services/file.service';
 import { v4 as uuid } from 'uuid';
 import { Router } from '@angular/router';
 import { Effect, Unit } from 'src/app/models/effect.model';
-import { Midi } from 'src/app/models/audio.model';
+import { Midi, MidiNote } from 'src/app/models/audio.model';
 import { EffectType, EffectTypeLabelMapping } from 'src/app/models/configuration.model';
 
 
@@ -134,8 +134,8 @@ export class EffectSettingsComponent implements OnInit {
       // this.prevUnits = { name: 'ms', PR: 1000 };
       this.effect.grid.xUnit = { name: 'deg', PR: 360 };
       this.updateRotationRange();
-    } else if (this.effect.type === EffectType.midi) {
-      this.effect = new Midi(this.effect.id, EffectType.midi);
+    } else if (this.effect.type === EffectType.midi || this.effect.type === EffectType.midiNote) {
+      this.effect = this.effect.type === EffectType.midi ? new Midi(this.effect.id, EffectType.midi) : new MidiNote(this.effect.id, EffectType.midiNote);
       this.effect.grid.yUnit = { name: 'v', PR: 128 };
       this.effect.range_y.start = 0;
       this.effect.range_y.end = 128;
@@ -149,9 +149,9 @@ export class EffectSettingsComponent implements OnInit {
         this.effect.grid.yUnit = new Unit('%', 100);
         this.effect.range_y.start = -100;
         this.effect.range_y.end = 100;
-      } else if (this.effect.type === EffectType.position || this.effect.type === EffectType.pneumatic || this.effect.type === EffectType.midi) {
+      } else if (this.effect.type === EffectType.position || this.effect.type === EffectType.pneumatic || this.effect.type === EffectType.midi || this.effect.type === EffectType.midiNote) {
         this.effect.range_y.start = 0;
-        if (this.effect.type === EffectType.midi) {
+        if (this.effect.type === EffectType.midi || this.effect.type === EffectType.midiNote) {
           this.effect.range_y.end = 128;
         }
       }

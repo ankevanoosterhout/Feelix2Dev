@@ -26,7 +26,7 @@
 
 
 
-    <div class="form-row" *ngIf="this.drawingService.file.activeEffect && (this.drawingService.file.activeEffect.type < 2 || this.drawingService.file.activeEffect.type === 4)" title="select units x-axis">
+    <div class="form-row" *ngIf="this.drawingService.file.activeEffect && (this.drawingService.file.activeEffect.type < 2 || this.drawingService.file.activeEffect.type >= 4)" title="select units x-axis">
       <label class="select axes">x </label>
       <select class="form-control small" id="select" value="{{ this.drawingService.file.activeEffect.grid.xUnit.name }}"
         (change)="this.drawingService.updateUnitsActiveEffect($event.target.value)" name="x-axis">
@@ -80,18 +80,18 @@
     </div>
 
 
-    <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type === 4 && this.drawingService.file.activeEffect.midi_config && this.drawingService.file.activeEffect.dataType === 1" title="CC value 0 - 255">
+    <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type === 5 && this.drawingService.file.activeEffect.midi_config" title="CC value 0 - 255">
       <label class="axes">cc </label>
       <input type="number" class="small" id="cc-value" name="cc-value" [(ngModel)]="this.drawingService.file.activeEffect.midi_config.data1" (click)="updateCC()">
     </div>
 
 
-    <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type === 4" title="select midi channel">
+    <!-- <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type === 4" title="select midi channel">
       <label class="select"></label>
       <select class="form-control" id="select" [(ngModel)]="this.drawingService.file.activeEffect.dataType" (change)="this.drawingService.saveEffect(this.drawingService.file.activeEffect)" name="midiDataTypeOptions">
           <option *ngFor="let type of midiDataTypeOptions" [ngValue]="type">{{ MidiDataTypeLabelMapping[type] }}</option>
       </select>
-    </div>
+    </div> -->
 
 
 
@@ -127,6 +127,10 @@
                 (click)="selectReferencePoint(point);"></div>
           </div>
       </li>
+
+      <!-- <li id="current-cc" class="scaling-options" *ngIf="this.innerWidth > 1070">
+
+      </li> -->
 
       <li id="current-x" class="scaling-options" *ngIf="this.innerWidth > 1070">
         <label class="coordinates-label">x</label>

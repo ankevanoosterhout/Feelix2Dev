@@ -33,8 +33,11 @@
               <li id="render-{{ collection.id }}" [ngClass]="{ active: collection.effectDataList.length > 0 }" (click)="render(collection)" title="render collection">
                 <img class="no-pointer-events" src="./assets/icons/buttons/render.svg"></li>
               <li id="upload" (click)="upload(collection)" title="upload collection"><img class="no-pointer-events" src="./assets/icons/buttons/upload.svg"></li>
+
+              <li id="collection_send" *ngIf="collection.microcontroller && collection.microcontroller.motors[0].type === 3" (click)="send_collection(collection)" title="Send Collection"><img class="no-pointer-events" src="./assets/icons/buttons/upload.svg"></li>
+
               <li id="play"  [ngClass]="{ active: collection.renderedData && collection.renderedData.length > 0 }" (click)="play(!collection.playing, collection)"
-                  *ngIf="collection.visualizationType >= 2 || collection.playing" title="play or stop collection">
+                  *ngIf="collection.visualizationType === 2 || collection.visualizationType === 3 || collection.playing" title="play or stop collection">
                 <span class="no-pointer-events" *ngIf="!collection.playing"><div class="play-arrow no-pointer-events"></div></span>
                 <span class="no-pointer-events" *ngIf="collection.playing"><div class="stop-square no-pointer-events"></div></span>
               </li>
@@ -47,11 +50,11 @@
               name="rotation-start-{{ collection.id }}" [(ngModel)]="collection.rotation.start" (change)="this.motorControlService.updateCollection(collection)">
             <input type="number" (focus)="this.motorControlService.deselectElements()" id="range-end" name="rotation-end" [(ngModel)]="collection.rotation.end" (change)="this.motorControlService.updateCollection(collection)">
 
-            <select class="form-control" *ngIf="collection.visualizationType < 2" id="unitsDropdown" (focus)="this.oldUnits = collection.rotation.units" [(ngModel)]="collection.rotation.units" (change)="changeUnits(collection)" name="units-r-{{ collection.id }}" [compareWith]="compareName">
+            <select class="form-control" *ngIf="collection.visualizationType < 2 || collection.visualizationType > 3" id="unitsDropdown" (focus)="this.oldUnits = collection.rotation.units" [(ngModel)]="collection.rotation.units" (change)="changeUnits(collection)" name="units-r-{{ collection.id }}" [compareWith]="compareName">
               <option *ngFor="let unit of unitOptions" [ngValue]="unit">{{ unit.name }}</option>
             </select>
 
-            <select class="form-control" *ngIf="collection.visualizationType >= 2" id="unitsDropdown" (focus)="this.oldUnits = collection.rotation.units" [(ngModel)]="collection.rotation.units" (change)="changeUnits(collection)" name="units-r-vel-{{ collection.id }}" [compareWith]="compareName">
+            <select class="form-control" *ngIf="collection.visualizationType === 2 || collection.visualizationType === 3" id="unitsDropdown" (focus)="this.oldUnits = collection.rotation.units" [(ngModel)]="collection.rotation.units" (change)="changeUnits(collection)" name="units-r-vel-{{ collection.id }}" [compareWith]="compareName">
               <option *ngFor="let unit of unitOptionsVelocity" [ngValue]="unit">{{ unit.name }}</option>
             </select>
 
@@ -68,12 +71,12 @@
 
           <div id="buttonsMotorControl" *ngIf="this.motorControlService.width > 350 && collection.microcontroller">
             <ul class="dropdown-buttons">
-              <li *ngIf="collection.visualizationType <= 2" id="return" (click)="returnToStart(collection)" title="move to start position"><img class="no-pointer-events" src="./assets/icons/buttons/return.svg"></li>
-              <li *ngIf="!collection.rotation.loop && !(collection.visualizationType >= 2 && collection.rotation.units_y.name === '%')" id="constrain_range"
+              <li *ngIf="collection.visualizationType !== 3" id="return" (click)="returnToStart(collection)" title="move to start position"><img class="no-pointer-events" src="./assets/icons/buttons/return.svg"></li>
+              <li *ngIf="!collection.rotation.loop && !collection.visualizationType >= 4 && !(collection.visualizationType >= 2 && collection.rotation.units_y.name === '%')" id="constrain_range"
                   [ngClass]="{ active: collection.rotation.constrain }" (click)="constrain(collection.id)" title="constrain range within which the motor can move">
                 <img class="no-pointer-events" src="./assets/icons/buttons/constrain.svg">
               </li>
-              <li *ngIf="!collection.rotation.constrain || (collection.visualizationType >= 2 && collection.rotation.units_y.name === '%')" id="loop" (click)="loop(collection.id)"
+              <li *ngIf="!collection.rotation.constrain || collection.visualizationType < 4 || (collection.visualizationType >= 2 && collection.rotation.units_y.name === '%')" id="loop" (click)="loop(collection.id)"
                   [ngClass]="{ active: collection.rotation.loop }" title="infinite rotation / loop (motor cursor)">
                   <img class="no-pointer-events" src="./assets/icons/buttons/infinite.svg">
               </li>
@@ -187,7 +190,7 @@
             </select>
           </div>
 
-          <div class="form-row left" *ngIf="this.motorControlService.width > 800 && collection.visualizationType < 2">
+          <div class="form-row left" *ngIf="this.motorControlService.width > 800 && (collection.visualizationType < 2 || collection.visualizationType > 3)">
             <div id="coll-layers-row" *ngFor="let layer of collection.layers">
               <ul id="coll-layers">
                 <li id="visible" [ngClass]="{ active: layer.visible }" (click)="toggleVisibility(collection, layer)" title="toggle visibility {{ layer.name }} layer">
@@ -206,7 +209,7 @@
             </select>
           </div>
 
-          <div class="form-row" *ngIf="collection.playing && collection.visualizationType < 3">
+          <div class="form-row" *ngIf="collection.playing && collection.visualizationType !== 3">
 
             <div class="motor-info posUnits" id="speedUnits-{{ collection.id }}" *ngIf="collection.rotation.units.name === 'deg'">&deg;/s</div>
             <div class="motor-info posUnits" id="speedUnits-{{ collection.id }}" *ngIf="collection.rotation.units.name === 'ms' || collection.rotation.units.name === 'rad'">rad/s</div>

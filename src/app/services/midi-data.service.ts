@@ -1,7 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { Injectable, Inject } from '@angular/core';
 import * as d3 from 'd3';
-import { MidiDataBlock, MidiBlockVisualization, MidiChannel } from '../models/audio.model';
+import { MidiDataBlock, MidiBlockVisualization, MidiNote } from '../models/audio.model';
 import { v4 as uuid } from 'uuid';
 import { Range } from '../models/effect.model';
 import { EffectType } from '../models/configuration.model';
@@ -15,7 +15,7 @@ export class MidiDataService {
 
   createNewDataBlock(x: number, y: number, width: number) {
       // create a new default effect for each block that is created
-      const newMidiEffect = new MidiChannel(uuid(), EffectType.midi);
+      const newMidiEffect = new MidiNote(uuid(), EffectType.midiNote);
       newMidiEffect.range = new Range(0,  width);
       //attach effect to block
       const newBlock = new MidiDataBlock(newMidiEffect.id + '-db', newMidiEffect);

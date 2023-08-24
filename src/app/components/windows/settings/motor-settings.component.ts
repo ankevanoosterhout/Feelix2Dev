@@ -5,7 +5,7 @@ import { FileService } from 'src/app/services/file.service';
 import { UploadService } from 'src/app/services/upload.service';
 import { Router } from '@angular/router';
 import { DOCUMENT } from '@angular/common';
-import { ActuatorLabelMapping, ActuatorType, BLDCConfig, MicroController, Motor, PneuConfig, SensorCommunication, SensorCommunicationMapping, StepperConfig, Unit } from 'src/app/models/hardware.model';
+import { ActuatorLabelMapping, ActuatorType, BLDCConfig, MicroController, Motor, PneuConfig, SensorCommunication, SensorCommunicationMapping, StepperConfig, TorqueTunerConfig, Unit } from 'src/app/models/hardware.model';
 import { MagneticSensor, Encoder } from 'src/app/models/position-sensors.model';
 
 
@@ -30,11 +30,6 @@ export class MotorSettingsComponent implements OnInit {
   selectedController = 'Teensy';
   showSelectMicrocontroller = false;
   searchRange = 0;
-
-  // public directionOptions = [
-  //   { name: 'clockwise', val: 'cw' },
-  //   { name: 'counterclockwise',  val: 'ccw' }
-  // ];
 
   public unitOptions = [
     { name: '4096PPR', PR: 4096 },
@@ -241,6 +236,8 @@ export class MotorSettingsComponent implements OnInit {
         motor.config = new PneuConfig();
       } else if (motor.type === ActuatorType.stepper) {
         motor.config = new StepperConfig();
+      } else if (motor.type === ActuatorType.torquetuner) {
+        motor.config = new TorqueTunerConfig();
       }
     }
     this.hardwareService.updateMicroController(microcontroller);

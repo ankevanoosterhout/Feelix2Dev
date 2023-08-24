@@ -6,7 +6,6 @@ import { DOCUMENT } from '@angular/common';
 import { ElectronService } from 'ngx-electron';
 import { DataService } from 'src/app/services/data.service';
 import { EffectType } from 'src/app/models/configuration.model';
-import { MidiDataType } from 'src/app/models/audio.model';
 
 
 @Component({
@@ -80,7 +79,7 @@ export class EffectListComponent implements OnInit {
     for (const effect of this.file.effects) {
       if (effect.id === tab.id) {
         return effect;
-      } else if (effect.type === EffectType.midi && effect.dataType === MidiDataType.notes) {
+      } else if (effect.type === EffectType.midi) { // && effect.dataType === MidiDataType.notes
         if (effect.data && effect.data.length > 0) {
           const midiEffect = effect.data.filter(d => d.effect.id === tab.id)[0];
           if (midiEffect) {

@@ -1,4 +1,4 @@
-import { Encoder, MagneticSensor } from './position-sensors.model';
+import { MagneticSensor } from './position-sensors.model';
 
 export enum SensorCommunication {
   SPI = 0,
@@ -13,17 +13,28 @@ export const SensorCommunicationMapping: Record<SensorCommunication, string> = {
 export enum ActuatorType {
   bldc = 0,
   stepper = 1,
-  pneumatic = 2
+  pneumatic = 2,
+  torquetuner = 3
 };
 
 export const ActuatorLabelMapping: Record<ActuatorType, string> = {
   [ActuatorType.bldc]: 'BLDC Motor',
   [ActuatorType.stepper]: 'Stepper Motor',
-  [ActuatorType.pneumatic]: 'Pneumatic Actuator'
+  [ActuatorType.pneumatic]: 'Pneumatic Actuator',
+  [ActuatorType.torquetuner]: 'TorqueTuner'
 };
 
+export class TorqueTunerConfig {
+  min_angle: number = 0;
+  max_angle: number = 3600;
+  scale: number = 90;
+  stretch: number = 1;
+  damping: number = 0.17;
+  default_velocity: number = 0;
+}
+
 export class Unit {
-  name = '4096PPR';
+  name = '4096PPR'; //Pulses per revolution
   PR = 4096;
 
   constructor(name = '4096PPR', PR = 4096) {
@@ -100,7 +111,7 @@ export class BLDCConfig extends Config {
   polepairs: number = 7;
   phaseResistance: number = 15.2;
   voltageLimit: number = 12;
-  velocityLimit: number = 20;
+  velocityLimit: number = 21;
   inlineCurrentSensing = false;
   encoderType: string = 'Magnetic sensor';
   encoder: any = new MagneticSensor();
@@ -140,7 +151,7 @@ export class PneuConfig extends Config {
 
 export class StepperConfig extends Config { //update config details for stepper motors
   voltageLimit: number = 12;
-  velocityLimit: number = 20;
+  velocityLimit: number = 21;
   encoderType: string = 'Magnetic sensor';
   encoder: any = new MagneticSensor();
   sensorOffset = 0.0;
@@ -185,6 +196,8 @@ export class Motor {
     } else if (this.type === ActuatorType.pneumatic) {
       this.config = new PneuConfig();
       this.config.pin = id + 2;
+    } else if (this.type === ActuatorType.torquetuner){
+      this.config = new TorqueTunerConfig();
     }
   }
 }

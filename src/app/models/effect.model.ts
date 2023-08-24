@@ -152,7 +152,7 @@ export class Effect {
     this.id = id;
     if (type !== null) {
       this.type = type;
-      if (type === EffectType.midi) {
+      if (type === EffectType.midi || type === EffectType.midiNote) {
         this.range_y = new Range(0, 128);
       }
     }

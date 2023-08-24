@@ -1,14 +1,16 @@
 import { Injectable } from '@angular/core';
-import { MicroController, Motor } from '../models/hardware.model';
+import { MicroController } from '../models/hardware.model';
 import { Path } from '../models/node.model';
 import { BezierService } from './bezier.service';
 import { NodeService } from './node.service';
-import { Linear, UploadModel } from '../models/effect-upload.model';
+import { UploadModel, UploadModel_TT } from '../models/effect-upload.model';
 import { Collection } from '../models/collection.model';
 import { Details, Effect } from '../models/effect.model';
+// import { Midi_config } from '../models/audio.model';
 import { CloneService } from './clone.service';
 import { v4 as uuid } from 'uuid';
 import { EffectType } from '../models/configuration.model';
+// import { mul } from '@tensorflow/tfjs';
 
 @Injectable()
 export class UploadService {
@@ -233,7 +235,7 @@ export class UploadService {
     return newEffectList;
   }
 
-  translateEffectData(collEffect: Details, effectData: Effect) {
+  translateEffectData(collEffect: Details, effectData: any) {
     // console.log(collEffect, effectData);
     let copyEffectList = this.cloneService.deepClone(effectData);
     let multiply = 1;
@@ -251,17 +253,22 @@ export class UploadService {
         start_pos = Math.ceil(nodes[0].pos.y * (Math.PI / 180));
       }
       if (path && path.nodes) {
-
-
-        data_complete = effectData.type === EffectType.position ?
-          data_complete.concat(this.translatePositionEffectData(path, multiply, 1)) :
-          data_complete.concat(this.translateTorqueEffectData(path, multiply, effectData.range_y, 1, start_pos));
+        if (effectData.type === EffectType.midiNote || effectData.type === EffectType.midi){
+          data_complete = data_complete.concat(this.translateTorqueEffectData(path, multiply, effectData.range_y, 1, start_pos, true));
+        }
+        else if (effectData.type === EffectType.position) {
+          data_complete = data_complete.concat(this.translatePositionEffectData(path, multiply, 1))
+        }
+        else {
+          data_complete = data_complete.concat(this.translateTorqueEffectData(path, multiply, effectData.range_y, 1, start_pos, false));
+        }
       }
     }
     data = this.reduceDataPoints(data_complete, collEffect.quality, multiply);
     // console.log(data);
 
-    return { id: collEffect.effectID, type: effectData.type, size: effectData.size, rotation: effectData.rotation, infinite: collEffect.infinite, yUnit: effectData.grid.yUnit.name, data: data, data_complete: data_complete };
+    return { id: collEffect.effectID, type: effectData.type, size: effectData.size, rotation: effectData.rotation, infinite: collEffect.infinite, yUnit: effectData.grid.yUnit.name,
+      data: data, data_complete: data_complete, midi_config: effectData.midi_config};
   }
 
 
@@ -278,7 +285,7 @@ export class UploadService {
   }
 
 
-  translateTorqueEffectData(path: Path, multiply: number, effect_range: any, quality = 1, start_from = 0) {
+  translateTorqueEffectData(path: Path, multiply: number, effect_range: any, quality = 1, start_from = 0, midi = false) {
     let translatedData = [];
     let offset = 0;
     if (path.nodes[0].pos.x > path.nodes[path.nodes.length - 1].pos.x) {
@@ -314,10 +321,12 @@ export class UploadService {
             }
           }
 
+
+          const division = midi ? 1 : 100;
           const coordinates = {
             x: (m - startPos),
-            y: inlistValue ? (inlistValue.y + (yValue / 100)) / 2 : (yValue / 100),
-            y2: inlistValue ? (inlistValue.y + (yValue / 100)) / 2 - start_from: (yValue / 100) - start_from
+            y: inlistValue ? (inlistValue.y + (yValue / division)) / 2 : (yValue / 100),
+            y2: inlistValue ? (inlistValue.y + (yValue / division)) / 2 - start_from: (yValue / 100) - start_from
           };
 
           translatedData.push(coordinates);
@@ -328,6 +337,7 @@ export class UploadService {
     }
     return translatedData;
   }
+
 
 
 
@@ -447,6 +457,14 @@ export class UploadService {
     // console.log(model);
     return model;
   }
+
+    // TODO: Revise this section too
+  createUploadModel_TT(message, microcontroller: MicroController) {
+    let model = new UploadModel_TT(message, microcontroller);
+    // console.log(model);
+    return model;
+  }
+
 
 
   translateEffectForExport(effect: any, quality: number) {

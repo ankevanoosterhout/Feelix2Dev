@@ -2,7 +2,7 @@ import { AfterViewInit, Component, Inject, OnInit } from '@angular/core';
 import { Collection, Layer } from 'src/app/models/collection.model';
 import { Details } from 'src/app/models/effect.model';
 import { v4 as uuid } from 'uuid';
-import { MicroController } from 'src/app/models/hardware.model';
+import { ActuatorType, MicroController } from 'src/app/models/hardware.model';
 import { HardwareService } from 'src/app/services/hardware.service';
 import { MotorControlService } from 'src/app/services/motor-control.service';
 import { DOCUMENT } from '@angular/common';
@@ -10,6 +10,7 @@ import { CloneService } from 'src/app/services/clone.service';
 import { UploadService } from 'src/app/services/upload.service';
 import { ElectronService } from 'ngx-electron';
 import { EffectType, EffectTypeLabelMapping } from 'src/app/models/configuration.model';
+import { ipcRenderer } from 'electron';
 // import { UploadModel } from 'src/app/models/effect-upload.model';
 
 @Component({
@@ -320,7 +321,9 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     }, time);
   }
 
-
+  send_collection(collection: Collection) {
+    this.electronService.ipcRenderer.send('send_collection_data', collection);
+  }
 
   upload(collection: Collection, newMCU = true) {
     if (collection.effectDataList.length > 0) {

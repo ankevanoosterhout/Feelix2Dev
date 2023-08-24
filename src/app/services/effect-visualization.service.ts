@@ -29,7 +29,7 @@ export class EffectVisualizationService {
   }
 
 
-  drawEffect(effect: Effect, colors: Array<EffectTypeColor>, viewSettings = 'large-thumbnails', storedIn: string) {
+  drawEffect(effect: any, colors: Array<EffectTypeColor>, viewSettings = 'large-thumbnails', storedIn: string) {
 
     const height = storedIn === 'file' ? 86 : 55;
     let windowDivisionWidth = (window.innerWidth * this.verticalDivision / 100);
@@ -53,24 +53,24 @@ export class EffectVisualizationService {
       .attr('stroke', '#2c2c2c')
       .attr('stroke-width', 0.5);
 
-    const zeroline = svg.append('line')
-      .attr('x2', width)
-      .attr('y1', height - (height / (effect.range_y.end - effect.range_y.start)) * (effect.range_y.start * -1))
-      .attr('x1', 0)
-      .attr('y2', height - (height / (effect.range_y.end - effect.range_y.start)) * (effect.range_y.start * -1))
-      .style('stroke', '#3a3a3a')
-      .style('stroke-width', 1)
-      .style('shape-rendering', 'crispEdges');
+    if (effect.type !== EffectType.position && effect.type !== EffectType.midi && effect.type !== EffectType.midiNote) {
 
-
-    if (effect.paths && effect.paths.length > 0) {
-
-      const nodes = svg.append('g')
-        .attr('class', 'nodes effect' + effect.id)
-        .attr('transform', 'translate(14, 2)');
-
-      this.drawEffectData(nodes, effect, height - 4, colors, width - 28, [effect.range_y.end, effect.range_y.start]);
+      const zeroline = svg.append('line')
+        .attr('x2', width)
+        .attr('y1', height - (height / (effect.range_y.end - effect.range_y.start)) * (effect.range_y.start * -1))
+        .attr('x1', 0)
+        .attr('y2', height - (height / (effect.range_y.end - effect.range_y.start)) * (effect.range_y.start * -1))
+        .style('stroke', '#3a3a3a')
+        .style('stroke-width', 1)
+        .style('shape-rendering', 'crispEdges');
     }
+    const nodes = svg.append('g')
+      .attr('class', 'nodes effect' + effect.id)
+      .attr('transform', 'translate(14, 2)');
+
+
+    this.drawEffectData(nodes, effect, height - 4, colors, width - 28, [effect.range_y.end, effect.range_y.start]);
+
   }
 
 
@@ -205,58 +205,85 @@ export class EffectVisualizationService {
   }
 
 
-  drawEffectData(nodes: any, effect: any, height: number, colors: Array<EffectTypeColor>, width = (window.innerWidth * this.verticalDivision / 100) - 120, domain: any, reflect = { x: false, y: false }, multiply = 1) {
+  drawEffectData(nodes: any, effect: any, height: number, colors: Array<EffectTypeColor>, width = (window.innerWidth * this.verticalDivision / 100) - 120, domainY: any, reflect = { x: false, y: false }, multiply = 1) {
+    console.log(effect);
 
     if (effect.size) {
+
+      const domainX = {
+        xMin: effect.type !== EffectType.midi ? effect.size.x * multiply : effect.range.start,
+        xMax: effect.type !== EffectType.midi ? (effect.size.x + effect.size.width) * multiply : effect.range.end
+      };
       const xScale = d3.scaleLinear()
-          .domain([ effect.size.x * multiply, (effect.size.x + effect.size.width) * multiply ])
+          .domain([ domainX.xMin, domainX.xMax ])
           .range([0, width]);
 
       const yScale = d3.scaleLinear()
-        .domain(domain)
+        .domain(domainY)
         .range([0, height]);
 
 
-      for (const path of effect.paths) {
-        if (path.nodes.length > 1) {
+      if (effect.type !== EffectType.midi) {
+        for (const path of effect.paths) {
+          if (path.nodes.length > 1) {
 
-          const effectPath = this.nodeService.mirrorPathEffect(this.cloneService.deepClone(path), effect.size, reflect);
+            const effectPath = this.nodeService.mirrorPathEffect(this.cloneService.deepClone(path), effect.size, reflect);
 
-          const paths = this.returnPathAsString(effectPath, xScale, yScale, 'pos', multiply);
+            const paths = this.returnPathAsString(effectPath, xScale, yScale, 'pos', multiply);
 
-          if (effect.type === EffectType.position) {
-            const planes = this.returnPlaneAsString(effectPath, xScale, yScale, multiply);
+            if (effect.type === EffectType.position) {
+              const planes = this.returnPlaneAsString(effectPath, xScale, yScale, multiply);
 
-            if (planes) {
-              nodes.selectAll('path.plane_' + path.id)
-                .data(planes)
+              if (planes) {
+                nodes.selectAll('path.plane_' + path.id)
+                  .data(planes)
+                  .enter()
+                  .append('path')
+                  .attr('d', (d: { svgPath: string }) => d.svgPath)
+                  .attr('fill', colors.filter(c => c.type === effect.type)[0].hash[0])
+                  .attr('class', 'plane_' + path.id)
+                  .style('opacity', 0.3)
+                  .attr('pointer-events', 'none');
+              }
+            }
+
+            if (paths) {
+              nodes.selectAll('path.path_' + path.id)
+                .data(paths)
                 .enter()
                 .append('path')
                 .attr('d', (d: { svgPath: string }) => d.svgPath)
-                .attr('fill', colors.filter(c => c.type === effect.type)[0].hash[0])
-                .attr('class', 'plane_' + path.id)
-                .style('opacity', 0.3)
+                .attr('stroke', () => colors.filter(c => c.type === effect.type)[0].hash[0])
+                .attr('stroke-width', () => effect.rotation === 'dependent' ? 2.0 : 4.0)
+                .attr('stroke-linecap', effect.rotation === 'dependent' ? 'butt' : 'round')
+                .attr('class', 'path_' + path.id)
+                .attr('fill', 'transparent')
                 .attr('pointer-events', 'none');
             }
           }
+        }
+      } else if (effect.type === EffectType.midi) {
 
-          if (paths) {
-            nodes.selectAll('path.path_' + path.id)
-              .data(paths)
-              .enter()
-              .append('path')
-              .attr('d', (d: { svgPath: string }) => d.svgPath)
-              .attr('stroke', () => colors.filter(c => c.type === effect.type)[0].hash[0])
-              .attr('stroke-width', () => effect.rotation === 'dependent' ? 2.0 : 4.0)
-              .attr('stroke-linecap', effect.rotation === 'dependent' ? 'butt' : 'round')
-              .attr('class', 'path_' + path.id)
-              .attr('fill', 'transparent')
-              .attr('pointer-events', 'none');
-          }
+        if (effect.data && effect.data.length > 0) {
+          nodes.selectAll('rect.blocks')
+            .data(effect.data)
+            .enter()
+            .append('rect')
+            .attr('class', 'blocks')
+            .attr('width',  (d: { vis: { x: number; width: number; }; }) => {
+              const width = xScale(d.vis.x + d.vis.width) - xScale(d.vis.x);
+              return width < 2 ? 2 : width; })
+            .attr('height', (d: { vis: { y: number; }; }) => Math.abs(yScale(d.vis.y) - yScale(d.vis.y + 1)) )
+            .attr('x', (d: { vis: { x: number; }; }) => xScale(d.vis.x))
+            .attr('y', (d: { vis: { y: number; }; }) => yScale(d.vis.y))
+            .style('fill', colors.filter(c => c.type === effect.type)[0].hash[0])
+            .style('shape-rendering', 'crispEdges')
+            .attr('pointer-events', 'none');
         }
       }
     }
   }
+
 
 
   drawCollectionFeedback(collection: Collection, width: number, height: number, view: any) {

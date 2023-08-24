@@ -797,7 +797,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
       if (this.file.activeEffect) {
 
-        if (this.file.activeEffect.grid.visible || (this.file.activeEffect.type === EffectType.midi && this.file.activeEffect.dataType === MidiDataType.notes)) {
+        if (this.file.activeEffect.grid.visible || this.drawingService.audioVisualization()) {
           // this.file.activeEffect.grid.settings.spacingX = 20;
           this.file.activeEffect.grid.settings.subDivisionsX = 4;
           this.file.activeEffect.grid.visible = true;

@@ -184,19 +184,42 @@ export class UploadModel {
   }
 }
 
-// export class CombinedUploadModel {
-//   effects: Array<EffectModel> = [];
-//   config: Array<ConfigModel> = [];
-//   vendor: string = null;
-//   data: DataModel = null;
+// TODO: Revise this section
+export class ConfigModel_TT {
+  serialPort: any;
+  motors: Array<Motor>;
+  vendor: string;
+  updateSpeed: number;
+  baudrate: number;
+  motorID: string;
 
-//   constructor(uploadModels: Array<UploadModel>) {
-//     for (const model of uploadModels) {
-//       this.effects.concat(model.effects);
-//       this.config.concat(model.config);
-//     }
-//   }
-// }
+  constructor(microcontroller: MicroController) {
+    this.serialPort = microcontroller.serialPort;
+    this.vendor = microcontroller.vendor;
+    this.updateSpeed = microcontroller.updateSpeed;
+    this.baudrate = microcontroller.baudrate;
+    this.motors = [microcontroller.motors[0]];
+    this.motorID = microcontroller.motors[0].id;
+  }
+}
+
+
+export class UploadModel_TT {
+  message = '';
+  config: ConfigModel_TT = null;
+  vendor: string = null;
+  newMCU = true;
+
+  constructor(message: string, microcontroller: MicroController) {
+
+    this.message = message;
+
+    this.config = new ConfigModel_TT(microcontroller);
+
+    this.vendor = microcontroller.vendor;
+  }
+}
+
 
 
 export class UploadStringModel {

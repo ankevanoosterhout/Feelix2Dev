@@ -10,12 +10,12 @@ import { Subject } from 'rxjs';
 import { FileService } from './file.service';
 import { EffectVisualizationService } from './effect-visualization.service';
 import { Details, Effect, Unit } from '../models/effect.model';
-import { Midi } from '../models/audio.model';
+import { Midi, MidiNote } from '../models/audio.model';
 import { Collection } from '../models/collection.model';
 import { Configuration, EffectType } from '../models/configuration.model';
 import { MidiDataType } from '../models/audio.model';
 import { MidiDataService } from './midi-data.service';
-
+import { until } from 'protractor';
 
 
 @Injectable()
@@ -166,7 +166,7 @@ export class DrawingService {
   }
 
   audioVisualization() {
-    return this.file.activeEffect && this.file.activeEffect.type === EffectType.midi && this.file.activeEffect.dataType === MidiDataType.notes ? true : false;
+    return this.file.activeEffect && this.file.activeEffect.type === EffectType.midi ? true : false; //&& this.file.activeEffect.dataType === MidiDataType.notes
   }
 
   deleteSelectedBlocks() {
@@ -1144,9 +1144,10 @@ export class DrawingService {
       this.file.activeEffect.range.start = 0;
       this.file.activeEffect.range.end = 1000;
 
-    } else if (this.file.activeEffect.type === EffectType.midi) {
-      this.file.activeEffect = new Midi(this.file.activeEffect.id, EffectType.midi);
+    } else if (this.file.activeEffect.type === EffectType.midi || this.file.activeEffect.type === EffectType.midiNote) {
+      this.file.activeEffect = this.file.activeEffect.type === EffectType.midi ? new Midi(this.file.activeEffect.id, this.file.activeEffect.type) : new MidiNote(this.file.activeEffect.id, this.file.activeEffect.type);
       this.file.activeEffect.grid.yUnit = new Unit('v', 128);
+
     } else {
       if (this.file.activeEffect.grid.xUnit.name === 'ms' || this.file.activeEffect.grid.xUnit.name === 'sec') {
         this.file.activeEffect.grid.xUnit = new Unit('deg', 360);
@@ -1156,8 +1157,8 @@ export class DrawingService {
       this.file.activeEffect.grid.yUnit = new Unit('%', 100);
     }
 
-    this.file.activeEffect.range_y.start = (this.file.activeEffect.type === EffectType.position || this.file.activeEffect.type === EffectType.pneumatic || this.file.activeEffect.type === EffectType.midi) ? 0 : -100;
-    this.file.activeEffect.range_y.end = (this.file.activeEffect.type === EffectType.midi ? 128 : 100);
+    this.file.activeEffect.range_y.start = (this.file.activeEffect.type === EffectType.torque || this.file.activeEffect.type === EffectType.velocity) ? -100 : 0;
+    this.file.activeEffect.range_y.end = (this.file.activeEffect.type === EffectType.midi || this.file.activeEffect.type === EffectType.midiNote ? 128 : 100);
 
     // console.log(this.config.editBounds);
 

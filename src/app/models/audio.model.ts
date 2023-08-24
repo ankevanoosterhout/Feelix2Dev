@@ -37,15 +37,15 @@ export class Midi_config {
 
 export class Midi extends Effect {
   dataType: MidiDataType = MidiDataType.notes;
-  type: EffectType = EffectType.midi;
+  // type: EffectType = EffectType.midi;
   data: Array<MidiDataBlock> = [];
 
   // midi_config = new Midi_config(176,0,0);
 }
 
-export class MidiChannel extends Effect {
-  type: EffectType = EffectType.midi;
-  dataType: MidiDataType = MidiDataType.CC01;
+export class MidiNote extends Effect {
+  type: EffectType = EffectType.midiNote;
+  // dataType: MidiDataType = MidiDataType.CC01;
   midi_config = new Midi_config(176,0,0);
 }
 
@@ -73,7 +73,7 @@ export class MidiBlockVisualization {
 export class MidiDataBlock {
   id: string;
   vis: MidiBlockVisualization;
-  effect: MidiChannel;
+  effect: MidiNote;
 
 
   constructor(id: string, effect: any) {

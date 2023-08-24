@@ -10,7 +10,7 @@ import { Collection } from '../models/collection.model';
 import { Configuration, EffectType, OpenTab } from '../models/configuration.model';
 import { HistoryService } from './history.service';
 import { CloneService } from './clone.service';
-import { Midi, MidiChannel, MidiDataType } from '../models/audio.model';
+import { Midi, MidiNote, MidiDataType } from '../models/audio.model';
 
 @Injectable()
 export class FileService {
@@ -185,7 +185,7 @@ export class FileService {
   }
 
 
-  addMidiEffect(effect: MidiChannel) {
+  addMidiEffect(effect: MidiNote) {
     const activeFile = this.files.filter(f => f.isActive)[0];
     if (activeFile) {
       this.addTab(activeFile, effect.id, effect.name);
@@ -248,7 +248,7 @@ export class FileService {
 
   updateActiveEffectData(file: File) {
     if (file.activeEffect) {
-      if (file.activeEffect.type === EffectType.midi && file.activeEffect.dataType === MidiDataType.notes) {
+      if (file.activeEffect.type === EffectType.midi) { // && file.activeEffect.dataType === MidiDataType.notes
         let midiEffect = file.effects.filter(e => e.id === file.activeEffect.id)[0];
         if (midiEffect && midiEffect.data) {
           midiEffect.data = JSON.parse(JSON.stringify(file.activeEffect.data));
@@ -273,18 +273,18 @@ export class FileService {
         }
         // let effect = file.effects.filter(e => e.id === file.activeEffect.id)[0];
         let effect = this.getEffect(file.activeEffect.id, file);
-        if (effect && effect.type !== EffectType.midi) {
-          effect = this.cloneService.deepClone(file.activeEffect);
-          effect.paths = this.cloneService.deepClone(file.activeEffect.paths);
-          effect.size = this.cloneService.deepClone(file.activeEffect.size);
-          effect.type = file.activeEffect.type;
-          effect.rotation = file.activeEffect.rotation;
-          effect.range = this.cloneService.deepClone(file.activeEffect.range);
-          effect.range_y = this.cloneService.deepClone(file.activeEffect.range_y);
-          effect.date.modified = new Date().getTime();
-          effect.grid = this.cloneService.deepClone(file.activeEffect.grid);
+        if (effect && effect.type !== EffectType.midiNote) {
+          file.effects.filter(e => e.id === effect.id)[0] = this.cloneService.deepClone(file.activeEffect);
+          file.effects.filter(e => e.id === effect.id)[0].paths = this.cloneService.deepClone(file.activeEffect.paths);
+          file.effects.filter(e => e.id === effect.id)[0].size = this.cloneService.deepClone(file.activeEffect.size);
+          file.effects.filter(e => e.id === effect.id)[0].type = file.activeEffect.type;
+          file.effects.filter(e => e.id === effect.id)[0].rotation = file.activeEffect.rotation;
+          file.effects.filter(e => e.id === effect.id)[0].range = this.cloneService.deepClone(file.activeEffect.range);
+          file.effects.filter(e => e.id === effect.id)[0].range_y = this.cloneService.deepClone(file.activeEffect.range_y);
+          file.effects.filter(e => e.id === effect.id)[0].date.modified = new Date().getTime();
+          file.effects.filter(e => e.id === effect.id)[0].grid = this.cloneService.deepClone(file.activeEffect.grid);
 
-        } else if (effect && effect.type === EffectType.midi) {
+        } else if (effect && effect.type === EffectType.midiNote) {
           const parent = this.getParentEffect(effect.id, file);
           if (parent && parent.data.filter(p => p.effect.id === effect.id)[0]) {
             parent.data.filter(p => p.effect.id === effect.id)[0].effect = this.cloneService.deepClone(file.activeEffect);
@@ -295,6 +295,7 @@ export class FileService {
             parent.data.filter(p => p.effect.id === effect.id)[0].effect.range_y = this.cloneService.deepClone(file.activeEffect.range_y);
             parent.data.filter(p => p.effect.id === effect.id)[0].effect.date.modified = new Date().getTime();
             parent.data.filter(p => p.effect.id === effect.id)[0].effect.grid = this.cloneService.deepClone(file.activeEffect.grid);
+            parent.data.filter(p => p.effect.id === effect.id)[0].effect.midi_config = this.cloneService.deepClone(file.activeEffect.midi_config);
           }
         }
       }
@@ -307,7 +308,7 @@ export class FileService {
     for (const effect of file.effects) {
       if (effect.id === id) {
         return effect;
-      } else if (effect.type === EffectType.midi && effect.dataType === MidiDataType.notes) {
+      } else if (effect.type === EffectType.midi) { // && effect.dataType === MidiDataType.notes
         if (effect.data && effect.data.length > 0) {
           const midiEffect = effect.data.filter(d => d.effect.id === id)[0];
           if (midiEffect) {
@@ -321,7 +322,7 @@ export class FileService {
 
   getParentEffect(child: string, file: File) {
     for (const effect of file.effects) {
-      if (effect.type === EffectType.midi && effect.dataType === MidiDataType.notes) {
+      if (effect.type === EffectType.midi) { // && effect.dataType === MidiDataType.notes
         if (effect.data && effect.data.length > 0) {
           if (effect.data.filter(d => d.effect.id === child).length > 0) {
             return effect;
@@ -451,13 +452,15 @@ export class FileService {
         //   const tabIndex = activeFile.configuration.openTabs.indexOf(openTab);
         //   activeFile.configuration.openTabs.splice(tabIndex, 1);
         // }
-        if (effect.type === EffectType.midi && effect.dataType === MidiDataType.notes) {
-          for (const item of effect.data) {
-            const openTabMidi = activeFile.configuration.openTabs.filter(t => t.id === item.effect.id)[0];
+        if (effect.type === EffectType.midi) { // && effect.dataType === MidiDataType.notes
+          if (effect.data && effect.data.length > 0) {
+            for (const item of effect.data) {
+              const openTabMidi = activeFile.configuration.openTabs.filter(t => t.id === item.effect.id)[0];
 
-            if (openTabMidi) {
+              if (openTabMidi) {
 
-              this.closeEffectTab(item.effect.id)
+                this.closeEffectTab(item.effect.id)
+              }
             }
           }
         }
