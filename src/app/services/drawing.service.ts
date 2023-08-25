@@ -1147,6 +1147,8 @@ export class DrawingService {
     } else if (this.file.activeEffect.type === EffectType.midi || this.file.activeEffect.type === EffectType.midiNote) {
       this.file.activeEffect = this.file.activeEffect.type === EffectType.midi ? new Midi(this.file.activeEffect.id, this.file.activeEffect.type) : new MidiNote(this.file.activeEffect.id, this.file.activeEffect.type);
       this.file.activeEffect.grid.yUnit = new Unit('v', 128);
+      this.file.activeEffect.range_y.start = 0;
+      this.file.activeEffect.range_y.end = 128;
 
     } else {
       if (this.file.activeEffect.grid.xUnit.name === 'ms' || this.file.activeEffect.grid.xUnit.name === 'sec') {

@@ -150,13 +150,10 @@ export class Effect {
 
   constructor(id: string, type: EffectType) {
     this.id = id;
-    if (type !== null) {
-      this.type = type;
-      if (type === EffectType.midi || type === EffectType.midiNote) {
-        this.range_y = new Range(0, 128);
-      }
+    this.type = type;
+    if (type === EffectType.midi || type === EffectType.midiNote) {
+      this.range_y = new Range(0, 128);
     }
-
 
     // this.colors.push(new Color('Blue', '#003fc1'));
     // this.colors.push(new Color('LightBlue', '#9bbef5'));

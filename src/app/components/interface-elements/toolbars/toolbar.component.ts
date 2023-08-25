@@ -140,12 +140,22 @@ export class ToolbarComponent implements OnInit {
 
     this.electronService.ipcRenderer.on('updateToolbar', (event: Event, data: any) => {
       if (data.type !== EffectType.position) {
-        this.toolService.disable('thick');
+        this.toolService.disable(['thick']);
         this.electronService.ipcRenderer.send('updateToolbarSize', 'small');
         if (this.selectedTool === 5) { this.selectTool(4); }
       } else {
         this.electronService.ipcRenderer.send('updateToolbarSize', 'large');
-        this.toolService.enable('thick');
+        this.toolService.enable(['thick']);
+      }
+
+      if (data.type === EffectType.midi) {
+        this.toolService.disable(['brush', 'pen', 'scis', 'zoom', 'anchor']);
+        this.toolService.enable(['note']);
+        this.selectTool(8);
+      } else {
+        this.toolService.enable(['brush', 'pen', 'scis', 'zoom', 'anchor']);
+        this.toolService.disable(['note']);
+        if (this.selectedTool === 8) { this.selectTool(4); }
       }
 
       this.toolList = this.toolService.getTools();

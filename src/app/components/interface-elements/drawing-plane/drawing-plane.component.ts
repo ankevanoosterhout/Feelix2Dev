@@ -414,11 +414,11 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
             }
 
           }
-        } else if (this.config.cursor.slug === 'sel' || this.config.cursor.slug === 'dsel') {
+        } else if (this.config.cursor.slug === 'sel' || this.config.cursor.slug === 'dsel' || this.config.cursor.slug === 'note') {
           if (coords.x >= this.config.editBounds.xMin && coords.x < this.config.editBounds.xMax && this.config.mouseDown.y > this.config.margin.offsetTop &&
               this.config.mouseDown.y < window.innerHeight - 45) {
 
-            if (this.drawingService.audioVisualization()) {
+            if (this.config.cursor.slug === 'note') {
 
               const blockWidth = this.file.activeEffect.grid.settings.spacingX / this.file.activeEffect.grid.settings.subDivisionsX;
               const newBlock = this.midiDataService.createNewDataBlock(Math.floor(coords.x / blockWidth) * blockWidth, Math.floor(coords.y), blockWidth);
