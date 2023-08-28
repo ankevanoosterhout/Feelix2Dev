@@ -55,7 +55,7 @@ import { ClassificationComponent } from './components/tensorflow/elements/classi
 import { ModelComponent } from './components/tensorflow/elements/model.component';
 import { DataSetService } from './services/dataset.service';
 import { LoadDataSetsComponent } from './components/tensorflow/datasets/load-datasets.component';
-import { TensorFlowModelService } from './services/tensorflow-model.service';
+import { TensorFlowModelService } from './services/tensorFlow-model.service';
 import { TensorFlowDrawService } from './services/tensorflow-draw.service';
 import { FilterService } from './services/filter.service';
 import { KinematicsComponent } from './components/kinematics/kinematics.component';

@@ -3,7 +3,7 @@ import { DOCUMENT } from '@angular/common';
 import { ElectronService } from 'ngx-electron';
 // import { DataSet, Model } from 'src/app/models/tensorflow.model';
 import { DataSetService } from 'src/app/services/dataset.service';
-import { TensorFlowModelService } from 'src/app/services/tensorflow-model.service';
+import { TensorFlowModelService } from 'src/app/services/tensorFlow-model.service';
 import { Router } from '@angular/router';
 
 
