@@ -794,7 +794,8 @@ function drawTemporaryWindow(width, minWidth, height, minHeight, title, resizabl
     parent: parent,
     icon: path.join(__dirname, '../src/assets/icons/png/64x64.png'),
     webPreferences: {
-      nodeIntegration: true
+      nodeIntegration: true,
+      contextIsolation: false
     }
   })
 
