@@ -82,7 +82,7 @@ export class MotorControlService {
     setTimeout(() => {
       this.drawCollections();
 
-      if (file.configuration.collectionDisplay !== 'small') {
+      if (file.collections && file.configuration.collectionDisplay !== 'small') {
         for (const collection of file.collections) {
           this.updateScale(collection);
         }
