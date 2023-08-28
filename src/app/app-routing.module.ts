@@ -16,7 +16,7 @@ import { MotorControlToolbarInsetComponent } from './components/interface-elemen
 import { MotorControlToolbarComponent } from './components/interface-elements/toolbars/motor-control-toolbar.component';
 import { MotorSettingsComponent } from './components/windows/settings/motor-settings.component';
 import { EffectListComponent } from './components/file/effect-list.component';
-import { TensorFlowJSComponent } from './components/tensorflow/tensorflowJS.component';
+import { TensorFlowJSComponent } from './components/tensorflow/tensorFlowJS.component';
 import { LoadDataSetsComponent } from './components/tensorflow/datasets/load-datasets.component';
 import { KinematicsComponent } from './components/kinematics/kinematics.component';
 import { KinematicsToolbarComponent } from './components/interface-elements/toolbars/kinematics-toolbar.component';

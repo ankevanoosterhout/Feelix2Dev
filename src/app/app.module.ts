@@ -48,7 +48,7 @@ import { EffectVisualizationService } from './services/effect-visualization.serv
 import { ExportDialogComponent } from './components/windows/export-dialog.component';
 import { CloneService } from './services/clone.service';
 import { GridService } from './services/grid.service';
-import { TensorFlowJSComponent } from './components/tensorflow/tensorflowJS.component';
+import { TensorFlowJSComponent } from './components/tensorflow/tensorFlowJS.component';
 import { TensorFlowMainService } from './services/tensorflow-main.service';
 import { DataComponent } from './components/tensorflow/elements/data.component';
 import { ClassificationComponent } from './components/tensorflow/elements/classification.component';

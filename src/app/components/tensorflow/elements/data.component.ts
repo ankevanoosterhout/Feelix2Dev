@@ -15,7 +15,7 @@ import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
 @Component({
   selector: 'app-data',
   templateUrl: 'data.component.html',
-  styleUrls: ['../../windows/effects/effects.component.css', './../tensorflowJS.component.css'],
+  styleUrls: ['../../windows/effects/effects.component.css', './../tensorFlowJS.component.css'],
 })
 export class DataComponent implements AfterViewInit {
 
