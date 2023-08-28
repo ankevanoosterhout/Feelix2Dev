@@ -74,20 +74,22 @@ export class EffectVisualizationService {
   }
 
 
-  drawCollectionEffect(svg: any, collection: Collection, collEffect: Details, effect: Effect, pixHeight: number, activeCollEffect: Details, colors: Array<EffectTypeColor>, tmp = false) {
+
+  drawCollectionEffect(svg: any, collection: Collection, collEffect: Details, effect: any, pixHeight: number, activeCollEffect: Details, colors: Array<EffectTypeColor>, tmp = false) {
 
     d3.selectAll('.coll-effect-' + collEffect.id).remove();
 
-    if (effect.paths && effect.paths.length > 0) {
+    if ((effect.paths && effect.paths.length > 0) || (effect.data && effect.data.length > 0)) {
 
+      const yScale = (effect.type === EffectType.midi || effect.type === EffectType.midiNote) ? collection.config.newMidiYscale : collection.config.newYscale;
       const multiply = (collection.rotation.units.PR / effect.grid.xUnit.PR);
 
-      const width = effect.paths.length === 0 ? 30 : collection.config.newXscale(collEffect.position.x + collEffect.position.width) - collection.config.newXscale(collEffect.position.x);
+      const width = (effect.paths && effect.paths.length === 0) || (effect.data && effect.data.length === 0) ? 30 : collection.config.newXscale(collEffect.position.x + collEffect.position.width) - collection.config.newXscale(collEffect.position.x);
       const domainSize = effect.range_y.end - effect.range_y.start;
 
-      const heightEffect = (collection.config.newYscale(collEffect.position.bottom) - collection.config.newYscale(collEffect.position.top)) * (collEffect.scale.y / 100);
+      const heightEffect = (yScale(collEffect.position.bottom) - yScale(collEffect.position.top)) * (collEffect.scale.y / 100);
 
-      const yPos = collection.config.newYscale(collEffect.position.top * (collEffect.scale.y / 100)) - (pixHeight * (collEffect.position.y / domainSize));
+      let yPos = yScale(collEffect.position.top * (collEffect.scale.y / 100)) - (pixHeight * (collEffect.position.y / domainSize));
 
       const offset = effect.range_y.start === 0 ? pixHeight * ((100-collEffect.scale.y)/100) - (pixHeight * (collEffect.position.y / 100)) :
                                                   pixHeight * (((100-collEffect.scale.y)/100) / 2) - (pixHeight * (collEffect.position.y / 100) / 2);
@@ -187,9 +189,11 @@ export class EffectVisualizationService {
   }
 
   checkIfEffectTypeEqualsVisualizationType(effect: Effect, collection: Collection) {
-    if (effect.paths.length > 0) {
+    if (effect.paths && effect.paths.length > 0) {
       if (effect.type !== EffectType.velocity && effect.type === collection.visualizationType) { return true; }
       if (effect.type === EffectType.velocity && effect.grid.yUnit.name === collection.rotation.units_y.name) { return true; }
+    } else if (effect.type === EffectType.midi) {
+      return true;
     }
     return false;
   }
@@ -206,13 +210,12 @@ export class EffectVisualizationService {
 
 
   drawEffectData(nodes: any, effect: any, height: number, colors: Array<EffectTypeColor>, width = (window.innerWidth * this.verticalDivision / 100) - 120, domainY: any, reflect = { x: false, y: false }, multiply = 1) {
-    console.log(effect);
 
     if (effect.size) {
 
       const domainX = {
-        xMin: effect.type !== EffectType.midi ? effect.size.x * multiply : effect.range.start,
-        xMax: effect.type !== EffectType.midi ? (effect.size.x + effect.size.width) * multiply : effect.range.end
+        xMin:  effect.size.x * multiply,
+        xMax: (effect.size.x + effect.size.width) * multiply
       };
       const xScale = d3.scaleLinear()
           .domain([ domainX.xMin, domainX.xMax ])

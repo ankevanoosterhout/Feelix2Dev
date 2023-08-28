@@ -32,13 +32,11 @@ export class MotorControlService {
     { id: 3, name: 'upload all', slug: 'upload_all', disabled: false, icon: './assets/icons/buttons/upload_all.svg' },
     { id: 4, name: 'play all uploaded collections', slug: 'play_all', disabled: true, icon: './assets/icons/buttons/play_all.svg', icon2: './assets/icons/buttons/stop_all.svg' },
     { id: 5, name: 'play all uploaded collections in sequence', slug: 'play_all_sequence', disabled: true, icon: './assets/icons/buttons/play_all_delay.svg', icon2: './assets/icons/buttons/stop_all.svg' }
-    // { id: 5, name: 'translation', slug: 'translation', disabled: false,
-    //   icon: this.file.configuration.collectionDisplayTranslation === 'linear' ? './assets/icons/buttons/translation-circular.svg' : './assets/icons/buttons/translation-linear.svg' }
   ]
 
   width: number;
   height: number;
-
+  midiHeight: number;
 
 
   constructor(@Inject(DOCUMENT) private document: Document, private drawingService: DrawingService, private fileService: FileService,
@@ -63,13 +61,14 @@ export class MotorControlService {
 
   updateHeight() {
     if (this.file.configuration.collectionDisplay === 'large') {
-      this.height = (window.innerHeight * this.file.configuration.horizontalScreenDivision / 100) - 85;
-      if (this.file.configuration.collectionDisplayTranslation === 'linear') {
-        if (this.height > 280) { this.height = 280;}
-        else if (this.height < 180) { this.height = 180;}
-      }
+      this.height = (window.innerHeight * this.file.configuration.horizontalScreenDivision / 100) - 80;
+      if (this.height > 280) { this.height = 280;}
+      else if (this.height < 180) { this.height = 180;}
+      this.midiHeight = this.height * 0.25;
+
     } else {
       this.height = 120;
+      this.midiHeight = 30;
     }
   }
 
@@ -83,7 +82,7 @@ export class MotorControlService {
     setTimeout(() => {
       this.drawCollections();
 
-      if (file.configuration.collectionDisplay !== 'small' && file.configuration.collectionDisplayTranslation === 'linear') {
+      if (file.configuration.collectionDisplay !== 'small') {
         for (const collection of file.collections) {
           this.updateScale(collection);
         }
@@ -95,19 +94,9 @@ export class MotorControlService {
     this.toolList.filter(t => t.slug === 'change_view')[0].icon =
       file.configuration.collectionDisplay === 'small' ? './assets/icons/buttons/large-display.svg' : './assets/icons/buttons/small-display.svg';
   }
-  // updateToolListTranslation(file: File) {
-    // console.log(file.configuration.collectionDisplayTranslation);
-    // this.toolList.filter(t => t.name === 'translation')[0].icon =
-    //   file.configuration.collectionDisplayTranslation === 'linear' ? './assets/icons/buttons/translation-circular.svg' : './assets/icons/buttons/translation-linear.svg';
-  // }
 
   changeViewSettings() {
     this.file.configuration.collectionDisplay = this.file.configuration.collectionDisplay === 'small' ? 'large' : 'small';
-    this.updateViewSettings(this.file);
-  }
-
-  changeTranslationView() {
-    this.file.configuration.collectionDisplayTranslation = this.file.configuration.collectionDisplayTranslation === 'linear' ? 'circular' : 'linear';
     this.updateViewSettings(this.file);
   }
 
@@ -164,12 +153,17 @@ export class MotorControlService {
 
     d3.select('#cID-' + collection.id).remove();
 
+
+    const updatedHeight = collection.config.midi ? this.height + (this.midiHeight + 10) : this.height; // increase height for midi effects
+    const frameHeight = this.height - 39;
+
+
     collection.config.svg = d3.select('#col-' + collection.id)
       .append('svg')
       .attr('id', 'cID-' + collection.id)
       .attr('class', 'collection')
       .attr('width', this.width)
-      .attr('height', (this.file.configuration.collectionDisplay === 'small' ? this.height - 35 : this.height));
+      .attr('height', (this.file.configuration.collectionDisplay === 'small' ? updatedHeight - 35 : updatedHeight));
 
     if (this.file.configuration.collectionDisplay === 'small') {
       collection.config.scale.graphD3 = d3.zoomIdentity.translate((this.width * 0.125), 0).scale((collection.config.scale.value/100));
@@ -186,13 +180,13 @@ export class MotorControlService {
       .append('svg:rect')
       .attr('class', 'clipCollection')
       .attr('width', this.width)
-      .attr('height', this.height - 39);
+      .attr('height', frameHeight);
 
     const container = collection.config.svg.append('rect')
       .attr('id', 'colE' + collection.id)
       .attr('class', 'collection')
       .attr('width', this.width)
-      .attr('height', this.height - 39)
+      .attr('height', frameHeight)
       .attr('clip-path', 'url(#clipCollection)')
       .attr('x', 0)
       .attr('y', 0)
@@ -205,13 +199,12 @@ export class MotorControlService {
         .attr('id', 'colE' + collection.id)
         .attr('class', 'inner-container collection')
         .attr('width', collection.config.newXscale(collection.rotation.end) - collection.config.newXscale(collection.rotation.start))
-        .attr('height', this.height - 39)
+        .attr('height', frameHeight)
         .attr('clip-path', 'url(#clipCollection)')
         .attr('x', collection.config.newXscale(collection.rotation.start))
         .attr('y', 0)
         .attr('transform', () => this.file.configuration.collectionDisplay === 'small' ? 'translate(0, 0)' : 'translate(0, 26)')
         .attr('fill', '#1c1c1c');
-
     }
     if (collection.rotation.loop || (collection.rotation.constrain && collection.visualizationType !== EffectType.velocity)) {
       const lineData = [collection.rotation.start, collection.rotation.end];
@@ -224,15 +217,13 @@ export class MotorControlService {
         .attr('x1', (d) => collection.config.newXscale(d))
         .attr('x2', (d) => collection.config.newXscale(d))
         .attr('y1', 0)
-        .attr('y2', this.height - 39)
+        .attr('y2', frameHeight)
         .attr('transform', () => this.file.configuration.collectionDisplay === 'small' ? 'translate(0, 0)' : 'translate(0, 26)')
         .attr('shape-rendering', 'crispEdges')
         .attr('stroke', !collection.rotation.loop ? '#FF9100' : '#999')
         .attr('stroke-width', collection.rotation.constrain ? 1 : 0.5)
         .attr('fill', 'none');
     }
-
-    const frame_height = (this.height - 39) / 2;
 
     const middleline = collection.config.svg.append('line')
       .attr('x1', 0)
@@ -277,14 +268,38 @@ export class MotorControlService {
 
     if (this.file.configuration.collectionDisplay !== 'small') {
       this.drawRuler(collection);
-      this.drawSlider(collection);
+      this.drawSlider(collection, updatedHeight);
     }
 
     this.updateOffset(collection);
 
     this.drawCollectionEffects(collection);
 
+    if (collection.config.midi) {
+      const midiContainer = collection.config.svg.append('rect')
+        .attr('id', 'colEM' + collection.id)
+        .attr('class', 'collection')
+        .attr('width', this.width)
+        .attr('height', this.midiHeight)
+        // .attr('clip-path', 'url(#clipCollection)')
+        .attr('x', 0)
+        .attr('y', 0)
+        .attr('transform', () => this.file.configuration.collectionDisplay === 'small' ? 'translate(0, '+ (this.height - 30) +')' : 'translate(0, ' + (this.height - 4) +')') //translate 26 large view (to account for ruler)
+        .attr('fill', () => collection.rotation.loop ? '#1c1c1c' : '#2c2c2c');
 
+        if (!collection.rotation.loop) {
+          const innerContainerMidi = collection.config.svg.append('rect')
+            .attr('id', 'colEM' + collection.id)
+            .attr('class', 'inner-container collection')
+            .attr('width', collection.config.newXscale(collection.rotation.end) - collection.config.newXscale(collection.rotation.start))
+            .attr('height', this.midiHeight)
+            // .attr('clip-path', 'url(#clipCollection)')
+            .attr('x', collection.config.newXscale(collection.rotation.start))
+            .attr('y', 0)
+            .attr('transform', () => this.file.configuration.collectionDisplay === 'small' ? 'translate(0, '+ (this.height - 30) +')' : 'translate(0, ' + (this.height - 4) +')') //translate 26 large view (to account for ruler)
+            .attr('fill', '#1c1c1c');
+        }
+    }
 
     if (collection.microcontroller) {
       if (collection.microcontroller.connected) {
@@ -355,6 +370,8 @@ export class MotorControlService {
     collection.config.xAxisThicks = axisSVG.append('g')
       .attr('class', 'axisMotor')
       .call(collection.config.xAxis);
+
+
   }
 
 
@@ -362,7 +379,7 @@ export class MotorControlService {
   drawCollectionEffects(collection: Collection) {
 
     if (collection) {
-      d3.select('#coll-effect-svg-' + collection.id).remove();
+      d3.select('#coll-effect-svg-' + collection.id + ', #coll-midi-svg-' + collection.id).remove();
 
       const offset = this.file.configuration.collectionDisplay === 'small' ? 0 : 26;
 
@@ -372,14 +389,21 @@ export class MotorControlService {
           .attr('clip-path', 'url(#clipCollection)')
           .attr('transform', 'translate('+ [0, offset] + ')');
 
+        const midiSVG = collection.config.midi ? collection.config.svg.append('g')
+          .attr('id', 'coll-midi-svg-' + collection.id)
+          // .attr('clip-path', 'url(#clipCollection)')
+          .attr('transform', 'translate('+ [0, offset + this.height - 39] + ')') : undefined;
+
+
         for (const collectionEffect of collection.effects) {
           if (this.checkVisibility(collectionEffect.direction, collection.layers)) {
 
             const effect = this.file.effects.filter(e => e.id === collectionEffect.effectID)[0];
-            if (effect && effect.paths.length > 0) {
 
-              this.effectVisualizationService.drawCollectionEffect(effectSVG, collection, collectionEffect, effect, (this.height - 39),
-                this.file.activeCollectionEffect, this.file.configuration.colors);
+            if (effect && (effect.paths.length > 0 || effect.type === EffectType.midi)) {
+              const svg = effect.type === EffectType.midi || effect.type === EffectType.midiNote ? midiSVG : effectSVG;
+              const height = effect.type === EffectType.midi || effect.type === EffectType.midiNote ? (this.height - 39) * 0.25 : (this.height - 39);
+              this.effectVisualizationService.drawCollectionEffect(svg, collection, collectionEffect, effect, height, this.file.activeCollectionEffect, this.file.configuration.colors);
             } else {
               this.removeCollectionsEffect(collection, collectionEffect);
             }
@@ -450,7 +474,7 @@ export class MotorControlService {
   }
 
 
-  drawSlider(collection: Collection) {
+  drawSlider(collection: Collection, height: number) {
     if (!collection.config.slider.inner.min || (collection.config.slider.outer.max !== this.width)) {
       this.getSliderPosition(collection);
     }
@@ -478,7 +502,7 @@ export class MotorControlService {
       .attr('width', this.width)
       .attr('height', 2)
       .attr('x', 0)
-      .attr('y', this.height - 5)
+      .attr('y', height - 5)
       .attr('fill', '#1c1c1c');
 
     const handle = collection.config.svg.append('rect')
@@ -486,7 +510,7 @@ export class MotorControlService {
       .attr('width', collection.config.slider.inner.max - collection.config.slider.inner.min)
       .attr('height', 2)
       .attr('x', collection.config.slider.inner.min)
-      .attr('y', this.height - 5)
+      .attr('y', height - 5)
       .attr('stroke-width', 5)
       .attr('stroke', 'transparent')
       .attr('fill', '#aaa')
@@ -598,6 +622,16 @@ export class MotorControlService {
       collection.config.newXscale = collection.config.xScale;
       collection.config.newYscale = collection.config.yScale;
     }
+
+    if (collection.config.midi) {
+      collection.config.midiYscale = d3
+        .scaleLinear()
+        .domain([collection.rotation.end_y, collection.rotation.start_y])
+        .range([this.height - 30, this.height - 30 + this.midiHeight]);
+
+      collection.config.newMidiYscale = collection.config.midiYscale;
+    }
+
     this.setZoomCollection(collection);
 
   }
@@ -692,7 +726,7 @@ export class MotorControlService {
     return this.drawingService.config.tmpEffect;
   }
 
-  drawTmpEffect(effectDetails: Details, collection: Collection, tmpEffect: Effect) {
+  drawTmpEffect(effectDetails: Details, collection: Collection, tmpEffect: any) {
 
     d3.select('#tmp-effect-svg').remove();
 
@@ -703,7 +737,7 @@ export class MotorControlService {
       .attr('clip-path', 'url(#clipCollection)')
       .attr('transform', 'translate('+ [0, offset] + ')');
 
-      if (tmpEffect && tmpEffect.paths.length > 0) {
+      if (tmpEffect && ((tmpEffect.type === EffectType.midi && tmpEffect.data) || tmpEffect.paths.length > 0)) {
 
         this.effectVisualizationService.drawCollectionEffect(tmpEffectSVG, collection, effectDetails, tmpEffect, (this.height - 39),
         effectDetails, this.file.configuration.colors, true);

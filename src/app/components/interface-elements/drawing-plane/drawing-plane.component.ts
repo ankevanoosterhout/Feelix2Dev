@@ -182,10 +182,6 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       this.motorControlService.changeViewSettings();
     });
 
-    this.electronService.ipcRenderer.on('changeViewTranslation', (event: Event, data: any) => {
-      this.motorControlService.changeTranslationView();
-    });
-
     this.electronService.ipcRenderer.on('saveData', () => {
       if (this.file.activeEffect) {
         this.fileService.updateActiveEffectData(this.file);
@@ -321,10 +317,10 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
 
   setFilesInServices() {
-    this.drawingService.file = this.file;
-    this.drawElements.file = this.file;
-    this.historyService.file = this.file;
-    this.motorControlService.file = this.file;
+    Object.assign(this.drawingService.file, this.file);
+    Object.assign(this.drawElements.file, this.file);
+    Object.assign(this.historyService.file, this.file);
+    Object.assign(this.motorControlService.file, this.file);
 
   }
 
@@ -421,7 +417,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
             if (this.config.cursor.slug === 'note') {
 
               const blockWidth = this.file.activeEffect.grid.settings.spacingX / this.file.activeEffect.grid.settings.subDivisionsX;
-              const newBlock = this.midiDataService.createNewDataBlock(Math.floor(coords.x / blockWidth) * blockWidth, Math.floor(coords.y), blockWidth);
+              const newBlock = this.midiDataService.createNewDataBlock(Math.floor(coords.x / blockWidth) * blockWidth, Math.floor(coords.y), blockWidth, this.file.activeEffect.name);
               newBlock.effect.name = this.file.activeEffect.name + '-CC-' + Math.floor(coords.y);
               this.file.activeEffect.data.push(newBlock);
               this.fileService.updateEffect(this.file.activeEffect);

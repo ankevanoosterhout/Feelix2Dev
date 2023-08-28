@@ -687,7 +687,8 @@ function createWindow() {
     y: displays[0].bounds.height * 0.1,
     icon: path.join(__dirname, '../src/assets/icons/png/64x64.png'),
     webPreferences: {
-      nodeIntegration: true
+      nodeIntegration: true,
+      contextIsolation: false
     }
   })
 
@@ -1194,10 +1195,6 @@ ipcMain.on('motorSettings', function (e, data) {
 
 ipcMain.on('changeViewSettings', function(e, data) {
   mainWindow.webContents.send('changeViewSettings');
-});
-
-ipcMain.on('changeViewTranslation', function(e, data) {
-  mainWindow.webContents.send('changeViewTranslation');
 });
 
 

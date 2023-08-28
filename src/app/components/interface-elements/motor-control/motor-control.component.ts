@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, Inject, OnInit } from '@angular/core';
 import { Collection, Layer } from 'src/app/models/collection.model';
-import { Details } from 'src/app/models/effect.model';
+import { Details, Effect } from 'src/app/models/effect.model';
 import { v4 as uuid } from 'uuid';
 import { ActuatorType, MicroController } from 'src/app/models/hardware.model';
 import { HardwareService } from 'src/app/services/hardware.service';
@@ -466,15 +466,15 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       collection.rotation.start *= (collection.rotation.units.PR / 360);
       collection.rotation.end *= (collection.rotation.units.PR / 360);
     }
-    this.motorControlService.drawCollection(collection);
     this.motorControlService.updateCollection(collection);
+    this.motorControlService.drawCollection(collection);
   }
 
   constrain(collectionID: string) {
     const collection = this.motorControlService.file.collections.filter(c => c.id === collectionID)[0];
     collection.rotation.constrain = !collection.rotation.constrain;
-    this.motorControlService.drawCollection(collection);
     this.motorControlService.updateCollection(collection);
+    this.motorControlService.drawCollection(collection);
   }
 
   copy(collection: Collection) {
@@ -483,6 +483,12 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
   delete(collection: Collection) {
     this.motorControlService.deleteCollection(collection);
+  }
+
+  showMidi(collection: Collection) {
+    collection.config.midi = !collection.config.midi;
+    this.motorControlService.updateCollection(collection);
+    this.motorControlService.drawCollection(collection);
   }
 
   changeUnits(collection: Collection) {
@@ -664,7 +670,8 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     if (this.draggingListItem === null) {
       const id = e.target.id;
       const tmpEffect = this.motorControlService.getTmpEffect();
-      if (tmpEffect && tmpEffect.paths.length > 0) {
+      // console.log(tmpEffect);
+      if (tmpEffect && ((tmpEffect.type === EffectType.midi && tmpEffect.data) || tmpEffect.paths.length > 0)) {
 
         const collection = this.getCollectionFromClassName(id);
         const dropEffect = tmpEffect.storedIn === 'library' && this.motorControlService.file.effects.filter(e => e.id === tmpEffect.id).length > 0 ?
@@ -673,6 +680,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
         if (collection && tmpEffect) {
           const multiply = collection.rotation.units.PR / dropEffect.grid.xUnit.PR;
           const effectDetails = new Details(uuid(), dropEffect.id, dropEffect.name + '-' + collection.name, dropEffect.grid.xUnit.name);
+          // console.log(multiply, effectDetails);
           effectDetails.position.width = dropEffect.size.width * multiply;
           effectDetails.position.x = collection.config.newXscale.invert(e.offsetX) - (effectDetails.position.width / 2);
           effectDetails.position.height = dropEffect.size.height;

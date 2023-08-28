@@ -106,8 +106,6 @@ export class EffectModel {
     const middleLine = (((collEffect.position.top - collEffect.position.bottom) / 2 + collEffect.position.bottom) / 100) * (collEffect.scale.y / 100) + (collEffect.position.y / 100);
     this.flip = new Model('F', [ collEffect.flip.x ? 1 : 0, collEffect.flip.y ? 1 : 0, middleLine.toFixed(6) ]);
 
-    this.midi_config = new Model('M', [effect.midi_config.channel, effect.midi_config.message_type, effect.midi_config.data1]);
-
     this.direction = new Model('D', [ (collEffect.direction.cw ? 1 : 0), (collEffect.direction.ccw? 1 : 0) ]);
 
     this.infinite = new Model ('I', collEffect.infinite ? 1 : 0);
@@ -124,6 +122,11 @@ export class EffectModel {
       } else {
         this.vis_type = new Model('T', 2);
       }
+    } else if (effect.type === EffectType.midiNote) {
+      this.midi_config = new Model('M', [effect.midi_config.channel, effect.midi_config.message_type, effect.midi_config.data1]);
+
+    } else if (effect.type === EffectType.midi) {
+      // config for midi effects here
     }
 
     this.quality = new Model('Q', collEffect.quality);

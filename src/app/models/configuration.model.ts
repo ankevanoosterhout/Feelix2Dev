@@ -53,7 +53,6 @@ export class Configuration {
   horizontalScreenDivision = 35; //35
   verticalScreenDivision = 70; //70
   collectionDisplay = 'large';
-  collectionDisplayTranslation = 'linear';
   openTabs: Array<OpenTab> = [];
   rendered = false;
   libraryViewSettings = 'large-thumbnails';

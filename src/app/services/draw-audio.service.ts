@@ -7,6 +7,8 @@ import { NodeService } from './node.service';
 import { MidiDataService } from './midi-data.service';
 import { DataService } from './data.service';
 import { Range } from '../models/effect.model';
+import { EffectType } from '../models/configuration.model';
+import { ElectronService } from 'ngx-electron';
 
 
 @Injectable()
@@ -45,7 +47,8 @@ export class DrawAudioService {
   keyWidth = 80;
   smallKeyWidth = 50;
 
-  constructor(private nodeService: NodeService, private drawingService: DrawingService, private midiDataService: MidiDataService, private dataService: DataService) {
+  constructor(private nodeService: NodeService, private drawingService: DrawingService, private midiDataService: MidiDataService, private dataService: DataService,
+              private electronService: ElectronService) {
     this.config = this.drawingService.config;
   }
 
@@ -208,6 +211,10 @@ export class DrawAudioService {
 
             this.dataService.selectElement(d.id, d.vis.x, d.vis.y, d.vis.width, null);
           }
+        })
+        .on('end', (event: any, d: any) => {
+          d.effect.name = effectname + '-CC-' + d.vis.y;
+          this.drawingService.updateActiveEffect(this.drawingService.file);
         });
 
       this.config.blocksSVG.selectAll('rect.blocks')
@@ -225,37 +232,34 @@ export class DrawAudioService {
         .style('stroke-width', 1)
         .style('shape-rendering', 'crispEdges')
         .on('mouseenter', (event: any, d: { id: string; }) => {
-          if (this.config.cursor.slug === 'dsel' || this.config.cursor.slug === 'sel') {
-            this.config.blocksSVG.select('#block_id_' + d.id).style('fill', '#0970ba').style('stroke', '#87c2ed');
-          }
+          this.config.blocksSVG.select('#block_id_' + d.id).style('fill', '#0970ba').style('stroke', '#87c2ed');
         })
         .on('mouseleave', (event: any, d: { id: string; }) => {
-          if (this.config.cursor.slug === 'dsel' || this.config.cursor.slug === 'sel') {
-            if (!this.midiDataService.isSelected(d.id)) {
-              this.config.blocksSVG.selectAll('#block_id_' + d.id).style('fill', '#5993bd').style('stroke', '#7fbdeb');
-            }
+          if (!this.midiDataService.isSelected(d.id)) {
+            this.config.blocksSVG.selectAll('#block_id_' + d.id).style('fill', '#5993bd').style('stroke', '#7fbdeb');
           }
         })
         .on('mousedown', (event: any, d: { id: string; vis: any; effect: any; }) => {
-          if (this.config.cursor.slug === 'dsel' || this.config.cursor.slug === 'sel') {
-            event.stopPropagation();
-            if (event.ctrlKey) {
-              //show drawing canvas
-              d.effect.name = effectname + '-CC-' + d.vis.y;
-              d.effect.range = new Range(0, d.vis.width);
+          event.stopPropagation();
+          if (event.ctrlKey) {
+            //show drawing canvas
+            d.effect.name = effectname + '-CC-' + d.vis.y;
+            d.effect.range = new Range(0, d.vis.width);
 
-              this.drawingService.openEffect(d.effect);
-            }
+            this.drawingService.openEffect(d.effect);
+            this.electronService.ipcRenderer.send('updateToolbar', { type: EffectType.midiNote });
+          } else {
             this.midiDataService.selectBlock(d.id, event.shiftKey);
             if (!event.shiftKey) {
               this.config.blocksSVG.selectAll('.blocks').style('fill', '#5993bd').style('stroke', '#7fbdeb');
               this.config.blocksSVG.select('#block_id_' + d.id).style('fill', '#0970ba').style('stroke', '#87c2ed');
             }
           }
+
         })
         .call(dragBlock)
         .append('svg:title')
-        .text(() => 'Ctrl + Click to edit');
+          .text((d: { effect: { name: string }}) => 'Ctrl + Click to edit ' + d.effect.name);
 
 
       const resizeWidthBlockLeft = d3.drag()
@@ -279,6 +283,10 @@ export class DrawAudioService {
 
             this.dataService.selectElement(d.id, d.vis.x, d.vis.y, d.vis.width, null);
           }
+        })
+        .on('end', (event: any, d:any) => {
+          d.effect.range = new Range(0, d.vis.width);
+          this.drawingService.updateActiveEffect(this.drawingService.file);
         });
 
       const resizeWidthBlockRight = d3.drag()
@@ -296,7 +304,12 @@ export class DrawAudioService {
             d3.select('#right_block_id_' + d.id).attr('x', (d: { vis: { x: number; width: number; }; }) => this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - 85);
           }
           this.dataService.selectElement(d.id, d.vis.x, d.vis.y, d.vis.width, null);
+        })
+        .on('end', (event: any, d:any) => {
+          d.effect.range = new Range(0, d.vis.width);
+          this.drawingService.updateActiveEffect(this.drawingService.file);
         });
+
 
       this.config.blocksSVG.selectAll('rect.side-left')
         .data(data)

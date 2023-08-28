@@ -40,7 +40,9 @@ export class Config {
   xAxisSmallThicks: any = null;
   slider = new SliderDrawplane();
   svg: any = null;
-
+  midi = false;
+  midiYscale: any = null;
+  newMidiYscale: any = null;
 }
 
 export class Layer {

@@ -10,7 +10,8 @@ import { Collection } from '../models/collection.model';
 import { Configuration, EffectType, OpenTab } from '../models/configuration.model';
 import { HistoryService } from './history.service';
 import { CloneService } from './clone.service';
-import { Midi, MidiNote, MidiDataType } from '../models/audio.model';
+import { MidiNote } from '../models/audio.model';
+import { MidiDataService } from './midi-data.service';
 
 @Injectable()
 export class FileService {
@@ -26,7 +27,7 @@ export class FileService {
 
   // tslint:disable-next-line: variable-name
   constructor(private localSt: LocalStorageService, private _FileSaverService: FileSaverService, private nodeService: NodeService,
-              private historyService: HistoryService, private cloneService: CloneService) {
+              private historyService: HistoryService, private cloneService: CloneService, private midiDataService: MidiDataService) {
 
     this.fs = (window as any).fs;
     // if loadfile exists, remove it from localstorage (on startup)
@@ -250,10 +251,14 @@ export class FileService {
     if (file.activeEffect) {
       if (file.activeEffect.type === EffectType.midi) { // && file.activeEffect.dataType === MidiDataType.notes
         let midiEffect = file.effects.filter(e => e.id === file.activeEffect.id)[0];
-        if (midiEffect && midiEffect.data) {
-          midiEffect.data = JSON.parse(JSON.stringify(file.activeEffect.data));
-        } else if (midiEffect) {
-          midiEffect.data = [];
+        if (midiEffect) {
+          midiEffect.range = this.cloneService.deepClone(file.activeEffect.range);
+          midiEffect.grid = this.cloneService.deepClone(file.activeEffect.grid);
+          midiEffect.date.modified = new Date().getTime();
+          if (midiEffect.data) {
+            midiEffect.data = this.cloneService.deepClone(file.activeEffect.data);
+            midiEffect.size = this.midiDataService.getSize(file.activeEffect.data);
+          }
         }
       } else {
         file.activeEffect.paths = this.nodeService.getAll();
