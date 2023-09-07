@@ -1,7 +1,8 @@
 import { Filter } from "./filter.model";
 import * as tf from '@tensorflow/tfjs';
 import { MicroController } from "./hardware.model";
-
+import { Dates } from "./file.model";
+import { Color } from "./effect.model";
 
 export enum Activation {
   elu = 'elu',
@@ -216,11 +217,23 @@ export class MotorEl {
   }
 }
 
+export class InputColor {
+  motor_index: number;
+  input_name: string;
+  hash: string;
+
+  constructor(index: number, name: string, hash: string) {
+    this.motor_index = index;
+    this.input_name = name;
+    this.hash = hash;
+  }
+}
 
 export class DataSet {
   id: String;
   name: String;
-  date: any;
+  // date: any;
+  date = new Dates();
   m: Array<MotorEl> = [];
   output = new OutputItem();
   // outputs: Array<any> = []; //convert to single outputItem
@@ -228,10 +241,10 @@ export class DataSet {
   selected = false;
   bounds = new Bounds();
   offsetTime = 0;
+  inputColors: Array<any> = [];
 
   constructor(id: String, name: String, selectedMCUs: Array<MicroController>) {
     this.id = id;
-    this.date = new Date().getTime();
     this.name = name;
 
     if (selectedMCUs) {

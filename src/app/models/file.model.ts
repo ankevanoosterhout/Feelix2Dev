@@ -7,6 +7,12 @@ export class Dates {
   created = new Date().getTime();
   modified = null;
   changed = false;
+
+  constructor(date: number = null) {
+    if (date) {
+      this.created = date;
+    }
+  }
 }
 
 

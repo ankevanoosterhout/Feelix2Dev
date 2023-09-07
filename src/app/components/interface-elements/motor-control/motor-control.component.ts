@@ -717,6 +717,12 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
           const collection = this.getCollectionFromClassName(id);
           if (collection) {
             const multiply = collection.rotation.units.PR / tmpEffect.grid.xUnit.PR;
+            let updateType = false;
+            if (collection.effects.length === 0 && collection.visualizationType !== tmpEffect.type) {
+              collection.visualizationType = tmpEffect.type;
+              collection.rotation.units = tmpEffect.grid.xUnit;
+              updateType = true;
+            }
 
             if (collection && tmpEffect && !(tmpEffect.type === EffectType.velocity && collection.visualizationType !== EffectType.velocity)) {
 
@@ -739,8 +745,8 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
               effectDetails.position.y = 0;
               effectDetails.position.top = tmpEffect.size.top;
               effectDetails.position.bottom = tmpEffect.size.bottom;
-              if (tmpEffect.grid.xUnit.name === 'ms') { effectDetails.quality = Math.ceil(effectDetails.position.width / 50); }
-              else if (tmpEffect.grid.xUnit.name === 'sec') { effectDetails.quality = Math.ceil((effectDetails.position.width * 1000)/ 50); }
+              if (tmpEffect.grid.xUnit.name === 'ms') { effectDetails.quality = Math.ceil(effectDetails.position.width / 100); }
+              else if (tmpEffect.grid.xUnit.name === 'sec') { effectDetails.quality = Math.ceil((effectDetails.position.width * 1000)/ 500); }
               else { effectDetails.quality = Math.ceil(effectDetails.position.width / 20); }
 
               collection.effects.push(effectDetails);
@@ -757,11 +763,9 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
                 if (collection.rotation.end - collection.rotation.start < tmpEffect.size.width * multiply ) {
                   collection.rotation.end = collection.rotation.start + (tmpEffect.size.width * multiply);
                 }
-
-                this.motorControlService.drawCollection(collection);
-              } else {
-                this.motorControlService.drawCollectionEffects(collection);
               }
+
+              this.motorControlService.drawCollection(collection);
             }
           }
         }

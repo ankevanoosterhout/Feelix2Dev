@@ -94,7 +94,7 @@ export class TensorFlowDrawService {
   }
 
 
-  drawTensorFlowGraphData(data: DataSet, tensorflowModel: Model, trimLines: any) {
+  drawTensorFlowGraphData(data: DataSet, trimLines: any) {
     // console.log(data);
 
     if (data && data.m.length > 0) {
@@ -104,15 +104,18 @@ export class TensorFlowDrawService {
         .attr('id', 'dataGroup')
         .attr('transform', 'translate(0,0)');
 
+      let n = 0;
       for (const m of data.m) {
-        if (m.record && m.visible) {
-          for (const input of tensorflowModel.inputs) {
-            if (input.active && input.visible) {
+        let i = 0;
+        if (m.record && m.visible && m.d && m.d.length > 0) {
+          for (const input of m.d[0].inputs) {
+            const inputColor = data.inputColors[n][i];
+            if (inputColor.visible) {
 
               dataGroup.append('path')
                 .datum(m.d)
                 .attr('fill', 'none')
-                .attr('stroke', input.color)
+                .attr('stroke', inputColor.hash)
                 .attr('stroke-width', 1.5)
                 .attr('d', d3.line()
                   .x((d: { time: number; }) => {
@@ -127,9 +130,12 @@ export class TensorFlowDrawService {
                   .append('svg:title')
                     .text(() => m.mcu.name + '-' + m.id);
 
+
             }
+            i++;
           }
         }
+        n++;
       }
 
       if (trimLines) {

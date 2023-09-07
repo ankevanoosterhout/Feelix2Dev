@@ -43,53 +43,24 @@ export class TensorFlowJSComponent implements OnInit {
       this.electronService.ipcRenderer.on('pneumaticDataPressure', (event: Event, data: any) => {
 
         for (const item of data.list) {
-          console.log(item);
-          const pressure = item.d.filter(i => i.name === 'pressure')[0].val;
+          // console.log(item);
+          const pressure = item.d.filter((i: { name: string; }) => i.name === 'pressure')[0].val;
           this.handleIncomingData(pressure, data.serialPath, item.motorID, item.d);
         }
       });
 
 
       this.electronService.ipcRenderer.on('export-dataset-model', (event: Event, data: any) => {
-        this.tensorflowService.saveDataNN();
+        this.tensorflowService.saveDataNN(data);
+      });
+
+      this.electronService.ipcRenderer.on('load-from-files', (event: Event, data: any) => {
+        this.tensorflowService.importDataSet(data);
       });
 
 
-      this.electronService.ipcRenderer.on('load-datasets', (event: Event, data: any) => {
-        if (data) {
-          for (const dataset of data) {
-            if (this.d.dataSets.filter(d => d.id === dataset.id).length === 0) {
-              this.d.dataSets.push(dataset);
-              for (const motor of dataset.m) {
-                if (this.d.selectedMicrocontrollers.filter(m => m.id === motor.mcu.id).length === 0) {
-                  const mcu = this.hardwareService.microcontrollers.filter(m => m.id === motor.mcu.id)[0];
-                  if (mcu) {
-                    this.d.selectOptionMicrocontroller = mcu;
-                    this.tensorflowService.addMicrocontroller();
-                  }
-                }
-              }
-              if (dataset.output.classifier_id) {
-                const outputClassifierInModel = this.d.selectedModel.outputs.filter(o => o.id === dataset.output.classifier_id)[0];
-
-                if (!outputClassifierInModel) {
-                  const newClassifier = new Classifier(dataset.output.classifier_id, dataset.output.classifier_name);
-                  this.d.selectedModel.outputs.push(newClassifier);
-                  this.tensorflowService.selectClassifier(newClassifier.id);
-                  this.checkIfHasLabel(newClassifier, dataset.output.label);
-                } else {
-                  this.checkIfHasLabel(outputClassifierInModel, dataset.output.label);
-                  this.tensorflowService.selectClassifier(outputClassifierInModel.id);
-                }
-              }
-            }
-          }
-          if (this.d.dataSets.length > 0) {
-            this.tensorflowService.selectDataSet(this.d.dataSets[0].id);
-          } else {
-            this.d.dataSets.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0));
-          }
-        }
+      this.electronService.ipcRenderer.on('load-datasets', (event: Event, data: Array<DataSet>) => {
+        this.loadDataSets(data);
       });
 
 
@@ -118,7 +89,7 @@ export class TensorFlowJSComponent implements OnInit {
       this.tensorflowService.updateGraph.subscribe(data => {
         this.tensorflowDrawService.drawGraph();
         if (data) {
-          this.tensorflowDrawService.drawTensorFlowGraphData(data.set, data.model, data.trimLines);
+          this.tensorflowDrawService.drawTensorFlowGraphData(data.set, data.trimLines);
         }
       });
 
@@ -157,6 +128,11 @@ export class TensorFlowJSComponent implements OnInit {
       this.electronService.ipcRenderer.on('train-model', (event: Event) => {
         this.document.getElementById('initialize').click();
       });
+
+
+      this.tensorflowService.loadData.subscribe((res) => {
+        this.loadDataSets(res);
+      });
   }
 
   ngOnInit(): void {
@@ -168,6 +144,70 @@ export class TensorFlowJSComponent implements OnInit {
     this.tensorflowService.addLabelToClassifier(0);
   }
 
+
+
+
+  loadDataSets(data: Array<DataSet>) {
+    if (data) {
+      for (const dataset of data) {
+        if (this.d.dataSets.filter(d => d.id === dataset.id).length === 0) {
+          if (dataset.inputColors === undefined) {
+            dataset.inputColors = [];
+          }
+
+
+          let m = 0;
+          for (const motor of dataset.m) {
+            if (this.d.selectedMicrocontrollers.filter(m => m.id === motor.mcu.id).length === 0) {
+              const mcu = this.hardwareService.microcontrollers.filter(m => m.id === motor.mcu.id)[0];
+              if (mcu) {
+                this.d.selectOptionMicrocontroller = mcu;
+                this.tensorflowService.addMicrocontroller();
+              }
+            }
+            if (motor.d.length > 0) {
+              let i = 0;
+              for (const input of motor.d[0].inputs) {
+                let inputModel = this.d.selectedModel.inputs.filter(i => i.name === input.name)[0];
+                if (inputModel) {
+                  if (!inputModel.active) { inputModel.active = true; }
+                } else {
+                  this.tensorflowService.addInputItem(input.name);
+                  inputModel = this.d.selectedModel.inputs.filter(i => i.name === input.name)[0];
+                }
+                const inputColor = inputModel.color;
+                if (!dataset.inputColors[m]) dataset.inputColors[m] = [];
+                !dataset.inputColors[m][i] ? dataset.inputColors[m].push({ 'hash': inputColor, 'visible': true }) : dataset.inputColors[m][i] = { 'hash': inputColor, 'visible': true };
+                i++;
+              }
+            }
+            m++;
+          }
+          this.d.dataSets.push(dataset);
+
+          if (dataset.output.classifier_id) {
+            const outputClassifierInModel = this.d.selectedModel.outputs.filter(o => o.id === dataset.output.classifier_id)[0];
+
+            if (!outputClassifierInModel) {
+              const newClassifier = new Classifier(dataset.output.classifier_id, dataset.output.classifier_name);
+              this.d.selectedModel.outputs.push(newClassifier);
+              this.tensorflowService.selectClassifier(newClassifier.id);
+              this.checkIfHasLabel(newClassifier, dataset.output.label);
+            } else {
+              this.checkIfHasLabel(outputClassifierInModel, dataset.output.label);
+              this.tensorflowService.selectClassifier(outputClassifierInModel.id);
+            }
+          }
+
+        }
+      }
+      if (this.d.dataSets.length > 0) {
+        this.tensorflowService.selectDataSet(this.d.dataSets[0].id);
+      } else {
+        this.d.dataSets.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0));
+      }
+    }
+  }
 
   startRecording(data: number) {
     if (this.d.recording.active && this.d.recording.starttime === null && (data > 0.03 || data < -0.03)) {
@@ -187,7 +227,7 @@ export class TensorFlowJSComponent implements OnInit {
       this.tensorflowDrawService.updateBounds(dataSetEl.bounds);
     }
     this.tensorflowDrawService.drawGraph();
-    this.tensorflowDrawService.drawTensorFlowGraphData(dataSetEl, this.d.selectedModel, this.d.trimLinesVisible ? this.d.trimLines : null);
+    this.tensorflowDrawService.drawTensorFlowGraphData(dataSetEl, this.d.trimLinesVisible ? this.d.trimLines : null);
   }
 
 
@@ -210,7 +250,8 @@ export class TensorFlowJSComponent implements OnInit {
             const dataObject = new Data();
 
             for (const input of this.d.selectedModel.inputs) {
-              const dataItem = receivedData.filter(d => d.input.slug === input.slug)[0]; //data.d
+              const dataItem = receivedData.filter((d: { slug: string; }) => d.slug === input.slug)[0]; //data.d
+              // console.log(dataItem, input);
 
               if (dataItem) {
                 const inputItem = new InputItem(input.name);
@@ -251,11 +292,11 @@ export class TensorFlowJSComponent implements OnInit {
   checkBounds(value: number) {
     if (!this.d.classify) {
       if (value > this.d.selectedDataset.bounds.yMax) {
-        this.d.selectedDataset.bounds.yMax = value >= 10 || this.d.selectedDataset.bounds.yMin <= -10 ? Math.ceil(value/10) * 10 : Math.ceil(value / 2) * 2;
+        this.d.selectedDataset.bounds.yMax = value >= 10 || this.d.selectedDataset.bounds.yMin <= -10 ? Math.ceil(value/10) * 10 : Math.ceil(value);
         this.tensorflowDrawService.updateBounds(this.d.selectedDataset.bounds);
 
       } else if (value < this.d.selectedDataset.bounds.yMin) {
-        this.d.selectedDataset.bounds.yMin = value <= -10 || this.d.selectedDataset.bounds.yMax >= 10 ? Math.floor(value/10) * 10 : Math.floor(value / 2) * 2;
+        this.d.selectedDataset.bounds.yMin = value <= -10 || this.d.selectedDataset.bounds.yMax >= 10 ? Math.floor(value/10) * 10 : Math.floor(value); //Math.floor(value/2) * 2
         this.tensorflowDrawService.updateBounds(this.d.selectedDataset.bounds);
       }
     }
@@ -267,15 +308,15 @@ export class TensorFlowJSComponent implements OnInit {
   }
 
 
-  public loadScript(url: string) {
-    let body = <HTMLDivElement> document.body;
-    let script = document.createElement('script');
-    script.innerHTML = '';
-    script.src = url;
-    script.async = true;
-    script.defer = true;
-    body.appendChild(script);
-  }
+  // public loadScript(url: string) {
+  //   let body = <HTMLDivElement> document.body;
+  //   let script = document.createElement('script');
+  //   script.innerHTML = '';
+  //   script.src = url;
+  //   script.async = true;
+  //   script.defer = true;
+  //   body.appendChild(script);
+  // }
 
 
 
@@ -301,14 +342,14 @@ export class TensorFlowJSComponent implements OnInit {
 
   @HostListener('window:resize', ['$event'])
   onResize(event: Event) {
-    this.config.width = (window.innerWidth - 470);
+    // this.config.width = (window.innerWidth - 550); //470
+    this.config.width = window.innerWidth - 250 - (this.config.sidebarColumnWidth[0] + this.config.sidebarColumnWidth[1]);
     this.config.height = window.innerHeight - this.config.horizontalScreenDivision - 120;
     this.document.getElementById('data').style.height = (window.innerHeight - this.config.horizontalScreenDivision) + 'px';
     this.document.getElementById('model').style.width = (window.innerWidth * this.config.verticalScreenDivision / 100) + 'px';
     this.document.getElementById('classifiers').style.width = (window.innerWidth * (100-this.config.verticalScreenDivision) / 100) + 'px';
     this.tensorflowDrawService.drawGraph();
-    this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.selectedModel,
-      this.d.trimLinesVisible ? this.d.trimLines : null);
+    this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.trimLinesVisible ? this.d.trimLines : null);
   }
 
 
@@ -340,8 +381,7 @@ export class TensorFlowJSComponent implements OnInit {
           this.document.getElementById('toggleDataSection').classList.remove('hidden');
         }
         this.tensorflowDrawService.drawGraph();
-        this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.selectedModel,
-          this.d.trimLinesVisible ? this.d.trimLines : null);
+        this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.trimLinesVisible ? this.d.trimLines : null);
       }
 
 

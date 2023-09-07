@@ -9,7 +9,9 @@ export class TensorFlowConfig {
 
   bounds = new Bounds();
 
-  width = window.innerWidth - 470;
+  sidebarColumnWidth = [150, 150];
+
+  width = window.innerWidth - 250 - (this.sidebarColumnWidth[0] + this.sidebarColumnWidth[1]);
   height = window.innerHeight - 340;
 
   margin = 30;
@@ -23,4 +25,5 @@ export class TensorFlowConfig {
 
   horizontalScreenDivision = 220;
   verticalScreenDivision = 70;
+
 }

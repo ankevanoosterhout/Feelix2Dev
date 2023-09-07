@@ -1,0 +1,149 @@
+.form-row {
+  padding: 1px 0;
+}
+
+.list-item {
+  width: 100%;
+  border-bottom: 1px solid #eee;
+}
+
+.list-item:hover {
+  background: #ddd;
+}
+
+.list-item:active {
+  background: #efefef;
+}
+
+.table-header {
+  background: #8a8a8a;
+  margin-left: 1px;
+  margin-bottom: -1px;
+}
+
+.labelRow {
+  display: inline-block;
+  width: auto;
+  box-sizing: border-box;
+  font-family: 'Open Sans', Arial, sans-serif;
+  font-size: 11px;
+  line-height: 16px;
+  padding: 6px 10px;
+  height: auto;
+  color: #1c1c1c;
+  user-select:none;
+  vertical-align: top;
+}
+
+
+.selected {
+  background: #00aeef82;
+}
+
+.button {
+  vertical-align: top;
+  padding: 1px 10px;
+  float: right;
+}
+
+.button img {
+  width: auto;
+  height: 17px;
+}
+
+.inputfield {
+  background: #fff;
+  border: 1px solid #1c1c1c;
+  padding-top: 1px;
+  height: calc(100vh - 150px);
+  overflow-y: auto;
+  width: 100%;
+}
+
+button {
+  min-width: 60px;
+}
+
+    /* width */
+.inputfield::-webkit-scrollbar, #data_output_list::-webkit-scrollbar {
+  width: 6px;
+}
+
+/* Track */
+.inputfield::-webkit-scrollbar-track, #data_output_list::-webkit-scrollbar-track {
+  background: 'transparent';
+}
+
+/* Handle */
+.inputfield::-webkit-scrollbar-thumb, #data_output_list::-webkit-scrollbar-thumb {
+  background: #1c1c1c;
+}
+
+/* Handle on hover */
+.inputfield::-webkit-scrollbar-thumb:hover, #data_output_list::-webkit-scrollbar-thumb:hover {
+  background: #111;
+}
+
+.checkbox-container {
+  pointer-events: none;
+  user-select: none;
+}
+
+.checkmark.checkbox {
+  background-color: #fff;
+  border: 1px solid #1a1a1a;
+  pointer-events: none;
+  user-select: none;
+}
+
+.checkbox-container .checkmark:after {
+  color: #222;
+}
+
+.window-content {
+  margin: 12px 0 0 0;
+}
+
+.window-content input[type='checkbox'] {
+  margin: 4px 7px 0!important;
+}
+
+
+
+
+ul.data-columns {
+  display: inline-flex;
+  flex-direction: row;
+  width: 100%;
+  margin:0;
+  padding:0;
+  list-style-type:none;
+}
+
+ul.data-columns li {
+  display: inline-flex;
+  height: auto;
+  overflow:hidden;
+  font-family: 'Open Sans', Arial, sans-serif;
+  font-size: 11px;
+  line-height: 16px;
+  padding: 8px 10px;
+  color: #666;
+}
+ul.data-columns li.cb {
+  width: 20px;
+}
+
+ul.data-columns li.name {
+  width: 200px;
+}
+
+ul.data-columns li.date {
+  width: 100px;
+}
+
+
+.data-columns li.header {
+  font-weight: 600;
+  color: #fff;
+}

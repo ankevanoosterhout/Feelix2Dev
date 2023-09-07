@@ -27,7 +27,7 @@ export class TensorFlowMainService {
     updateGraphBounds: Subject<any> = new Subject();
     updateGraph: Subject<any> = new Subject();
     drawTrimLines: Subject<any> = new Subject();
-    createJSON: Subject<any> = new Subject();
+    loadData: Subject<any> = new Subject();
 
     constructor(@Inject(DOCUMENT) private document: Document, public hardwareService: HardwareService, private dataSetService: DataSetService,
                 private tensorflowModelService: TensorFlowModelService, private electronService: ElectronService, private _FileSaverService: FileSaverService) {
@@ -38,8 +38,8 @@ export class TensorFlowMainService {
 
 
 
-    deleteDataSet() {
-      const set = this.d.dataSets.filter(s => s.open)[0];
+    deleteDataSet(id: string = null) {
+      const set = this.d.dataSets.filter(s => id ? s.id === id : s.open)[0];
       if (set) {
         const index = this.d.dataSets.indexOf(set);
         this.d.dataSets.splice(index, 1);
@@ -47,6 +47,7 @@ export class TensorFlowMainService {
           this.selectDataSet(this.d.dataSets[0].id);
         } else {
           this.updateGraph.next();
+          this.d.selectedDataset = null;
         }
       }
     }
@@ -74,20 +75,26 @@ export class TensorFlowMainService {
       }
     }
 
-    exportDataSet() {
-      const dataSet = this.d.dataSets.filter(d => d.open)[0];
-      if (dataSet) {
-        const data = { data: this.createJSON.next({ data: [dataSet], train: false }) };
-        const blob = new Blob([JSON.stringify(data)], { type: 'text/plain' });
-        const fileName = dataSet.name + '.json';
+    exportDataSet(dataSets: Array<DataSet>) {
+
+      if (dataSets && dataSets.length > 0) {
+        const blob = new Blob([JSON.stringify(dataSets)], { type: 'text/plain' });
+        const fileName = dataSets[0].name + '.json';
         this._FileSaverService.save(blob, fileName, 'text/plain');
       } else {
         this.updateProgess('No data set selected', 0);
       }
     }
 
-    importDataSet() {
+    importDataSet(data: any) {
       //open dialogue window
+      if (data) {
+        const dataObj = JSON.parse(data);
+        this.loadData.next(dataObj);
+      }
+      if (this.d.dataSets.length > 0) {
+        this.selectDataSet(this.d.dataSets[this.d.dataSets.length - 1].id);
+      }
     }
 
     trimDataSet() {
@@ -162,12 +169,16 @@ export class TensorFlowMainService {
       this.electronService.ipcRenderer.send('load-dataset');
     }
 
-    saveDataNN() {
+
+
+    saveDataNN(data: any) {
       if (this.d.selectedModel.model) {
         this.d.selectedModel.model.saveData('training-data-' + this.d.selectedModel.name, this.itemsSaved);
-      } else {
-        this.exportDataSet();
       }
+      this.exportDataSet(data ? data : [this.d.selectedDataset]);
+      // else {
+      //   this.exportDataSet();
+      // }
     }
 
     itemsSaved = ((error: any) => {
@@ -227,9 +238,9 @@ export class TensorFlowMainService {
       this.d.selectedModel.options = this.d.selectedModel.type === ModelType.neuralNetwork ? new NN_options() : new Regression_options();
     }
 
-    addInputItem() {
+    addInputItem(name = 'untitled') {
       const nrOfInputs = this.d.selectedModel.inputs.length;
-      this.d.selectedModel.inputs.push(new ModelVariable('untitled-' + (nrOfInputs - 5), false, false, '#FFFFFF', 'V' + (nrOfInputs - 5)));
+      this.d.selectedModel.inputs.push(new ModelVariable(name + '-' + (nrOfInputs - 5), false, false, '#FFFFFF', 'V' + (nrOfInputs - 5)));
     }
 
     deleteInputItem(i: number) {
@@ -257,7 +268,6 @@ export class TensorFlowMainService {
     }
 
     updateClassifier(i: number, pos: number) {
-      console.log(i, pos);
       const value = (this.document.getElementById('classifier-' + pos + '-' + i) as HTMLInputElement).value;
       this.d.selectedModel.outputs[i].name = value;
       (this.document.getElementById('classifier-' + (pos === 1 ? 2 : 1) + '-' + i) as HTMLInputElement).value = value;
@@ -325,6 +335,7 @@ export class TensorFlowMainService {
         motorEl.record = m.record;
         motorEl.visible = true;
         dataSet.m.push(motorEl);
+        dataSet.inputColors[dataSet.m.length - 1] = this.d.colorList;
       }
     }
 
@@ -334,6 +345,7 @@ export class TensorFlowMainService {
           const index = dataSet.m.indexOf(m);
           if (index > -1) {
             dataSet.m.splice(index, 1);
+            dataSet.inputColors.splice(index, 1);
           }
         }
       }
@@ -386,7 +398,7 @@ export class TensorFlowMainService {
 
     loadModel(id: String) {
       const modelData = this.tensorflowModelService.getModel(id);
-      console.log(modelData);
+      // console.log(modelData);
       if (modelData) {
         this.d.selectedModel = modelData;
         if (modelData.model) {

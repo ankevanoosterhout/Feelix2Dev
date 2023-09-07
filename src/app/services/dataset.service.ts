@@ -4,6 +4,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { Subject } from 'rxjs';
 import { CloneService } from './clone.service';
 import { DataSet } from '../models/tensorflow.model';
+import { Dates } from '../models/file.model';
 
 @Injectable()
 export class DataSetService {
@@ -67,12 +68,15 @@ export class DataSetService {
       this.getDataFromLocalStorage();
       let dataSetLib = this.dataSetLibrary.filter(d => d.id === dataSet.id)[0];
       if (dataSetLib) {
+        dataSet.date.modified = new Date().getTime();
         dataSetLib = this.cloneService.deepClone(dataSet);
+        dataSetLib.date = this.cloneService.deepClone(dataSet.date);
+
       } else {
         dataSet.id = uuid();
+        dataSet.date.modified = new Date().getTime();
         this.dataSetLibrary.push(dataSet);
       }
-
       this.store();
     }
   }
@@ -80,6 +84,7 @@ export class DataSetService {
   copyDataSet(dataSet: DataSet) {
     if (dataSet) {
       const copy = this.cloneService.deepClone(dataSet);
+      copy.date = this.cloneService.deepClone(dataSet.date);
       copy.id = uuid();
       copy.selected = false;
       return copy;
@@ -95,7 +100,7 @@ export class DataSetService {
 
   store() {
     this.localSt.store('dataSetLibrary', this.dataSetLibrary);
-    // console.log(this.dataSetLibrary);
+    console.log(this.dataSetLibrary);
   }
 
 

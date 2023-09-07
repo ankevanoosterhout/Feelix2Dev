@@ -644,8 +644,10 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
         const nrSelectedNodes = this.nodeService.selectedNodes.length;
 
         if (this.file.activeCollectionEffect !== null && activeSelection.length === 0 && this.nodeService.selectedPaths.length === 0) {
-          this.motorControlService.deleteCollectionEffect(this.file.activeCollectionEffect.id);
-          this.file.activeCollectionEffect = null;
+          if (!this.file.activeCollection.playing) {
+            this.motorControlService.deleteCollectionEffect(this.file.activeCollectionEffect.id);
+            this.file.activeCollectionEffect = null;
+          }
         } else {
 
           if (activeSelection) { this.fileService.deleteGuides(activeSelection); }

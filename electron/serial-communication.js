@@ -308,7 +308,7 @@ class newSerialPort {
           const data = {
               major: parseInt(dataArray[0]),
               minor: parseInt(dataArray[1]),
-              patch: parseInt(dataArray[2]),
+              patch: parseInt(dataArray[2])
           };
           if (data.major !== softwareVersion.major || data.minor !== softwareVersion.minor) {
             main.showMessageConfirmation({ msg: "The software version of Feelix does not match the software version on the microcontroller (v"

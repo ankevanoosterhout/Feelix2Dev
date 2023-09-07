@@ -27,4 +27,5 @@ export class TensorFlowData {
   trimLinesVisible = false;
   trimLines = [ { id: 0, value: null }, { id: 1, value: null } ];
 
+  colorList = ['#43E6D5', '#00AEEF', '#E18257', '#4390E6', '#7778E0'];
 }

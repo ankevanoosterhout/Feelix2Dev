@@ -385,13 +385,14 @@ const ml_control_menu_template = [
     label: 'Data',
     submenu: [
       {
-        label: 'Load',
+        label: 'Load from file',
         click() {
-          createLoadDataSetWindow("load-dataset");
+          // tensorflowWindow.webContents.send('load-from-files');
+          openFileDialog('json', 'loadData', 'loadDataLocation');
         }
       },
       {
-        label: 'Export',
+        label: 'Export as file',
         click() {
           tensorflowWindow.webContents.send('export-dataset-model');
         }
@@ -589,18 +590,23 @@ const kinematics_menu_template = [
 
 
 
-function openFileDialog(extension, storage, location) {
+function openFileDialog(extension, storage, location, storeLocal) {
   dialog.showOpenDialog({ filters: [{ name: 'All Files', extensions: [extension, 'json'] }] }, function (fileName) {
     if (fileName != null) {
       jsonfile.readFile(fileName[0], function (err, obj) {
         let loadFile = JSON.stringify(JSON.stringify(obj));
         let loadFileLocation = JSON.stringify(JSON.stringify(fileName[0]));
-        // console.log(obj);
-        // localStorage.removeItem('loadFile');
-        // localStorage.removeItem('loadFileLocation');
 
-        localStorage.setItem(storage, (loadFile.substring(1, loadFile.length - 1)));
-        localStorage.setItem(location, (loadFileLocation.substring(1, loadFileLocation.length - 1)));
+        if (storeLocal) {
+
+          localStorage.setItem(storage, (loadFile.substring(1, loadFile.length - 1)));
+          localStorage.setItem(location, (loadFileLocation.substring(1, loadFileLocation.length - 1)));
+
+        } else {
+          if (tensorflowWindow) {
+            tensorflowWindow.webContents.send('load-from-files', JSON.stringify(obj));
+          }
+        }
       });
     }
   });
@@ -971,7 +977,7 @@ function createFileSettingWindow(filepath) {
 }
 
 function createLoadDataSetWindow(filepath) {
-  drawTemporaryWindow(300, 300, 400, 300, 'Load Data Sets', true, filepath);
+  drawTemporaryWindow(560, 300, 400, 300, 'Load Data Sets', true, filepath);
 }
 
 function createEffectSettingWindow(filepath) {
@@ -1206,6 +1212,9 @@ ipcMain.on('load-model', function(e, data) {
   tensorflowWindow.webContents.send('load-model', data);
 });
 
+ipcMain.on('export-datasets', function(e, data) {
+  tensorflowWindow.webContents.send('export-dataset-model', data);
+});
 
 ipcMain.on('saveLogFile', function(e, data) {
   const timeStamp = new Date().getTime();

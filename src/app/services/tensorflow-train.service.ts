@@ -17,9 +17,9 @@ export class TensorFlowTrainService {
   constructor(@Inject(DOCUMENT) private document: Document, private tensorflowService: TensorFlowMainService) {
     this.d = this.tensorflowService.d;
 
-    this.tensorflowService.createJSON.subscribe((res) => {
-      this.createJSONfromDataSet(res.data, res.train);
-    });
+    // this.tensorflowService.createJSON.subscribe((res) => {
+    //   const JSONData = this.createJSONfromDataSet(res.data, res.train);
+    // });
   }
 
   predictOutput() {
@@ -53,15 +53,13 @@ export class TensorFlowTrainService {
 
 
   createJSONfromDataSet(dataSets: Array<DataSet>, train = true) {
-    // console.log(dataSets);
     const data = { xs: [], ys: [] };
     let dataSize = 0;
 
     dataSets.forEach(set => {
 
       let outputs = [];
-
-      if (train && set.output.label.id) {
+      if (set.output.label.id) {
 
         for (const classifier of this.d.selectedModel.outputs) {
           if (classifier.active && classifier.id === set.output.classifier_id) {
@@ -86,7 +84,6 @@ export class TensorFlowTrainService {
         let inputArray = [];
         let i = 0;
         let n = 0 + dataSize;
-
 
         if (motor.d.length > 0) {
 
@@ -126,8 +123,6 @@ export class TensorFlowTrainService {
 
       dataSize = data.xs.length;
     });
-
-    console.log(data);
 
     return data;
   }

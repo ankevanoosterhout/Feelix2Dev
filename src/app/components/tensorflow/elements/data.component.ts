@@ -9,6 +9,7 @@ import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service'
 import { MicroController, Motor } from 'src/app/models/hardware.model';
 import { MotorEl } from 'src/app/models/tensorflow.model';
 import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
+import { TensorFlowConfig } from 'src/app/models/tensorflow-config.model';
 
 
 
@@ -22,11 +23,13 @@ export class DataComponent implements AfterViewInit {
 
   dataVisible = true;
   public d: TensorFlowData;
+  public config: TensorFlowConfig;
 
 
   constructor(@Inject(DOCUMENT) private document: Document,public tensorflowService: TensorFlowMainService, public hardwareService: HardwareService,
               private electronService: ElectronService, private uploadService: UploadService, private tensorflowDrawService: TensorFlowDrawService) {
                 this.d = this.tensorflowService.d;
+                this.config = this.tensorflowDrawService.config;
               }
 
 
@@ -71,18 +74,17 @@ export class DataComponent implements AfterViewInit {
     this.tensorflowService.updateResize((!this.dataVisible ? window.innerHeight - 60 : window.innerHeight * 0.45));
   }
 
-  toggleVisibilityInput(name: string) {
-    const input = this.d.selectedModel.inputs.filter(n => n.name == name)[0];
-    input.visible = !input.visible;
+  toggleVisibilityInput(motorIndex: number, inputColor: number) {
+    this.d.selectedDataset.inputColors[motorIndex][inputColor].visible = !this.d.selectedDataset.inputColors[motorIndex][inputColor].visible;
     if (this.d.selectedDataset) {
-      this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.selectedModel, this.d.selectedMicrocontrollers);
+      this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.selectedMicrocontrollers);
     }
   }
 
   toggleVisibilityMotor(m: MotorEl) {
     if (m) {
       m.visible = !m.visible;
-      this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.selectedModel, this.d.selectedMicrocontrollers);
+      this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.selectedMicrocontrollers);
     }
   }
 
@@ -94,6 +96,46 @@ export class DataComponent implements AfterViewInit {
           m.visible = true;
         }
       }
+    }
+  }
+  getFirstChar(fullName: string) {
+    return fullName.charAt(0);
+  }
+
+  updateSidebarColumn(index: number) {
+    this.tensorflowDrawService.config.sidebarColumnWidth[index] = this.tensorflowDrawService.config.sidebarColumnWidth[index] === 150 ? 30 : 150;
+    (this.document.getElementById('sidebar-column-' + index) as HTMLElement).style.width = this.tensorflowDrawService.config.sidebarColumnWidth[index] + 'px';
+
+    this.tensorflowDrawService.config.sidebarColumnWidth[index] === 150 ?
+      this.document.getElementById('toggleSidebarColumn' + index).classList.remove('hidden') : this.document.getElementById('toggleSidebarColumn' + index).classList.add('hidden');
+
+    this.tensorflowDrawService.config.width = window.innerWidth - 250 - (this.tensorflowDrawService.config.sidebarColumnWidth[0] + this.tensorflowDrawService.config.sidebarColumnWidth[1]);
+
+    (this.document.getElementById('svg_graph') as HTMLElement).style.width = this.tensorflowDrawService.config.width + 'px';
+
+    this.tensorflowDrawService.drawGraph();
+
+    if (this.d.selectedDataset) {
+      this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.trimLinesVisible ? this.d.trimLines : null);
+    }
+  }
+
+  changeColorInputItem(motorIndex: number, inputColor: number) {
+    const currentColor = this.d.selectedDataset.inputColors[motorIndex][inputColor].hash;
+    this.d.selectedDataset.inputColors[motorIndex][inputColor].hash = this.getNextColor(currentColor);
+    if (this.d.selectedDataset) {
+      this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.selectedMicrocontrollers);
+    }
+  }
+
+  getNextColor(color: string) {
+    const index = this.d.colorList.indexOf(color);
+    if (index > -1) {
+      const nextIndex = (index + 1) % this.d.colorList.length;
+      return this.d.colorList[nextIndex];
+    } else {
+      this.d.colorList.push(color);
+      return this.d.colorList[0];
     }
   }
 
