@@ -124,23 +124,42 @@
                   <div class="list-text-item" [ngClass]="{ active: m.visible }" *ngIf="m.record && this.config.sidebarColumnWidth[0] > 30" (click)="toggleVisibilityMotor(m)">{{ m.mcu.name }} - {{ m.id }}</div>
                   <div class="list-text-item" [ngClass]="{ active: m.visible }" *ngIf="m.record && this.config.sidebarColumnWidth[0] === 30" (click)="toggleVisibilityMotor(m)">{{ m.id }}</div>
 
-                  <div class="row">
-                    <ul class="input-list-buttons" *ngIf="m.d && m.d.length > 0 && m.visible">
-                      <li class="input-list-button-item" *ngFor="let input of m.d[0].inputs; let i = index;">
+                  <div class="row" *ngIf="(!m.d || m.d.length === 0) && this.d.selectedModel && m.visible">
+                    <ul class="input-list-buttons">
+                      <li class="input-list-button-item" *ngFor="let input of this.d.selectedModel.inputs; let i = index;">
 
-                        <div class="list-text-item input-list-button-item-content" *ngIf="this.d.selectedDataset.inputColors[n][i] && this.d.selectedDataset.inputColors[n][i].visible">
-                          <div [ngStyle]="{'background': this.d.selectedDataset.inputColors[n][i].hash }" class="active" (click)="toggleVisibilityInput(n, i)" *ngIf="this.config.sidebarColumnWidth[0] > 30">{{ input.name }}</div>
-                          <div [ngStyle]="{'background': this.d.selectedDataset.inputColors[n][i].hash }" class="active uppercase" (click)="toggleVisibilityInput(n, i)" *ngIf="this.config.sidebarColumnWidth[0] === 30">{{ getFirstChar(input.name) }}</div>
+                        <div class="list-text-item input-list-button-item-content" *ngIf="input.active && m.colors[i].visible">
+                          <div [ngStyle]="{'background': m.colors[i].hash }" class="active" (click)="toggleVisibilityInput(m, i)" *ngIf="this.config.sidebarColumnWidth[0] > 30">{{ input.name }}</div>
+                          <div [ngStyle]="{'background': m.colors[i].hash }" class="active uppercase" (click)="toggleVisibilityInput(m, i)" *ngIf="this.config.sidebarColumnWidth[0] === 30">{{ getFirstChar(input.name) }}</div>
 
-                          <div [ngStyle]="{'background': this.d.selectedDataset.inputColors[n][i].hash }" class="color-editor" id="color-editor-{{ n }}-{{ i }}" (click)="changeColorInputItem(n, i)">
+                          <div [ngStyle]="{'background': m.colors[i].hash }" class="color-editor" id="color-editor-{{ m.id }}-{{ i }}" (click)="changeColorInputItem(m, i)">
                             <img src="./assets/icons/buttons/brush.svg"/>
                           </div>
                         </div>
-                        <div class="list-text-item input-list-button-item-content" *ngIf="!this.d.selectedDataset.inputColors[n][i].visible && this.config.sidebarColumnWidth[0] > 30" (click)="toggleVisibilityInput(n, i)"><div>{{ input.name }}</div></div>
-                        <div class="list-text-item" *ngIf="!this.d.selectedDataset.inputColors[n][i].visible && this.config.sidebarColumnWidth[0] === 30" (click)="toggleVisibilityInput(n, i)"><div>{{ getFirstChar(input.name) }}</div></div>
+                        <div class="list-text-item input-list-button-item-content" *ngIf="input.active && !m.colors[i].visible && this.config.sidebarColumnWidth[0] > 30" (click)="toggleVisibilityInput(m, i)"><div>{{ input.name }}</div></div>
+                        <div class="list-text-item" *ngIf="!m.colors[i].visible && this.config.sidebarColumnWidth[0] === 30" (click)="toggleVisibilityInput(m, i)"><div>{{ getFirstChar(input.name) }}</div></div>
                       </li>
                     </ul>
                   </div>
+
+                  <div class="row" *ngIf="m.d && m.d.length > 0 && m.visible">
+                    <ul class="input-list-buttons">
+                      <li class="input-list-button-item" *ngFor="let input of m.d[0].inputs; let i = index;">
+
+                        <div class="list-text-item input-list-button-item-content" *ngIf="m.colors[i] && m.colors[i].visible">
+                          <div [ngStyle]="{'background': m.colors[i].hash }" class="active" (click)="toggleVisibilityInput(m, i)" *ngIf="this.config.sidebarColumnWidth[0] > 30">{{ input.name }}</div>
+                          <div [ngStyle]="{'background': m.colors[i].hash }" class="active uppercase" (click)="toggleVisibilityInput(m, i)" *ngIf="this.config.sidebarColumnWidth[0] === 30">{{ getFirstChar(input.name) }}</div>
+
+                          <div [ngStyle]="{'background': m.colors[i].hash }" class="color-editor" id="color-editor-{{ m.id }}-{{ i }}" (click)="changeColorInputItem(m, i)">
+                            <img src="./assets/icons/buttons/brush.svg"/>
+                          </div>
+                        </div>
+                        <div class="list-text-item input-list-button-item-content" *ngIf="!m.colors[i].visible && this.config.sidebarColumnWidth[0] > 30" (click)="toggleVisibilityInput(m, i)"><div>{{ input.name }}</div></div>
+                        <div class="list-text-item" *ngIf="!m.colors[i].visible && this.config.sidebarColumnWidth[0] === 30" (click)="toggleVisibilityInput(m, i)"><div>{{ getFirstChar(input.name) }}</div></div>
+                      </li>
+                    </ul>
+                  </div>
+
                 </li>
               </ul>
             </div>

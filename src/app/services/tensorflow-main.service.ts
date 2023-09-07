@@ -234,6 +234,13 @@ export class TensorFlowMainService {
       this.d.dataSets.filter(d => d.id === id)[0].name = value;
     }
 
+    updateDataSetInputColor(id: String, motorIndex: number, colorIndex: number, color: string) {
+      const set = this.d.dataSets.filter(d => d.id === id)[0];
+      if (set) {
+        set.m[motorIndex].colors[colorIndex].hash = color;
+      }
+    }
+
     updateModelType() {
       this.d.selectedModel.options = this.d.selectedModel.type === ModelType.neuralNetwork ? new NN_options() : new Regression_options();
     }
@@ -334,8 +341,8 @@ export class TensorFlowMainService {
         const motorEl = new MotorEl(mcu.id, mcu.name, mcu.serialPort.path, m.id, index);
         motorEl.record = m.record;
         motorEl.visible = true;
+        motorEl.colors = JSON.parse(JSON.stringify(this.d.colorList));
         dataSet.m.push(motorEl);
-        dataSet.inputColors[dataSet.m.length - 1] = this.d.colorList;
       }
     }
 
@@ -345,7 +352,6 @@ export class TensorFlowMainService {
           const index = dataSet.m.indexOf(m);
           if (index > -1) {
             dataSet.m.splice(index, 1);
-            dataSet.inputColors.splice(index, 1);
           }
         }
       }

@@ -1,7 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { Component, OnInit, Inject, HostListener } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
-import { Classifier, Data, DataSet, InputItem, Label } from 'src/app/models/tensorflow.model';
+import { Classifier, Data, DataSet, InputColor, InputItem, Label } from 'src/app/models/tensorflow.model';
 import { HardwareService } from 'src/app/services/hardware.service';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 import { MotorControlService } from 'src/app/services/motor-control.service';
@@ -36,19 +36,22 @@ export class TensorFlowJSComponent implements OnInit {
 
 
       this.electronService.ipcRenderer.on('motorData', (event: Event, data: any) => {
-
-        this.handleIncomingData(data.velocity, data.serialPath, data.motorID, data.d);
+        const velocity = data.d.filter((d: { name: string; }) => d.name === 'velocity')[0];
+        if (velocity) {
+          this.handleIncomingData(velocity.val, data.serialPath, data.motorID, data.d);
+        }
       });
 
       this.electronService.ipcRenderer.on('pneumaticDataPressure', (event: Event, data: any) => {
 
         for (const item of data.list) {
           // console.log(item);
-          const pressure = item.d.filter((i: { name: string; }) => i.name === 'pressure')[0].val;
-          this.handleIncomingData(pressure, data.serialPath, item.motorID, item.d);
+          const pressure = item.d.filter((i: { name: string; }) => i.name === 'pressure')[0];
+          if (pressure) {
+            this.handleIncomingData(pressure.val, data.serialPath, item.motorID, item.d);
+          }
         }
       });
-
 
       this.electronService.ipcRenderer.on('export-dataset-model', (event: Event, data: any) => {
         this.tensorflowService.saveDataNN(data);
@@ -151,12 +154,7 @@ export class TensorFlowJSComponent implements OnInit {
     if (data) {
       for (const dataset of data) {
         if (this.d.dataSets.filter(d => d.id === dataset.id).length === 0) {
-          if (dataset.inputColors === undefined) {
-            dataset.inputColors = [];
-          }
 
-
-          let m = 0;
           for (const motor of dataset.m) {
             if (this.d.selectedMicrocontrollers.filter(m => m.id === motor.mcu.id).length === 0) {
               const mcu = this.hardwareService.microcontrollers.filter(m => m.id === motor.mcu.id)[0];
@@ -166,7 +164,6 @@ export class TensorFlowJSComponent implements OnInit {
               }
             }
             if (motor.d.length > 0) {
-              let i = 0;
               for (const input of motor.d[0].inputs) {
                 let inputModel = this.d.selectedModel.inputs.filter(i => i.name === input.name)[0];
                 if (inputModel) {
@@ -174,14 +171,13 @@ export class TensorFlowJSComponent implements OnInit {
                 } else {
                   this.tensorflowService.addInputItem(input.name);
                   inputModel = this.d.selectedModel.inputs.filter(i => i.name === input.name)[0];
+                  this.d.colorList.push(inputModel ? new InputColor(inputModel.name, inputModel.color) : new InputColor('custom', '#999'));
                 }
-                const inputColor = inputModel.color;
-                if (!dataset.inputColors[m]) dataset.inputColors[m] = [];
-                !dataset.inputColors[m][i] ? dataset.inputColors[m].push({ 'hash': inputColor, 'visible': true }) : dataset.inputColors[m][i] = { 'hash': inputColor, 'visible': true };
-                i++;
               }
             }
-            m++;
+            if (!motor.colors || motor.colors.length === 0) {
+              motor.colors = JSON.parse(JSON.stringify(this.d.colorList));
+            }
           }
           this.d.dataSets.push(dataset);
 

@@ -7,7 +7,7 @@ import { UploadService } from 'src/app/services/upload.service';
 import { DOCUMENT } from '@angular/common';
 import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
 import { MicroController, Motor } from 'src/app/models/hardware.model';
-import { MotorEl } from 'src/app/models/tensorflow.model';
+import { InputColor, MotorEl } from 'src/app/models/tensorflow.model';
 import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
 import { TensorFlowConfig } from 'src/app/models/tensorflow-config.model';
 
@@ -74,17 +74,17 @@ export class DataComponent implements AfterViewInit {
     this.tensorflowService.updateResize((!this.dataVisible ? window.innerHeight - 60 : window.innerHeight * 0.45));
   }
 
-  toggleVisibilityInput(motorIndex: number, inputColor: number) {
-    this.d.selectedDataset.inputColors[motorIndex][inputColor].visible = !this.d.selectedDataset.inputColors[motorIndex][inputColor].visible;
+  toggleVisibilityInput(m: MotorEl, inputIndex: number) {
+    m.colors[inputIndex].visible = !m.colors[inputIndex].visible;
     if (this.d.selectedDataset) {
-      this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.selectedMicrocontrollers);
+      this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.trimLinesVisible ? this.d.trimLines : null);
     }
   }
 
   toggleVisibilityMotor(m: MotorEl) {
     if (m) {
       m.visible = !m.visible;
-      this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.selectedMicrocontrollers);
+      this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.trimLinesVisible ? this.d.trimLines : null);
     }
   }
 
@@ -120,22 +120,19 @@ export class DataComponent implements AfterViewInit {
     }
   }
 
-  changeColorInputItem(motorIndex: number, inputColor: number) {
-    const currentColor = this.d.selectedDataset.inputColors[motorIndex][inputColor].hash;
-    this.d.selectedDataset.inputColors[motorIndex][inputColor].hash = this.getNextColor(currentColor);
-    if (this.d.selectedDataset) {
-      this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.selectedMicrocontrollers);
-    }
+  changeColorInputItem(m: MotorEl, inputIndex: number) {
+    m.colors[inputIndex].hash = this.getNextColor(m.colors[inputIndex].hash);
+    this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.trimLinesVisible ? this.d.trimLines : null);
   }
 
   getNextColor(color: string) {
-    const index = this.d.colorList.indexOf(color);
+    const index = this.d.colorOptions.indexOf(color);
     if (index > -1) {
-      const nextIndex = (index + 1) % this.d.colorList.length;
-      return this.d.colorList[nextIndex];
+      const nextIndex = (index + 1) % this.d.colorOptions.length;
+      return this.d.colorOptions[nextIndex];
     } else {
-      this.d.colorList.push(color);
-      return this.d.colorList[0];
+      this.d.colorOptions.push(color);
+      return this.d.colorOptions[0];
     }
   }
 

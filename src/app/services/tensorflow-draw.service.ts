@@ -104,18 +104,17 @@ export class TensorFlowDrawService {
         .attr('id', 'dataGroup')
         .attr('transform', 'translate(0,0)');
 
-      let n = 0;
       for (const m of data.m) {
         let i = 0;
         if (m.record && m.visible && m.d && m.d.length > 0) {
           for (const input of m.d[0].inputs) {
-            const inputColor = data.inputColors[n][i];
-            if (inputColor.visible) {
+            
+            if (m.colors[i].visible) {
 
               dataGroup.append('path')
                 .datum(m.d)
                 .attr('fill', 'none')
-                .attr('stroke', inputColor.hash)
+                .attr('stroke', m.colors[i].hash)
                 .attr('stroke-width', 1.5)
                 .attr('d', d3.line()
                   .x((d: { time: number; }) => {
@@ -135,7 +134,7 @@ export class TensorFlowDrawService {
             i++;
           }
         }
-        n++;
+
       }
 
       if (trimLines) {

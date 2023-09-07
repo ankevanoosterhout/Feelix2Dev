@@ -192,6 +192,7 @@ export class OutputItem {
 export class Data {
   inputs: Array<InputItem> = [];
   time: number;
+
 }
 
 export class McuEl {
@@ -207,6 +208,11 @@ export class MotorEl {
   d: Array<Data> = [];
   record: boolean = true;
   visible: boolean = true;
+  colors = [ new InputColor('angle', '#43E6D5'),
+             new InputColor('velocity', '#00AEEF'),
+             new InputColor('direction', '#E18257'),
+             new InputColor('pressure', '#4390E6'),
+             new InputColor('target', '#7778E0') ];
 
   constructor(mcuID: string, mcuName: string, serialPath: string, id: string, index: number) {
     this.mcu.id = mcuID;
@@ -218,12 +224,11 @@ export class MotorEl {
 }
 
 export class InputColor {
-  motor_index: number;
+  visible: boolean = true;
   input_name: string;
   hash: string;
 
-  constructor(index: number, name: string, hash: string) {
-    this.motor_index = index;
+  constructor(name: string, hash: string) {
     this.input_name = name;
     this.hash = hash;
   }
@@ -241,7 +246,6 @@ export class DataSet {
   selected = false;
   bounds = new Bounds();
   offsetTime = 0;
-  inputColors: Array<any> = [];
 
   constructor(id: String, name: String, selectedMCUs: Array<MicroController>) {
     this.id = id;
