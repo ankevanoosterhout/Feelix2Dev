@@ -88,7 +88,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
     this.electronService.ipcRenderer.on('playDataPressure', (event: Event, data: any) => {
       for (const item of data.list) {
-        const selectedCollection = this.motorControlService.file.collections.filter(c => c.microcontroller && c.microcontroller.serialPort.path === data.serialPath && c.motorID && c.motorID.name === item.motorID)[0];
+        const selectedCollection = this.motorControlService.file.collections.filter(c => c.playing && c.microcontroller && c.microcontroller.serialPort.path === data.serialPath && c.motorID && c.motorID.name === item.motorID)[0];
 
         if (selectedCollection) {
 
@@ -328,13 +328,20 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       const microcontroller = this.hardwareService.getMicroControllerByCOM(collection.microcontroller.serialPort.path);
       const uploadModel = this.uploadService.createUploadModel(collection, microcontroller);
 
-      //turn active (playing) collections of on the port/motor
-      const activeCollection = this.motorControlService.file.collections.filter(c => c.microcontroller && c.microcontroller.serialPort.path === collection.microcontroller.serialPort.path && c.playing && c.motorID === collection.motorID)[0];
-      if (activeCollection) {
-        activeCollection.playing = false;
-        this.motorControlService.updateCollection(activeCollection);
+      // turn active (playing) collections off on the same port/motor
+      const playingCollections = this.motorControlService.file.collections.filter(c => c.playing && c.microcontroller && c.microcontroller.serialPort.path === collection.microcontroller.serialPort.path && c.motorID.name === collection.motorID.name);
+      for (let pC of playingCollections) {
+        pC.playing = false;
+        this.motorControlService.updateCollection(pC);
       }
       uploadModel.newMCU = newMCU;
+
+      // const activeCollection = this.motorControlService.file.collections.filter(c => c.microcontroller && c.microcontroller.serialPort.path === collection.microcontroller.serialPort.path && c.playing && c.motorID === collection.motorID)[0];
+      // if (activeCollection) {
+      //   activeCollection.playing = false;
+      //   this.motorControlService.updateCollection(activeCollection);
+      // }
+      // uploadModel.newMCU = newMCU;
 
       // console.log('upload to ' + microcontroller.serialPort.path + 'newMCU ' + newMCU);
       // console.log(uploadModel);
@@ -348,12 +355,15 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
   uploadAll() {
     this.microcontrollerUploadList = [];
     for (const collection of this.motorControlService.file.collections) {
+
       if (collection.microcontroller) {
         if (this.microcontrollerUploadList.filter(m => m.mcu === collection.microcontroller.id && m.motorID === collection.motorID.name).length === 0) {
           // upload collection check if the microcontroller already appears in upload list
           this.upload(collection, (this.microcontrollerUploadList.filter(m => m.mcu === collection.microcontroller.id).length === 0 ? true : false));
 
           this.microcontrollerUploadList.push({ id: collection.id, mcu: collection.microcontroller.id, motorID: collection.motorID.name, name: collection.name, time: 0, type: collection.visualizationType });
+        } else {
+          collection.playing = false;
         }
       }
     }
@@ -364,6 +374,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     const buttonDisabled = this.microcontrollerUploadList.filter(m => m.type >= 2).length > 0 ? false : true;
     this.updatePlayButtonsToolbar(buttonDisabled);
   }
+
 
   updatePlayButtonsToolbar(buttonDisabled: boolean) {
 
@@ -384,6 +395,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       this.electronService.ipcRenderer.send('updateMotorControlToolbarButton', buttonDisabled);
     }
   }
+
 
   play(play: boolean, collection: Collection) {
     if (collection.effects.length > 0) {
