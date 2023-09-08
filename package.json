@@ -7,7 +7,6 @@
   "scripts": {
     "i": "npm install && rexreplace ', import.meta.url \\)' '/*, import.meta.url*/ \\)' node_modules/closed-chain-ik/src/worker/WorkerSolver.js",
     "ng": "ng",
-    "fix": "rexreplace ', import.meta.url \\)' '/*, import.meta.url*/ \\)' node_modules/closed-chain-ik/src/worker/WorkerSolver.js",
     "start": "ng serve",
     "build": "ng build",
     "test": "ng test",
@@ -45,6 +44,7 @@
     "electron-browser-storage": "^1.0.6",
     "file-saver": "^2.0.2",
     "file-system": "^2.2.2",
+    "jsonfile": "^6.1.0",
     "jszip": "^3.7.0",
     "ngx-color-picker": "^7.5.0",
     "ngx-electron": "^2.2.0",
@@ -78,6 +78,7 @@
     "electron-packager": "^16.0.0",
     "electron-reload": "1.5.0",
     "electron-wix-msi": "^3.0.0",
+    "exe-icon-extractor": "^1.0.8",
     "jasmine-core": "~3.8.0",
     "jasmine-spec-reporter": "~4.2.1",
     "karma": "~4.1.0",
