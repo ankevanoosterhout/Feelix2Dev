@@ -6,8 +6,8 @@ import { ConnectModel } from 'src/app/models/effect-upload.model';
 import { UploadService } from 'src/app/services/upload.service';
 import { DOCUMENT } from '@angular/common';
 import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
-import { MicroController, Motor } from 'src/app/models/hardware.model';
-import { InputColor, MotorEl } from 'src/app/models/tensorflow.model';
+import { Motor } from 'src/app/models/hardware.model';
+import { MotorEl } from 'src/app/models/tensorflow.model';
 import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
 import { TensorFlowConfig } from 'src/app/models/tensorflow-config.model';
 

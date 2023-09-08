@@ -742,7 +742,8 @@ function createTensorFlowWindow() {
       icon: path.join(__dirname, '../src/assets/icons/png/64x64.png'),
       parent: mainWindow,
       webPreferences: {
-        nodeIntegration: true
+        nodeIntegration: true,
+        contextIsolation: false
       }
     })
 
@@ -800,7 +801,8 @@ function drawTemporaryWindow(width, minWidth, height, minHeight, title, resizabl
     parent: parent,
     icon: path.join(__dirname, '../src/assets/icons/png/64x64.png'),
     webPreferences: {
-      nodeIntegration: true
+      nodeIntegration: true,
+      contextIsolation: false
     }
   })
 
@@ -843,7 +845,8 @@ function createInfoWindow() {
     icon: path.join(__dirname, '../src/assets/icons/png/64x64.png'),
     parent: mainWindow,
     webPreferences: {
-      nodeIntegration: true
+      nodeIntegration: true,
+      contextIsolation: false
     }
   })
 
@@ -897,7 +900,8 @@ function createToolbar(hash, width, type) {
       parent: mainWindow,
       icon: path.join(__dirname, '../src/assets/icons/png/64x64.png'),
       webPreferences: {
-        nodeIntegration: true
+        nodeIntegration: true,
+        contextIsolation: false
       }
     })
     newToolbar.loadURL(
@@ -941,7 +945,8 @@ function createKinematicsWindow() {
     icon: path.join(__dirname, '../src/assets/icons/png/64x64.png'),
     parent: mainWindow,
     webPreferences: {
-      nodeIntegration: true
+      nodeIntegration: true,
+      contextIsolation: false
     }
   })
 
