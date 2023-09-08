@@ -1,4 +1,5 @@
 const { SerialPort } = require('serialport');
+const { ReadlineParser } = require('@serialport/parser-readline');
 const main = require('./main');
 
 let activePorts = [];
@@ -185,7 +186,8 @@ class newSerialPort {
          this.sp.close();
       }
 
-      this.sp = new SerialPort(this.COM, {
+      this.sp = new SerialPort({
+          path:this.COM,
           baudRate: this.baudrate,
           autoOpen: true
       }, (error) => {
@@ -199,10 +201,7 @@ class newSerialPort {
           // }
       });
 
-      let Readline = SerialPort.parsers.Readline; // make instance of Readline parser
-      let parser = new Readline(); // make a new parser to read ASCII lines
-      this.sp.pipe(parser); // pipe the serial stream to the parser
-
+      const parser = this.sp.pipe(new ReadlineParser({ delimiter: '\r\n' }))
 
       this.sp.on('open', (error) => {
         if (error) {

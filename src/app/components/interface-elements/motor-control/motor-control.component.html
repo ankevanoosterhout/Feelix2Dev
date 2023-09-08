@@ -85,7 +85,7 @@
           </div>
 
 
-          <span *ngIf="collection.microcontroller.motors[collection.motorID.index].config.position_pid">
+          <span *ngIf="collection.microcontroller && collection.microcontroller.motors[collection.motorID.index].config.position_pid">
             <div class="form-row left collection_pid" id="PID_angle" *ngIf="(collection.visualizationType === 1 || collection.rotation.units_y.name === 'deg') && collection.microcontroller && this.motorControlService.width > 500 && collection.effectDataList.length > 0" title="PID controller (P)">
               <label>P</label>
               <input type="number" id="collection-PID" name="collection-PID_P-{{ collection.id }}" (focus)="this.motorControlService.deselectElements()" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].position_pid.p"
@@ -105,7 +105,7 @@
             </div>
           </span>
 
-          <span *ngIf="collection.microcontroller.motors[collection.motorID.index].config.inflate_pid">
+          <span *ngIf="collection.microcontroller && collection.microcontroller.motors[collection.motorID.index].config.inflate_pid">
             <div class="form-row left collection_pid" id="PID_inflate_P" *ngIf="(collection.visualizationType === 3) && collection.microcontroller && this.motorControlService.width > 980 && collection.effectDataList.length > 0" title="PID controller (P)">
               <label>inflate P</label>
               <input type="number" id="collection-PID" name="collection-inflate-PID_P-{{ collection.id }}" (focus)="this.motorControlService.deselectElements()" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].config.inflate_pid.p"
@@ -125,7 +125,7 @@
             </div>
           </span>
 
-          <span *ngIf="collection.microcontroller.motors[collection.motorID.index].config.deflate_pid">
+          <span *ngIf="collection.microcontroller && collection.microcontroller.motors[collection.motorID.index].config.deflate_pid">
             <div class="form-row left collection_pid" id="PID_deflate_P" *ngIf="(collection.visualizationType === 3) && collection.microcontroller && this.motorControlService.width > 980 && collection.effectDataList.length > 0" title="PID controller (P)">
               <label>deflate P</label>
               <input type="number" id="collection-PID" name="collection-deflate-PID_P-{{ collection.id }}" (focus)="this.motorControlService.deselectElements()" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].config.deflate_pid.p"
@@ -145,7 +145,7 @@
             </div>
           </span>
 
-          <span *ngIf="collection.microcontroller.motors[collection.motorID.index].velocity_pid">
+          <span *ngIf="collection.microcontroller && collection.microcontroller.motors[collection.motorID.index].velocity_pid">
             <div class="form-row left collection_pid" id="PID_velocity" *ngIf="(collection.visualizationType === 2 && collection.rotation.units_y.name !== 'deg') && collection.microcontroller && this.motorControlService.width > 500 && collection.effectDataList.length > 0" title="PID controller (P)">
               <label>P</label>
               <input type="number" id="collection-PID" name="collection-PID_P-{{ collection.id }}" (focus)="this.motorControlService.deselectElements()" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].velocity_pid.p"

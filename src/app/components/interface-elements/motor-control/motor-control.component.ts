@@ -717,7 +717,15 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
             if (collection.effects.length === 0 && collection.visualizationType !== tmpEffect.type) {
               collection.visualizationType = tmpEffect.type;
-              collection.rotation.units = tmpEffect.grid.xUnit;
+
+              if (collection.rotation.units.name !== tmpEffect.grid.xUnit.name) {
+                collection.rotation.units = tmpEffect.grid.xUnit;
+                collection.rotation.start = tmpEffect.range.start;
+                collection.rotation.end = tmpEffect.range.end;
+              }
+              collection.rotation.units_y = tmpEffect.grid.yUnit;
+              collection.rotation.start_y = tmpEffect.range_y.start;
+              collection.rotation.end_y = tmpEffect.range_y.end;
             }
             const multiply = collection.rotation.units.PR / tmpEffect.grid.xUnit.PR;
 
