@@ -31,8 +31,11 @@ Run `npm run electron` to test the locally
 ## Package application
 
 Uncomment line 15: '\\.o(bj)?$' in node_modules/electron-packager/src/copy-filter.js
+
 Run `ng build`
+
 Run `npm run package-win` or `npm run package-mac`
+
 Run `node build_installer.js` or `node dmg_builder.js`
 
 ## Node version 16.20.2
