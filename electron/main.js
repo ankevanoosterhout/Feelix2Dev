@@ -24,13 +24,13 @@ let tensorflowWindow = null;
 
 app.on('ready', createWindow)
 
-app.on('window-all-closed', function () {
+app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
 })
 
-app.on('activate', function () {
+app.on('activate', () => {
   if (mainWindow === null) createWindow()
 })
 
@@ -374,6 +374,12 @@ const ml_control_menu_template = [
         }
       },
       {
+        label: 'Import',
+        click() {
+          openFileDialog('json', 'loadMLModel', 'loadMLModelLocation');
+        }
+      },
+      {
         label: 'Export',
         click() {
           tensorflowWindow.webContents.send('export-model');
@@ -387,7 +393,6 @@ const ml_control_menu_template = [
       {
         label: 'Load from file',
         click() {
-          // tensorflowWindow.webContents.send('load-from-files');
           openFileDialog('json', 'loadData', 'loadDataLocation');
         }
       },
@@ -590,22 +595,24 @@ const kinematics_menu_template = [
 
 
 
-function openFileDialog(extension, storage, location, storeLocal) {
-  dialog.showOpenDialog({ filters: [{ name: 'All Files', extensions: [extension, 'json'] }] }, function (fileName) {
+function openFileDialog(extension, storage, location) {
+  dialog.showOpenDialog({ filters: [{ name: 'All Files', extensions: [extension, 'json'] }] }, (fileName) => {
+
     if (fileName != null) {
-      jsonfile.readFile(fileName[0], function (err, obj) {
+      jsonfile.readFile(fileName[0], (err, obj) => {
         let loadFile = JSON.stringify(JSON.stringify(obj));
         let loadFileLocation = JSON.stringify(JSON.stringify(fileName[0]));
 
-        if (storeLocal) {
+        if (storage === 'loadFile' || storage === 'loadModel') {
 
           localStorage.setItem(storage, (loadFile.substring(1, loadFile.length - 1)));
           localStorage.setItem(location, (loadFileLocation.substring(1, loadFileLocation.length - 1)));
 
-        } else {
-          if (tensorflowWindow) {
-            tensorflowWindow.webContents.send('load-from-files', JSON.stringify(obj));
-          }
+        } else if (storage === 'loadData') {
+          tensorflowWindow.webContents.send('load-from-files', JSON.stringify(obj));
+
+        } else if (storage === 'loadMLModel') {
+          tensorflowWindow.webContents.send('load-ml-model-from-files', JSON.stringify(obj));
         }
       });
     }
@@ -615,7 +622,7 @@ function openFileDialog(extension, storage, location, storeLocal) {
 
 /****** save file data *****/
 
-ipcMain.on('saveFile', function (e, data) {
+ipcMain.on('saveFile', (e, data) => {
   // console.log(data);
   if (data.overwrite && data.file.path) {
     const existingFile = fs.existsSync(data.file.path);
@@ -639,7 +646,7 @@ function saveFileWidthDialog(file, overwrite, newId, ext) {
     dialog.showSaveDialog(mainWindow, {
       title: 'Save as',
       defaultPath: '~/' + file.name + ext
-    }, function (filePath) {
+    }, (filePath) => {
       if (filePath != null) {
         let fileName = filePath.replace(/^.*[\\\/]/, '');
         let extension = fileName.split(".");
@@ -664,7 +671,7 @@ function saveFileWidthDialog(file, overwrite, newId, ext) {
 
 
 function saveChanges(file, type, extension = '.feelix') {
-  fs.writeFile(file.path, JSON.stringify(file), 'utf8', function (err) {
+  fs.writeFile(file.path, JSON.stringify(file), 'utf8', (err) => {
     if (err) throw err;
     const data = {
       file: file,
@@ -706,9 +713,7 @@ function createWindow() {
     })
   );
 
-  mainWindow.on('close', function () {
-    app.quit();
-  })
+  mainWindow.on('close', () => app.quit());
 
   mainMenu = Menu.buildFromTemplate(mainMenuTemplate);
 
@@ -722,9 +727,7 @@ function createWindow() {
 
   // mainWindow.webContents.openDevTools();
 
-  mainWindow.webContents.on('did-finish-load', function() {
-    displayStatus('Ready', 'main');
-  });
+  mainWindow.webContents.on('did-finish-load', () => displayStatus('Ready', 'main'));
 
 }
 
@@ -766,7 +769,7 @@ function createTensorFlowWindow() {
 
     // tensorflowWindow.webContents.openDevTools();
 
-    tensorflowWindow.on('close', function () {
+    tensorflowWindow.on('close', () => {
       tensorflowWindow = null
     });
   }
@@ -825,7 +828,7 @@ function drawTemporaryWindow(width, minWidth, height, minHeight, title, resizabl
 
   // tmpWindow.webContents.openDevTools();
 
-  tmpWindow.on('close', function () {
+  tmpWindow.on('close', () => {
     tmpWindow = null
   })
 
@@ -865,7 +868,7 @@ function createInfoWindow() {
     infoWindow.show()
   });
 
-  infoWindow.on('close', function () {
+  infoWindow.on('close', () => {
     infoWindow = null
   })
 }
@@ -918,7 +921,7 @@ function createToolbar(hash, width, type) {
       mainWindow.webContents.send('resetCursor');
     })
 
-    newToolbar.on('close', function () {
+    newToolbar.on('close', () => {
       const toolbarEl = toolbars.filter(t => t.type === type);
       if (toolbarEl) {
         const toolbarIndex = toolbars.indexOf(toolbarEl);
@@ -969,7 +972,7 @@ function createKinematicsWindow() {
 
   kinematicWindow.webContents.openDevTools();
 
-  kinematicWindow.on('close', function () {
+  kinematicWindow.on('close', () => {
     kinematicWindow = null
   })
 }
@@ -1021,7 +1024,7 @@ function createConnectToCOM(comPorts) {
 
 function openFile(file, tab) {
   const src = path.join(__dirname, '../../example-files/' + tab + '/' + file);
-  jsonfile.readFile(src, function (err, obj) {
+  jsonfile.readFile(src, (err, obj) => {
     let loadFile = JSON.stringify(JSON.stringify(obj));
     let loadFileLocation = JSON.stringify(JSON.stringify(src));
 
@@ -1035,16 +1038,16 @@ function openFile(file, tab) {
 
 /****** communication *****/
 
-ipcMain.on('openExternalLink', function(e, url) {
+ipcMain.on('openExternalLink', (e, url) => {
   if (!['https:', 'http:'].includes(new URL(url).protocol)) return;
   shell.openExternal(url);
 });
 
-ipcMain.on('closeInfoWindow', function() {
+ipcMain.on('closeInfoWindow', () => {
   infoWindow.close();
 });
 
-ipcMain.on('attachToolbar', function () {
+ipcMain.on('attachToolbar', () => {
   const selectedToolbar = toolbars.filter(t => t.type === 'edit')[0];
   if (selectedToolbar) {
     selectedToolbar.toolbar.close();
@@ -1052,7 +1055,7 @@ ipcMain.on('attachToolbar', function () {
   }
 });
 
-ipcMain.on('attachToolbarMotor', function() {
+ipcMain.on('attachToolbarMotor', () => {
   const selectedToolbar = toolbars.filter(t => t.type === 'motor')[0];
   if (selectedToolbar) {
     selectedToolbar.toolbar.close();
@@ -1060,76 +1063,76 @@ ipcMain.on('attachToolbarMotor', function() {
   }
 });
 
-ipcMain.on('showToolbar', function() {
+ipcMain.on('showToolbar', () => {
   createToolbar('/toolbar', 321, 'edit');
   mainMenu.items[2].submenu.items[0].checked = true;
 });
 
-ipcMain.on('showToolbarMotor', function() {
+ipcMain.on('showToolbarMotor', () => {
   createToolbar('/motor-control-toolbar', 244, 'motor'); //170
 });
 
 
 
-ipcMain.on('closeTmpWindow', function () {
+ipcMain.on('closeTmpWindow', () => {
   tmpWindow.close();
 });
 
-ipcMain.on('effectSettings', function(e, filepath) {
+ipcMain.on('effectSettings', (e, filepath) => {
   createEffectSettingWindow(filepath);
 });
 
-ipcMain.on('export', function (e, data) {
+ipcMain.on('export', (e, data) => {
   mainWindow.webContents.send('showExport', data);
 });
 
-ipcMain.on('updateButtonState', function(e, data) {
+ipcMain.on('updateButtonState', (e, data) => {
   mainWindow.webContents.send('updateButtonState', data);
 });
 
-ipcMain.on('load-dataset', function() {
+ipcMain.on('load-dataset', () => {
   createLoadDataSetWindow('load-dataset');
 });
 
-ipcMain.on('addCollection', function() {
+ipcMain.on('addCollection', () => {
   mainWindow.webContents.send('addCollection');
 });
 
-ipcMain.on('uploadAll', function() {
+ipcMain.on('uploadAll', () => {
   mainWindow.webContents.send('uploadAll');
 });
 
-ipcMain.on('uploadAll', function() {
+ipcMain.on('uploadAll', () => {
   mainWindow.webContents.send('uploadAll');
 });
 
-ipcMain.on('transform', function (e, data) {
+ipcMain.on('transform', (e, data) => {
   mainWindow.webContents.send('transform', data);
   if (data.tmp === false) {
     tmpWindow.close();
   }
 });
 
-ipcMain.on('updateMotorControlToolbarButton', function(e, data) {
+ipcMain.on('updateMotorControlToolbarButton', (e, data) => {
   const motorToolbar = toolbars.filter(t => t.type === 'motor')[0];
   if (motorToolbar) {
     motorToolbar.toolbar.webContents.send('disableButton', data);
   }
 });
 
-ipcMain.on('updateCursor', function (e, details) {
+ipcMain.on('updateCursor', (e, details) => {
   mainWindow.webContents.send('updateCursor', details);
   mainWindow.focus();
 });
 
-ipcMain.on('selectCursor', function (e, acc) {
+ipcMain.on('selectCursor', (e, acc) => {
   const selectedToolbar = toolbars.filter(t => t.type === 'edit')[0];
   if (selectedToolbar) {
     selectedToolbar.toolbar.webContents.send('selectCursor', acc);
   }
 });
 
-ipcMain.on('updateToolbarSize', function (e, size) {
+ipcMain.on('updateToolbarSize', (e, size) => {
   const selectedToolbar = toolbars.filter(t => t.type === 'edit')[0];
   if (selectedToolbar) {
     if (size === 'large') {
@@ -1139,45 +1142,45 @@ ipcMain.on('updateToolbarSize', function (e, size) {
 });
 
 
-ipcMain.on('increaseHeightCOMWindow', function (e, height) {
+ipcMain.on('increaseHeightCOMWindow', (e, height) => {
   tmpWindow.setSize(500, height);
 });
 
-ipcMain.on('updateHeightSettings', function (e, height) {
+ipcMain.on('updateHeightSettings', (e, height) => {
   tmpWindow.setSize(430, height);
 });
 
-ipcMain.on('listSerialPorts', function (e, data) {
+ipcMain.on('listSerialPorts', (e, data) => {
   serialPort.listSerialPorts(createConnectToCOM);
 });
 
 
-ipcMain.on('addMicrocontroller', function (e, data) {
+ipcMain.on('addMicrocontroller', (e, data) => {
   // console.log('add microcontroller ', data);
   serialPort.createConnection(data);
   mainWindow.webContents.send('updateStatus', { microcontroller: data, connected: false, error: false });
 });
 
-// ipcMain.on('updateMicrocontroller', function (e, data) {
+// ipcMain.on('updateMicrocontroller', (e, data) => {
 //   mainWindow.webContents.send('updateMicrocontroller', { microcontroller: data, connected: false, error: false });
 // });
 
-ipcMain.on('updateMicrocontrollers', function (e, data) {
+ipcMain.on('updateMicrocontrollers', (e, data) => {
   if (tmpWindow !== null && (activeWindow === 'motor-settings')) {
     tmpWindow.webContents.send('microcontrollers', data);
   }
 });
 
-ipcMain.on('deleteMicrocontrollerCollections', function (e, data) {
+ipcMain.on('deleteMicrocontrollerCollections', (e, data) => {
   mainWindow.webContents.send('deleteMicrocontrollerCollections', data);
 });
 
 
-ipcMain.on('connectToSerialPort', function (e, data) {
+ipcMain.on('connectToSerialPort', (e, data) => {
   serialPort.connectToSerialPort(data.COM);
 });
 
-// ipcMain.on('connectToSerialPort', function (e, data) {
+// ipcMain.on('connectToSerialPort', (e, data) => {
 //   if (data.connect) {
 //     serialPort.connectToSerialPort(data.COM);
 //   } else {
@@ -1187,49 +1190,49 @@ ipcMain.on('connectToSerialPort', function (e, data) {
 
 
 
-ipcMain.on('playEffect', function(e, data) {
+ipcMain.on('playEffect', (e, data) => {
   serialPort.playEffect(data.play, data.microcontroller);
 });
 
-ipcMain.on('playAll', function(e, data) {
+ipcMain.on('playAll', (e, data) => {
   mainWindow.webContents.send('playAll', data);
 });
 
 
-ipcMain.on('playAllSequenceWindow', function(e, data) {
+ipcMain.on('playAllSequenceWindow', (e, data) => {
   mainWindow.webContents.send('playAllSequenceWindow');
 });
 
-ipcMain.on('motorSettings', function (e, data) {
+ipcMain.on('motorSettings', (e, data) => {
   createMotorSettingsWindow();
 });
 
-ipcMain.on('changeViewSettings', function(e, data) {
+ipcMain.on('changeViewSettings', (e, data) => {
   mainWindow.webContents.send('changeViewSettings');
 });
 
 
-ipcMain.on('load-datasets', function(e, data) {
+ipcMain.on('load-datasets', (e, data) => {
   tensorflowWindow.webContents.send('load-datasets', data);
 });
 
-ipcMain.on('load-model', function(e, data) {
+ipcMain.on('load-model', (e, data) => {
   tensorflowWindow.webContents.send('load-model', data);
 });
 
-ipcMain.on('export-datasets', function(e, data) {
+ipcMain.on('export-datasets', (e, data) => {
   tensorflowWindow.webContents.send('export-dataset-model', data);
 });
 
-ipcMain.on('saveLogFile', function(e, data) {
+ipcMain.on('saveLogFile', (e, data) => {
   const timeStamp = new Date().getTime();
 
   dialog.showSaveDialog(mainWindow, {
     title: 'Save data log',
     defaultPath: '~/log-' + timeStamp + '.txt'
-  }, function (filePath) {
+  }, (filePath) => {
     if (filePath != null) {
-      fs.writeFile(filePath, data, 'utf8', function (err) {
+      fs.writeFile(filePath, data, 'utf8', (err) => {
         if (err) throw err;
       });
     }
@@ -1237,7 +1240,7 @@ ipcMain.on('saveLogFile', function(e, data) {
 })
 
 
-ipcMain.on('clearAllData', function(e) {
+ipcMain.on('clearAllData', (e) => {
   localStorage.clear();
   setTimeout(() => {
     app.relaunch();
@@ -1245,7 +1248,7 @@ ipcMain.on('clearAllData', function(e) {
   }, 10000);
 });
 
-ipcMain.on('updateMenu', function (e, item) {
+ipcMain.on('updateMenu', (e, item) => {
 
   gridVisible = item.visible;
   gridSnap = item.snap;

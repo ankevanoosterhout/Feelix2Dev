@@ -61,6 +61,10 @@ export class TensorFlowJSComponent implements OnInit {
         this.tensorflowService.importDataSet(data);
       });
 
+      this.electronService.ipcRenderer.on('load-ml-model-from-files', (event: Event, data: any) => {
+        this.tensorflowService.importModel(data);
+      });
+
 
       this.electronService.ipcRenderer.on('load-datasets', (event: Event, data: Array<DataSet>) => {
         this.loadDataSets(data);
@@ -118,10 +122,6 @@ export class TensorFlowJSComponent implements OnInit {
 
       this.electronService.ipcRenderer.on('export-model', (event: Event) => {
         this.tensorflowService.exportModel();
-      });
-
-      this.electronService.ipcRenderer.on('import-model', (event: Event) => {
-        this.tensorflowService.importModel();
       });
 
       this.electronService.ipcRenderer.on('deploy-model', (event: Event) => {
@@ -342,7 +342,7 @@ export class TensorFlowJSComponent implements OnInit {
     this.config.width = window.innerWidth - 250 - (this.config.sidebarColumnWidth[0] + this.config.sidebarColumnWidth[1]);
     (this.document.getElementById('svg_graph') as HTMLElement).style.width = this.config.width + 'px';
     (this.document.getElementById('graph-header') as HTMLElement).style.width = this.tensorflowDrawService.config.width + 'px';
-    
+
     this.config.height = window.innerHeight - this.config.horizontalScreenDivision - 120;
     this.document.getElementById('data').style.height = (window.innerHeight - this.config.horizontalScreenDivision) + 'px';
     this.document.getElementById('model').style.width = (window.innerWidth * this.config.verticalScreenDivision / 100) + 'px';

@@ -101,7 +101,7 @@ export class ModelComponent {
 
   initializeRegression_Model() {
     if (!this.d.processing) {
-
+      this.tensorflowService.updateProgess('this feature is not yet implemented', 0);
     }
   }
 

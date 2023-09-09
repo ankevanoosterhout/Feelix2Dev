@@ -218,22 +218,27 @@ export class TensorFlowMainService {
       }
     }
 
-    updateOutputDataSet(index: number) {
+    updateOutputDataSet(id: string) {
       if (this.d.selectedDataset) {
-        this.d.selectedDataset.output = new OutputItem(this.d.selectedModel.outputs[index].id, this.d.selectedModel.outputs[index].name);
-        const selectClassifierDiv = (this.document.getElementById('dataset-output-select-' + this.d.selectedModel.outputs[index].id) as HTMLElement)
+        this.d.selectedDataset.output = new OutputItem(id, this.d.selectedModel.outputs.filter(o => o.id === id)[0].name);
+        const selectClassifierDiv = (this.document.getElementById('dataset-output-select-' + id) as HTMLElement);
         if (selectClassifierDiv) selectClassifierDiv.classList.remove('invisible');
       }
     }
 
+    updateOutputLabel(index: number) {
+      if (this.d.selectedDataset.output) {
+        this.d.selectedDataset.output.classifier_id = this.d.selectedModel.outputs[index].id;
+        this.d.selectedDataset.output.classifier_name = this.d.selectedModel.outputs[index].name;
+      }
+    }
+
     selectClassifier(id: string) {
-      let i = 0;
       for (const output of this.d.selectedModel.outputs) {
         output.active = output.id === id ? true : false;
         if (output.active) {
-          this.updateOutputDataSet(i);
+          this.updateOutputDataSet(output.id);
         }
-        i++;
       }
     }
 
@@ -394,8 +399,12 @@ export class TensorFlowMainService {
 
 
 
-    importModel() {
+    importModel(model: any) {
       //select a folder
+      if (model) {
+        const modelObj = JSON.parse(model);
+        this.d.selectedModel = modelObj;
+      }
     }
 
 
