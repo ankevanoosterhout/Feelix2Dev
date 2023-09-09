@@ -2,7 +2,6 @@ import { Filter } from "./filter.model";
 import * as tf from '@tensorflow/tfjs';
 import { MicroController } from "./hardware.model";
 import { Dates } from "./file.model";
-import { Color } from "./effect.model";
 
 export enum Activation {
   elu = 'elu',
@@ -187,6 +186,13 @@ export class OutputItem {
   label = new Label(null, null);
   classifier_id: string;
   classifier_name: string;
+
+  constructor(id: string, name: string) {
+    if (id && name) {
+      this.classifier_id = id;
+      this.classifier_name = name;
+    }
+  }
 }
 
 export class Data {
@@ -240,7 +246,7 @@ export class DataSet {
   // date: any;
   date = new Dates();
   m: Array<MotorEl> = [];
-  output = new OutputItem();
+  output = new OutputItem(null, null);
   // outputs: Array<any> = []; //convert to single outputItem
   open = true;
   selected = false;

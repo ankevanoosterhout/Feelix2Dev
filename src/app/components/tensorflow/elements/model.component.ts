@@ -105,10 +105,6 @@ export class ModelComponent {
     }
   }
 
-  selectClassifier(id: string) {
-    this.tensorflowService.selectClassifier(id);
-  }
-
 
   classifyAtRunTime() {
     if (this.d.selectedModel.model) {

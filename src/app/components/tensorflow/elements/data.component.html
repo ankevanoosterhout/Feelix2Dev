@@ -4,7 +4,7 @@
   <div class="row" id="toolbar-content">
 
     <div class="column offset-left" *ngIf="this.d.selectedDataset && this.d.selectedModel">
-      <div class="row variable_name" class="data_element selectbox" *ngFor="let output of this.d.selectedModel.outputs; let o=index;" [ngClass]="{ invisible: !output.active }">
+      <div class="row variable_name" class="data_element selectbox" *ngFor="let output of this.d.selectedModel.outputs; let o=index;"  id="dataset-output-select-{{ output.id }}" [ngClass]="{ invisible: !output.active }">
 
         <label class="labelRow small">{{ output.name }}</label>
         <select class="form-control playWindow microcontroller" id="{{ this.d.selectedDataset.id }}-output-{{ o }}" name="{{ this.d.selectedDataset.id }}-output-{{ o }}"

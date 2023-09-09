@@ -2,7 +2,7 @@ import { DOCUMENT } from '@angular/common';
 import { Injectable, Inject } from '@angular/core';
 import { v4 as uuid } from 'uuid';
 import { MicroController } from '../models/hardware.model';
-import { Model, DataSet, Classifier, Data, NN_options, Label, MotorEl, ModelVariable, ModelType, Regression_options } from '../models/tensorflow.model';
+import { Model, DataSet, Classifier, Data, NN_options, Label, MotorEl, ModelVariable, ModelType, Regression_options, OutputItem } from '../models/tensorflow.model';
 import { HardwareService } from './hardware.service';
 import { DataSetService } from './dataset.service';
 import { Subject } from 'rxjs';
@@ -219,13 +219,21 @@ export class TensorFlowMainService {
     }
 
     updateOutputDataSet(index: number) {
-      this.d.selectedDataset.output.classifier_id = this.d.selectedModel.outputs[index].id;
-      this.d.selectedDataset.output.classifier_name = this.d.selectedModel.outputs[index].name;
+      if (this.d.selectedDataset) {
+        this.d.selectedDataset.output = new OutputItem(this.d.selectedModel.outputs[index].id, this.d.selectedModel.outputs[index].name);
+        const selectClassifierDiv = (this.document.getElementById('dataset-output-select-' + this.d.selectedModel.outputs[index].id) as HTMLElement)
+        if (selectClassifierDiv) selectClassifierDiv.classList.remove('invisible');
+      }
     }
 
     selectClassifier(id: string) {
+      let i = 0;
       for (const output of this.d.selectedModel.outputs) {
         output.active = output.id === id ? true : false;
+        if (output.active) {
+          this.updateOutputDataSet(i);
+        }
+        i++;
       }
     }
 
@@ -409,7 +417,7 @@ export class TensorFlowMainService {
         this.d.selectedModel = modelData;
         if (modelData.model) {
           const modelStr = JSON.stringify(modelData.model);
-          console.log(modelStr);
+          // console.log(modelStr);
           this.d.selectedModel.model = JSON.parse(modelStr);
           // console.log(this.selectedModel.model);
         }
