@@ -336,15 +336,6 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       }
       uploadModel.newMCU = newMCU;
 
-      // const activeCollection = this.motorControlService.file.collections.filter(c => c.microcontroller && c.microcontroller.serialPort.path === collection.microcontroller.serialPort.path && c.playing && c.motorID === collection.motorID)[0];
-      // if (activeCollection) {
-      //   activeCollection.playing = false;
-      //   this.motorControlService.updateCollection(activeCollection);
-      // }
-      // uploadModel.newMCU = newMCU;
-
-      // console.log('upload to ' + microcontroller.serialPort.path + 'newMCU ' + newMCU);
-      // console.log(uploadModel);
       this.electronService.ipcRenderer.send('upload', uploadModel);
 
     } else {

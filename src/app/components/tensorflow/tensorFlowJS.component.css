@@ -481,10 +481,10 @@ select#microcontroller {
 
 .data-size {
   position: absolute;
-  right: 80px;
+  right: 57px;
   top: 0;
   margin-top: 4px;
-  margin-right: 10px;
+  margin-right: 0;
   font-size: 13px;
   font-weight: 600;
   color: #fff;
@@ -1031,10 +1031,13 @@ input.html-slider {
 .form-group.absolute {
   position: absolute;
   width: calc(100% - 320px);
-  display: inline-block;
+  display: inline-flex;
+  justify-content: space-between;
   margin: 10px 0 0 28px;
   z-index: 10;
 }
+
+
 
 #dataSetName {
   font-size: 13px;

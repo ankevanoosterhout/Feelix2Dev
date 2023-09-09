@@ -84,25 +84,26 @@
 
     <div class="data_content">
 
-      <div class="form-group absolute" *ngIf="this.d.selectedDataset">
+      <div class="form-group absolute" id="graph-header" *ngIf="this.d.selectedDataset">
         <!-- <label class="label">Dataset</label> -->
-        <span *ngIf="!this.d.classify">
-          <input type="text" id="dataSetName" [(ngModel)]="this.d.selectedDataset.name" name="dataSetName">
-        </span>
-        <span *ngIf="this.d.classify && this.d.predictionDataset">
-          <input type="text" id="dataSetName" [(ngModel)]="this.d.predictionDataset.name" name="dataSetName" disabled>
-        </span>
+        <div class="row">
+          <span *ngIf="!this.d.classify">
+            <input type="text" id="dataSetName" [(ngModel)]="this.d.selectedDataset.name" name="dataSetName">
+          </span>
+          <span *ngIf="this.d.classify && this.d.predictionDataset">
+            <input type="text" id="dataSetName" [(ngModel)]="this.d.predictionDataset.name" name="dataSetName" disabled>
+          </span>
 
-        <p class="date" *ngIf="!this.d.classify && this.d.selectedDataset.date.created">{{ this.d.selectedDataset.date.created | date:'dd-MM-yyyy hh:mm' }}</p>
-        <div class="buttons trim" *ngIf="this.d.trimLinesVisible">
-          <button id="cancel" (click)="this.cancelTrim()">Cancel</button>
-          <button id="trim" (click)="this.trimDataSet()">Trim</button>
+          <p class="date" *ngIf="!this.d.classify && this.d.selectedDataset.date.created">{{ this.d.selectedDataset.date.created | date:'dd-MM-yyyy hh:mm' }}</p>
+          <div class="buttons trim" *ngIf="this.d.trimLinesVisible">
+            <button id="cancel" (click)="this.cancelTrim()">Cancel</button>
+            <button id="trim" (click)="this.trimDataSet()">Trim</button>
+          </div>
+
+          <div class="data-size" *ngIf="!this.d.classify && this.d.selectedDataset && this.d.selectedDataset.m.length > 0 && !this.d.trimLinesVisible">
+            size: {{ this.d.selectedDataset.m[0].d.length }}
+          </div>
         </div>
-
-        <div class="data-size" *ngIf="!this.d.classify && this.d.selectedDataset && this.d.selectedDataset.m.length > 0 && !this.d.trimLinesVisible">
-          size: {{ this.d.selectedDataset.m[0].d.length }}
-        </div>
-
       </div>
 
       <div id="svg_graph"></div>

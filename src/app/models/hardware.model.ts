@@ -243,8 +243,6 @@ export class MicroController {
     this.lastDataSend = new Date().getTime();
     this.name = serialPort.path + '-' + vendor;
   }
-
-
 }
 
 

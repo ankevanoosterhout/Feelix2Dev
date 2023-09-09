@@ -112,6 +112,7 @@ export class DataComponent implements AfterViewInit {
     this.tensorflowDrawService.config.width = window.innerWidth - 250 - (this.tensorflowDrawService.config.sidebarColumnWidth[0] + this.tensorflowDrawService.config.sidebarColumnWidth[1]);
 
     (this.document.getElementById('svg_graph') as HTMLElement).style.width = this.tensorflowDrawService.config.width + 'px';
+    (this.document.getElementById('graph-header') as HTMLElement).style.width = this.tensorflowDrawService.config.width + 'px';
 
     this.tensorflowDrawService.drawGraph();
 

@@ -340,6 +340,9 @@ export class TensorFlowJSComponent implements OnInit {
   onResize(event: Event) {
     // this.config.width = (window.innerWidth - 550); //470
     this.config.width = window.innerWidth - 250 - (this.config.sidebarColumnWidth[0] + this.config.sidebarColumnWidth[1]);
+    (this.document.getElementById('svg_graph') as HTMLElement).style.width = this.config.width + 'px';
+    (this.document.getElementById('graph-header') as HTMLElement).style.width = this.tensorflowDrawService.config.width + 'px';
+    
     this.config.height = window.innerHeight - this.config.horizontalScreenDivision - 120;
     this.document.getElementById('data').style.height = (window.innerHeight - this.config.horizontalScreenDivision) + 'px';
     this.document.getElementById('model').style.width = (window.innerWidth * this.config.verticalScreenDivision / 100) + 'px';
