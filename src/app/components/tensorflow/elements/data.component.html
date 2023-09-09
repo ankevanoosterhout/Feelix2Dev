@@ -94,13 +94,13 @@
             <input type="text" id="dataSetName" [(ngModel)]="this.d.predictionDataset.name" name="dataSetName" disabled>
           </span>
 
-          <p class="date" *ngIf="!this.d.classify && this.d.selectedDataset.date.created">{{ this.d.selectedDataset.date.created | date:'dd-MM-yyyy hh:mm' }}</p>
+          <p class="date" *ngIf="!this.d.classify && this.d.selectedDataset && this.d.selectedDataset.date.created">{{ this.d.selectedDataset.date.created | date:'dd-MM-yyyy hh:mm' }}</p>
           <div class="buttons trim" *ngIf="this.d.trimLinesVisible">
             <button id="cancel" (click)="this.cancelTrim()">Cancel</button>
             <button id="trim" (click)="this.trimDataSet()">Trim</button>
           </div>
 
-          <div class="data-size" *ngIf="!this.d.classify && this.d.selectedDataset && this.d.selectedDataset.m.length > 0 && !this.d.trimLinesVisible">
+          <div class="data-size" *ngIf="!this.d.classify && this.d.selectedDataset && this.d.selectedDataset.m && this.d.selectedDataset.m.length > 0 && !this.d.trimLinesVisible">
             size: {{ this.d.selectedDataset.m[0].d.length }}
           </div>
         </div>
@@ -117,7 +117,7 @@
             <div class="labelRow marginLeft" *ngIf="this.config.sidebarColumnWidth[0] > 30">Input data</div>
           </div>
 
-          <div class="sidebar-column-content" *ngIf="this.d.selectedDataset.m.length > 0">
+          <div class="sidebar-column-content" *ngIf="this.d.selectedDataset.m && this.d.selectedDataset.m.length > 0">
 
             <div class="row" id="section_motors">
               <ul class="motor-list-buttons">
