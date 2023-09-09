@@ -17,14 +17,24 @@ Remove from `node-modules` folder the `serialport` and `@serialport` folders
 
 Remove the file `package-lock.json`
 
-Run `npm i` to install non-installed modules
+Run `npm run i` or in case that is not working:
+Remove ', import.meta.url' in node_modules/closed-chain-ik/src/worker/WorkerSolver.js" line 30 (change to: const worker = new Worker( new URL( './workerSolver.worker.js'), { type: 'module' } );
+and Run `npm i` to install non-installed modules
 
 Run `./node_modules/.bin/electron-rebuild` (directly after `npm i`)
+
 
 ## Run locally 
 
 Run `npm run electron` to test the locally
 
-## Node version 14.19.1
+## Package application
+
+Uncomment line 15: '\\.o(bj)?$' in node_modules/electron-packager/src/copy-filter.js
+Run `ng build`
+Run `npm run package-win` or `npm run package-mac`
+Run `node build_installer.js` or `node dmg_builder.js`
+
+## Node version 16.20.2
 
 
