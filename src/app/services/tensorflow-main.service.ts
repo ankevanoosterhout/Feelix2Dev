@@ -218,10 +218,10 @@ export class TensorFlowMainService {
       }
     }
 
-    updateOutputDataSet(id: string) {
+    updateOutputDataSet(index: number) {
       if (this.d.selectedDataset) {
-        this.d.selectedDataset.output = new OutputItem(id, this.d.selectedModel.outputs.filter(o => o.id === id)[0].name);
-        const selectClassifierDiv = (this.document.getElementById('dataset-output-select-' + id) as HTMLElement);
+        this.d.selectedDataset.output = new OutputItem(this.d.selectedModel.outputs[index].id, this.d.selectedModel.outputs[index].name);
+        const selectClassifierDiv = (this.document.getElementById('dataset-output-select-' + this.d.selectedModel.outputs[index].id) as HTMLElement);
         if (selectClassifierDiv) selectClassifierDiv.classList.remove('invisible');
       }
     }
@@ -234,11 +234,13 @@ export class TensorFlowMainService {
     }
 
     selectClassifier(id: string) {
+      let index = 0;
       for (const output of this.d.selectedModel.outputs) {
         output.active = output.id === id ? true : false;
         if (output.active) {
-          this.updateOutputDataSet(output.id);
+          this.updateOutputDataSet(index);
         }
+        index++;
       }
     }
 

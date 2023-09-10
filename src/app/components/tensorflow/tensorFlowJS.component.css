@@ -602,17 +602,17 @@ label {
 }
 
 .record-button {
-  position: absolute;
-  right: 22px;
+  position: relative;
   width: 46px;
   height: 18px;
   border-radius: 18px;
   line-height: 18px;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   flex-direction: row;
   background: #d6cece;
-  top: 13px;
+  top: -1px;
+  margin-left: 10px;
 }
 
 .circle {
@@ -716,17 +716,9 @@ ul.motor-list li.header > span {
 
 
 .buttons-list {
-  float:right;
-  margin-right: 50px;
   margin-top: 4px!important;
 }
 
-.buttons-list li#delete {
-  padding: 3px 2px;
-  height: 27px;
-  width: 27px;
-  box-sizing: border-box;
-}
 
 /* #data_input_list li.dataSet {
 
@@ -915,6 +907,10 @@ ul.motor-list li.header > span {
 }
 
 #toolbar-content {
+  display: inline-flex;
+  width: 100%;
+  flex-direction: row;
+  justify-content: space-between;
   min-width: 970px;
 }
 
