@@ -369,6 +369,10 @@ ul {
   margin-top: -2px;
 }
 
+.collection_pid {
+  margin-top: 0;
+}
+
 #PID_angle, #PID_velocity, #max {
   margin-left: 18px;
   margin-top: 0;
