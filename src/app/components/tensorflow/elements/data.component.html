@@ -116,7 +116,7 @@
         <div class="sidebar-column" id="sidebar-column-0">
           <div class="column-header-sidebar" (click)="this.updateSidebarColumn(0)">
             <div class="hide-sidebar" id="toggleSidebarColumn0"><div></div></div>
-            <div class="labelRow marginLeft" *ngIf="this.config.sidebarColumnWidth[0] > 30">Input data</div>
+            <div class="labelRow marginLeft" *ngIf="this.config.sidebarColumnWidth[0] > 30">Input variables</div>
           </div>
 
           <div class="sidebar-column-content" *ngIf="this.d.selectedDataset.m && this.d.selectedDataset.m.length > 0">
@@ -173,7 +173,7 @@
         <div class="sidebar-column" id="sidebar-column-1">
           <div class="column-header-sidebar" (click)="this.updateSidebarColumn(1)">
             <div class="hide-sidebar" id="toggleSidebarColumn1" [ngClass]="{ hidden: this.config.sidebarColumnWidth[1] === 30 }"><div></div></div>
-            <div class="labelRow marginLeft" *ngIf="this.config.sidebarColumnWidth[1] > 30">Files</div>
+            <div class="labelRow marginLeft" *ngIf="this.config.sidebarColumnWidth[1] > 30">Data sets</div>
           </div>
           <div class="sidebar-column-content">
             <ul class="file-list-sidebar" *ngIf="this.d.dataSets">

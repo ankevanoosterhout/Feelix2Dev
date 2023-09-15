@@ -970,7 +970,7 @@ function createKinematicsWindow() {
     kinematicWindow.show()
   });
 
-  kinematicWindow.webContents.openDevTools();
+  // kinematicWindow.webContents.openDevTools();
 
   kinematicWindow.on('close', () => {
     kinematicWindow = null
