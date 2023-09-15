@@ -123,6 +123,36 @@ export class ModelComponent {
     }
   }
 
+  addInputItem() {
+    this.tensorflowService.addInputItem();
+  }
 
+  updateInput(index: number) {
+    this.tensorflowService.updateInput(index);
+  }
+
+  deleteInputItem(index: number) {
+    this.tensorflowService.deleteInputItem(index);
+  }
+
+  addClassifier() {
+    this.tensorflowService.addClassifier();
+  }
+
+  deleteClassifier(index: number) {
+    this.tensorflowService.deleteClassifier(index);
+  }
+
+  selectClassifier(id: string) {
+    this.tensorflowService.selectClassifier(id);
+  }
+
+  updateClassifier(i: number, pos: number) {
+    this.tensorflowService.updateClassifier(i, pos);
+  }
+
+  updateModelType() {
+    this.tensorflowService.updateModelType();
+  }
 
 }

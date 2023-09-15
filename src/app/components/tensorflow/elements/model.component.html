@@ -11,7 +11,7 @@
 
     <div class="form-group">
       <label class="label">Model type</label>
-      <select class="form-control playWindow" id="model_type" name="model_type" [(ngModel)]="this.d.selectedModel.type" (change)="this.tensorflowService.updateModelType()">
+      <select class="form-control playWindow" id="model_type" name="model_type" [(ngModel)]="this.d.selectedModel.type" (change)="this.updateModelType()">
         <option *ngFor="let item of this.modelTypeOptions" [ngValue]="item">{{ ModelTypeMapping[item] }}</option>
       </select>
     </div>
@@ -94,7 +94,7 @@
   <!-- output column  -->
 
   <div id="inputs" class="column-20">
-    <label class="labelRow">Inputs <div class="buttonPlayWindow dataSetList" (click)="this.tensorflowService.addInputItem()" title="add input item">+</div></label>
+    <label class="labelRow">Inputs <div class="buttonPlayWindow dataSetList" (click)="this.addInputItem()" title="add input item">+</div></label>
     <ul>
       <li *ngFor="let input of this.d.selectedModel.inputs; let i = index" [attr.data-index]="i">
         <label class="radio-container">
@@ -103,24 +103,24 @@
           <span class="checkmark radio tensorflow"></span>
         </label>
         <div class="row flexbox-row-even input" *ngIf="i >= 5" id="label-{{ input.slug }}">
-          <input type="text" class="list-item inputList" id="input-{{ i }}" value="{{ input.name }}" name="input-{{ i }}" (change)="this.tensorflowService.updateInput(i)">
-          <div class="buttonPlayWindow dataSetList delete" (click)="this.tensorflowService.deleteInputItem(i)" title="delete input item">-</div>
+          <input type="text" class="list-item inputList" id="input-{{ i }}" value="{{ input.name }}" name="input-{{ i }}" (change)="this.updateInput(i)">
+          <div class="buttonPlayWindow dataSetList delete" (click)="this.deleteInputItem(i)" title="delete input item">-</div>
         </div>
       </li>
     </ul>
   </div>
   <div id="inputs" class="column-20">
-    <label class="labelRow">Output <div class="buttonPlayWindow dataSetList" (click)="this.tensorflowService.addClassifier()" title="add output item">+</div></label>
+    <label class="labelRow">Output <div class="buttonPlayWindow dataSetList" (click)="this.addClassifier()" title="add output item">+</div></label>
 
     <ul>
       <li *ngFor="let output of this.d.selectedModel.outputs; let i = index" [attr.data-index]="i">
         <label class="radio-container">
-          <input type="checkbox" class="type" id="{{ output.name }}" name="{{ output.name }}" [(ngModel)]="output.active" [checked]="output.active" (change)="this.tensorflowService.selectClassifier(output.id)">
+          <input type="checkbox" class="type" id="{{ output.name }}" name="{{ output.name }}" [(ngModel)]="output.active" [checked]="output.active" (change)="this.selectClassifier(output.id)">
           <span class="checkmark radio tensorflow"></span>
         </label>
         <div class="row flexbox-row-even input" id="label-{{ output.id }}">
-          <input type="text" class="list-item inputList" id="classifier-1-{{ i }}" value="{{ output.name }}" name="classifier-1-{{ i }}" (change)="this.tensorflowService.updateClassifier(i, 1)">
-          <div class="buttonPlayWindow dataSetList delete" (click)="this.tensorflowService.deleteClassifier(i)" title="delete input item">-</div>
+          <input type="text" class="list-item inputList" id="classifier-1-{{ i }}" value="{{ output.name }}" name="classifier-1-{{ i }}" (change)="this.updateClassifier(i, 1)">
+          <div class="buttonPlayWindow dataSetList delete" (click)="this.deleteClassifier(i)" title="delete input item">-</div>
         </div>
       </li>
     </ul>
@@ -131,6 +131,6 @@
 
 <div class="buttons">
   <button id="deploy" (click)="this.classifyAtRunTime()">Deploy</button>
-  <button id="initialize" (click)="this.initializeNN_Model()" *ngIf="!this.processing">Train</button>
-  <button id="initialize" (click)="this.stopTraining()" *ngIf="this.processing">Cancel</button>
+  <button id="initialize" (click)="this.initializeNN_Model()" *ngIf="!this.d.processing">Train</button>
+  <button id="initialize" (click)="this.stopTraining()" *ngIf="this.d.processing">Cancel</button>
 </div>
