@@ -50,7 +50,7 @@
     "ngx-electron": "^2.2.0",
     "ngx-filesaver": "^10.0.1",
     "ngx-fs": "0.0.1",
-    "ngx-webstorage": "^6.0.0",
+    "ngx-webstorage": "^7.0.1",
     "npm": "^7.11.1",
     "rxjs": "~6.6.7",
     "serialport": "^11.0.1",
