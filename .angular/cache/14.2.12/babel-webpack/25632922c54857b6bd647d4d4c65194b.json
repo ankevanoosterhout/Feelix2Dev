@@ -1,1 +1,0 @@
-{"ast":null,"code":"export default function noop() {}","map":{"version":3,"names":["noop"],"sources":["C:/Users/Anke/Documents/Feelix documents/Feelix2.0-dev/Feelix v2/node_modules/d3-geo/src/noop.js"],"sourcesContent":["export default function noop() {}\n"],"mappings":"AAAA,eAAe,SAASA,IAAT,GAAgB,CAAE"},"metadata":{},"sourceType":"module"}
