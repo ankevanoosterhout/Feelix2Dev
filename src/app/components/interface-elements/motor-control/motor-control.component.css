@@ -73,19 +73,42 @@ ul {
 }
 
 .info {
-  display: inline-block;
+  display: inline-flex;
+  flex-direction: row;
   position: relative;
   top:0;
   left:0;
-  width: calc(100% - 7px);
+  width: 100%;
   height: 26px;
   margin: 0;
   padding: 2px 1px;
   box-sizing: border-box;
   z-index: 100;
-  overflow: visible;
   cursor: default;
+  overflow: hidden;
+  justify-content: space-between;
+  flex-wrap: wrap!important;
 }
+
+.info-column {
+  width: auto;
+  position: relative;
+  overflow: hidden;
+  height: 20px;
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: wrap!important;
+}
+
+.info-column-controls {
+  max-width: calc(100% - 140px);
+}
+
+.info-column-data {
+  position: absolute;
+  right:0;
+}
+
 
 .column-visualization {
   position: relative;
@@ -308,23 +331,19 @@ ul {
 #buttonsMotorControl .dropdown-buttons {
   list-style-type: none;
   position: relative;
-  left: 15px;
+  margin-left: 7px;
   height: 20px;
-  vertical-align: top;
-  display: inline-block;
 }
 
 #buttonsMotorControl .dropdown-buttons li {
   display: inline-block;
   position: relative;
-  vertical-align: top;
   width: 20px;
   height: 20px;
   border: 1px solid #1c1c1c;
   background: #3a3a3a;
   opacity: 0.6;
-  margin-right: 6px;
-  margin-top: -3px;
+  margin-right: 4px;
   padding:0;
 }
 
@@ -354,7 +373,7 @@ ul {
 #buttonsMotorControl, #rangeValues, #coll-layers-row, #visualizationType  {
   position:relative;
   width: auto;
-  height: 17px;
+  height: 20px;
   display: inline-block;
 }
 #buttonsMotorControl {
@@ -363,10 +382,10 @@ ul {
 
 #rangeValues, #coll-layers-row, #PID_angle, #PID_velocity, #max, .collection_pid {
   font-size: 11px;
+  line-height: 19px;
   color: #ccc;
-  margin-left: 20px;
+  margin-left: 8px;
   vertical-align: top;
-  margin-top: -2px;
 }
 
 .collection_pid {
@@ -374,18 +393,12 @@ ul {
 }
 
 #PID_angle, #PID_velocity, #max {
-  margin-left: 18px;
+  margin-left: 5px;
   margin-top: 0;
 }
 
 #coll-layers-row label {
   position:relative;
-  vertical-align: middle;
-  margin-top: -2px;
-}
-
-#rangeValues {
-  margin-right: -8px;
 }
 
 #visualizationType {
@@ -428,30 +441,23 @@ input#collection-name {
   text-align: left;
   left:0;
   width: 75px;
-  margin-top: -1px;
+  margin-top: 2px;
 }
 
 input#collection-PID {
   width: 19px;
   padding: 3px 4px;
-  margin-top: -3px;
   margin-left: 4px;
 }
 
 #range-end, #range-start {
   margin-left:5px;
-  margin-top: -1px;
   padding: 3px 4px;
 }
 
 .form-row {
   padding: 0;
   width: auto;
-  float: right;
-  margin-right: -8px;
-}
-.form-row.left {
-  float:none;
 }
 
 
@@ -466,7 +472,7 @@ select {
   border: 1px solid #2c2c2c;
   border-radius: 0;
   box-shadow:none;
-  margin: -3px 0 0 15px;
+  margin: 0 0 0 5px;
   vertical-align: top;
   text-align: left;
   color:#ccc;
@@ -478,7 +484,7 @@ select#comport, select#unitsDropdown {
 }
 
 select#unitsDropdown {
-  margin: -1px 0 0 5px;
+  margin: 0 0 0 5px;
   width: 33px;
 }
 
@@ -490,7 +496,6 @@ select#visualizationType {
   width: 55px;
   padding: 3px 5px;
   margin-left: 15px;
-  margin-top: -3px;
 }
 
 select option {

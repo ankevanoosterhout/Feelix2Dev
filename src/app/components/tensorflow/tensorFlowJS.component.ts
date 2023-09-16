@@ -300,7 +300,8 @@ export class TensorFlowJSComponent implements OnInit {
 
   toggleResultWindow() {
     this.config.resultWindowVisible = !this.config.resultWindowVisible;
-    this.updateScreenDivisionX(!this.config.resultWindowVisible ? window.innerWidth - 18 : window.innerWidth * 0.65);
+    console.log(this.config.resultWindowVisible);
+    this.updateScreenDivisionX(!this.config.resultWindowVisible ? window.innerWidth - 18 : window.innerWidth * 0.7);
   }
 
 
@@ -360,7 +361,8 @@ export class TensorFlowJSComponent implements OnInit {
 
   updateScreenDivisionX(coord: number) {
     if (coord <= window.innerWidth - 18) {
-      let division = 100 / (window.innerWidth / coord);
+      const division = 100 / (window.innerWidth / coord);
+      console.log(division);
       this.updateResize(division, 'vertical');
     }
   }
@@ -383,12 +385,11 @@ export class TensorFlowJSComponent implements OnInit {
         this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.trimLinesVisible ? this.d.trimLines : null);
       }
 
-
     } else if (orientation === 'vertical') {
-      this.document.getElementById('model').style.width = (window.innerWidth * division / 100) + 'px';
-      this.document.getElementById('classifiers').style.width = (window.innerWidth * (100-division) / 100) + 'px';
+      this.document.getElementById('model').style.width = division + '%';
+      this.document.getElementById('classifiers').style.width = (100 - division) + '%';
       this.config.verticalScreenDivision = division;
-      if (this.config.verticalScreenDivision >= (100 / window.innerWidth) * (window.innerWidth - 18)) {
+      if (division >= (100/window.innerWidth) * (window.innerWidth - 18)) {
         if (!this.document.getElementById('toggleResultWindow').classList.contains('hidden')) {
           this.document.getElementById('toggleResultWindow').classList.add('hidden');
         }

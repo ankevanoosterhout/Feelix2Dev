@@ -837,8 +837,8 @@ function drawTemporaryWindow(width, minWidth, height, minHeight, title, resizabl
 
 function createInfoWindow() {
   infoWindow = new BrowserWindow({
-    width: 650,
-    height: 520,
+    width: 800,
+    height: 600,
     title: 'Info',
     // titleBarStyle: 'hidden',
     backgroundColor: '#eee',
@@ -867,6 +867,7 @@ function createInfoWindow() {
   infoWindow.once('ready-to-show', () => {
     infoWindow.show()
   });
+
 
   infoWindow.on('close', () => {
     infoWindow = null

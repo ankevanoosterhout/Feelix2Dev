@@ -4,27 +4,22 @@ import { ElectronService } from 'ngx-electron';
 @Component({
   selector: 'app-info-page',
   template: `
+  <div class="image-bg" style="background-image: url('./assets/images/info-window-bg.png');"></div>
   <div class="window-content">
-    <div class="logo"><img src="./assets/icons/logo/feelix.svg"></div>
-
 
     <div class="row">
+      <div class="title">
+        <h1>Haptic Interaction Design with Feelix</h1>
       <div class="column">
-        Design directional force feedback or precise motion control for your brushless motor with Feelix.<br /><br />
-        Feelix makes use of the <p class="link" (click)="gotToLink('https://simplefoc.com/')">SimpleFOC library</p> and can be used in combination with the following hardware:
+        Feelix makes use of the <p class="link" (click)="gotToLink('https://simplefoc.com/')">SimpleFOC library</p> for brushless motor control and can be used in combination with the following hardware:
         <ul>
-          <li>Brushless motor (high torque)</li>
-          <li>Encoder (e.g. ams AS5047 / AS5058A)</li>
-          <li>3-Phase motor driver (L6234)</li>
-          <li>Teensy / STM32 / Arduino / ESP <p class="link" (click)="gotToLink('https://docs.feelix.xyz/downloads/c-library')">
-            download library
-          </p></li>
+          <li>BLDC (high torque)</li>
+          <li>Encoder (e.g., AS5047 / AS5058A)</li>
+          <li>3-Phase motor driver (e.g., L6234, DRV8313)</li>
+          <li>Various 32-bit microcontrollers are supported including: Teensy, STM32, Arduino, ESP, and Raspberry.
+            <p class="link" (click)="gotToLink('https://docs.feelix.xyz/downloads/c-library')"> Download Feelix Library</p></li>
         </ul>
-        <br />
-        For more information visit <p class="link inline" (click)="gotToLink('https://docs.feelix.xyz')">docs.feelix.xyz<p>
-      </div>
-      <div class="column">
-        <img class="bldcmotor-img" src="./assets/images/brushlessmotor.png">
+        For more information visit <p class="link inline" (click)="gotToLink('https://docs.feelix.xyz')">www.feelix.xyz<p>
       </div>
     </div>
 
@@ -36,12 +31,33 @@ import { ElectronService } from 'ngx-electron';
   </div>`,
   styles: [`
 
+    .image-bg {
+      position:absolute;
+      margin:0;
+      width:802px;
+      height:100%;
+      z-index:-1;
+      top:0;
+      left:-1px;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
+    }
+
+
+    h1 {
+      font-size: 30px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      padding: 110px 36px 35px;
+    }
+
     .window-content {
       width: 100%;
       height: 100vh;
       box-sizing: border-box;
       font-size: 12px;
-      color: #222;
+      color: #fff;
     }
 
     .logo {
@@ -55,19 +71,31 @@ import { ElectronService } from 'ngx-electron';
       margin: 0;
       padding:0;
       display:inline-block;
-      color: #4E8EFF;
+      color: #FFF;
+      font-weight: 600px;
+      opacity: 0.6;
     }
+
+    p.link:hover {
+      opacity: 1;
+    }
+
     p.inline {
       display: inline-block;
     }
 
     .column {
-      display:inline-block;
-      float: left;
-      width: 50%;
+      display: inline-block;
+      width: 55%;
+      left: 42%;
+      line-height: 22px;
       padding: 10px 15px;
       box-sizing: border-box;
+      position: relative;
+      letter-spacing: 0.03em;
     }
+
+
 
     .column-wide {
       width: 100%;
@@ -84,11 +112,12 @@ import { ElectronService } from 'ngx-electron';
     .show {
       position: absolute;
       bottom: 0;
-      left:0;
-      margin: 30px 30px;
-      font-size: 12px;
-      line-heigth: 18px;
-      color: #222;
+      right: 0;
+      width: 55%;
+      margin: 30px 6px;
+      font-size: 11px;
+      line-height: 20px;
+      color: #fff;
     }
 
     .checkmark.checkbox {

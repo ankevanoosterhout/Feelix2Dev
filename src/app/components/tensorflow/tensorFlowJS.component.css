@@ -29,7 +29,7 @@ select {
   padding: 0 0 2px;
   min-height: 200px;
   overflow:hidden;
-  min-width: 250px;
+  /* min-width: 250px; */
   right: 0;
   background: #333;
 }
@@ -242,6 +242,7 @@ ul.file-list-sidebar li:active, ul.file-list-sidebar li.active {
   align-self: flex-start;
   flex-direction: column;
   margin-right: 20px;
+  overflow-x:hidden;
 }
 
 .column-20 {
@@ -348,6 +349,7 @@ ul.file-list-sidebar li:active, ul.file-list-sidebar li.active {
 #create_classifiers, #results {
   padding: 15px;
   width: calc(100% - 25px);
+  min-width: 250px;
   box-sizing: border-box;
   left: 25px;
   position: absolute;
@@ -712,11 +714,6 @@ ul.motor-list li > span {
 
 ul.motor-list li.header > span {
   background: #346394;
-}
-
-
-.buttons-list {
-  margin-top: 4px!important;
 }
 
 

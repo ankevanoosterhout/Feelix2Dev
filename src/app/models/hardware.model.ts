@@ -149,7 +149,7 @@ export class PneuConfig extends Config {
   deflate_valve = new minMax(185, 250);
 }
 
-export class StepperConfig extends Config { //update config details for stepper motors
+export class StepperConfig extends Config { //update config details for stepper motorsvelocity_pid
   voltageLimit: number = 12;
   velocityLimit: number = 21;
   encoderType: string = 'Magnetic sensor';

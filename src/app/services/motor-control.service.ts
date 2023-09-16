@@ -763,7 +763,13 @@ export class MotorControlService {
   }
 
   deselectElements() {
-    this.drawingService.deselectAllElements();
+
+    this.deselectCollectionEffects();
+    // this.drawingService.deselectAllElements();
+  }
+
+  updateInputFieldFocus(focus: boolean) {
+    this.config.activeInput = focus;
   }
 
   deselectCollectionEffects() {

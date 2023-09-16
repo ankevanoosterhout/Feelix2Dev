@@ -554,6 +554,11 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     return el1 && el2 ? el1.name === el2.name : el1 === el2;
   }
 
+  focusInputField(focus: boolean) {
+    this.motorControlService.deselectCollectionEffects();
+    this.motorControlService.updateInputFieldFocus(focus);
+  }
+
   // updateRangeValues(collection: Collection) {
   //   collection.rotation.start = collection.rotation.units.name !== 'ms' ? parseFloat((this.document.getElementById('range-start') as HTMLInputElement).value) : 0;
   //   collection.rotation.end = parseFloat((this.document.getElementById('range-end') as HTMLInputElement).value);

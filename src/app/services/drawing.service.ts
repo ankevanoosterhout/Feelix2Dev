@@ -537,9 +537,9 @@ export class DrawingService {
       if (collection && collection.config.svg) {
         collection.config.svg.selectAll('#coll-effect-' + this.file.activeCollectionEffect.id).style('opacity', 0.3);
       }
-      this.file.activeCollectionEffect = null;
-      this.file.activeCollection = null;
     }
+    this.file.activeCollectionEffect = null;
+    this.file.activeCollection = null;
   }
 
 
