@@ -11,7 +11,7 @@ export class EffectLibraryService {
   public static readonly LIBRARY_LOCATION = 'ngx-webstorage|effectLibrary';
 
   effectLibrary: Array<LibraryEffect> = [];
-  showLibraryTab: Subject<any> = new Subject();
+  showLibraryTab: Subject<any> = new Subject<void>();
 
   constructor(private localSt: LocalStorageService, private cloneService: CloneService) {
     // retrieve files stored in local storage
@@ -92,7 +92,7 @@ export class EffectLibraryService {
   }
 
   showLibraryEffects() {
-    this.showLibraryTab.next();
+    this.showLibraryTab.next(true);
   }
 
   sortLibraryEffectsBy(sortType: string, sortDirection: string) {

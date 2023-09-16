@@ -23,7 +23,7 @@ export class FilterService {
   constructor(@Inject(DOCUMENT) private document: Document) {}
 
 
-  addFilterToModel: Subject<any> = new Subject();
+  addFilterToModel: Subject<any> = new Subject<void>();
 
   applyFilter(type: string) {
 

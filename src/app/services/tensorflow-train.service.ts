@@ -12,7 +12,7 @@ export class TensorFlowTrainService {
 
   public d: TensorFlowData;
 
-  createPredictionModel: Subject<any> = new Subject();
+  createPredictionModel: Subject<any> = new Subject<void>();
 
   constructor(@Inject(DOCUMENT) private document: Document, private tensorflowService: TensorFlowMainService) {
     this.d = this.tensorflowService.d;
@@ -137,7 +137,7 @@ export class TensorFlowTrainService {
 
     this.d.selectedModel.model = tf.sequential();
 
-    this.createPredictionModel.next();
+    this.createPredictionModel.next(true);
 
     this.d.selectedModel.model.name = modelObj.name;
 

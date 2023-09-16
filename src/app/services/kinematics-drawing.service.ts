@@ -17,16 +17,15 @@ export class KinematicsDrawingService {
 
   public targets = [];
 
-  // selectObjectFromScene: Subject<any> = new Subject();
-  updateModelPosition: Subject<any> = new Subject();
+  updateModelPosition: Subject<any> = new Subject<void>();
 
-  updateKinematicsProgress: Subject<any> = new Subject();
-  selectControl: Subject<any> = new Subject();
-  updateCameraView: Subject<any> = new Subject();
-  selectCameraView: Subject<any> = new Subject();
-  loadModelFromLink: Subject<any> = new Subject();
-  updateJointAngleScene: Subject<any> = new Subject();
-  setControlsActive: Subject<any> = new Subject();
+  updateKinematicsProgress: Subject<any> = new Subject<void>();
+  selectControl: Subject<any> = new Subject<void>();
+  updateCameraView: Subject<any> = new Subject<void>();
+  selectCameraView: Subject<any> = new Subject<void>();
+  loadModelFromLink: Subject<any> = new Subject<void>();
+  updateJointAngleScene: Subject<any> = new Subject<void>();
+  setControlsActive: Subject<any> = new Subject<void>();
 
 
   constructor(@Inject(DOCUMENT) private document: Document, private kinematicService: KinematicService) {
@@ -52,10 +51,10 @@ export class KinematicsDrawingService {
 
 
   updateCamera() {
-    this.updateCameraView.next();
+    this.updateCameraView.next(true);
   }
   selectCamera() {
-    this.selectCameraView.next();
+    this.selectCameraView.next(true);
   }
 
   updateControlMode(name: string) {

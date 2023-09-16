@@ -243,8 +243,8 @@ input[type="color"] {
 	-webkit-appearance: none;
 	border: 1px solid #1c1c1c;
   border-radius: 0;
-	width: 18px;
-	height: 16px;
+  width: 20px;
+  height: 20px;
   background: #4a4a4a;
   vertical-align: top;
   margin: 2px;

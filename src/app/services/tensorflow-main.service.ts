@@ -21,13 +21,13 @@ export class TensorFlowMainService {
 
     public d: TensorFlowData;
 
-    updateTensorflowProgress: Subject<any> = new Subject();
-    reloadPage: Subject<any> = new Subject();
-    updateResizeElements: Subject<any> = new Subject();
-    updateGraphBounds: Subject<any> = new Subject();
-    updateGraph: Subject<any> = new Subject();
-    drawTrimLines: Subject<any> = new Subject();
-    loadData: Subject<any> = new Subject();
+    updateTensorflowProgress: Subject<any> = new Subject<void>();
+    reloadPage: Subject<any> = new Subject<void>();
+    updateResizeElements: Subject<any> = new Subject<void>();
+    updateGraphBounds: Subject<any> = new Subject<void>();
+    updateGraph: Subject<any> = new Subject<void>();
+    drawTrimLines: Subject<any> = new Subject<void>();
+    loadData: Subject<any> = new Subject<void>();
 
     constructor(@Inject(DOCUMENT) private document: Document, public hardwareService: HardwareService, private dataSetService: DataSetService,
                 private tensorflowModelService: TensorFlowModelService, private electronService: ElectronService, private _FileSaverService: FileSaverService) {
@@ -46,7 +46,7 @@ export class TensorFlowMainService {
         if (this.d.dataSets.length > 0) {
           this.selectDataSet(this.d.dataSets[0].id);
         } else {
-          this.updateGraph.next();
+          this.updateGraph.next(true);
           this.d.selectedDataset = null;
         }
       }

@@ -16,8 +16,8 @@ export class IKService {
   ikFrames: Array<any> = [];
   public rootsObservable = new Subject<any>();
 
-  updateIKhelper: Subject<any> = new Subject();
-  updateModels: Subject<any> = new Subject();
+  updateIKhelper: Subject<any> = new Subject<void>();
+  updateModels: Subject<any> = new Subject<void>();
 
   solverOptions = {
     maxIterations: 5,

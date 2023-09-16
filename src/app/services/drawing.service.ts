@@ -23,12 +23,12 @@ export class DrawingService {
   public file = new File(null, null, null);
 
 
-  drawFile: Subject<any> = new Subject();
-  showMessage: Subject<any> = new Subject();
-  align: Subject<any> = new Subject();
-  updateResizeMotorControlSection: Subject<any> = new Subject();
-  drawEffectsInLibrary: Subject<any> = new Subject();
-  getBBoxSize: Subject<any> = new Subject();
+  drawFile: Subject<any> = new Subject<void>();
+  showMessage: Subject<any> = new Subject<void>();
+  align: Subject<any> = new Subject<void>();
+  updateResizeMotorControlSection: Subject<any> = new Subject<void>();
+  drawEffectsInLibrary: Subject<any> = new Subject<void>();
+  getBBoxSize: Subject<any> = new Subject<void>();
 
 
 
@@ -575,7 +575,7 @@ export class DrawingService {
       }
     }
     this.updateResize(division, 'vertical');
-    this.updateResizeMotorControlSection.next();
+    this.updateResizeMotorControlSection.next(true);
   }
 
   toggleDrawPlane() {
@@ -592,7 +592,7 @@ export class DrawingService {
       division = (100 / window.innerHeight) * (window.innerHeight - 38);
     }
     this.updateResize(division, 'horizontal');
-    this.updateResizeMotorControlSection.next();
+    this.updateResizeMotorControlSection.next(true);
   }
 
   setDivToScreenDivision() {
@@ -710,7 +710,7 @@ export class DrawingService {
   }
 
   public drawFileData() {
-    this.drawFile.next();
+    this.drawFile.next(true);
 
   }
 
@@ -723,7 +723,7 @@ export class DrawingService {
   }
 
   public drawEffects() {
-    this.drawEffectsInLibrary.next();
+    this.drawEffectsInLibrary.next(true);
   }
 
 
@@ -746,7 +746,7 @@ export class DrawingService {
 
 
   getBoxSizeActivePaths() {
-    this.getBBoxSize.next();
+    this.getBBoxSize.next(true);
   }
 
   resetPathData() {

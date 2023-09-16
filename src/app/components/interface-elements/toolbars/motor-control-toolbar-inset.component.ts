@@ -143,7 +143,7 @@ export class MotorControlToolbarInsetComponent implements OnInit {
       } else if (id === 2) {
         this.motorControlService.changeViewSettings();
       } else if (id === 3) {
-        this.motorControlService.uploadAllCollections.next();
+        this.motorControlService.uploadAllCollections.next(true);
       } else if (id === 4) {
         const src = (this.document.getElementById('tool-motor-control-4') as HTMLImageElement).src.split('/');
         const play = src[src.length - 1] === 'play_all.svg' ? true : false;
@@ -152,7 +152,7 @@ export class MotorControlToolbarInsetComponent implements OnInit {
         const src = (this.document.getElementById('tool-motor-control-4') as HTMLImageElement).src.split('/');
         const play = src[src.length - 1] === 'play_all_delay.svg' ? true : false;
         if (play) {
-          this.motorControlService.playSequence.next();
+          this.motorControlService.playSequence.next(true);
         }
       }
     }

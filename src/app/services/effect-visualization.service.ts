@@ -15,8 +15,8 @@ export class EffectVisualizationService {
 
   public verticalDivision = 30;
 
-  setActiveEffect: Subject<any> = new Subject();
-  updateCollectionEffect: Subject<any> = new Subject();
+  setActiveEffect: Subject<any> = new Subject<void>();
+  updateCollectionEffect: Subject<any> = new Subject<void>();
 
   constructor(private nodeService: NodeService, private cloneService: CloneService, private dataService: DataService) { }
 

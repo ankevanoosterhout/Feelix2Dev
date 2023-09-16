@@ -18,11 +18,11 @@ export class MotorControlService {
   public config: DrawingPlaneConfig;
   public file = new File(null, null, null);
 
-  uploadAllCollections: Subject<any> = new Subject();
-  playAllCollections: Subject<any> = new Subject();
-  playAllInSequence: Subject<any> = new Subject();
-  playSequence: Subject<any> = new Subject();
-  playAll: Subject<any> = new Subject();
+  uploadAllCollections: Subject<any> = new Subject<void>();
+  playAllCollections: Subject<any> = new Subject<void>();
+  playAllInSequence: Subject<any> = new Subject<void>();
+  playSequence: Subject<any> = new Subject<void>();
+  playAll: Subject<any> = new Subject<void>();
 
   public toolList = [
     { id: 0, name: 'new collection', slug: 'collection', disabled: false, icon: './assets/icons/tools/collections.svg' },

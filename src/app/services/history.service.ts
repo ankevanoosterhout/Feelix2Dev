@@ -12,7 +12,7 @@ export class HistoryService {
   public config = new HistoryConfig();
   public file = new File(null, null, null);
 
-  reloadFileData: Subject<any> = new Subject();
+  reloadFileData: Subject<any> = new Subject<void>();
 
   constructor(private electronService: ElectronService, private cloneService: CloneService) {
 

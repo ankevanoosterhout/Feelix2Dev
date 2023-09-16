@@ -32,7 +32,7 @@ export class KinematicService {
   selConnPoints: Array<Point> = [];
 
   // importOBJModelToObjectGroup: Subject<any> = new Subject();
-  deleteJointsScene: Subject<any> = new Subject();
+  deleteJointsScene: Subject<any> = new Subject<void>();
 
   fs: any;
 
@@ -156,7 +156,7 @@ export class KinematicService {
   }
 
   loadFile(model: ModelFile) {
-    this.deleteJointsScene.next();
+    this.deleteJointsScene.next(true);
     // console.log(model.joints);
     if (model.joints) {
       this.frames = model.joints;
@@ -235,7 +235,7 @@ export class KinematicService {
     const modelObj = this.models.filter(m => m.id === model.id)[0];
     if (modelObj) {
       if (modelObj.isActive) {
-        this.deleteJointsScene.next();
+        this.deleteJointsScene.next(true);
         this.frames = [];
         // this.kinematicLinkService.deleteAll();
       }
@@ -364,7 +364,7 @@ export class KinematicService {
         // console.log('angle ', frame.angle, rotationZ);
       }
     }
-    
+
     frame.dimensions.rpy.z = rotation;
 
     if (this.selectedFrames[0] && this.selectedFrames[0].id === id) {
