@@ -468,7 +468,7 @@ select {
   box-shadow:none;
   margin: -3px 0 0 15px;
   vertical-align: top;
-  text-align: right;
+  text-align: left;
   color:#ccc;
 }
 

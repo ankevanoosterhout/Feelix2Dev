@@ -5,7 +5,6 @@ import { KinematicsConfig } from 'src/app/models/kinematics-config.model';
 import { KinematicsDrawingService } from 'src/app/services/kinematics-drawing.service';
 import { DOCUMENT } from '@angular/common';
 import { DragControlsService } from 'src/app/services/drag-controls.service';
-import { Subject } from 'rxjs';
 import { Raycaster } from 'three';
 // import { ClosedChainIKService } from 'src/app/services/closed-chain-ik.service';
 

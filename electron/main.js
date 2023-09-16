@@ -1022,16 +1022,16 @@ function createConnectToCOM(comPorts) {
 
 
 
-function openFile(file, tab) {
-  const src = path.join(__dirname, '../../example-files/' + tab + '/' + file);
-  jsonfile.readFile(src, (err, obj) => {
-    let loadFile = JSON.stringify(JSON.stringify(obj));
-    let loadFileLocation = JSON.stringify(JSON.stringify(src));
+// function openFile(file, tab) {
+//   const src = path.join(__dirname, '../../example-files/' + tab + '/' + file);
+//   jsonfile.readFile(src, (err, obj) => {
+//     let loadFile = JSON.stringify(JSON.stringify(obj));
+//     let loadFileLocation = JSON.stringify(JSON.stringify(src));
 
-    localStorage.setItem('loadFile', (loadFile.substring(1, loadFile.length - 1)));
-    localStorage.setItem('loadFileLocation', (loadFileLocation.substring(1, loadFileLocation.length - 1)));
-  });
-}
+//     localStorage.setItem('loadFile', (loadFile.substring(1, loadFile.length - 1)));
+//     localStorage.setItem('loadFileLocation', (loadFileLocation.substring(1, loadFileLocation.length - 1)));
+//   });
+// }
 
 
 

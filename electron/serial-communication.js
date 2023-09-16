@@ -11,7 +11,7 @@ let progress = 0;
 let dataSendWaitList = [];
 let datalist = [];
 
-const softwareVersion = { major: 3, minor: 0, patch: 0 };
+const softwareVersion = { major: 3, minor: 0, patch: 1 };
 
 
 function listSerialPorts(callback) {

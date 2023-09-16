@@ -1,10 +1,8 @@
 import { Injectable } from '@angular/core';
 import { v4 as uuid } from 'uuid';
 import { LocalStorageService } from 'ngx-webstorage';
-import { Subject } from 'rxjs';
 import { CloneService } from './clone.service';
 import { DataSet } from '../models/tensorflow.model';
-import { Dates } from '../models/file.model';
 
 @Injectable()
 export class DataSetService {

@@ -23,7 +23,8 @@ Run `npm run electron` to test the locally
 
 ## Package application
 
-Uncomment line 15: '\\.o(bj)?$' in node_modules/electron-packager/src/copy-filter.js
+Enable production environment main.ts 
+Uncomment line 15: '\\.o(bj)?$' in node_modules/electron-packager/src/copy-filter.js and add ''/\\.angular($|/)',' to ignore angular cache
 
 Run `ng build`
 

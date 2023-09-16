@@ -1,7 +1,7 @@
 {
   "name": "feelix",
   "productName": "Feelix",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "main": "electron/main.js",
   "license": "MIT",
   "scripts": {
@@ -52,7 +52,6 @@
     "ngx-filesaver": "^16.0.0",
     "ngx-fs": "0.0.1",
     "ngx-webstorage": "^10.0.1",
-    "npm": "^9.6.7",
     "rxjs": "^7.8.1",
     "serialport": "^11.0.1",
     "three": "^0.138.3",
@@ -81,8 +80,8 @@
     "@typescript-eslint/eslint-plugin": "4.3.0",
     "@typescript-eslint/parser": "4.3.0",
     "electron": "^24.8.3",
-    "electron-installer-dmg": "^3.0.0",
-    "electron-packager": "^16.0.0",
+    "electron-installer-dmg": "^4.0.0",
+    "electron-packager": "^17.1.2",
     "electron-reload": "1.5.0",
     "electron-wix-msi": "^3.0.0",
     "eslint": "^7.6.0",

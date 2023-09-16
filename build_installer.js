@@ -21,8 +21,10 @@ const msiCreator = new MSICreator({
     exe: 'Feelix',
     name: 'Feelix',
     manufacturer: 'Anke',
-    version: '3.0.0',
+    version: '3.0.1',
     arch: 'x64',
+    // certificateFile: './cert.pfx',
+    // certificatePassword: 'this-is-a-secret',
 
     // Configure installer User Interface
     ui: {
@@ -38,8 +40,22 @@ const msiCreator = new MSICreator({
     }
 });
 
+// // Step 2: Create a .wxs template file
+// const supportBinaries = await msiCreator.create()
+
+// // 🆕 Step 2a: optionally sign support binaries if you
+// // sign you binaries as part of of your packaging script
+// supportBinaries.forEach(async (binary) => {
+//   // Binaries are the new stub executable and optionally
+//   // the Squirrel auto updater.
+//   await signFile(binary)
+// })
+
+// Step 3: Compile the template to a .msi file
+// await msiCreator.compile()
+
 // 4. Create a .wxs template file
-msiCreator.create().then(function(){
+msiCreator.create().then(() => {
 
     // Step 5: Compile the template to a .msi file
     msiCreator.compile();
