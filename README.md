@@ -11,11 +11,7 @@ Run `ng build` to build the project. The build artifacts will be stored in the `
 
 ## To install developer mode:
 
-Run `npm install`
-
-Run `npm run i` or in case that is not working:
-Remove ', import.meta.url' in node_modules/closed-chain-ik/src/worker/WorkerSolver.js" line 30 (change to: const worker = new Worker( new URL( './workerSolver.worker.js'), { type: 'module' } );
-
+Run `npm i`
 
 ## Run locally 
 
