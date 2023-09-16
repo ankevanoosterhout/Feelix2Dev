@@ -1,6 +1,6 @@
 # Feelix
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 8.1.1.
+This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 14.3.0.
 
 ## Build
 
@@ -13,15 +13,8 @@ Run `ng build` to build the project. The build artifacts will be stored in the `
 
 Run `npm install`
 
-Remove from `node-modules` folder the `serialport` and `@serialport` folders
-
-Remove the file `package-lock.json`
-
 Run `npm run i` or in case that is not working:
 Remove ', import.meta.url' in node_modules/closed-chain-ik/src/worker/WorkerSolver.js" line 30 (change to: const worker = new Worker( new URL( './workerSolver.worker.js'), { type: 'module' } );
-and Run `npm i` to install non-installed modules
-
-Run `./node_modules/.bin/electron-rebuild` (directly after `npm i`)
 
 
 ## Run locally 
@@ -38,6 +31,6 @@ Run `npm run package-win` or `npm run package-mac`
 
 Run `node build_installer.js` or `node dmg_builder.js`
 
-## Node version 16.20.2
+## Node version 18.17.1
 
 
