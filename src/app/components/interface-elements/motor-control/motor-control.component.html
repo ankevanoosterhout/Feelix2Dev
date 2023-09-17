@@ -179,7 +179,7 @@
               </div>
 
 
-              
+
               <div id="visualizationType" class="form-row left" *ngIf="collection.effectDataList.length === 0">
                 <select class="form-control" id="visualizationType" [(ngModel)]="collection.visualizationType" (change)="updateVisualizationType(collection)" name="visualizationType" title="visualization type">
                     <option *ngFor="let type of visualizationTypes" [ngValue]="type">{{ EffectTypeLabelMapping[type] }}</option>
@@ -211,16 +211,17 @@
 
             <div class="form-row info-column" *ngIf="collection.playing && collection.visualizationType !== 3">
 
+              <div class="motor-info" id="speed-{{ collection.id }}">0 </div>
               <div class="motor-info posUnits" id="speedUnits-{{ collection.id }}" *ngIf="collection.rotation.units.name === 'deg'">&deg;/s</div>
               <div class="motor-info posUnits" id="speedUnits-{{ collection.id }}" *ngIf="collection.rotation.units.name === 'ms' || collection.rotation.units.name === 'rad'">rad/s</div>
-              <div class="motor-info" id="speed-{{ collection.id }}">0 </div>
 
-              <div class="motor-info posUnits" id="posUnits-{{ collection.id }}" *ngIf="collection.rotation.units.name === 'ms'">ms</div>
               <div class="motor-info" id="time-{{ collection.id }}" *ngIf="collection.rotation.units.name === 'ms'">0 </div>
+              <div class="motor-info posUnits" id="posUnits-{{ collection.id }}" *ngIf="collection.rotation.units.name === 'ms'">ms</div>
 
+              <div class="motor-info" id="position-{{ collection.id }}" *ngIf="collection.rotation.units.name !== 'ms'">0 </div>
               <div class="motor-info posUnits" id="posUnits-{{ collection.id }}" *ngIf="collection.rotation.units.name === 'deg'">&deg;</div>
               <div class="motor-info posUnits" id="posUnits-{{ collection.id }}" *ngIf="collection.rotation.units.name === 'rad'">rad</div>
-              <div class="motor-info" id="position-{{ collection.id }}" *ngIf="collection.rotation.units.name !== 'ms'">0 </div>
+
 
               <div class="motor-info posUnits current_sense" id="current_sense_b-{{ collection.id }}"></div>
               <div class="motor-info posUnits current_sense" id="current_sense_a-{{ collection.id }}"></div>

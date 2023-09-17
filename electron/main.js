@@ -8,7 +8,7 @@ const jsonfile = require('jsonfile');
 const { localStorage } = require('electron-browser-storage');
 
 const serialPort = require('./serial-communication.js');
-global['window'] = fs.wi;
+global['window'] = fs.window;
 global['HTMLVideoElement'] = fs.HTMLVideoElement;
 
 let mainWindow, infoWindow = null, helpWindow = null, kinematicWindow = null;
