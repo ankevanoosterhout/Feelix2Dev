@@ -815,6 +815,7 @@ function drawTemporaryWindow(width, minWidth, height, minHeight, title, resizabl
     frame: false,
     resizable: resizable,
     // resizable: true,
+    fullscreenable:false,
     center: false,
     movable: true,
     parent: parent,
