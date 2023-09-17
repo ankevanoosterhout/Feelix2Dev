@@ -5,7 +5,6 @@
   "main": "electron/main.js",
   "license": "MIT",
   "scripts": {
-    "i": "npm install && rexreplace ', import.meta.url \\)' '/*, import.meta.url*/ \\)' node_modules/closed-chain-ik/src/worker/WorkerSolver.js",
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
