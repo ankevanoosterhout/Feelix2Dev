@@ -57,7 +57,7 @@ export class FileListComponent implements OnInit {
           newId: uuid(),
           extension: this._list === 'designFiles' ? '.feelix' : '.mFeelix'
         };
-        this.electronService.ipcRenderer.send('saveFile', data);
+        this.electronService.ipcRenderer.send('saveFile', JSON.stringify(data));
       }
     });
 

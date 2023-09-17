@@ -46,8 +46,9 @@ export class TensorFlowMainService {
         if (this.d.dataSets.length > 0) {
           this.selectDataSet(this.d.dataSets[0].id);
         } else {
-          this.updateGraph.next(true);
-          this.d.selectedDataset = null;
+          this.addDataSet();
+          // this.updateGraph.next(true);
+          // this.d.selectedDataset = null;
         }
       }
     }

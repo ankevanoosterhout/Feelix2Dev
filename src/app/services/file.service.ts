@@ -68,7 +68,9 @@ export class FileService {
           this.parseFile(localStorage.getItem(FileService.LOAD_FILE)).then((file: File) => {
             try {
               file.path = fileLocation;
-              this.files.push(file);
+              if (this.files.filter(f => f._id === file._id).length === 0) {
+                this.files.push(file);
+              }
               this.setActive(file);
             } catch (error) {
             }

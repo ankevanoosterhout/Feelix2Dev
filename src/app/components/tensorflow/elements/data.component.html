@@ -127,7 +127,7 @@
                   <div class="list-text-item" [ngClass]="{ active: m.visible }" *ngIf="m.record && this.config.sidebarColumnWidth[0] > 30" (click)="toggleVisibilityMotor(m)">{{ m.mcu.name }} - {{ m.id }}</div>
                   <div class="list-text-item" [ngClass]="{ active: m.visible }" *ngIf="m.record && this.config.sidebarColumnWidth[0] === 30" (click)="toggleVisibilityMotor(m)">{{ m.id }}</div>
 
-                  <div class="row" *ngIf="(!m.d || m.d.length === 0) && this.d.selectedModel && m.visible">
+                  <div class="row" *ngIf="(!m.d || m.d.length === 0) && this.d.selectedModel && m.visible && m.record">
                     <ul class="input-list-buttons">
                       <li class="input-list-button-item" *ngFor="let input of this.d.selectedModel.inputs; let i = index;">
 
@@ -145,7 +145,7 @@
                     </ul>
                   </div>
 
-                  <div class="row" *ngIf="m.d && m.d.length > 0 && m.visible">
+                  <div class="row" *ngIf="m.d && m.d.length > 0 && m.visible && m.record">
                     <ul class="input-list-buttons">
                       <li class="input-list-button-item" *ngFor="let input of m.d[0].inputs; let i = index;">
 

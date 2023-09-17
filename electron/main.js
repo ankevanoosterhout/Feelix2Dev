@@ -596,45 +596,58 @@ const kinematics_menu_template = [
 
 
 function openFileDialog(extension, storage, location) {
-  dialog.showOpenDialog({ filters: [{ name: 'All Files', extensions: [extension, 'json'] }] }, (fileName) => {
+  dialog.showOpenDialog({
+    filters: [{ name: 'All Files', extensions: [extension, 'json'] }],
+    properties: ['openFile', 'multiSelections']
 
-    if (fileName != null) {
-      jsonfile.readFile(fileName[0], (err, obj) => {
-        let loadFile = JSON.stringify(JSON.stringify(obj));
-        let loadFileLocation = JSON.stringify(JSON.stringify(fileName[0]));
+  }).then(result => {
+    if (result.canceled) return;
+    if (result.filePaths) {
+      for (const filePath of result.filePaths) {
+        jsonfile.readFile(filePath, (err, obj) => {
+          if (err) return;
 
-        if (storage === 'loadFile' || storage === 'loadModel') {
+          let loadFile = JSON.stringify(JSON.stringify(obj));
+          let loadFileLocation = JSON.stringify(JSON.stringify(filePath));
 
-          localStorage.setItem(storage, (loadFile.substring(1, loadFile.length - 1)));
-          localStorage.setItem(location, (loadFileLocation.substring(1, loadFileLocation.length - 1)));
+          if (storage === 'loadFile' || storage === 'loadModel') {
 
-        } else if (storage === 'loadData') {
-          tensorflowWindow.webContents.send('load-from-files', JSON.stringify(obj));
+            localStorage.setItem(storage, (loadFile.substring(1, loadFile.length - 1)));
+            localStorage.setItem(location, (loadFileLocation.substring(1, loadFileLocation.length - 1)));
 
-        } else if (storage === 'loadMLModel') {
-          tensorflowWindow.webContents.send('load-ml-model-from-files', JSON.stringify(obj));
-        }
-      });
+          } else if (storage === 'loadData') {
+            tensorflowWindow.webContents.send('load-from-files', JSON.stringify(obj));
+
+          } else if (storage === 'loadMLModel') {
+            tensorflowWindow.webContents.send('load-ml-model-from-files', JSON.stringify(obj));
+          }
+        });
+      }
     }
+  }).catch(err => {
+    displayStatus(err, 'main');
   });
 }
 
 
 /****** save file data *****/
 
-ipcMain.on('saveFile', (e, data) => {
-  // console.log(data);
-  if (data.overwrite && data.file.path) {
-    const existingFile = fs.existsSync(data.file.path);
-    if (!existingFile) {
-      data.overwrite = false;
+ipcMain.on('saveFile', (e, d) => {
+  if (d) {
+    // console.log(d);
+    const data = JSON.parse(d);
+    if (data.overwrite && data.file.path) {
+      const existingFile = fs.existsSync(data.file.path);
+      if (!existingFile) {
+        data.overwrite = false;
+      }
     }
+    saveFileWithDialog(data.file, data.overwrite, data.newId, data.extension);
   }
-  saveFileWidthDialog(data.file, data.overwrite, data.newId, data.extension);
 })
 
 
-function saveFileWidthDialog(file, overwrite, newId, ext) {
+function saveFileWithDialog(file, overwrite, newId, ext) {
   file.date.modified = new Date().getTime();
   file.date.changed = false;
 
@@ -646,9 +659,11 @@ function saveFileWidthDialog(file, overwrite, newId, ext) {
     dialog.showSaveDialog(mainWindow, {
       title: 'Save as',
       defaultPath: '~/' + file.name + ext
-    }, (filePath) => {
-      if (filePath != null) {
-        let fileName = filePath.replace(/^.*[\\\/]/, '');
+    }).then(result => {
+      if (result.canceled) return;
+
+      if (result.filePath) {
+        let fileName = result.filePath.replace(/^.*[\\\/]/, '');
         let extension = fileName.split(".");
         if (extension[extension.length - 1] === 'feelix') {
           fileName = fileName.slice(0, -5);
@@ -657,14 +672,15 @@ function saveFileWidthDialog(file, overwrite, newId, ext) {
         }
 
         let posName = fileName.lastIndexOf(".");
-        file.name = fileName.substr(0, posName < 0 ? fileName.length : posName);
+        file.name = fileName.substring(0, posName < 0 ? fileName.length : posName);
 
-        let posPath = filePath.lastIndexOf(".");
-        file.path = filePath.substr(0, posPath < 0 ? filePath.length : posPath) + ext;
-        // file.name = fileName;
-        // file.path = filePath;
+        let posPath = result.filePath.lastIndexOf(".");
+        file.path = result.filePath.substring(0, posPath < 0 ? result.filePath.length : posPath) + ext;
+
         saveChanges(file, 'add', ext);
       }
+    }).catch(err => {
+      displayStatus(err, 'main');
     });
   }
 }
@@ -1225,20 +1241,20 @@ ipcMain.on('export-datasets', (e, data) => {
   tensorflowWindow.webContents.send('export-dataset-model', data);
 });
 
-ipcMain.on('saveLogFile', (e, data) => {
-  const timeStamp = new Date().getTime();
+// ipcMain.on('saveLogFile', (e, data) => {
+//   const timeStamp = new Date().getTime();
 
-  dialog.showSaveDialog(mainWindow, {
-    title: 'Save data log',
-    defaultPath: '~/log-' + timeStamp + '.txt'
-  }, (filePath) => {
-    if (filePath != null) {
-      fs.writeFile(filePath, data, 'utf8', (err) => {
-        if (err) throw err;
-      });
-    }
-  });
-})
+//   dialog.showSaveDialog(mainWindow, {
+//     title: 'Save data log',
+//     defaultPath: '~/log-' + timeStamp + '.txt'
+//   }, (filePath) => {
+//     if (filePath != null) {
+//       fs.writeFile(filePath, data, 'utf8', (err) => {
+//         if (err) throw err;
+//       });
+//     }
+//   });
+// })
 
 
 ipcMain.on('clearAllData', (e) => {
