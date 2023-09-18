@@ -29,9 +29,9 @@ export class EffectVisualizationService {
   }
 
 
-  drawEffect(effect: any, colors: Array<EffectTypeColor>, viewSettings = 'large-thumbnails', storedIn: string) {
+  drawEffect(effect: any, colors: Array<EffectTypeColor>, viewSettings = 'large-thumbnails') {
 
-    const height = storedIn === 'file' ? 86 : 55;
+    const height = 86;
     let windowDivisionWidth = (window.innerWidth * this.verticalDivision / 100);
     if (windowDivisionWidth < 300) { windowDivisionWidth = 300; }
     const width = viewSettings !== 'small-thumbnails' ? windowDivisionWidth - 86 : (windowDivisionWidth / 2) - 70;

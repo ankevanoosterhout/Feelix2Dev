@@ -30,7 +30,9 @@
     </div>
 
     <ul class="tabContent tab-{{ this.activeTab }}" id="outer">
-      <!-- normal tab -->
+
+      <!-- effect tab -->
+
       <div class="innerContent" id="inner" *ngIf="this.activeTab === 0">
         <li class="blockContent {{ this.drawingService.file.configuration.libraryViewSettings }} file-view" *ngFor="let item of this.drawingService.file.effects">
           <div class="rowDetails">
@@ -73,16 +75,16 @@
       <!-- library tab -->
 
       <div class="innerContent" id="inner" *ngIf="this.activeTab === 1">
-        <li class="blockContent {{ this.drawingService.file.configuration.libraryViewSettings }} library-view" *ngFor="let item of this.effectLibraryService.effectLibrary">
+        <li class="blockContent {{ this.drawingService.file.configuration.libraryViewSettings }} file-view" *ngFor="let item of this.effectLibraryService.effectLibrary">
           <div class="rowDetails">
             <div class="title {{ this.drawingService.file.configuration.libraryViewSettings }}">
               <input type="text" class="form-control" id="name-{{ item.id }}" [(ngModel)]="item.effect.name" name="name-{{ item.id }}" (change)="updateLibEffectName(item.effect)">
             </div>
             <div class="buttonsPlayWindow {{ this.drawingService.file.configuration.libraryViewSettings }}"
                  *ngIf="this.drawingService.file.configuration.libraryViewSettings === 'list'">
-              <!-- <div class="buttonPlayWindow delete" (click)="editLibraryEffectItem(item.id)" title="edit">
-                <img src="./assets/icons/buttons/edit.svg">
-              </div> -->
+              <div class="buttonPlayWindow delete" (click)="importLibraryEffectItem(item.id)" title="import to file">
+                <img src="./assets/icons/buttons/import.svg">
+              </div>
               <div class="buttonPlayWindow delete" (click)="exportLibEffectItem(item.id)" title="export">
                 <img src="./assets/icons/buttons/export.svg">
               </div>
@@ -94,6 +96,9 @@
           <div class="row" *ngIf="this.drawingService.file.configuration.libraryViewSettings !== 'list'">
             <div id="effectSVG-{{ item.effect.id }}" class="effectSVG"></div>
             <div class="buttonsPlayWindow">
+              <div class="buttonPlayWindow delete" (click)="importLibraryEffectItem(item.id)" title="import to file">
+                <img src="./assets/icons/buttons/import.svg">
+              </div>
               <div class="buttonPlayWindow delete" (click)="exportLibEffectItem(item.id)" title="export">
                 <img src="./assets/icons/buttons/export.svg">
               </div>
@@ -102,9 +107,9 @@
               </div>
             </div>
           </div>
-          <div class="overlayEffect" id="overlayEffect-{{ item.effect.id }}"></div>
+          <!-- <div class="overlayEffect" id="overlayEffect-{{ item.effect.id }}"></div>
           <div class="dragOverlayEffect" id="dragOverlayEffect-{{ item.effect.id }}" draggable="true"
-              (mousedown)="dragstart(item.effect)" (dragend)="dragend(item.effect)" (mouseup)="dragend(item.effect)"></div>
+              (mousedown)="dragstart(item.effect)" (dragend)="dragend(item.effect)" (mouseup)="dragend(item.effect)"></div> -->
         </li>
       </div>
 

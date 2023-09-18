@@ -30,8 +30,8 @@ export class EffectsComponent implements OnInit, AfterViewInit {
   inLibrary = false;
 
   tabs = [ { id: 0, name: 'Effects', selected: true, disabled: false },
-           { id: 1, name: 'Library', selected: false, disabled: false  },
-           { id: 2, name: 'Details', selected: false, disabled: false  } ];
+           { id: 1, name: 'Global Library', selected: false, disabled: false  },
+           { id: 2, name: 'Effect Details', selected: false, disabled: false  } ];
           //  {id: 3, name: 'TorqueTuner', selected: false, disabled: false } ];
 
   buttons = [ { name: 'add', icon: '../../src/assets/icons/buttons/add.svg' },
@@ -157,32 +157,23 @@ export class EffectsComponent implements OnInit, AfterViewInit {
   }
 
 
-  drawEffects(effects: any) {
-    for (const effect of effects) {
-      const div = this.document.getElementById('effectSVG-' + effect.id);
+  drawEffects(effects: any, type: string) {
+    for (const el of effects) {
+      const div = this.document.getElementById('effectSVG-' + (type === 'library' ? el.effect.id : el.id));
       if (div) {
-        this.effectVisualizationService.drawEffect(effect, this.drawingService.file.configuration.colors, this.drawingService.file.configuration.libraryViewSettings, 'file');
+        this.effectVisualizationService.drawEffect((type === 'library' ? el.effect : el), this.drawingService.file.configuration.colors, this.drawingService.file.configuration.libraryViewSettings);
       }
     }
   }
 
-  drawLibEffects(libEffects: any) {
-    for (const libEffect of libEffects) {
-      const div = this.document.getElementById('effectSVG-' + libEffect.effect.id);
-      if (div) {
-        this.effectVisualizationService.drawEffect(libEffect.effect, this.drawingService.file.configuration.colors, this.drawingService.file.configuration.libraryViewSettings, 'library');
-      }
-    }
-  }
 
   drawLibraryEffects() {
     this.effectLibraryService.getEffectsFromLocalStorage();
-    setTimeout(() => { this.drawLibEffects(this.effectLibraryService.effectLibrary); }, 100);
+    setTimeout(() => { this.drawEffects(this.effectLibraryService.effectLibrary, 'library'); }, 100);
   }
 
   drawFileEffects() {
-    // console.log(this.drawingService.file.effects);
-    setTimeout(() => { this.drawEffects(this.drawingService.file.effects); }, 100);
+    setTimeout(() => { this.drawEffects(this.drawingService.file.effects, 'file'); }, 100);
   }
 
   changeQuality(effect: any) {
@@ -235,6 +226,19 @@ export class EffectsComponent implements OnInit, AfterViewInit {
     let effect = this.drawingService.file.effects.filter(e => e.id === effectID)[0];
     if (effect) {
       this.electronService.ipcRenderer.send('export', { effect: effect });
+    }
+  }
+
+  importLibraryEffectItem(libEffectID:string) {
+    const item = this.effectLibraryService.getEffect(libEffectID);
+    if (item) {
+      const copyEffect = this.cloneService.deepClone(item.effect);
+      copyEffect.storedIn = 'file';
+      copyEffect.id = uuid();
+      copyEffect.date.modified = new Date().getTime();
+      this.drawingService.file.effects.push(copyEffect);
+      this.sortItemsEffectList();
+      this.selectTab(0);
     }
   }
 

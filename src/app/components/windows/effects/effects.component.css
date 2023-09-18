@@ -262,8 +262,11 @@ ul.motorlist {
   box-sizing: border-box;
   border-bottom: 1px solid #2c2c2c;
   padding: 3px 4px;
+  background: #4a4a4a;
 }
-
+.tabContent li.blockContent:hover {
+  background: #6c6c6d;
+}
 .tabContent li.blockContent.list {
   width: 100%;
   height: 35px;
