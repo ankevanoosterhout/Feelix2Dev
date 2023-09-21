@@ -15,20 +15,39 @@ export class Rotation {
   constrain = false;
 }
 
+export enum scaleOption {
+  scale50 = 0.5,
+  scale75 = 0.75,
+  scale100 = 1,
+  scale125 = 1.25,
+  scale150 = 1.5,
+  scale250 = 2.5,
+  scale500 = 5
+};
+
+export const ScaleLabelMapping: Record<scaleOption, string> = {
+  [scaleOption.scale50]: '50%',
+  [scaleOption.scale75]: '75%',
+  [scaleOption.scale100]: '100%',
+  [scaleOption.scale125]: '125%',
+  [scaleOption.scale150]: '150%',
+  [scaleOption.scale250]: '250%',
+  [scaleOption.scale500]: '500%'
+};
+
+
 
 export class Scale {
-  text: string = null;
-  value: number = null;
+  value: scaleOption = null;
   graphD3: any = null;
 
-  constructor(text: string, value: number) {
-    this.text = text;
+  constructor(value: scaleOption) {
     this.value = value;
   }
 }
 
 export class Config {
-  scale = new Scale('100%', 100);
+  scale = new Scale(scaleOption.scale100);
   zoom: any = null;
   yScale: any = null;
   xScale: any = null;
@@ -64,6 +83,7 @@ export class Collection {
   id: string = null;
   name: string = 'Sequence-1';
   effects: Array<Details> = [];
+  midiEffects: Array<Details> = [];
   microcontroller: MicroController = null;
   motorID = new motorid();
   rotation = new Rotation();
@@ -74,6 +94,7 @@ export class Collection {
   effectDataList = [];
   renderedData = [];
   playing = false;
+  returnToStart = false;
   changedAfterRender = false;
   time = 0;
   feedbackData: Array<any> = [];

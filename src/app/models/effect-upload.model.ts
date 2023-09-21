@@ -41,6 +41,7 @@ export class ConfigModel {
   loop: number;
   motorID: string;
 
+
   constructor(collection: Collection, microcontroller: MicroController) {
     this.serialPort = microcontroller.serialPort;
     this.vendor = microcontroller.vendor;
@@ -83,7 +84,10 @@ export class EffectModel {
   midi_config: Model = null;
 
   constructor(collEffect: Details, effect: any, units: string, motorID: string) {
+    console.log(collEffect);
+
     this.id = effect.id;
+
     this.position = new Model('P',
     [ Math.round(collEffect.position.x) !== collEffect.position.x ? collEffect.position.x.toFixed(5) : collEffect.position.x,
       Math.round(collEffect.position.y) !== collEffect.position.y ? (collEffect.position.y / 100).toFixed(5) : (collEffect.position.y / 100) ]);
@@ -168,6 +172,8 @@ export class UploadModel {
   vendor: string = null;
   data: DataModel = null;
   newMCU = true;
+  returnToStart: number = null;
+  run: number = 0;
 
   constructor(collection: Collection, microcontroller: MicroController) {
     if (collection) {
@@ -179,6 +185,24 @@ export class UploadModel {
         }
       }
       this.data = new DataModel(collection.effectDataList, collection.renderedData);
+
+      // get startposition of velocity sequence (angle)
+      if (collection.visualizationType < 2) {
+        this.run = 1;
+      }
+      if (collection.returnToStart) {
+        let firstItem = collection.effects[0];
+        for (const item of collection.effects) {
+          if (item.position.x < firstItem.position.x) {
+            firstItem = item;
+          }
+        }
+        if (firstItem) {
+          const effectDataFirstItem = collection.effectDataList.filter(e => e.id === firstItem.effectID)[0];
+          this.returnToStart = (effectDataFirstItem.data[0].y * 100) * (Math.PI / 180);
+          // console.log(firstItem, this.returnToStart, effectDataFirstItem);
+        }
+      }
     }
 
     this.config = new ConfigModel(collection, microcontroller);

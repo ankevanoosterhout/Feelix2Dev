@@ -85,10 +85,15 @@ export class PID {
   p: number = null;
   i: number = null;
   d: number = null;
-  constructor(p: number, i: number, d: number) {
+  Tf: number = null;
+  output_ramp: number = null;
+
+  constructor(p: number, i: number, d: number, Tf: number = null, output_ramp: number = null) {
     this.p = p;
     this.i = i;
     this.d = d;
+    this.Tf = Tf;
+    this.output_ramp = output_ramp;
   }
 }
 
@@ -123,6 +128,10 @@ export class BLDCConfig extends Config {
   current_sense = [ new CurrentSense('a', 0.0), new CurrentSense('b', 0.0) ];
   current_sense_calibration: number;
   overheatProtection = false;
+  output_ramp_angle = 10000;
+  output_ramp_velocity = 1000;
+  position_pid = new PID(20.0, 0.0, 0.0, 0, 1000);
+  velocity_pid = new PID(0.5, 10, .001, 0.01, 1000);
 }
 
 export class minMax {
@@ -159,6 +168,8 @@ export class StepperConfig extends Config { //update config details for stepper 
   rotation = new Rotation();
   transmission = 1;
   frequency = 50000;
+  position_pid = new PID(20.0, 0.0, 0.0, 0);
+  velocity_pid = new PID(0.5, 10, .001, 0.01);
 }
 
 export class State {
@@ -175,13 +186,10 @@ export class Motor {
   type: ActuatorType;
   config: any;
   state = new State();
-  position_pid = new PID(20.0, 0.0, 0.0);
-  velocity_pid = new PID(0.5, 10, .001);
   record = false;
   visible = true;
   I2C_address: any;
   I2C_communication = 0;
-
 
   constructor(id: number, type: ActuatorType, i2cComm = 0) {
     this.id = (id + 10).toString(16).toUpperCase();

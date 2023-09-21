@@ -4,7 +4,7 @@ import { DrawingPlaneConfig } from '../models/drawing-plane-config.model';
 import { File } from '../models/file.model';
 import * as d3 from 'd3';
 import { FileService } from './file.service';
-import { Collection, Layer, Scale } from '../models/collection.model';
+import { Collection, Layer, Scale, scaleOption } from '../models/collection.model';
 import { DrawingService } from './drawing.service';
 import { Details, Direction, Effect, Unit } from '../models/effect.model';
 import { EffectVisualizationService } from './effect-visualization.service';
@@ -166,9 +166,10 @@ export class MotorControlService {
       .attr('height', (this.file.configuration.collectionDisplay === 'small' ? updatedHeight - 35 : updatedHeight));
 
     if (this.file.configuration.collectionDisplay === 'small') {
-      collection.config.scale.graphD3 = d3.zoomIdentity.translate((this.width * 0.125), 0).scale((collection.config.scale.value/100));
+      collection.config.scale.value = scaleOption.scale75;
+      collection.config.scale.graphD3 = d3.zoomIdentity.translate((this.width * 0.125), 0).scale(collection.config.scale.value);
     } else if (collection.config.scale.graphD3 && collection.config.scale.graphD3.k) {
-      collection.config.scale.graphD3 = d3.zoomIdentity.translate(collection.config.scale.graphD3.x, 0).scale((collection.config.scale.value/100));
+      collection.config.scale.graphD3 = d3.zoomIdentity.translate(collection.config.scale.graphD3.x, 0).scale((collection.config.scale.value));
     } else {
       collection.config.scale.graphD3 = d3.zoomIdentity.translate(0, 0).scale(1);
     }
@@ -305,9 +306,6 @@ export class MotorControlService {
       if (collection.microcontroller.connected) {
         this.drawCursor(collection);
       }
-      // if (this.file.configuration.collectionDisplay !== 'small') {
-      //   this.drawStartPosition(collection);
-      // }
     }
   }
 
@@ -556,7 +554,10 @@ export class MotorControlService {
 
 
   updateScale(collection: Collection) {
-    const scale = this.file.configuration.collectionDisplay === 'small' ? 0.75 : collection.config.scale.value / 100;
+    collection.config.scale.graphD3 = null;
+
+    const scale = this.file.configuration.collectionDisplay === 'small' ? 0.75 : collection.config.scale.value;
+
     const oldSlideWidth = collection.config.slider.inner.max - collection.config.slider.inner.min;
     let sliderWidth = collection.config.slider.outer.max / scale * 0.5;
     const sliderWidthDifferenceMeasuredFromCenter = (oldSlideWidth - sliderWidth) / 2;
@@ -573,9 +574,14 @@ export class MotorControlService {
     this.updateOffset(collection);
     this.scaleContent(collection);
 
+    collection.config.svg.select('container').attr('fill', collection.rotation.loop ? '#1c1c1c' : '#2c2c2c');
+
     d3.select('.sliderHandle-' + collection.id)
       .attr('x', collection.config.slider.inner.min)
       .attr('width', collection.config.slider.inner.max - collection.config.slider.inner.min);
+
+    this.updateCollection(collection);
+    this.drawCollection(collection);
   }
 
   // drawStartPosition(collection: Collection) {
@@ -599,7 +605,7 @@ export class MotorControlService {
 
   setScale(collection: Collection) {
 
-    let scale = collection.config.scale.graphD3 ? collection.config.scale.graphD3.k : collection.config.scale.value / 100;
+    let scale = collection.config.scale.graphD3 ? collection.config.scale.graphD3.k : collection.config.scale.value;
     if (this.file.configuration.collectionDisplay === 'small') {
       scale = 0.75;
     }
@@ -650,11 +656,10 @@ export class MotorControlService {
       collection.config.svg.selectAll('.range-line').attr('x1', (d) => collection.config.newXscale(d)).attr('x2', (d) => collection.config.newXscale(d));
     }
     if (!collection.rotation.loop && collection.visualizationType !== EffectType.velocity) {
-      collection.config.svg.selectAll('.inner-container')
+      collection.config.svg.select('.inner-container')
         .attr('x', collection.config.newXscale(collection.rotation.start))
         .attr('width', collection.config.newXscale(collection.rotation.end) - collection.config.newXscale(collection.rotation.start));
     }
-
     this.drawCollectionEffects(collection);
   }
 
@@ -670,7 +675,7 @@ export class MotorControlService {
   getSliderPosition(collection: Collection) {
 
     if (this.file.configuration.collectionDisplay !== 'small') {
-      let scale = collection.config.scale.value / 100;
+      let scale = collection.config.scale.value;
 
       collection.config.slider.outer.max = this.width;
       collection.config.slider.outer.min = 0;
@@ -707,7 +712,7 @@ export class MotorControlService {
 
 
   updateOffset(collection: Collection) {
-    const scale = this.file.configuration.collectionDisplay === 'small' ? 0.75 :(collection.config.scale.value / 100);
+    const scale = this.file.configuration.collectionDisplay === 'small' ? 0.75 : collection.config.scale.value;
     let offset =
         (((-collection.config.slider.inner.min) / collection.config.slider.outer.max) *
         (collection.config.slider.outer.max * scale)) +

@@ -194,7 +194,7 @@ ul {
 .play-arrow {
   width: 0;
   height: 0;
-  margin: 4px 6px;
+  margin: 4px 5px;
   display:inline-block;
   position: absolute;
   border-left: 9px solid #ccc;

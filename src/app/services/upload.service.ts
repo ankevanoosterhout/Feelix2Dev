@@ -236,7 +236,6 @@ export class UploadService {
   }
 
   translateEffectData(collEffect: Details, effectData: any) {
-    // console.log(collEffect, effectData);
     let copyEffectList = this.cloneService.deepClone(effectData);
     let multiply = 1;
 
@@ -248,24 +247,25 @@ export class UploadService {
     let start_pos = 0;
 
     for (const path of copyEffectList.paths) {
-      if (effectData.type === EffectType.velocity && effectData.grid.yUnit.name === 'deg') {
-        const nodes = path.nodes.filter(n => n.type === 'node');
-        start_pos = Math.ceil(nodes[0].pos.y * (Math.PI / 180));
-      }
+
       if (path && path.nodes) {
-        if (effectData.type === EffectType.midiNote || effectData.type === EffectType.midi){
-          data_complete = data_complete.concat(this.translateTorqueEffectData(path, multiply, effectData.range_y, 1, start_pos, true));
-        }
-        else if (effectData.type === EffectType.position) {
+
+        if (effectData.type === EffectType.position) {
           data_complete = data_complete.concat(this.translatePositionEffectData(path, multiply, 1))
         }
         else {
-          data_complete = data_complete.concat(this.translateTorqueEffectData(path, multiply, effectData.range_y, 1, start_pos, false));
+          if (effectData.type === EffectType.velocity && effectData.grid.yUnit.name === 'deg') {
+            const nodes = path.nodes.filter(n => n.type === 'node');
+            start_pos = nodes[0].pos.y * (Math.PI / 180);
+          }
+
+          data_complete = data_complete.concat(
+            this.translateTorqueEffectData(path, multiply, effectData.range_y, 1, start_pos, (effectData.type >= 4 ? true : false)));
         }
       }
     }
     data = this.reduceDataPoints(data_complete, collEffect.quality, multiply);
-    // console.log(data);
+    console.log(data);
 
     return { id: collEffect.effectID, type: effectData.type, size: effectData.size, rotation: effectData.rotation, infinite: collEffect.infinite, yUnit: effectData.grid.yUnit.name,
       data: data, data_complete: data_complete, midi_config: effectData.midi_config};
@@ -321,19 +321,22 @@ export class UploadService {
             }
           }
 
-
           const division = midi ? 1 : 100;
           const coordinates = {
             x: (m - startPos),
             y: inlistValue ? (inlistValue.y + (yValue / division)) / 2 : (yValue / 100),
-            y2: inlistValue ? (inlistValue.y + (yValue / division)) / 2 - start_from: (yValue / 100) - start_from
+            y2: inlistValue ? (inlistValue.y + (yValue / division)) / 2 - start_from : (yValue / 100) - start_from
           };
 
           translatedData.push(coordinates);
         }
       }
+      // else if (i === nodes.length - 1) {
+      //  // add last node to effect based on last node value
+      // }
       offset = quality - ((end - start) % quality);
       i++;
+
     }
     return translatedData;
   }
@@ -454,12 +457,12 @@ export class UploadService {
 
   createUploadModel(collection: Collection, microcontroller: MicroController) {
     let model = new UploadModel(collection, microcontroller);
-    // console.log(model);
+    console.log(model);
     return model;
   }
 
     // TODO: Revise this section too
-  createUploadModel_TT(message, microcontroller: MicroController) {
+  createUploadModel_TT(message: any, microcontroller: MicroController) {
     let model = new UploadModel_TT(message, microcontroller);
     // console.log(model);
     return model;

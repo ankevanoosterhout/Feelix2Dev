@@ -8,6 +8,7 @@ import { FileService } from 'src/app/services/file.service';
 import { Effect, RepeatInstance } from 'src/app/models/effect.model';
 import { v4 as uuid } from 'uuid';
 import { CloneService } from 'src/app/services/clone.service';
+import { EffectTypeLabelMapping } from 'src/app/models/configuration.model';
 
 @Component({
     selector: 'app-effects',
@@ -28,6 +29,8 @@ export class EffectsComponent implements OnInit, AfterViewInit {
   effect: Effect = null;
 
   inLibrary = false;
+
+  public EffectTypeLabelMapping = EffectTypeLabelMapping;
 
   tabs = [ { id: 0, name: 'Effects', selected: true, disabled: false },
            { id: 1, name: 'Global Library', selected: false, disabled: false  },

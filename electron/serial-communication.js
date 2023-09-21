@@ -141,6 +141,16 @@ function createConnection(serialData, data = null, callback = null) {
   }
 }
 
+function deleteDataItemsCOM(COM) {
+  const dataItems = this.dataSendWaitList.filter(d => d.port === COM);
+  for (const item of dataItems) {
+    const index = this.dataSendWaitList.indexOf(item);
+    if (index > -1) {
+      this.dataSendWaitList.splice(index, 1);
+    }
+  }
+}
+
 
 class newSerialPort {
   constructor(portData, sp) {
@@ -193,7 +203,8 @@ class newSerialPort {
       }, (error) => {
           if (error) {
             main.updateSerialProgress({ progress: 0, str: 'Error: ' + error.message });
-            // return;
+            deleteDataItemsCOM(this.COM);
+            return;
           }
           // else {
           //   console.log("CHECK SOFTWARE VERSION1");
@@ -226,9 +237,9 @@ class newSerialPort {
       parser.on('data', (d) => {
 
         // uncomment to print incoming data
-        // if (d.charAt(0) === '#') {
-        //   console.log('received data ', d);
-        // } else
+        if (d.charAt(0) === '#') {
+          console.log('received data ', d);
+        } else
         if (d.charAt(0) === '*') {
           if (dataSendWaitList.filter(d => d.port === this.COM).length > 0) {
             uploadFromWaitList(ports.filter(p => p.COM === this.COM)[0]);
@@ -405,13 +416,18 @@ function prepareMotorData(uploadContent, motor, datalist, index) {
     datalist.unshift('FM' + motor.id + 'J' + uploadContent.config.range);
     datalist.unshift('FM' + motor.id + 'H' + uploadContent.config.loop);
     datalist.unshift('FM' + motor.id + 'M' + uploadContent.config.constrain_range);
+    datalist.unshift('FM' + motor.id + 'W:' + (uploadContent.config.returnToStart ? 2 : 1) + ':' + (uploadContent.config.returnToStart ? uploadContent.config.returnToStart.toFixed(6) : 0));
   }
   if (motor.state.position.start) {
     datalist.unshift('FM' + motor.id + '%' + motor.state.position.start.toFixed(14));
   }
 
-  datalist.unshift('FM' + motor.id + 'A' + ':' + motor.position_pid.p.toFixed(2) + ':' + motor.position_pid.i.toFixed(2) + ':' + motor.position_pid.d.toFixed(3));
-  datalist.unshift('FM' + motor.id + 'Q' + ':' + motor.velocity_pid.p.toFixed(2) + ':' + motor.velocity_pid.i.toFixed(2) + ':' + motor.velocity_pid.d.toFixed(3));
+  if (motor.config.position_pid && motor.config.velocity_pid) {
+    datalist.unshift('FM' + motor.id + 'A' + ':' + motor.config.position_pid.p.toFixed(2) + ':' + motor.config.position_pid.i.toFixed(2));
+    datalist.unshift('FM' + motor.id + '$' + ':' + motor.config.position_pid.output_ramp + ':' + motor.config.position_pid.Tf.toFixed(3));
+    datalist.unshift('FM' + motor.id + 'Q' + ':' + motor.config.velocity_pid.p.toFixed(2) + ':' + motor.config.velocity_pid.i.toFixed(2));
+    datalist.unshift('FM' + motor.id + '@' + ':' + motor.config.velocity_pid.output_ramp + ':' + motor.config.velocity_pid.Tf.toFixed(3));
+  }
   datalist.unshift('FM' + motor.id + 'G' + (motor.config.inlineCurrentSensing ? 1 : 0));
   if (motor.config.calibrateCurrentSense) {
     datalist.unshift('FM' + motor.id + 'Y' + motor.config.calibrateCurrentSense.toFixed(5));
@@ -615,6 +631,8 @@ function upload_to_receivedPort(port, uploadContent) {
     index++;
   }
 
+  datalist.unshift('FMK' + uploadContent.run);
+
   dataSendWaitList.push({ port: uploadContent.config.serialPort.path, data: datalist, totalItems: datalist.length, collection: uploadContent.config.collection });
   dataSendWaitList.filter(d => d.port === uploadContent.config.serialPort.path)[0].data.unshift('FC' + (uploadContent.config.motorID ? uploadContent.config.motorID : 'A'));
   // console.log(JSON.stringify(dataSendWaitList));
@@ -692,7 +710,7 @@ function run(motor_id, port, run) {
 }
 
 function returnToStart(motor_id, collection_name, port) {
-  sendDataStr([ 'FM' + motor_id + 'W0' ], port);
+  sendDataStr([ 'FM' + motor_id + 'W:0:0' ], port);
   main.updateSerialProgress({ progress: 100, str: (play ? 'Return to start ' + collection_name + ' at ' + port : 'Stop ' + collection_name + ' at ' + port) });
 }
 
@@ -864,7 +882,9 @@ function updateMotorSettingCallback(port, uploadContent) {
 
     if (datalist.length > 0) {
       datalist.unshift('FC' + uploadContent.config.motorID);
+
       dataSendWaitList.push({ port: uploadContent.config.serialPort.path, data: datalist, totalItems: datalist.length });
+
 
       main.updateSerialProgress({ progress: 0, str: 'Updating settings at ' + receivingPort.COM });
 

@@ -70,6 +70,7 @@ import { DOCUMENT } from '@angular/common';
       width: 0;
       height:6px;
       background: #222;
+      transition: all 0.5s ease-in;
     }
 
 
@@ -106,6 +107,8 @@ export class StatusbarComponent implements OnInit {
 
   public _progress = 0;
 
+  progressRefresh: any = null;
+
   constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService) {
 
     this.electronService.ipcRenderer.on('updateProgress', (event: Event, data: any) => {
@@ -126,8 +129,21 @@ export class StatusbarComponent implements OnInit {
   }
 
   private updateProgressBar(progress: number) {
+
+    if (typeof this.progressRefresh === 'number') {
+      clearTimeout(this.progressRefresh);
+    }
     const width = 244 * (progress / 100);
-    this.document.getElementById('progress').style.width = width + 'px';
+    const progressDiv = this.document.getElementById('progress');
+    progressDiv.style.transition = 'all 0.5s ease-in';
+    progressDiv.style.width = width + 'px';
+
+    if (progress === 100) {
+      this.progressRefresh = setTimeout(() => {
+        progressDiv.style.transition = 'none';
+        progressDiv.style.width = '0px';
+      }, 3000);
+    }
   }
 
   ngOnInit(): void { }

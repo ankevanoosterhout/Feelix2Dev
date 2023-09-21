@@ -337,7 +337,11 @@ const mainMenuTemplate = [
       },
       {
         label: 'Open development tools',
-        click() { mainWindow.webContents.openDevTools(); }
+        click() {
+          // const devtools = new BrowserWindow();
+          // mainWindow.webContents.setDevToolsWebContents(devtools.webContents);
+          mainWindow.webContents.openDevTools();
+        }
       }
     ]
   }

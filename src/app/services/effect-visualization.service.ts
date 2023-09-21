@@ -291,6 +291,7 @@ export class EffectVisualizationService {
 
   drawCollectionFeedback(collection: Collection, width: number, height: number, view: any) {
 
+
     d3.select('#svgFeedback-' + collection.id).remove();
 
     const feedbackData = collection.config.svg.append('g')
@@ -305,8 +306,8 @@ export class EffectVisualizationService {
       .append('circle')
       .attr('class', 'feedback_' + collection.id)
       .attr('r', 1)
-      .attr('cx', (d: { time: number }) => { return collection.config.newXscale(collection.rotation.units.name === 'sec' ? d.time / 1000 : d.time) })
-      .attr('cy', (d: { value: number }) => { return collection.config.newYscale(d.value) })
+      .attr('cx', (d: { time: number }) => collection.config.newXscale(collection.rotation.units.name === 'sec' ? d.time / 1000 : d.time))
+      .attr('cy', (d: { value: number }) => { console.log(d.value, collection.config.newYscale(d.value)); return collection.config.newYscale(d.value); })
       .style('fill', '#E18257');
 
     feedbackData.append('path')
@@ -315,7 +316,7 @@ export class EffectVisualizationService {
       .attr('stroke', '#E18257')
       .attr('stroke-width', 1.5)
       .attr('d', d3.line()
-        .x((d: { time: number }) => { return collection.config.newXscale(collection.rotation.units.name === 'sec' ? d.time / 1000 : d.time) })
+        .x((d: { time: number }) => collection.config.newXscale(collection.rotation.units.name === 'sec' ? d.time / 1000 : d.time))
         .y((d: { value: number }) => { return collection.config.newYscale(d.value) }));
 
   }

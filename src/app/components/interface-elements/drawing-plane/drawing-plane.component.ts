@@ -535,14 +535,14 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
     if (!this.config.zoomable) {
       const key = e.key;
       if (key === ' ') {
-        if (this.config.activeInput === null && !this.nodeService.inputFieldsActive && !this.drawingService.audioVisualization()) {
+        if (!this.config.activeInput && !this.nodeService.inputFieldsActive && !this.drawingService.audioVisualization()) {
           this.drawingService.deselectAllElements();
           this.config.svg.call(this.config.zoom);
           this.drawingService.setCursor('url(./assets/icons/tools/cursor-move.png), none');
           this.config.zoomable = true;
         }
       } else if (key === 'ArrowUp' || key === 'ArrowDown' || key === 'ArrowLeft' || key === 'ArrowRight' ) {
-        if (!this.nodeService.inputFieldsActive && this.config.activeInput === null) {
+        if (!this.nodeService.inputFieldsActive && !this.config.activeInput) {
           if (this.nodeService.selectedPaths.length > 0 || this.nodeService.selectedNodes.length > 0) {
 
 
@@ -637,7 +637,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
     } else if (key === 'Delete' || key === 'Backspace') {
 
-      if (!this.nodeService.inputFieldsActive && this.config.activeInput === null) {
+      if (!this.nodeService.inputFieldsActive && !this.config.activeInput) {
 
         // if (!this.drawingService.audioVisualization())
         const activeSelection = this.dataService.activeSelection();
