@@ -59,7 +59,6 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
   constructor(@Inject(DOCUMENT) private document: Document, public motorControlService: MotorControlService, public hardwareService: HardwareService,
               private cloneService: CloneService, private uploadService: UploadService, private electronService: ElectronService) {
 
-                console.log(this.scaleOptions, scaleOption);
 
     this.microcontrollers = this.hardwareService.getAllMicroControllers();
 
@@ -512,15 +511,12 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
   toggleMidi(collection: Collection) {
     collection.config.midi = !collection.config.midi;
-    console.log(collection.config.midi);
     this.motorControlService.updateCollection(collection);
     this.motorControlService.drawCollection(collection);
   }
 
   changeUnits(collection: Collection) {
-    // console.log(collection.rotation.units, this.oldUnits);
     const multiply = (collection.rotation.units.PR/this.oldUnits.PR);
-    // console.log(multiply);
     if (multiply !== 1) {
 
       collection.rotation.start *= multiply;
@@ -571,7 +567,6 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     return port1 && port2 ? port1.serialPort.path === port2.serialPort.path : port1 === port2;
   }
   compareID(el1: any, el2: any) {
-    console.log(el1, el2);
     return el1 && el2 ? el1.id === el2.id : el1 === el2;
   }
 

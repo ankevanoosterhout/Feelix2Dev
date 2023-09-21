@@ -11,7 +11,7 @@ let progress = 0;
 let dataSendWaitList = [];
 let datalist = [];
 
-const softwareVersion = { major: 3, minor: 0, patch: 1 };
+const softwareVersion = { major: 3, minor: 1, patch: 1 };
 
 
 function listSerialPorts(callback) {
@@ -237,9 +237,9 @@ class newSerialPort {
       parser.on('data', (d) => {
 
         // uncomment to print incoming data
-        if (d.charAt(0) === '#') {
-          console.log('received data ', d);
-        } else
+        // if (d.charAt(0) === '#') {
+        //   console.log('received data ', d);
+        // } else
         if (d.charAt(0) === '*') {
           if (dataSendWaitList.filter(d => d.port === this.COM).length > 0) {
             uploadFromWaitList(ports.filter(p => p.COM === this.COM)[0]);

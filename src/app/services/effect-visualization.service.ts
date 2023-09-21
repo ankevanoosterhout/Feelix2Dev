@@ -307,7 +307,7 @@ export class EffectVisualizationService {
       .attr('class', 'feedback_' + collection.id)
       .attr('r', 1)
       .attr('cx', (d: { time: number }) => collection.config.newXscale(collection.rotation.units.name === 'sec' ? d.time / 1000 : d.time))
-      .attr('cy', (d: { value: number }) => { console.log(d.value, collection.config.newYscale(d.value)); return collection.config.newYscale(d.value); })
+      .attr('cy', (d: { value: number }) => collection.config.newYscale(d.value))
       .style('fill', '#E18257');
 
     feedbackData.append('path')
@@ -317,7 +317,7 @@ export class EffectVisualizationService {
       .attr('stroke-width', 1.5)
       .attr('d', d3.line()
         .x((d: { time: number }) => collection.config.newXscale(collection.rotation.units.name === 'sec' ? d.time / 1000 : d.time))
-        .y((d: { value: number }) => { return collection.config.newYscale(d.value) }));
+        .y((d: { value: number }) => collection.config.newYscale(d.value)));
 
   }
 
