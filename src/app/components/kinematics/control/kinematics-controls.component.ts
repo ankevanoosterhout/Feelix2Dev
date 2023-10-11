@@ -178,7 +178,7 @@ export class KinematicsControlComponent implements AfterViewInit {
 
     if (this.ikService.ikConfig.drag.selected && this.ikService.ikConfig.drag.selected.parent) {
       const selectedFrame = this.kinematicService.getFrame(this.ikService.ikConfig.drag.selected.parent.name);
-      console.log(model);
+      // console.log(model);
       const updatedModel = this.updatePosition(selectedFrame, model);
       if (selectedFrame instanceof URFD_Joint) {
         this.addLink(updatedModel, this.ikService.ikConfig.drag.selected, null, true);

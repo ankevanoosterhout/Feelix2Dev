@@ -68,7 +68,7 @@ export class Configuration {
       new EffectTypeColor(EffectType.midi, ['#5993bd']),
       new EffectTypeColor(EffectType.midiNote, ['#0970ba']) ];
 
-  colorList = [ new InputColor('pressure', '#43E6D5'),
+  colorList = [ new InputColor('pressure', '#FF9100'),
                 new InputColor('pressure-1', '#00AEEF'),
                 new InputColor('pressure-2', '#E18257'),
                 new InputColor('pressure-3', '#4390E6'),

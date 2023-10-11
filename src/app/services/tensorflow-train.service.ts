@@ -134,6 +134,7 @@ export class TensorFlowTrainService {
 
 
   NN_createData(data: any, modelObj: Model) {
+    console.log(data);
 
     this.d.selectedModel.model = tf.sequential();
 

@@ -243,6 +243,7 @@ ul.file-list-sidebar li:active, ul.file-list-sidebar li.active {
   flex-direction: column;
   margin-right: 20px;
   overflow-x:hidden;
+  overflow-y: visible;
 }
 
 .column-20 {

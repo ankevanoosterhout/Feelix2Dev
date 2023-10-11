@@ -349,8 +349,8 @@ export class TensorFlowMainService {
 
             if (motor.config.nrOfSensors && motor.config.nrOfSensors > 1) {
               for (let i = 1; i < motor.config.nrOfSensors; i++) {
-                const input = this.d.selectedModel.inputs.filter(i => i.name === 'pressure-' + i)[0];
-                if (!input) {
+                const input = this.d.selectedModel.inputs.filter(i => i.name === 'pressure-' + i);
+                if (input.length === 0) {
                   const inputModel = new ModelVariable('pressure-' + i, true, true, '#4390E6', 'P-' + i);
                   this.d.selectedModel.inputs.push(inputModel);
                   this.d.colorList.push(new InputColor(inputModel.name, inputModel.color));

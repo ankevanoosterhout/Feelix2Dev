@@ -79,7 +79,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     });
 
     this.electronService.ipcRenderer.on('playDataPressure', (event: Event, data: any) => {
-      console.log(data);
+      // console.log(data);
 
       for (const item of data.list) {
         const selectedCollection = this.motorControlService.file.collections.filter(c => c.playing && c.microcontroller && c.microcontroller.serialPort.path === data.serialPath && c.motorID && c.motorID.name === item.motorID)[0];
@@ -89,7 +89,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
           const motor = selectedCollection.microcontroller.motors.filter(m => m.id === selectedCollection.motorID.name)[0];
           const pressure = item.d.filter((i: { name: string; }) => i.name === 'pressure')[0].val;
 
-          console.log(pressure);
+          // console.log(pressure);
 
           selectedCollection.time = item.d.filter((i: { name: string; }) => i.name === 'time')[0].val;
 
@@ -317,7 +317,6 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
       if (loop && collection.feedbackData.length > 0 && collection.feedbackData[index] && collection.feedbackData[index][collection.feedbackData[index].length - 1].time >= collection.time) {
         collection.feedbackData[index] = [];
-        console.log('reset');
       }
 
       if (loop || (!loop && (collection.feedbackData.length === 0 || collection.feedbackData[index] && (collection.feedbackData[index].length === 0 ||

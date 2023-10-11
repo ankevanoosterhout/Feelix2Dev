@@ -43,12 +43,13 @@ export class TensorFlowJSComponent implements OnInit {
       });
 
       this.electronService.ipcRenderer.on('pneumaticDataPressure', (event: Event, data: any) => {
+        // console.log(data);
 
         for (const item of data.list) {
           // console.log(item);
           const pressure = item.d.filter((i: { name: string; }) => i.name === 'pressure')[0];
-          if (pressure && pressure.val.length > 0) {
-            this.handleIncomingData(pressure.val[0], data.serialPath, item.motorID, item.d);
+          if (pressure) {
+            this.handleIncomingData(pressure.val, data.serialPath, item.motorID, item.d);
           }
         }
       });
@@ -300,7 +301,6 @@ export class TensorFlowJSComponent implements OnInit {
 
   toggleResultWindow() {
     this.config.resultWindowVisible = !this.config.resultWindowVisible;
-    console.log(this.config.resultWindowVisible);
     this.updateScreenDivisionX(!this.config.resultWindowVisible ? window.innerWidth - 18 : window.innerWidth * 0.7);
   }
 
@@ -362,7 +362,6 @@ export class TensorFlowJSComponent implements OnInit {
   updateScreenDivisionX(coord: number) {
     if (coord <= window.innerWidth - 18) {
       const division = 100 / (window.innerWidth / coord);
-      console.log(division);
       this.updateResize(division, 'vertical');
     }
   }
