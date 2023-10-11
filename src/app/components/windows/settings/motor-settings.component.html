@@ -126,6 +126,13 @@
                   <span class="checkmark radio playwindow"></span>
                 </label>
               </div>
+
+              <div class="form-group" *ngIf="motor.type === 2 && motor.config.closedLoop">
+                <label class="labelRow motorsettings inset"><div class="question-mark" title="Number of sensors per actuator (default: 1, max: 5)">?</div>Number of sensors</label>
+                <input type="number" class="motor-settings" id="pressure-sensors-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="pressure-sensors-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}"
+                  [(ngModel)]="motor.config.nrOfSensors" (change)="updateMicrocontroller(selectedMicrocontroller)">
+              </div>
+
             </div>
 
 
@@ -363,7 +370,7 @@
 
 
 
-            <div class="horizontalSeparator" *ngIf="selectedMicrocontroller && selectedMicrocontroller.vendor !== 'ESP8266' && motor.type === 0"></div>
+            <!-- <div class="horizontalSeparator" *ngIf="selectedMicrocontroller && selectedMicrocontroller.vendor !== 'ESP8266' && motor.type === 0"></div>
 
             <div class="form-group" *ngIf="selectedMicrocontroller && selectedMicrocontroller.vendor !== 'ESP8266' && motor.type === 0">
               <div class="row">
@@ -385,7 +392,7 @@
 
                 <button (click)="getCurrentSenseCalibrationValue(motor.id)">Calibrate</button>
               </div>
-            </div>
+            </div> -->
 
             <div class="horizontalSeparator" *ngIf="motor.type === 2 || motor.type === 0"></div>
 
@@ -407,8 +414,10 @@
               <p>I </p><input type="number" class="small motor-settings" id="inflate_pid_i_{{ motor.id }}" name="position_pid_i_{{ motor.id }}" [(ngModel)]="motor.config.inflate_pid.i" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
               <!-- <p>D </p><input type="number" class="small motor-settings" id="inflate_pid_d_{{ motor.id }}" name="position_pid_d_{{ motor.id }}" [(ngModel)]="motor.config.inflate_pid.d" (change)="updateMicrocontroller(this.selectedMicrocontroller)"> -->
             </div>
-
-
+            <div class="form-group" *ngIf="motor.type === 2 && motor.config.inflate_pid">
+              <label class="labelRow motorsettings inset"><div class="question-mark" title="This variable limits acceleration of inflation">?</div> Output ramp</label>
+              <input type="number" class="motor-settings" id="output_ramp_infl_{{ motor.id }}" name="output_ramp_infl_{{ motor.id }}" [(ngModel)]="motor.config.inflate_pid.output_ramp" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
+            </div>
 
             <div class="form-group" *ngIf="motor.type === 2 && motor.config.deflate_pid">
               <label class="labelRow motorsettings inset"><div class="question-mark" title="PID controller, to tune deflation">?</div> PI deflate</label>
@@ -416,7 +425,15 @@
               <p>I </p><input type="number" class="small motor-settings" id="deflate_pid_i_{{ motor.id }}" name="deflate_pid_i_{{ motor.id }}" [(ngModel)]="motor.config.deflate_pid.i" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
               <!-- <p>D </p><input type="number" class="small motor-settings" id="deflate_pid_d_{{ motor.id }}" name="deflate_pid_d_{{ motor.id }}" [(ngModel)]="motor.config.deflate_pid.d" (change)="updateMicrocontroller(this.selectedMicrocontroller)"> -->
             </div>
+            <div class="form-group" *ngIf="motor.type === 2 && motor.config.deflate_pid">
+              <label class="labelRow motorsettings inset"><div class="question-mark" title="This variable limits acceleration of deflation">?</div> Output ramp</label>
+              <input type="number" class="motor-settings" id="output_ramp_defl_{{ motor.id }}" name="output_ramp_defl_{{ motor.id }}" [(ngModel)]="motor.config.deflate_pid.output_ramp" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
+            </div>
 
+            <div class="form-group" *ngIf="motor.type === 2 && motor.config.inflate_pid">
+              <label class="labelRow motorsettings inset"><div class="question-mark" title="Low pass filter time constant deflation">?</div> Low pass filter</label>
+              <input type="number" class="motor-settings" id="lpf_infl_{{ motor.id }}" name="lpf_infl_{{ motor.id }}" [(ngModel)]="motor.config.inflate_pid.Tf" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
+            </div>
 
 
             <div class="form-group" *ngIf="motor.type === 0 && motor.config.position_pid">
@@ -448,6 +465,7 @@
               <label class="labelRow motorsettings inset"><div class="question-mark" title="Low pass filter time constant">?</div> Low pass filter</label>
               <input type="number" class="motor-settings" id="lpf_vel_{{ motor.id }}" name="lpf_vel_{{ motor.id }}" [(ngModel)]="motor.config.velocity_pid.Tf" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
             </div>
+
 
           </div>
         </div>

@@ -47,8 +47,8 @@ export class TensorFlowJSComponent implements OnInit {
         for (const item of data.list) {
           // console.log(item);
           const pressure = item.d.filter((i: { name: string; }) => i.name === 'pressure')[0];
-          if (pressure) {
-            this.handleIncomingData(pressure.val, data.serialPath, item.motorID, item.d);
+          if (pressure && pressure.val.length > 0) {
+            this.handleIncomingData(pressure.val[0], data.serialPath, item.motorID, item.d);
           }
         }
       });

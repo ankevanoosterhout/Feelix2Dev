@@ -730,7 +730,7 @@ export class FileService {
 
 
 
-  updateUnits(oldUnits: any, newUnits: any) {
+  updateUnits(oldUnits: any, newUnits: any, axis = 'x') {
     const activeFile = this.files.filter(f => f.isActive)[0];
     if (activeFile && activeFile.activeEffect) {
       activeFile.activeEffect.paths = this.nodeService.updateUnits(oldUnits.PR, newUnits.PR);
@@ -738,16 +738,21 @@ export class FileService {
       this.nodeService.loadFile(activeFile.activeEffect.paths);
 
     }
+    if (axis === 'x') {
+      activeFile.activeEffect.range.end = activeFile.activeEffect.range.end * (newUnits.PR / activeFile.activeEffect.grid.xUnit.PR);
+      activeFile.activeEffect.range.start = activeFile.activeEffect.range.start * (newUnits.PR / activeFile.activeEffect.grid.xUnit.PR);
 
-    activeFile.activeEffect.range.end = activeFile.activeEffect.range.end * (newUnits.PR / activeFile.activeEffect.grid.xUnit.PR);
-    activeFile.activeEffect.range.start = activeFile.activeEffect.range.start * (newUnits.PR / activeFile.activeEffect.grid.xUnit.PR);
+      activeFile.activeEffect.grid.settings.spacingX = activeFile.activeEffect.grid.settings.spacingX * (newUnits.PR / activeFile.activeEffect.grid.xUnit.PR);
 
-    activeFile.activeEffect.grid.settings.spacingX = activeFile.activeEffect.grid.settings.spacingX * (newUnits.PR / activeFile.activeEffect.grid.xUnit.PR);
-
-    activeFile.activeEffect.grid.xUnit = newUnits;
+      activeFile.activeEffect.grid.xUnit = newUnits;
+    } else if (axis === 'y') {
+      activeFile.activeEffect.range_y.end = activeFile.activeEffect.range_y.end * (newUnits.PR / activeFile.activeEffect.grid.yUnit.PR);
+      activeFile.activeEffect.range_y.start = activeFile.activeEffect.range_y.start * (newUnits.PR / activeFile.activeEffect.grid.yUnit.PR);
+      activeFile.activeEffect.grid.yUnit = newUnits;
+    }
+    this.nodeService.setGridLayer(activeFile.activeEffect.grid);
     let effect = activeFile.effects.filter(e => e.id === activeFile.activeEffect.id)[0];
 
-    this.nodeService.setGridLayer(activeFile.activeEffect.grid);
 
     if (effect) {
       // activeFile.effects.filter(e => e.id === activeFile.activeEffect.id)[0] = this.cloneService.deepClone(activeFile.activeEffect);
@@ -757,7 +762,6 @@ export class FileService {
       activeFile.effects.filter(e => e.id === activeFile.activeEffect.id)[0].grid = this.cloneService.deepClone(activeFile.activeEffect.grid);
       activeFile.effects.filter(e => e.id === activeFile.activeEffect.id)[0].date.modified = new Date().getTime();
     }
-
     this.store();
   }
 

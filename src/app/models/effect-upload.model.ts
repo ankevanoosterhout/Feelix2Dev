@@ -11,11 +11,11 @@ export class Linear {
   dYdX: number = null;
 }
 
-export class PID {
-  P: number;
-  I: number;
-  D: number;
-}
+// export class PID {
+//   P: number;
+//   I: number;
+//   D: number;
+// }
 
 
 
@@ -84,7 +84,6 @@ export class EffectModel {
   midi_config: Model = null;
 
   constructor(collEffect: Details, effect: any, units: string, motorID: string) {
-    console.log(collEffect);
 
     this.id = effect.id;
 

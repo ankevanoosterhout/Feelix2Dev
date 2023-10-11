@@ -28,6 +28,8 @@ function listSerialPorts(callback) {
             vendor = 'Arduino DUE';
           } else if (item.productId === '0042') {
             vendor = 'Arduino MEGA';
+          } else if (item.productId === '0001') {
+            vendor = 'Arduino';
           }
         } else if (item.vendorId === '0483' && (item.productId === '5740' || item.productId === '0003')) {
           vendor = 'STM32';
@@ -157,7 +159,7 @@ class newSerialPort {
       this.portData = portData;
       this.COM = portData.port.path;
       this.sp = sp;
-      this.baudrate = portData.baudrate
+      this.baudrate = portData.baudrate;
       this.connected = false;
   }
 
@@ -221,7 +223,7 @@ class newSerialPort {
         } else {
           updateProgress(50, (this.COM + ' has been added'));
 
-          if (this.portData.type !== 'Arduino MEGA') {
+          if (this.portData.type !== 'Arduino MEGA' && this.portData.type !== 'Arduino') {
             sendDataStr([ 'FS' ],  this.COM, true);
             this.connected = true;
             main.updateSerialStatus({ microcontroller: this.portData, connected: this.connected });
@@ -238,7 +240,7 @@ class newSerialPort {
 
         // uncomment to print incoming data
         // if (d.charAt(0) === '#') {
-        //   console.log('received data ', d);
+          // console.log('received data ', d, this.connected);
         // } else
         if (d.charAt(0) === '*') {
           if (dataSendWaitList.filter(d => d.port === this.COM).length > 0) {
@@ -253,7 +255,7 @@ class newSerialPort {
                              { name: 'velocity', val: vel, slug: 'V' },
                              { name: 'direction', val: vel === 0.0 ? 0 : vel > 0.0 ? 1 : -1, slug: 'D' },
                              { name: 'target', val: parseFloat(dataArray[4]), slug: 'G' },
-                             { name: 'time', val: parseFloat(dataArray[3]), slug: 'T' } ];
+                             { name: 'time', val: parseInt(dataArray[3]), slug: 'T' } ];
 
           // process custom input data
           if (dataArray.length > 5) {
@@ -265,20 +267,36 @@ class newSerialPort {
           main.visualizaMotorData(incomingData);
 
         } else if (d.charAt(0) === 'J') { //pneumatic data
+          // console.log(d);
           const dataArray = d.substr(1).split(':');
+
           let incomingData = {
             serialPath: this.COM,
             list: []
           };
-          for (const el of dataArray) {
-            const subArray = el.split('&');
-            const dataList = [ { name: 'pressure', val: parseFloat(subArray[1]), slug: 'P' },
-                               { name: 'time', val: parseInt(subArray[2]), slug: 'T' } ];
 
-            incomingData.list.push({ motorID: subArray[0], d: dataList });
-            // incomingData.list.push({ motorID: subArray[0], pressure: parseFloat(subArray[1]), time: parseInt(subArray[2]) });
+          for (let i = 0; i < dataArray.length; i++) {
+            if (dataArray[i]) {
+              const subArray = dataArray[i].split('&');
+              if (subArray) {
+                const pressureDataList = subArray[1].split('$');
+                const dataList = [];
+
+                for (let p = 0; p < pressureDataList.length; p++) {
+                  dataList.push({ name: p === 0 ? 'pressure' : 'pressure-' + p, val: parseFloat(pressureDataList[p]), slug: p === 0 ? 'P' : 'P-' + p } );
+                }
+
+                dataList.push({ name: 'target', val: parseFloat(subArray[2]), slug: 'G' });
+                dataList.push({ name: 'time', val: parseInt(subArray[3]), slug: 'T' });
+
+                incomingData.list.push({ motorID: subArray[0], d: dataList });
+              }
+            }
           }
-          main.visualizaPressureMotorData(incomingData);
+
+          if (incomingData.list.length > 0) {
+            main.visualizaPressureMotorData(incomingData);
+          }
 
         } else if (d.charAt(0) === 'Z') { // receive calibration values motor
 
@@ -340,11 +358,16 @@ class newSerialPort {
           main.returnData(data);
           main.updateSerialProgress({ progress: 100, str: 'value received' });
 
-        } else if (d.charAt(0) === 'H') { // check if the microcontroller is using the right firmware
-          sendDataStr([ 'FS' ],  this.COM, true);
+        } else if (!this.connected && (d.charAt(0) === 'H' || d === '0')) { // check if the microcontroller is using the right firmware
+          sendDataStr([ 'FS' ], this.COM, true);
           this.connected = true;
           main.updateSerialStatus({ microcontroller: this.portData, connected: this.connected });
           updateProgress(100, ('Connected to ' + this.COM));
+        }
+        else if (this.connected && (d.charAt(0) === 'H' || d === 0)) {
+          if (dataSendWaitList.filter(d => d.port === this.COM).length > 0) {
+            uploadFromWaitList(ports.filter(p => p.COM === this.COM)[0]);
+          }
         }
 
     });
@@ -405,8 +428,8 @@ function prepareMotorData(uploadContent, motor, datalist, index) {
   if (motor.config.sensorOffset !== undefined) {
     datalist.unshift('FM' + motor.id + 'O' + (motor.config.sensorOffset * (Math.PI / 180)).toFixed(14));
   }
-  if (motor.config.transmission !== 1) {
-    datalist.unshift('FM' + motor.id + 'X' + (motor.config.encoder.transmission.toFixed(14))); //new
+  if (motor.config.transmission) {
+    datalist.unshift('FM' + motor.id + 'X' + (motor.config.transmission.toFixed(14))); //new
   }
   datalist.unshift('FM' + motor.id + 'C' + motor.config.encoder.clock_speed);
   datalist.unshift('FM' + motor.id + 'D' + (motor.config.encoder.direction ? 1 : -1));
@@ -432,7 +455,7 @@ function prepareMotorData(uploadContent, motor, datalist, index) {
   if (motor.config.calibrateCurrentSense) {
     datalist.unshift('FM' + motor.id + 'Y' + motor.config.calibrateCurrentSense.toFixed(5));
   }
-  datalist.unshift('FM' + motor.id + 'X' + (motor.config.overheatProtection ? 1 : 0));
+  // datalist.unshift('FM' + motor.id + 'X' + (motor.config.overheatProtection ? 1 : 0));
 
 
   // datalist.unshift('FM' + motor.id + 'B' + uploadContent.baudRate);
@@ -468,8 +491,10 @@ function preparePneumaticData(uploadContent, motor, datalist) {
   // datalist.unshift('FM' + index + 'N' + motor.config.pin);
   datalist.unshift('FM' + motor.id + 'V' + ':' + motor.config.inflate_valve.min + ':' + motor.config.inflate_valve.max);
   datalist.unshift('FM' + motor.id + 'W' + ':' + motor.config.deflate_valve.min + ':' + motor.config.deflate_valve.max);
-  datalist.unshift('FM' + motor.id + 'E' + ':' + motor.config.inflate_pid.p.toFixed(2) + ':' + motor.config.inflate_pid.i.toFixed(2) + ':' + motor.config.inflate_pid.d.toFixed(3));
-  datalist.unshift('FM' + motor.id + 'G' + ':' + motor.config.deflate_pid.p.toFixed(2) + ':' + motor.config.deflate_pid.i.toFixed(2) + ':' + motor.config.deflate_pid.d.toFixed(3));
+  datalist.unshift('FM' + motor.id + 'E' + ':' + motor.config.inflate_pid.p.toFixed(2) + ':' + motor.config.inflate_pid.i.toFixed(2));
+  datalist.unshift('FM' + motor.id + 'O' + ':' + motor.config.inflate_pid.output_ramp + ':' + motor.config.inflate_pid.Tf.toFixed(3));
+  datalist.unshift('FM' + motor.id + 'G' + ':' + motor.config.deflate_pid.p.toFixed(2) + ':' + motor.config.deflate_pid.i.toFixed(2));
+  datalist.unshift('FM' + motor.id + 'M' + ':' + motor.config.deflate_pid.output_ramp + ':' + motor.config.inflate_pid.Tf.toFixed(3));
 
   if (uploadContent.config) {
     datalist.unshift('FM' + motor.id + 'T' + uploadContent.config.updateSpeed);
@@ -514,6 +539,7 @@ function prepareEffectData(uploadContent, motor, datalist) {
     if (d.type === 2 && d.yUnit !== 'deg') { type = 2; }
     if (d.type === 2 && d.yUnit === 'deg') { type = 3; }
     datalist.unshift('FE' + motor.id + i + 'T:' + type); //T
+
     if (type !== 2) {
       datalist.unshift('FE' + motor.id + i + 'E:1');
     }
@@ -545,7 +571,7 @@ function prepareEffectData(uploadContent, motor, datalist) {
     datalist.unshift('FE' + motor.id + i + effect.flip.identifier + ':' + effect.flip.value[0] + ':' + effect.flip.value[1] + ':' + effect.flip.value[2]);
     datalist.unshift('FE' + motor.id + i + effect.angle.identifier + ':' + effect.angle.value);
     datalist.unshift('FE' + motor.id + i + effect.vis_type.identifier + ':' + effect.vis_type.value);
-    if (effect.vis_type !== 2) {
+    if (effect.effect_type.value !== 2) {
       datalist.unshift('FE' + motor.id + i + effect.effect_type.identifier + ':' + effect.effect_type.value);
     }
     if (effect.vis_type === 4) {

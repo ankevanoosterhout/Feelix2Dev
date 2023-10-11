@@ -310,9 +310,9 @@ export class MotorControlService {
   }
 
 
-  drawCollectionFeedbackData(collection: Collection) {
+  drawCollectionFeedbackData(collection: Collection, index: number) {
 
-    this.effectVisualizationService.drawCollectionFeedback(collection, this.width, this.height, this.file.configuration.collectionDisplay);
+    this.effectVisualizationService.drawCollectionFeedback(collection, this.width, this.height, this.file.configuration.collectionDisplay, index, this.file.configuration.colorList[index].hash);
   }
 
 

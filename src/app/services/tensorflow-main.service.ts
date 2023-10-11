@@ -1,8 +1,8 @@
 import { DOCUMENT } from '@angular/common';
 import { Injectable, Inject } from '@angular/core';
 import { v4 as uuid } from 'uuid';
-import { MicroController } from '../models/hardware.model';
-import { Model, DataSet, Classifier, Data, NN_options, Label, MotorEl, ModelVariable, ModelType, Regression_options, OutputItem } from '../models/tensorflow.model';
+import { ActuatorType, MicroController } from '../models/hardware.model';
+import { Model, DataSet, Classifier, Data, NN_options, Label, MotorEl, ModelVariable, ModelType, Regression_options, OutputItem, InputColor } from '../models/tensorflow.model';
 import { HardwareService } from './hardware.service';
 import { DataSetService } from './dataset.service';
 import { Subject } from 'rxjs';
@@ -211,7 +211,7 @@ export class TensorFlowMainService {
     }
 
     updateBoundsActiveDataset() {
-      if (this.d.selectedDataset && this.d.selectedDataset.m.length > 0) {
+      if (this.d.selectedDataset && this.d.selectedDataset.m.length > 0 && this.d.selectedDataset.m[0].d.length > 0) {
         const endTime = this.d.selectedDataset.m[0].d[this.d.selectedDataset.m[0].d.length - 1].time;
         this.d.selectedDataset.bounds.xMax = endTime < 3000 ? (Math.ceil(endTime / 200) * 200) : (Math.ceil(endTime / 500) * 500);
         this.updateGraphBounds.next(this.d.selectedDataset.bounds);
@@ -341,6 +341,23 @@ export class TensorFlowMainService {
       if (this.d.selectOptionMicrocontroller !== undefined && this.d.selectedMicrocontrollers.filter(m => m.id === this.d.selectOptionMicrocontroller.id).length === 0) {
         for (const motor of this.d.selectOptionMicrocontroller.motors) {
           motor.record = true;
+
+          if (motor.type === ActuatorType.pneumatic) {
+            const pressureInputItem = this.d.selectedModel.inputs.filter(i => i.name === 'pressure')[0];
+            pressureInputItem.active = true;
+            pressureInputItem.visible = true;
+
+            if (motor.config.nrOfSensors && motor.config.nrOfSensors > 1) {
+              for (let i = 1; i < motor.config.nrOfSensors; i++) {
+                const input = this.d.selectedModel.inputs.filter(i => i.name === 'pressure-' + i)[0];
+                if (!input) {
+                  const inputModel = new ModelVariable('pressure-' + i, true, true, '#4390E6', 'P-' + i);
+                  this.d.selectedModel.inputs.push(inputModel);
+                  this.d.colorList.push(new InputColor(inputModel.name, inputModel.color));
+                }
+              }
+            }
+          }
         }
         this.d.selectedMicrocontrollers.push(this.d.selectOptionMicrocontroller);
         for (const set of this.d.dataSets) {

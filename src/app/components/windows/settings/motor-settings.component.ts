@@ -51,6 +51,7 @@ export class MotorSettingsComponent implements OnInit {
     { name: 'Teensy' },
     { name: 'ESP32' },
     { name: 'ESP8266' },
+    { name: 'Arduino' },
     { name: 'Arduino MEGA' },
     { name: 'Arduino DUE' },
     { name: 'Arduino Nano' },

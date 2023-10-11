@@ -21,8 +21,9 @@ const msiCreator = new MSICreator({
     exe: 'Feelix',
     name: 'Feelix',
     manufacturer: 'Anke',
-    version: '3.0.1',
+    version: '3.1.1',
     arch: 'x64',
+    icon: path.resolve(__dirname, './src/feelix.ico'),
     // certificateFile: './cert.pfx',
     // certificatePassword: 'this-is-a-secret',
 
@@ -33,9 +34,10 @@ const msiCreator = new MSICreator({
         images: {
           background: path.resolve(__dirname, './src/assets/images/installer-bg.png'),
           banner: path.resolve(__dirname, './src/assets/images/installer-banner.png'),
+          exclamationIcon: path.resolve(__dirname, './src/assets/icons/png/32x32.png'),
           infoIcon: path.resolve(__dirname, './src/assets/icons/png/32x32.png'),
           newIcon: path.resolve(__dirname, './src/assets/icons/png/16x16.png'),
-          upIcon: path.resolve(__dirname, './src/assets/icons/png/16x16.png')
+          upIcon: path.resolve(__dirname, './src/assets/icons/png/16x16.png'),
         }
     }
 });

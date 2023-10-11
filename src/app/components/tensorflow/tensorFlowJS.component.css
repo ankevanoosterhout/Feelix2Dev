@@ -988,7 +988,7 @@ input.html-slider {
 .input-list-button-item, .motor-list-button-item div {
    display: inline-block;
    font-size: 10px;
-   padding: 2px 10px;
+   padding: 0 10px;
    line-height: 17px;
    width: auto;
    font-weight: 600;

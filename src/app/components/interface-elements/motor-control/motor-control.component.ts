@@ -79,6 +79,8 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     });
 
     this.electronService.ipcRenderer.on('playDataPressure', (event: Event, data: any) => {
+      console.log(data);
+
       for (const item of data.list) {
         const selectedCollection = this.motorControlService.file.collections.filter(c => c.playing && c.microcontroller && c.microcontroller.serialPort.path === data.serialPath && c.motorID && c.motorID.name === item.motorID)[0];
 
@@ -86,6 +88,9 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
           const motor = selectedCollection.microcontroller.motors.filter(m => m.id === selectedCollection.motorID.name)[0];
           const pressure = item.d.filter((i: { name: string; }) => i.name === 'pressure')[0].val;
+
+          console.log(pressure);
+
           selectedCollection.time = item.d.filter((i: { name: string; }) => i.name === 'time')[0].val;
 
           if (motor) { motor.state.pressure = pressure; }
@@ -93,18 +98,25 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
           if (this.document.getElementById('pressure-' + selectedCollection.id) !== null) {
             (this.document.getElementById('pressure-' + selectedCollection.id) as HTMLElement).innerHTML = (Math.round(pressure * 100) / 100) + ' ';
           }
+
           if (this.document.getElementById('time-' + selectedCollection.id) !== null) {
             (this.document.getElementById('time-' + selectedCollection.id) as HTMLElement).innerHTML = selectedCollection.time + ' ';
           }
           this.motorControlService.drawCursor(selectedCollection);
-
-          this.drawFeedbackDataOnPlay(selectedCollection.rotation.loop, selectedCollection, pressure * 100);
+          let i = 0;
+          for (const d of item.d) {
+            if (d.name !== 'target' && d.name !== 'time') {
+              this.drawFeedbackDataOnPlay(selectedCollection.rotation.loop, selectedCollection, d.val * 100, i);
+              i++;
+            }
+          }
         }
       }
     });
 
 
     this.electronService.ipcRenderer.on('playData', (event: Event, data: any) => {
+      // console.log(data);
       const d_angle = data.d.filter((d: { name: string; }) => d.name === 'angle')[0];
       const d_velocity = data.d.filter((d: { name: string; }) => d.name === 'velocity')[0];
       const selectedCollection = this.motorControlService.file.collections.filter(c => c.microcontroller && c.microcontroller.serialPort.path === data.serialPath && c.playing && c.motorID && c.motorID.name === data.motorID)[0];
@@ -272,6 +284,18 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     this.updatePlayButtonsToolbar(true);
   }
 
+
+  getAverage(array: Array<number>) {
+    let total = 0.0;
+    let count = 0;
+
+    for (const item of array) {
+      total += item;
+      count++;
+    }
+    return total / count;
+  }
+
   selectMicrocontroller(collectionID: string, microcontroller: MicroController) {
     this.motorControlService.file.collections.filter(c => c.id === collectionID)[0].microcontroller = microcontroller;
   }
@@ -287,33 +311,46 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     this.motorControlService.saveCollection(collection);
   }
 
-  drawFeedbackDataOnPlay(loop: boolean, collection: Collection, data: number) {
+  drawFeedbackDataOnPlay(loop: boolean, collection: Collection, data: number, index = 0) {
+
     if (collection) {
-      if (loop && collection.feedbackData.length > 0 && collection.feedbackData[collection.feedbackData.length - 1].time > collection.time) {
-        collection.feedbackData = [];
+
+      if (loop && collection.feedbackData.length > 0 && collection.feedbackData[index] && collection.feedbackData[index][collection.feedbackData[index].length - 1].time >= collection.time) {
+        collection.feedbackData[index] = [];
+        console.log('reset');
       }
 
-      if (loop || (!loop && collection.feedbackData.length > 0 && collection.feedbackData[collection.feedbackData.length - 1].time <= collection.time)) {
-        collection.feedbackData.push({ value: data, time: collection.time });
-        this.motorControlService.drawCollectionFeedbackData(collection);
+      if (loop || (!loop && (collection.feedbackData.length === 0 || collection.feedbackData[index] && (collection.feedbackData[index].length === 0 ||
+          (collection.feedbackData[index].length > 0 && collection.feedbackData[index][collection.feedbackData[index].length - 1].time <= collection.rotation.end))))) {
+
+
+        if (index < collection.feedbackData.length) {
+          collection.feedbackData[index].push({ value: data, time: collection.time });
+        } else {
+          const newArray = [];
+          newArray.push({ value: data, time: collection.time });
+          collection.feedbackData.push(newArray);
+        }
       }
+
+      this.motorControlService.drawCollectionFeedbackData(collection, index);
     }
   }
 
-  render(collection: Collection, upload = false) {
-    // console.log(collection);
-    let time = 0;
-    // if (collection.rotation.units.name === 'rad' && collection.effectDataList.length === 0) {
-    //   time = 200;
-    //   collection.rotation.units = { name: 'deg', PR: 360 };
-    //   this.changeUnits(collection);
-    // }
+  resetRenderData(collection: Collection) {
+    collection.effectDataList = [];
+    collection.overlappingData = [];
+    collection.renderedData = [];
+  }
 
-    setTimeout(() => {
+  render(collection: Collection, upload = false) {
+
       if (collection.effectDataList.length > 0) {
-        collection.effectDataList = [];
-        collection.overlappingData = [];
-        collection.renderedData = [];
+        if (collection.playing) {
+          this.play(false, collection);
+        }
+        this.resetRenderData(collection);
+
       } else {
         if (this.motorControlService.file.effects.length > 0) {
           this.uploadService.renderCollection(collection, this.motorControlService.file.effects);
@@ -323,8 +360,9 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       if (upload && collection.effectDataList.length > 0) {
         this.upload(collection);
       }
-    }, time);
   }
+
+
 
   send_collection(collection: Collection) {
     this.electronService.ipcRenderer.send('send_collection_data', collection);
@@ -407,6 +445,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
         } else {
           collection.playing = false;
         }
+        collection.feedbackData = [];
         this.motorControlService.saveCollection(collection);
       } else {
         this.upload(collection);
@@ -469,32 +508,22 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     const collection = this.motorControlService.file.collections.filter(c => c.id === collectionID)[0];
     collection.rotation.loop = !collection.rotation.loop;
     if (collection.rotation.units.name !== 'ms' && collection.rotation.units.name !== 'sec') {
-      // collection.rotation.start = 0;
-      // collection.rotation.end = 360 * (collection.rotation.units.PR / 360);
-      // if (collection.rotation.loop) {
-      //   collection.rotation.start *= (collection.rotation.units.PR / 360);
-      //   collection.rotation.end *= (collection.rotation.units.PR / 360);
-      // }
+
       for (const effect of collection.effects) {
         effect.infinite = collection.rotation.loop;
       }
     }
     this.smallScale(collection);
-    // this.motorControlService.updateCollection(collection);
-    // this.motorControlService.drawCollection(collection);
-
   }
 
   constrain(collectionID: string) {
     const collection = this.motorControlService.file.collections.filter(c => c.id === collectionID)[0];
     collection.rotation.constrain = !collection.rotation.constrain;
     this.smallScale(collection);
-    // this.motorControlService.updateCollection(collection);
-    // this.motorControlService.drawCollection(collection);
   }
 
   smallScale(collection: Collection) {
-    if (collection.rotation.loop) {
+    if (collection.rotation.loop || collection.rotation.constrain) {
       collection.config.scale.graphD3 = null;
       collection.config.scale.value = scaleOption.scale75;
     }

@@ -110,7 +110,7 @@ export class EffectVisualizationService {
           activeCollEffect = collEffect;
           d3.selectAll('#coll-effect-' + collection.id + '-' + collEffect.id).style('opacity', 0.6);
         })
-        .on('drag', (event, d) => {
+        .on('drag', (event: { x: number; dx: number; }, d: { id: string; }) => {
           if (!layerLocked) {
             if (collEffect.repeat.repeatInstances.filter(r => r.id === d.id)[0]) {
               collEffect.repeat.repeatInstances.filter(r => r.id === d.id)[0].x += (collection.config.newXscale.invert(event.x) - collection.config.newXscale.invert(event.x - event.dx));
@@ -131,11 +131,11 @@ export class EffectVisualizationService {
         .data(data)
         .enter()
         .append('rect')
-        .attr('id', (d) => 'coll-effect-' + collection.id + '-' + d.id)
+        .attr('id', (d: { id: string; }) => 'coll-effect-' + collection.id + '-' + d.id)
         .attr('class', 'coll-effect-' + collEffect.id)
-        .attr('x', (d) => collection.config.newXscale(d.x))
+        .attr('x', (d: { x: any; }) => d.x ? collection.config.newXscale(d.x) : 0)
         .attr('y', this.checkIfEffectTypeEqualsVisualizationType(effect, collection) ? yPos : 0)
-        .attr('width', width === 0 ? 10 : width)
+        .attr('width', width === null || width === 0 ? 10 : width)
         .attr('height', this.checkIfEffectTypeEqualsVisualizationType(effect, collection) ? heightEffect : pixHeight)
         .style('fill', colors.filter(c => c.type === effect.type)[0].hash[0])
         .style('opacity', activeCollEffect !== null && activeCollEffect.id === collEffect.id ? 0.6 : 0.2)
@@ -176,10 +176,10 @@ export class EffectVisualizationService {
         .enter()
         .append('text')
         .attr('class', 'coll-effect-' + collEffect.id)
-        .attr('x', (d) => collection.config.newXscale(d.x) + width - 5)
-        .attr('y', () => this.checkIfEffectTypeEqualsVisualizationType(effect, collection) ? yPos + 12 : 12)
+        .attr('x', (d: { x: any; }) => d.x ? collection.config.newXscale(d.x) + width - 5 : 0)
+        .attr('y', this.checkIfEffectTypeEqualsVisualizationType(effect, collection) ? yPos + 12 : 12)
         .attr('text-anchor', 'end')
-        .text((d, i) => i > 0 ? effect.name + ' n' + (i+ 1) : effect.name)
+        .text((d: any, i: number) => i > 0 ? effect.name + ' n' + (i+ 1) : effect.name)
         .style('fill', '#fff')
         .attr('cursor', 'default')
         .style('opacity', activeCollEffect !== null && activeCollEffect.id === collEffect.id ? 0.6 : 0.3)
@@ -289,31 +289,31 @@ export class EffectVisualizationService {
 
 
 
-  drawCollectionFeedback(collection: Collection, width: number, height: number, view: any) {
+  drawCollectionFeedback(collection: Collection, width: number, height: number, view: any, index: number, color: string) {
 
 
-    d3.select('#svgFeedback-' + collection.id).remove();
+    d3.select('#svgFeedback-' + collection.id + '_' + index).remove();
 
     const feedbackData = collection.config.svg.append('g')
-      .attr('id', 'svgFeedback-' + collection.id)
+      .attr('id', 'svgFeedback-' + collection.id + '_' + index)
       .attr('width', width)
       .attr('height', height - 39)
       .attr('transform', (view === 'small' ? 'translate(0, 0)' : 'translate(0, 26)'));
 
-    feedbackData.selectAll('circle.feedback_' + collection.id)
-      .data(collection.feedbackData)
+    feedbackData.selectAll('circle.feedback_' + collection.id + '_' + index)
+      .data(collection.feedbackData[index])
       .enter()
       .append('circle')
-      .attr('class', 'feedback_' + collection.id)
+      .attr('class', 'feedback_' + collection.id + '_' + index)
       .attr('r', 1)
       .attr('cx', (d: { time: number }) => collection.config.newXscale(collection.rotation.units.name === 'sec' ? d.time / 1000 : d.time))
       .attr('cy', (d: { value: number }) => collection.config.newYscale(d.value))
-      .style('fill', '#E18257');
+      .style('fill', color);
 
     feedbackData.append('path')
-      .datum(collection.feedbackData)
+      .datum(collection.feedbackData[index])
       .attr('fill', 'none')
-      .attr('stroke', '#E18257')
+      .attr('stroke', color)
       .attr('stroke-width', 1.5)
       .attr('d', d3.line()
         .x((d: { time: number }) => collection.config.newXscale(collection.rotation.units.name === 'sec' ? d.time / 1000 : d.time))
@@ -405,24 +405,24 @@ export class EffectVisualizationService {
         .enter()
         .append('line')
         .attr('class', 'offset-' + collection.id + '-' + collEffect.id + '-' + Math.round(x * 1000))
-        .attr('x1', (d) => collection.config.newXscale((d.x * (collEffect.scale.x / 100) * multiply.x) + x))
-        .attr('x2', (d) => render ? collection.config.newXscale((d.o * (collEffect.scale.x / 100) * multiply.x) + x) : collection.config.newXscale(((d.x + d.d) * multiply.x) + x))
-        .attr('y1', (d) => collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
-        .attr('y2', (d) => collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
+        .attr('x1', (d: { x: number; }) => collection.config.newXscale((d.x * (collEffect.scale.x / 100) * multiply.x) + x))
+        .attr('x2', (d: { o: number; x: any; d: any; }) => render ? collection.config.newXscale((d.o * (collEffect.scale.x / 100) * multiply.x) + x) : collection.config.newXscale(((d.x + d.d) * multiply.x) + x))
+        .attr('y1', (d: { y: number; }) => collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
+        .attr('y2', (d: { y: number; }) => collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
         .attr('stroke', 'rgba(255,255,255,0.4)')
         .attr('stroke-width', 1)
-        .style('opacity', (d) => render && this.checkIfXisWithinOverlap(d.x * (collEffect.scale.x / 100) + (x/multiply.x), collection.renderedData) ? 0 : 0.4);
+        .style('opacity', (d: { x: number; }) => render && this.checkIfXisWithinOverlap(d.x * (collEffect.scale.x / 100) + (x/multiply.x), collection.renderedData) ? 0 : 0.4);
 
       grp.selectAll('circle.offset-' + collection.id + '-' + collEffect.id + '-' + Math.round(x * 1000))
         .data(dataCopy)
         .enter()
         .append('circle')
         .attr('class', 'offset-' + collection.id + '-' + collEffect.id + '-' + Math.round(x * 1000))
-        .attr('cx', (d) => render ? collection.config.newXscale((d.o * (collEffect.scale.x / 100) * multiply.x) + x) : collection.config.newXscale(((d.x + d.d) * multiply.x) + x))
-        .attr('cy', (d) => collection.config.newYscale((d.y * multiply.y)) * (collEffect.scale.y / 100) + offset)
-        .attr('r', (d) => 1)
+        .attr('cx', (d: { o: number; x: any; d: any; }) => render ? collection.config.newXscale((d.o * (collEffect.scale.x / 100) * multiply.x) + x) : collection.config.newXscale(((d.x + d.d) * multiply.x) + x))
+        .attr('cy', (d: { y: number; }) => collection.config.newYscale((d.y * multiply.y)) * (collEffect.scale.y / 100) + offset)
+        .attr('r', (d: any) => 1)
         .style('fill', 'rgba(255,255,255,0.4)')
-        .style('opacity', (d, i) => render && this.checkIfXisWithinOverlap(d.x * (collEffect.scale.x / 100) + (x/multiply.x), collection.renderedData) ? 0 : 0.4);
+        .style('opacity', (d: { x: number; }, i: any) => render && this.checkIfXisWithinOverlap(d.x * (collEffect.scale.x / 100) + (x/multiply.x), collection.renderedData) ? 0 : 0.4);
     }
 
     grp.selectAll('line.render-' + collection.id + '-' + collEffect.id + '-' + Math.round(x * 1000))
@@ -430,23 +430,23 @@ export class EffectVisualizationService {
       .enter()
       .append('line')
       .attr('class', 'render-' + collection.id + '-' + collEffect.id + '-' + Math.round(x * 1000))
-      .attr('x1', (d, i) => i < dataCopy.length - 1 ? collection.config.newXscale((d.x * (collEffect.scale.x / 100) * multiply.x) + x) : 0)
-      .attr('x2', (d, i) => i < dataCopy.length - 1 ? collection.config.newXscale((dataCopy[i + 1].x * (collEffect.scale.x / 100) * multiply.x) + x) : 0)
-      .attr('y1', (d, i) => i < dataCopy.length - 1 ? collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset : 0)
-      .attr('y2', (d, i) => i < dataCopy.length - 1 ? collection.config.newYscale((dataCopy[i + 1].y * multiply.y )) * (collEffect.scale.y / 100) + offset : 0)
+      .attr('x1', (d: { x: number; }, i: number) => i < dataCopy.length - 1 ? collection.config.newXscale((d.x * (collEffect.scale.x / 100) * multiply.x) + x) : 0)
+      .attr('x2', (d: any, i: number) => i < dataCopy.length - 1 ? collection.config.newXscale((dataCopy[i + 1].x * (collEffect.scale.x / 100) * multiply.x) + x) : 0)
+      .attr('y1', (d: { y: number; }, i: number) => i < dataCopy.length - 1 ? collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset : 0)
+      .attr('y2', (d: any, i: number) => i < dataCopy.length - 1 ? collection.config.newYscale((dataCopy[i + 1].y * multiply.y )) * (collEffect.scale.y / 100) + offset : 0)
       .style('stroke', 'rgba(255,255,255, 0.4)')
-      .style('stroke-width', (d, i) => i < dataCopy.length - 1 ? 1.2 : 0);
+      .style('stroke-width', (d: any, i: number) => i < dataCopy.length - 1 ? 1.2 : 0);
 
     grp.selectAll('circle.render-' + collection.id + '-' + collEffect.id + '-' + Math.round(x * 1000))
       .data(dataCopy)
       .enter()
       .append('circle')
       .attr('class', 'render-' + collection.id + '-' + collEffect.id + '-' + Math.round(x * 1000))
-      .attr('cx', (d, i) => collection.config.newXscale((d.x * (collEffect.scale.x / 100) * multiply.x) + x))
-      .attr('cy', (d) => collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
-      .attr('r', (d) =>  1.3)
+      .attr('cx', (d: { x: number; }, i: any) => collection.config.newXscale((d.x * (collEffect.scale.x / 100) * multiply.x) + x))
+      .attr('cy', (d: { y: number; }) => collection.config.newYscale((d.y * multiply.y )) * (collEffect.scale.y / 100) + offset)
+      .attr('r', (d: any) =>  1.3)
       .style('fill', color)
-      .style('opacity', (d, i) => render && this.checkIfXisWithinOverlap(d.x * (collEffect.scale.x / 100) + (x/multiply.x), collection.renderedData) ? 0 : 1);
+      .style('opacity', (d: { x: number; }, i: any) => render && this.checkIfXisWithinOverlap(d.x * (collEffect.scale.x / 100) + (x/multiply.x), collection.renderedData) ? 0 : 1);
 
   }
 
@@ -477,7 +477,7 @@ export class EffectVisualizationService {
 
   returnPathAsString(path: any, scaleX: any, scaleY: any, type = 'pos', multiply = 1): Array<object> {
     const nodes = path.nodes;
-    const numberOfNodes = path.nodes.filter(n => n.type === 'node');
+    const numberOfNodes = path.nodes.filter((n: { type: string; }) => n.type === 'node');
 
 
     if (numberOfNodes.length > 1) {
@@ -486,7 +486,7 @@ export class EffectVisualizationService {
       let n = 0;
       let idStr = '';
 
-      nodes.forEach((node, index) => {
+      nodes.forEach((node: { type: string; pos: { x: number; y: any; }; angle: { x: number; y: any; }; id: string; }, index: number) => {
 
         if (node.type === 'node') {
           if (type === 'pos') {
@@ -534,7 +534,7 @@ export class EffectVisualizationService {
 
   returnPlaneAsString(path: any, scaleX: any, scaleY: any, multiply = 1): Array<object> {
     const nodes = path.nodes;
-    const numberOfNodes = path.nodes.filter(n => n.type === 'node');
+    const numberOfNodes = path.nodes.filter((n: { type: string; }) => n.type === 'node');
 
     if (numberOfNodes.length > 1) {
       const planeStrArray = [];
@@ -606,7 +606,7 @@ export class EffectVisualizationService {
         n.pos.x = old.x * scaleX;
         n.pos.y = (maxY - old.y) * scaleY;
       }
-      if (path.nodes.filter(n => n.type === 'node').length > 1) {
+      if (path.nodes.filter((n: { type: string; }) => n.type === 'node').length > 1) {
         const str = this.returnCopyPathAsString(path);
         strArray.push(str);
       }
@@ -618,7 +618,7 @@ export class EffectVisualizationService {
 
   returnCopyPathAsString(path: any): Array<object> {
     const nodes = path.nodes;
-    const numberOfNodes = path.nodes.filter(n => n.type === 'node');
+    const numberOfNodes = path.nodes.filter((n: { type: string; }) => n.type === 'node');
 
     if (numberOfNodes.length > 1) {
       const pathStrArray = [];
@@ -626,7 +626,7 @@ export class EffectVisualizationService {
       let n = 0;
       let idStr = '';
 
-      nodes.forEach((node, index) => {
+      nodes.forEach((node: { type: string; pos: { x: string; y: string; }; id: string; }, index: number) => {
 
         if (node.type === 'node') {
           pathStr += ' ' + node.pos.x;

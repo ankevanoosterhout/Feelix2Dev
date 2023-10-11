@@ -232,11 +232,12 @@
             </div>
 
             <div class="form-row info-column" *ngIf="collection.playing && collection.visualizationType === 3">
-              <div class="motor-info posUnits" id="pressureUnits-{{ collection.id }}">bar</div>
-              <div class="motor-info" id="pressure-{{ collection.id }}">0 </div>
 
-              <div class="motor-info posUnits" id="posUnits-{{ collection.id }}">ms</div>
+              <div class="motor-info" id="pressure-{{ collection.id }}">0 </div>
+              <div class="motor-info posUnits" id="pressureUnits-{{ collection.id }}">bar</div>
+
               <div class="motor-info" id="time-{{ collection.id }}">0 </div>
+              <div class="motor-info posUnits" id="posUnits-{{ collection.id }}">ms</div>
             </div>
 
             <!-- scale -->

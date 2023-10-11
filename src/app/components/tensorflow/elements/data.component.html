@@ -131,7 +131,7 @@
                     <ul class="input-list-buttons">
                       <li class="input-list-button-item" *ngFor="let input of this.d.selectedModel.inputs; let i = index;">
 
-                        <div class="list-text-item input-list-button-item-content" *ngIf="input.active && m.colors[i].visible">
+                        <div class="list-text-item input-list-button-item-content" *ngIf="input.active && m.colors[i] && m.colors[i].visible">
                           <div [ngStyle]="{'background': m.colors[i].hash }" class="active" (click)="toggleVisibilityInput(m, i)" *ngIf="this.config.sidebarColumnWidth[0] > 30">{{ input.name }}</div>
                           <div [ngStyle]="{'background': m.colors[i].hash }" class="active uppercase" (click)="toggleVisibilityInput(m, i)" *ngIf="this.config.sidebarColumnWidth[0] === 30">{{ getFirstChar(input.name) }}</div>
 
@@ -139,8 +139,8 @@
                             <img src="./assets/icons/buttons/brush.svg"/>
                           </div>
                         </div>
-                        <div class="list-text-item input-list-button-item-content" *ngIf="input.active && !m.colors[i].visible && this.config.sidebarColumnWidth[0] > 30" (click)="toggleVisibilityInput(m, i)"><div>{{ input.name }}</div></div>
-                        <div class="list-text-item" *ngIf="!m.colors[i].visible && this.config.sidebarColumnWidth[0] === 30" (click)="toggleVisibilityInput(m, i)"><div>{{ getFirstChar(input.name) }}</div></div>
+                        <div class="list-text-item input-list-button-item-content" *ngIf="input.active && m.colors[i] && !m.colors[i].visible && this.config.sidebarColumnWidth[0] > 30" (click)="toggleVisibilityInput(m, i)"><div>{{ input.name }}</div></div>
+                        <div class="list-text-item" *ngIf="m.colors[i] && !m.colors[i].visible && this.config.sidebarColumnWidth[0] === 30" (click)="toggleVisibilityInput(m, i)"><div>{{ getFirstChar(input.name) }}</div></div>
                       </li>
                     </ul>
                   </div>

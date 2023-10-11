@@ -662,18 +662,21 @@ export class DrawingService {
 
   updateUnitsActiveEffect(value: string) {
     if (this.file.activeEffect) {
-      const newUnits = this.file.activeEffect.type >= 2 ? this.config.xAxisOptions_velocity.filter(o => o.name === value)[0] : this.config.xAxisOptions.filter(o => o.name === value)[0];
-      if (newUnits) {
-        this.fileService.updateUnits(this.file.activeEffect.grid.xUnit, newUnits);
+      const newXUnits = this.file.activeEffect.type >= 2 ? this.config.xAxisOptions_velocity.filter(o => o.name === value)[0] : this.config.xAxisOptions.filter(o => o.name === value)[0];
+      if (newXUnits) {
+        this.fileService.updateUnits(this.file.activeEffect.grid.xUnit, newXUnits, 'x');
       }
     }
   }
 
   updateYunitsActiveEffect(value: string) {
     if (this.file.activeEffect) {
-      const newYunits = this.config.yAxisOptions_pneumatic.filter(p => p.name === value)[0];
-      if (newYunits) {
-        //write function to update Y axis
+      if (this.file.activeEffect.type === EffectType.pneumatic) {
+        const newYunits = this.file.activeEffect.type === EffectType.pneumatic ?
+          this.config.yAxisOptions_pneumatic.filter(p => p.name === value)[0] : this.config.xAxisOptions_velocity.filter(o => o.name === value)[0];
+        if (newYunits) {
+          this.fileService.updateUnits(this.file.activeEffect.grid.yUnit, newYunits, 'y');
+        }
       }
     }
   }

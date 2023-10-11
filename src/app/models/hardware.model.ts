@@ -148,12 +148,13 @@ export class PneuConfig extends Config {
   pressureLimit: number = 1;
   sensorAddress: number = 0x28;
   sensorCSS: number = 10;
+  nrOfSensors: number = 1;
   sensorCommunication: SensorCommunication = SensorCommunication.I2C;
   pin: number = 2;
   in: number = 3;
   closedLoop = true;
-  inflate_pid = new PID(1, 5, 0.0001);
-  deflate_pid = new PID(1, 5, 0.0001);
+  inflate_pid = new PID(0.5, 10.0, 0.0, 0.01, 1000);
+  deflate_pid = new PID(0.5, 10.0, 0.0, 0.01, 1000);
   inflate_valve = new minMax(185, 250);
   deflate_valve = new minMax(185, 250);
 }

@@ -1,3 +1,5 @@
+import { InputColor } from "./tensorflow.model";
+
 export enum EffectType {
   torque = 0,
   position = 1,
@@ -65,4 +67,10 @@ export class Configuration {
       new EffectTypeColor(EffectType.pneumatic, ['#37DEF8']),
       new EffectTypeColor(EffectType.midi, ['#5993bd']),
       new EffectTypeColor(EffectType.midiNote, ['#0970ba']) ];
+
+  colorList = [ new InputColor('pressure', '#43E6D5'),
+                new InputColor('pressure-1', '#00AEEF'),
+                new InputColor('pressure-2', '#E18257'),
+                new InputColor('pressure-3', '#4390E6'),
+                new InputColor('pressure-4', '#7778E0') ];
 };

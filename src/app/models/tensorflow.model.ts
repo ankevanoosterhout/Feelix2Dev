@@ -158,7 +158,7 @@ export class Model {
     this.inputs = [
       new ModelVariable('angle', true, true, '#43E6D5', 'A'),
       new ModelVariable('velocity', true, true, '#00AEEF', 'V'),
-      new ModelVariable('direction', true, false, '#E18257', 'D'),
+      new ModelVariable('direction', true, true, '#E18257', 'D'),
       new ModelVariable('pressure', false, false, '#4390E6', 'P'),
       new ModelVariable('target', false, false, '#7778E0', 'G')
       // new ModelVariable('time', false, false, '#4390E6')
