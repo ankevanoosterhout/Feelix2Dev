@@ -240,7 +240,7 @@ class newSerialPort {
 
         // uncomment to print incoming data
         // if (d.charAt(0) === '#') {
-          // console.log('received data ', d, this.connected);
+        //   console.log('received data ', d);
         // } else
         if (d.charAt(0) === '*') {
           if (dataSendWaitList.filter(d => d.port === this.COM).length > 0) {

@@ -34,5 +34,5 @@ export class TensorFlowData {
                 new InputColor('pressure', '#4390E6'),
                 new InputColor('target', '#7778E0') ];
 
-  colorOptions = ['#43E6D5', '#00AEEF', '#E18257', '#4390E6', '#7778E0' ];
+  colorOptions = ['#43E6D5', '#00AEEF', '#E18257', '#4390E6', '#7778E0', '#F93858', '#B533FF', '#FCFF33', '#BBFF33' ];
 }

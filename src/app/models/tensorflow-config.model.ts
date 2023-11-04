@@ -5,7 +5,10 @@ export class TensorFlowConfig {
 
   dataSVG: any = null;
   scaleY: any;
+  baseScaleX: any;
   scaleX: any;
+  zoom: any;
+  transform: any;
 
   bounds = new Bounds();
 
@@ -17,6 +20,7 @@ export class TensorFlowConfig {
   margin = 30;
 
   xAxis: any;
+  xAxisBottom: any;
   yAxis: any;
 
   updateHorizontalScreenDivision = false;

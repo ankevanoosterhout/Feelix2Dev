@@ -6,9 +6,9 @@
 
     <ul class="data-columns">
       <li class="cb header"><input type="checkbox" class="checkbox_input" id="select_all" name="select_all" [(ngModel)]="this.allSelected" [checked]="this.allSelected" (change)="selectAllItems()"></li>
-      <li class="name header">Name</li>
-      <li class="date header">Date created</li>
-      <li class="date header">Date modified</li>
+      <li id="item-0" class="name header" (click)="this.sortDataItems('name', 0)">Name <span class="arrow"></span></li>
+      <li id="item-1" class="date header" (click)="this.sortDataItems('date-created', 1)">Date created <span class="arrow"></span></li>
+      <li id="item-2" class="date header active" (click)="this.sortDataItems('date-modified', 2)">Date modified <span class="arrow"></span></li>
     </ul>
   </div>
   <div class="inputfield">

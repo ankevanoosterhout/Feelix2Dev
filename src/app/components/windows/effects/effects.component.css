@@ -130,7 +130,7 @@ ul {
 .tabsContainer-vertical li div.add-button {
   display: inline-block;
   position: relative;
-  margin: 10px 50px;
+  margin: 10px 50px 80px;
   padding: 0;
   width: 25px;
   height: 25px;
@@ -147,6 +147,22 @@ ul {
 
 .tabsContainer-vertical li div.add-button:active {
   background: #444;
+}
+
+.tabsContainer-vertical::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tabsContainer-vertical::-webkit-scrollbar-track {
+  background: 'transparent';
+}
+
+.tabsContainer-vertical::-webkit-scrollbar-thumb {
+  background: #1c1c1c;
+}
+
+.tabsContainer-vertical::-webkit-scrollbar-thumb:hover {
+  background: #111;
 }
 
 ul.motorlist {

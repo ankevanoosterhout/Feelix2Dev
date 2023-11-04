@@ -169,8 +169,8 @@ export class Model {
 export class Bounds {
   xMin = 0;
   xMax = 1000;
-  yMin = -2;
-  yMax = 2;
+  yMin = 0;
+  yMax = 1;
 }
 
 export class InputItem {

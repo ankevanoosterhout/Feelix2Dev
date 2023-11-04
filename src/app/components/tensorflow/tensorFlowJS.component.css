@@ -242,8 +242,7 @@ ul.file-list-sidebar li:active, ul.file-list-sidebar li.active {
   align-self: flex-start;
   flex-direction: column;
   margin-right: 20px;
-  overflow-x:hidden;
-  overflow-y: visible;
+  overflow: visible;
 }
 
 .column-20 {
@@ -275,13 +274,8 @@ ul.file-list-sidebar li:active, ul.file-list-sidebar li.active {
 }
 
 .fixed-height {
-  height: 300px;
-  overflow-x: hidden;
-  overflow-y: hidden;
-}
-
-#NN_options.fixed-height {
-  overflow:visible;
+  height: 100%;
+  overflow:visible!important;
 }
 
 .fixed-toolbar {
@@ -297,7 +291,6 @@ ul.file-list-sidebar li:active, ul.file-list-sidebar li.active {
   box-sizing: border-box;
   user-select: none;
   background: #3a3a3a;
-
   border-bottom: 1px solid #202020;
   /* box-shadow: inset 0px 0px 3px #4d4d4d; */
 }
@@ -927,11 +920,12 @@ input.html-slider {
   display:inline-block;
   vertical-align: top;
   margin-left: 5px!important;
-  border-radius: 12px!important;
+  margin-top: 1px!important;
+  border-radius: 10px!important;
   padding:0;
   box-sizing: border-box;
-  height: 22px!important;
-  width: 22px!important;
+  height: 20px!important;
+  width: 20px!important;
   opacity: 0;
 }
 
@@ -939,7 +933,7 @@ input.html-slider {
   position: absolute;
   height: 56%;
   left: 0;
-  margin: 12% 20%;
+  margin: 20%;
   width: auto;
   pointer-events: none;
 }
@@ -990,15 +984,15 @@ input.html-slider {
    display: inline-block;
    font-size: 10px;
    padding: 0 10px;
-   line-height: 17px;
+   line-height: 18px;
    width: auto;
    font-weight: 600;
    color: #999;
    cursor:pointer;
    user-select: none;
    /* margin: 2px; */
-   border-top-right-radius: 12px;
-   border-bottom-right-radius: 12px;
+   border-top-right-radius: 10px;
+   border-bottom-right-radius: 10px;
 }
 
 
@@ -1015,10 +1009,12 @@ input.html-slider {
   /* background: #00AEEF; */
   background: #999;
   color: #222;
+  margin: 2px 0;
 }
 
 .input-list-button-item div.active {
   color: #222;
+  margin: 2px 0;
 }
 
 

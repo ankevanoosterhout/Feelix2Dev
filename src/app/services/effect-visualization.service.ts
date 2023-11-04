@@ -87,7 +87,9 @@ export class EffectVisualizationService {
       const width = (effect.paths && effect.paths.length === 0) || (effect.data && effect.data.length === 0) ? 30 : collection.config.newXscale(collEffect.position.x + collEffect.position.width) - collection.config.newXscale(collEffect.position.x);
       const domainSize = effect.range_y.end - effect.range_y.start;
 
-      const heightEffect = (yScale(collEffect.position.bottom) - yScale(collEffect.position.top)) * (collEffect.scale.y / 100);
+      let heightEffect = (yScale(collEffect.position.bottom) - yScale(collEffect.position.top)) * (collEffect.scale.y / 100);
+
+      if (heightEffect < 10) { heightEffect = 10; }
 
       let yPos = yScale(collEffect.position.top * (collEffect.scale.y / 100)) - (pixHeight * (collEffect.position.y / domainSize));
 
@@ -127,13 +129,14 @@ export class EffectVisualizationService {
           // }
         });
 
+
       const rect = svg.selectAll('rect.coll-effect-' + collEffect.id)
         .data(data)
         .enter()
         .append('rect')
         .attr('id', (d: { id: string; }) => 'coll-effect-' + collection.id + '-' + d.id)
         .attr('class', 'coll-effect-' + collEffect.id)
-        .attr('x', (d: { x: any; }) => d.x ? collection.config.newXscale(d.x) : 0)
+        .attr('x', (d: { x: any; }) => d.x !== undefined && d.x !== null ? collection.config.newXscale(d.x) : 0)
         .attr('y', this.checkIfEffectTypeEqualsVisualizationType(effect, collection) ? yPos : 0)
         .attr('width', width === null || width === 0 ? 10 : width)
         .attr('height', this.checkIfEffectTypeEqualsVisualizationType(effect, collection) ? heightEffect : pixHeight)
@@ -176,7 +179,7 @@ export class EffectVisualizationService {
         .enter()
         .append('text')
         .attr('class', 'coll-effect-' + collEffect.id)
-        .attr('x', (d: { x: any; }) => d.x ? collection.config.newXscale(d.x) + width - 5 : 0)
+        .attr('x', (d: { x: any; }) => d.x !== undefined && d.x !== null ? collection.config.newXscale(d.x) + width - 5 : 0)
         .attr('y', this.checkIfEffectTypeEqualsVisualizationType(effect, collection) ? yPos + 12 : 12)
         .attr('text-anchor', 'end')
         .text((d: any, i: number) => i > 0 ? effect.name + ' n' + (i+ 1) : effect.name)
@@ -361,7 +364,7 @@ export class EffectVisualizationService {
     // const multiply = { x: multiply_x, y: collection.rotation.units_y.name === 'deg' ? collection.rotation.end_y - collection.rotation.start_y : 100 };
     const multiply = { x: multiply_x, y: 100 };
 
-    const offset = renderedData && renderedData.type === EffectType.position ? pixHeight * ((100-collEffect.scale.y)/100) - (pixHeight * (collEffect.position.y / 100)) :
+    const offset = renderedData && (renderedData.type === EffectType.position || renderedData.type === EffectType.pneumatic) ? pixHeight * ((100-collEffect.scale.y)/100) - (pixHeight * (collEffect.position.y / 100)) :
                                                       pixHeight * (((100-collEffect.scale.y)/100) / 2) - (pixHeight * (collEffect.position.y / 100) / 2);
 
 

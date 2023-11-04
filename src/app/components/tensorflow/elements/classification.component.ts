@@ -11,6 +11,9 @@ import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service'
 export class ClassificationComponent {
 
 
+  
+
+
   constructor(public tensorflowService: TensorFlowMainService, public filterService: FilterService) {
 
     this.filterService.addFilterToModel.subscribe(data => {

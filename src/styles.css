@@ -702,7 +702,7 @@ button.disabled:focus {
   display: none;
 }
 
-.datagraphTicks line {
+.datagraphTicks line, .datagraphTicks path {
   stroke-width: 0.5;
   stroke: #999;
   shape-rendering: crisp-edges;

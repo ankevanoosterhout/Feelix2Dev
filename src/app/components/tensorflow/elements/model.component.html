@@ -54,7 +54,7 @@
 
 
 
-  <div class="column-30">
+  <div class="column-30 fixed-height">
 
     <div class="form-group" *ngIf="this.d.selectedModel.options.hiddenUnits">
       <label class="label"><div class="question-mark" title="Number of hidden layers">?</div>Hidden units</label>
@@ -93,7 +93,7 @@
 
   <!-- output column  -->
 
-  <div id="inputs" class="column-20">
+  <div id="inputs" class="column-20 fixed-height">
     <label class="labelRow">Inputs <div class="buttonPlayWindow dataSetList" (click)="this.addInputItem()" title="add input item">+</div></label>
     <ul>
       <li *ngFor="let input of this.d.selectedModel.inputs; let i = index" [attr.data-index]="i">
@@ -109,7 +109,7 @@
       </li>
     </ul>
   </div>
-  <div id="inputs" class="column-20">
+  <div id="inputs" class="column-20 fixed-height">
     <label class="labelRow">Output <div class="buttonPlayWindow dataSetList" (click)="this.addClassifier()" title="add output item">+</div></label>
 
     <ul>

@@ -122,6 +122,7 @@ ul.data-columns {
 
 ul.data-columns li {
   display: inline-flex;
+  position: relative;
   height: auto;
   overflow:hidden;
   font-family: 'Open Sans', Arial, sans-serif;
@@ -129,6 +130,7 @@ ul.data-columns li {
   line-height: 16px;
   padding: 8px 10px;
   color: #666;
+  user-select: none;
 }
 ul.data-columns li.cb {
   width: 20px;
@@ -146,4 +148,25 @@ ul.data-columns li.date {
 .data-columns li.header {
   font-weight: 600;
   color: #fff;
+}
+.data-columns li .arrow {
+  display: none;
+}
+.data-columns li.active .arrow {
+  display: inline-block;
+  position: relative;
+  left: 7px;
+  top: 7px;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid #fff;
+  border-bottom: none;
+  pointer-events: none;
+}
+
+.data-columns li.active.reverse .arrow {
+  border-bottom: 4px solid #fff;
+  border-top:none;
 }

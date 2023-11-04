@@ -78,6 +78,10 @@ export class TensorFlowJSComponent implements OnInit {
         }
       });
 
+      this.tensorflowDrawService.redraw.subscribe(res => {
+        this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.trimLinesVisible ? this.d.trimLines : null);
+      });
+
       this.tensorflowService.updateTensorflowProgress.subscribe(data => {
         this.progress = data.progress;
         this.status = data.status;
@@ -95,9 +99,10 @@ export class TensorFlowJSComponent implements OnInit {
       });
 
       this.tensorflowService.updateGraph.subscribe(data => {
-        this.tensorflowDrawService.drawGraph();
+        // this.tensorflowDrawService.drawGraph();
         if (data) {
-          this.tensorflowDrawService.drawTensorFlowGraphData(data.set, data.trimLines);
+          this.redraw(data.set, data.trimLines);
+          // this.tensorflowDrawService.drawTensorFlowGraphData(data.set, data.trimLines);
         }
       });
 
@@ -195,10 +200,10 @@ export class TensorFlowJSComponent implements OnInit {
               this.tensorflowService.selectClassifier(outputClassifierInModel.id);
             }
           }
-
         }
       }
       if (this.d.dataSets.length > 0) {
+        this.config.transform = null;
         this.tensorflowService.selectDataSet(this.d.dataSets[0].id);
       } else {
         this.d.dataSets.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0));
@@ -223,8 +228,7 @@ export class TensorFlowJSComponent implements OnInit {
 
       this.tensorflowDrawService.updateBounds(dataSetEl.bounds);
     }
-    this.tensorflowDrawService.drawGraph();
-    this.tensorflowDrawService.drawTensorFlowGraphData(dataSetEl, this.d.trimLinesVisible ? this.d.trimLines : null);
+    this.redraw(dataSetEl);
   }
 
 
@@ -289,11 +293,11 @@ export class TensorFlowJSComponent implements OnInit {
   checkBounds(value: number) {
     if (!this.d.classify) {
       if (value > this.d.selectedDataset.bounds.yMax) {
-        this.d.selectedDataset.bounds.yMax = value >= 10 || this.d.selectedDataset.bounds.yMin <= -10 ? Math.ceil(value/10) * 10 : Math.ceil(value);
+        this.d.selectedDataset.bounds.yMax = value >= 10 || this.d.selectedDataset.bounds.yMin <= -10 ? Math.ceil(value/5) * 5 : Math.ceil(value);
         this.tensorflowDrawService.updateBounds(this.d.selectedDataset.bounds);
 
       } else if (value < this.d.selectedDataset.bounds.yMin) {
-        this.d.selectedDataset.bounds.yMin = value <= -10 || this.d.selectedDataset.bounds.yMax >= 10 ? Math.floor(value/10) * 10 : Math.floor(value); //Math.floor(value/2) * 2
+        this.d.selectedDataset.bounds.yMin = value <= -10 || this.d.selectedDataset.bounds.yMax >= 10 ? Math.floor(value/5) * 5 : Math.floor(value); //Math.floor(value/2) * 2
         this.tensorflowDrawService.updateBounds(this.d.selectedDataset.bounds);
       }
     }
@@ -348,8 +352,7 @@ export class TensorFlowJSComponent implements OnInit {
     this.document.getElementById('data').style.height = (window.innerHeight - this.config.horizontalScreenDivision) + 'px';
     this.document.getElementById('model').style.width = (window.innerWidth * this.config.verticalScreenDivision / 100) + 'px';
     this.document.getElementById('classifiers').style.width = (window.innerWidth * (100-this.config.verticalScreenDivision) / 100) + 'px';
-    this.tensorflowDrawService.drawGraph();
-    this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.trimLinesVisible ? this.d.trimLines : null);
+    this.redraw();
   }
 
 
@@ -380,8 +383,7 @@ export class TensorFlowJSComponent implements OnInit {
         if (this.document.getElementById('toggleDataSection').classList.contains('hidden')) {
           this.document.getElementById('toggleDataSection').classList.remove('hidden');
         }
-        this.tensorflowDrawService.drawGraph();
-        this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.trimLinesVisible ? this.d.trimLines : null);
+        this.redraw();
       }
 
     } else if (orientation === 'vertical') {
@@ -400,4 +402,15 @@ export class TensorFlowJSComponent implements OnInit {
     }
   }
 
+
+  redraw(set = this.d.selectedDataset, lines = this.d.trimLines) {
+    this.tensorflowDrawService.drawGraph();
+    if (set) {
+      this.tensorflowDrawService.drawTensorFlowGraphData(set, this.d.trimLinesVisible ? lines : null);
+    }
+  }
+
 }
+
+
+

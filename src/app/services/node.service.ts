@@ -43,7 +43,7 @@ export class NodeService {
     this.selectedNodes = [id];
   }
 
-  newNode(type: string, pos: Coords, angle: Coords): Node {
+  newNode(type: string, pos: Coords, angle: Coords, shift = false): Node {
     // create new path
     if (this.selectedNodes.length === 0) {
       const nodePath = new Path(uuid());
@@ -54,6 +54,20 @@ export class NodeService {
       if (path.box) {
         if (pos.x > path.box.left && pos.x < path.box.right) {
           return null;
+        }
+      }
+      if (shift) {
+        const node = path.nodes.filter(n => n.id === this.selectedNodes[0])[0];
+        if (node) {
+          const diffY = Math.abs(node.pos.y - pos.y);
+          const diffX = Math.abs(node.pos.x - pos.x);
+          if (diffY > diffX) {
+            pos.x = node.pos.x;
+            angle.x = node.pos.x;
+          } else {
+            pos.y = node.pos.y;
+            angle.y = node.pos.y;
+          }
         }
       }
     }
@@ -1260,25 +1274,39 @@ export class NodeService {
     if (!shift) {
       this.deselectAll();
     }
-    for (const path of this.paths.filter(p => !p.lock)) {
-      nodeLoop:
-      for (const n of path.nodes) {
-        if (n.pos.x >= box.x1 && n.pos.x <= box.x2 && n.pos.y >= box.y1 && n.pos.y <= box.y2) {
-          if (cursor === 'dsel') {
-            if (!alt) {
-              this.addSelectedNode(n.id);
-              this.addSelectedPath(path.id);
-            } else {
-              this.removeSelectedNode(n.id);
-              this.removeSelectedPath(path.id);
-            }
-          } else if (cursor === 'sel') {
-            if (!alt) {
-              this.addSelectedPath(path.id);
-            } else {
-              this.removeSelectedPath(path.id);
-            }
-            break nodeLoop;
+    for (const path of this.paths) {
+
+      if (cursor === 'dsel') {
+        let selected = false;
+        let index = 0;
+
+        for (const n of path.nodes) {
+          if (n.pos.x >= box.x1 && n.pos.x <= box.x2 && n.pos.y >= box.y1 && n.pos.y <= box.y2) {
+              selected = true;
+
+              !alt ? this.addSelectedNode(n.id) : this.removeSelectedNode(n.id);
+
+              if (selected && index >= path.nodes.length - 1) {
+                !alt ? this.addSelectedPath(path.id) : this.removeSelectedPath(path.id);
+              }
+              index ++;
+
+          }
+        }
+      } else if (cursor === 'sel') {
+
+        if (path.box) {
+          const leftSide = path.box.left >= box.x1 && path.box.left <= box.x2 ? true : false;
+          const rightSide = path.box.right >= box.x1 && path.box.right <= box.x2 ? true : false;
+          const topSide = path.box.top >= box.y1 && path.box.top <= box.y2 ? true : false;
+          const bottomSide = path.box.top >= box.y1 && path.box.top <= box.y2 ? true : false;
+          const insideWidth = box.x1 >= path.box.left && box.x2 <= path.box.right ? true : false;
+          const insideHeight = box.y1 >= path.box.bottom && box.y2 <= path.box.top ? true : false;
+
+          if ((insideWidth && (topSide || bottomSide || insideHeight)) ||
+              (insideHeight && (leftSide || rightSide || insideWidth)) ||
+              ((leftSide || rightSide) && (topSide || bottomSide))) {
+            !alt ? this.addSelectedPath(path.id) : this.removeSelectedPath(path.id);
           }
         }
       }

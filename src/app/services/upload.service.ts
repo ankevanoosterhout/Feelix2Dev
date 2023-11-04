@@ -264,20 +264,23 @@ export class UploadService {
         }
       }
     }
-    data = this.reduceDataPoints(data_complete, collEffect.quality, multiply);
+    data = this.reduceDataPoints(data_complete, collEffect.quality);
 
     return { id: collEffect.effectID, type: effectData.type, size: effectData.size, rotation: effectData.rotation, infinite: collEffect.infinite, yUnit: effectData.grid.yUnit.name,
       data: data, data_complete: data_complete, midi_config: effectData.midi_config};
   }
 
 
-  reduceDataPoints(data: any, quality: number, multiply: number) {
+  reduceDataPoints(data: any, quality: number) {
     let data_reduced = [];
-
-    for (let i = 0; i < data.length; i+=quality) {
+    for (let i = 0; i <= data.length; i+=quality) {
       // data[i].x /= multiply;
       // if (data[i].o) { data[i].o /= multiply; }
-      data_reduced.push(data[i]);
+      if (i === data.length) {
+        data_reduced.push(data[data.length - 1]);
+      } else {
+        data_reduced.push(data[i]);
+      }
     }
 
     return data_reduced;
@@ -307,7 +310,6 @@ export class UploadService {
         end = Math.round(pathSegment[pathSegment.length - 1].pos.x * multiply);
 
         for (let m = start; m <= end; m += quality) {
-
           let yValue = this.bezierService.closestY(m, coords);
           if (yValue > effect_range.end) { yValue = effect_range.end; }
           if (yValue < effect_range.start) { yValue = effect_range.start; }

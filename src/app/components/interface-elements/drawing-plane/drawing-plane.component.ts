@@ -358,7 +358,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
             coords.x >= this.config.editBounds.xMin && coords.x <= this.config.editBounds.xMax) {
 
           if (Math.abs(coords.x - this.config.newNode.pos.x) > 0.3 || Math.abs(coords.y - this.config.newNode.pos.y) > 0.3) {
-            this.config.newNode = this.nodeService.newNode('node', coords, coords);
+            this.config.newNode = this.nodeService.newNode('node', coords, coords, e.shiftKey);
             if (this.config.newNode) { this.drawFileData(); }
           }
         }
@@ -398,7 +398,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
               this.electronService.ipcRenderer.send('disable', { type: 0, enabled: true });
             }
 
-            this.config.newNode = this.nodeService.newNode('node', coords, coords);
+            this.config.newNode = this.nodeService.newNode('node', coords, coords, e.shiftKey);
 
             if (this.config.newNode && this.config.cursor.slug === 'pen') {
               const path = this.nodeService.getPath(this.nodeService.selectedPaths[0]);

@@ -92,5 +92,40 @@ export class LoadDataSetsComponent implements OnInit {
     this.document.body.classList.add('disable-scroll-body');
   }
 
+
+  sortDataItems(sortType: string, index: number) {
+    let direction = 1;
+
+    for (let i = 0; i < 3; i++) {
+      const headerEl = (this.document.getElementById('item-' + i) as HTMLDivElement);
+      if (i === index) {
+        if (headerEl.classList.contains('active')) {
+          if (headerEl.classList.contains('reverse')) {
+            headerEl.classList.remove('reverse');
+          } else {
+            headerEl.classList.add('reverse');
+            direction = -1;
+          }
+        } else {
+          headerEl.classList.add('active');
+        }
+      } else {
+        headerEl.classList.remove('active');
+        headerEl.classList.remove('reverse');
+      }
+    }
+
+    if (sortType === 'name') {
+      this.data.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0));
+    } else if (sortType === 'date-created') {
+      this.data.sort((a,b) => (a.date.created > b.date.created) ? 1 : ((b.date.created > a.date.created) ? -1 : 0));
+    } else if (sortType === 'date-modified') {
+      this.data.sort((a,b) => (a.date.modified > b.date.modified) ? 1 : ((b.date.modified > a.date.modified) ? -1 : 0));
+    }
+    if (direction === -1) {
+      this.data.reverse();
+    }
+  }
+
 }
 
