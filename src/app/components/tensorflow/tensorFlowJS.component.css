@@ -117,7 +117,10 @@ ul.file-list-sidebar {
   top:0;
   display: inline-flex;
   flex-direction: column;
+  margin-bottom: 200px;
 }
+
+
 
 ul.file-list-sidebar li {
   display: inline-flex;
@@ -138,9 +141,19 @@ ul.file-list-sidebar li:hover {
   color: #999;
 }
 
+ul.file-list-sidebar li.selected {
+  background-color: #4e4e4e;
+  color: rgb(194, 194, 194);
+}
+
 ul.file-list-sidebar li:active, ul.file-list-sidebar li.active {
   background-color: #5b5b5b;
   color: #ccc;
+}
+
+ul.file-list-sidebar li .name {
+  max-width: calc(100% - 40px);
+  overflow: hidden;
 }
 
 .close-button {
@@ -324,6 +337,12 @@ ul.file-list-sidebar li:active, ul.file-list-sidebar li.active {
   cursor: pointer;
 }
 
+#trimlines-input-data {
+  display:inline-flex;
+  position: relative;
+  flex-direction: row;
+}
+
 #data_output_list {
   min-width: 200px;
   width: calc(100% - 50px);
@@ -403,6 +422,11 @@ button {
   margin-top: 10px;
   margin-bottom: 10px;
   float:right;
+}
+
+button.trim {
+  margin: auto;
+  float:none;
 }
 
 button.add {
@@ -1044,4 +1068,21 @@ p.date {
   position: relative;
 }
 
+
+
+input[type=number].header {
+  display: inline-block;
+  width: 41px;
+  padding: 0 3px;
+  -webkit-appearance: none;
+  border: 1px solid #1c1c1c;
+  background: #999;
+  font-size: 11px;
+  color: #000;
+  height: 18px;
+  vertical-align: top;
+  margin: 3px 8px 0 0;
+  font-family: 'Open Sans', Arial, sans-serif;
+  text-align: right;
+}
 

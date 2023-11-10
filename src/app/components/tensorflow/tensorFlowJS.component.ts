@@ -25,6 +25,8 @@ export class TensorFlowJSComponent implements OnInit {
   public status = 'Ready';
   public progress = 0;
 
+
+
   inputArray = [];
   stopRecordingCounter = 0;
 
@@ -119,7 +121,11 @@ export class TensorFlowJSComponent implements OnInit {
       });
 
       this.tensorflowService.drawTrimLines.subscribe(data => {
-        this.tensorflowDrawService.drawTrimLines(data.bounds, data.visible, data.lines);
+        this.tensorflowDrawService.drawTrimLines(data.visible, data.lines);
+      });
+
+      this.tensorflowService.updateScale.subscribe(scale => {
+        this.tensorflowDrawService.updateScale(scale);
       });
 
       this.electronService.ipcRenderer.on('save-model', (event: Event) => {
@@ -153,6 +159,16 @@ export class TensorFlowJSComponent implements OnInit {
     this.tensorflowService.addLabelToClassifier(0);
   }
 
+
+  // @HostListener('window:keydown', ['$event'])
+  // onKeyDown(e: KeyboardEvent) {
+
+  // }
+
+  // @HostListener('window:keyup', ['$event'])
+  // onKeyDown(e: KeyboardEvent) {
+
+  // }
 
 
 

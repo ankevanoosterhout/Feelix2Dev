@@ -75,6 +75,8 @@ export class DataComponent implements AfterViewInit {
   }
 
   toggleVisibilityInput(m: MotorEl, inputIndex: number) {
+    console.log(m, inputIndex);
+    console.log(this.d.selectedDataset);
     m.colors[inputIndex].visible = !m.colors[inputIndex].visible;
     if (this.d.selectedDataset) {
       this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.trimLinesVisible ? this.d.trimLines : null);
@@ -178,5 +180,12 @@ export class DataComponent implements AfterViewInit {
   trimDataSet() {
     this.tensorflowService.trimSet();
     this.tensorflowDrawService.removeTrimlines();
+  }
+
+
+  updateLine() {
+    if (this.d.selectedDataset) {
+      this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.trimLinesVisible ? this.d.trimLines : null);
+    }
   }
 }

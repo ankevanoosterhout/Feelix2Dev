@@ -11,6 +11,7 @@ import { FilterModel, UploadStringModel } from '../models/effect-upload.model';
 import { ElectronService } from 'ngx-electron';
 import { FileSaverService } from 'ngx-filesaver';
 // import * as tf from '@tensorflow/tfjs';
+import * as JSZip from 'jszip';
 import { TensorFlowData } from '../models/tensorflow-data.model';
 // import { Tensor2D } from '@tensorflow/tfjs';
 
@@ -26,6 +27,7 @@ export class TensorFlowMainService {
     updateResizeElements: Subject<any> = new Subject<void>();
     updateGraphBounds: Subject<any> = new Subject<void>();
     updateGraph: Subject<any> = new Subject<void>();
+    updateScale: Subject<any> = new Subject<void>();
     drawTrimLines: Subject<any> = new Subject<void>();
     loadData: Subject<any> = new Subject<void>();
 
@@ -60,37 +62,62 @@ export class TensorFlowMainService {
     }
 
     saveDataSet(dataSet: DataSet = this.d.selectedDataset) {
-      if (dataSet) {
+      if (dataSet && !this.d.multipleSelect.active) {
         this.dataSetService.saveDataSet(dataSet);
         this.updateProgess(dataSet.name + ' saved', 100);
+      } else {
+        for (let i = this.d.multipleSelect.min; i < this.d.multipleSelect.max; i++) {
+          this.dataSetService.saveDataSet(this.d.dataSets[i]);
+        }
       }
     }
 
     saveCopyDataSet() {
-      const copy = this.dataSetService.copyDataSet(this.d.selectedDataset);
-      if (copy) {
-        copy.name += '-copy';
-        this.d.dataSets.push(copy);
-        this.saveDataSet(copy);
-        this.selectDataSet(copy.id);
+      const dataSets = this.d.multipleSelect.active ? this.d.dataSets.slice(this.d.multipleSelect.min, this.d.multipleSelect.max + 1) : [ this.d.selectedDataset ];
+      let index = 0;
+      for (const set of dataSets) {
+        const copy = this.dataSetService.copyDataSet(set);
+        if (copy) {
+          copy.name += '-copy';
+          this.d.dataSets.push(copy);
+          this.saveDataSet(copy);
+          if (index >= dataSets.length - 1) {
+            this.selectDataSet(copy.id);
+          }
+        }
+        index++;
       }
     }
 
     exportDataSet(dataSets: Array<DataSet>) {
-
-      if (dataSets && dataSets.length > 0) {
-        const blob = new Blob([JSON.stringify(dataSets)], { type: 'text/plain' });
-        const fileName = dataSets[0].name + '.json';
-        this._FileSaverService.save(blob, fileName, 'text/plain');
+      if (dataSets) {
+        this.zipFiles(dataSets);
       } else {
         this.updateProgess('No data set selected', 0);
       }
+    }
+
+    createBlob(data: any) {
+      return new Blob([JSON.stringify(data)], { type: 'text/plain' });
+    }
+
+    async zipFiles(files: Array<any>) {
+      const zip = new JSZip();
+
+      for (const file of files) {
+        const fileblob = this.createBlob(file);
+        const filename = file.name + '.json';
+        zip.file(filename, fileblob);
+      }
+      const content = await zip.generateAsync({ type: 'blob' });
+      this._FileSaverService.save(content, 'folder.zip', 'application/zip');
     }
 
     importDataSet(data: any) {
       //open dialogue window
       if (data) {
         const dataObj = JSON.parse(data);
+        console.log(dataObj);
         this.loadData.next(dataObj);
       }
       if (this.d.dataSets.length > 0) {
@@ -103,8 +130,10 @@ export class TensorFlowMainService {
 
         this.d.trimLinesVisible = true;
 
-        this.d.trimLines[0].value = this.d.selectedDataset.bounds.xMin + 100;
-        this.d.trimLines[1].value = this.d.selectedDataset.bounds.xMax - 100;
+        this.updateScale.next(1);
+
+        this.d.trimLines[0].value = this.d.selectedDataset.bounds.xMin + 50;
+        this.d.trimLines[1].value = this.d.selectedDataset.bounds.xMax - 50;
 
         this.drawTrimLines.next({ bounds: this.d.selectedDataset.bounds, visible: this.d.trimLinesVisible, lines: this.d.trimLines });
       }
@@ -112,7 +141,7 @@ export class TensorFlowMainService {
 
 
     trimSet() {
-      let Ymin = -1;
+      let Ymin = 0;
       let Ymax = 1;
       const dataSetCopy = this.dataSetService.copyDataSet(this.d.selectedDataset);
       dataSetCopy.name = this.d.selectedDataset.name + '-copy';
@@ -125,8 +154,9 @@ export class TensorFlowMainService {
             } else {
               m.d[i].time -= Math.floor(this.d.trimLines[0].value);
               for (const el of m.d[i].inputs) {
-                if (el.name !== 'direction' && this.d.selectedModel.inputs.filter(i => i.name === el.name && i.active && i.visible).length > 0) {
-                  if (el.value > Ymax) { Ymax = el.value; } else if (el.value < Ymin) { Ymin = el.value; }
+                if (el.name !== 'direction' && this.d.selectedModel.inputs.filter(i => i.name === el.name && i.active).length > 0) {
+                  if (el.value > Ymax) { Ymax = el.value; }
+                  if (el.value < Ymin) { Ymin = el.value; }
                 }
               }
             }
@@ -137,8 +167,8 @@ export class TensorFlowMainService {
 
       dataSetCopy.bounds.xMin = 0;
       dataSetCopy.bounds.xMax = span < 1000 ? Math.ceil(span / 100) * 100 : span < 3000 ? Math.ceil(span / 200) * 200 : Math.ceil(span / 500) * 500;
-      dataSetCopy.bounds.yMin = Ymin < -10 || Ymax > 10 ? Math.floor(Ymin/10) * 10 : Math.floor(Ymin/2) * 2;
-      dataSetCopy.bounds.yMax = Ymin < -10 || Ymax > 10 ? Math.ceil(Ymax/10) * 10 : Math.ceil(Ymax/2) * 2;
+      dataSetCopy.bounds.yMin = Ymin < -10 || Ymax > 10 ? Math.floor(Ymin/5) * 5 : Math.floor(Ymin/2) * 2;
+      dataSetCopy.bounds.yMax = Ymin < -10 || Ymax > 10 ? Math.ceil(Ymax/5) * 5 : Math.ceil(Ymax/2) * 2;
 
       this.d.trimLinesVisible = false;
 
@@ -160,8 +190,8 @@ export class TensorFlowMainService {
           }
         }
       }
-      dataSet.bounds.yMin = Ymin < -10 || Ymax > 10 ? Math.floor(Ymin/10) * 10 : Math.floor(Ymin);
-      dataSet.bounds.yMax = Ymin < -10 || Ymax > 10 ? Math.ceil(Ymax/10) * 10 : Math.ceil(Ymax);
+      dataSet.bounds.yMin = Ymin < -10 || Ymax > 10 ? Math.floor(Ymin/5) * 5 : Math.floor(Ymin);
+      dataSet.bounds.yMax = Ymin < -10 || Ymax > 10 ? Math.ceil(Ymax/5) * 5 : Math.ceil(Ymax);
     }
 
 
@@ -173,13 +203,12 @@ export class TensorFlowMainService {
 
 
     saveDataNN(data: any) {
-      if (this.d.selectedModel.model) {
-        this.d.selectedModel.model.saveData('training-data-' + this.d.selectedModel.name, this.itemsSaved);
-      }
-      this.exportDataSet(data ? data : [this.d.selectedDataset]);
-      // else {
-      //   this.exportDataSet();
+      // if (this.d.selectedModel.model) {
+      //   this.d.selectedModel.model.saveData('training-data-' + this.d.selectedModel.name, this.itemsSaved);
       // }
+      const dataSets = this.d.multipleSelect.active ? this.d.dataSets.slice(this.d.multipleSelect.min, this.d.multipleSelect.max + 1) : [ this.d.selectedDataset ];
+
+      this.exportDataSet(data ? data : dataSets);
     }
 
     itemsSaved = ((error: any) => {
@@ -197,8 +226,27 @@ export class TensorFlowMainService {
 
 
 
-    selectDataSet(id: String = this.d.selectedDataset.id) {
+    selectDataSet(id: String = this.d.selectedDataset.id, event = null) {
       this.d.trimLinesVisible = false;
+
+      const shift = event ? event.shiftKey : false;
+      const current = shift ? this.d.dataSets.filter(s => s.open)[0] : null;
+      const selected =  this.d.dataSets.filter(s => s.id === id)[0];
+
+      if (current && selected) {
+        this.d.multipleSelect.active = true;
+        this.d.multipleSelect.min = this.d.dataSets.indexOf(current);
+        this.d.multipleSelect.max = this.d.dataSets.indexOf(selected);
+        if (this.d.multipleSelect.min > this.d.multipleSelect.max) {
+          const tmp = this.d.multipleSelect.max;
+          this.d.multipleSelect.max = this.d.multipleSelect.min;
+          this.d.multipleSelect.min = tmp;
+        }
+      } else {
+        this.d.multipleSelect.active = false;
+        this.d.multipleSelect.min = 0;
+        this.d.multipleSelect.max = 0;
+      }
 
       for (const set of this.d.dataSets) {
         set.open = set.id === id ? true : false;
@@ -208,6 +256,7 @@ export class TensorFlowMainService {
           this.updateGraph.next({ set: set, model: this.d.selectedModel, mcus: this.d.selectedMicrocontrollers, trimLines: this.d.trimLinesVisible ? this.d.trimLines : null });
         }
       }
+
     }
 
     updateBoundsActiveDataset() {

@@ -45,7 +45,7 @@
     "file-saver": "^2.0.5",
     "file-system": "^2.2.2",
     "jsonfile": "^6.1.0",
-    "jszip": "^3.7.0",
+    "jszip": "^3.10.1",
     "ngx-color-picker": "^7.5.0",
     "ngx-electron": "^2.2.0",
     "ngx-filesaver": "^16.0.0",

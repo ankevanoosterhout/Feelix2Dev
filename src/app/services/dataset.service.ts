@@ -98,7 +98,6 @@ export class DataSetService {
 
   store() {
     this.localSt.store('dataSetLibrary', this.dataSetLibrary);
-    console.log(this.dataSetLibrary);
   }
 
 

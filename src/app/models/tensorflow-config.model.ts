@@ -30,4 +30,6 @@ export class TensorFlowConfig {
   horizontalScreenDivision = 220;
   verticalScreenDivision = 70;
 
+  // shift = false;
+
 }

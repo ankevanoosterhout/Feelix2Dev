@@ -19,6 +19,7 @@ export class TensorFlowData {
   dataSets: Array<DataSet> = [];
   selectedDataset: DataSet = null;
   predictionDataset: DataSet = null;
+  multipleSelect = { min: 0, max: 0, active: false };
 
   processing = false;
 

@@ -110,6 +110,14 @@ export class TensorFlowDrawService {
     this.setScale();
   }
 
+  updateScale(scale: number) {
+    this.config.transform = d3.zoomIdentity.translate(0, 0).scale(scale);
+    this.config.scaleX = this.config.transform.rescaleX(this.config.baseScaleX);
+
+    this.config.dataSVG.call(this.config.zoom.transform, this.config.transform);
+
+  }
+
 
   drawTicks() {
     this.config.yAxis = this.config.dataSVG.append('g');
@@ -199,7 +207,7 @@ export class TensorFlowDrawService {
       }
 
       if (trimLines) {
-        this.drawTrimLines(data.bounds, true, trimLines);
+        this.drawTrimLines(true, trimLines);
       }
     }
   }
@@ -209,7 +217,7 @@ export class TensorFlowDrawService {
   }
 
 
-  drawTrimLines(bounds: Bounds, visible: boolean, lines: any) {
+  drawTrimLines(visible: boolean, lines: any) {
 
     d3.selectAll('#dataTrimLines').remove();
 
@@ -217,29 +225,49 @@ export class TensorFlowDrawService {
 
       const trimLinesGroup = this.config.dataSVG.append('g')
         .attr('id', 'dataTrimLines')
-        .attr('transform', 'translate(0,0)');
+        .attr('clip-path', 'url(#clipPathGraph)')
+        .attr('transform', 'translate(0,'+ this.config.margin +')');
 
       const dragLine = d3
             .drag()
-            .on('drag', (event: any, d: { id: number; value: number } ) => {
+            .on('drag', (event: any, d: { id: number; value: number }) => {
               d.value = this.config.scaleX.invert(event.x);
-              d3.select('#trimLine_' + d.id).attr('x1', event.x);
-              d3.select('#trimLine_' + d.id).attr('x2', event.x);
+              d3.select('#trimLine_' + d.id).attr('x', event.x);
+              d3.select('#trimLine_' + d.id).attr('x', event.x);
+
+              if (lines[0].id === d.id) {
+                d3.select('#trimLineRect_' + d.id).attr('width', event.x);
+              } else {
+                d3.select('#trimLineRect_' + d.id).attr('x', event.x).attr('width', this.config.width - event.x);
+              }
             });
 
 
-      trimLinesGroup.selectAll('line.trim')
+      trimLinesGroup.selectAll('rect.trim')
+          .data(lines)
+          .enter()
+          .append('rect')
+          .attr('id', (d: { id: number }) => 'trimLineRect_' + d.id)
+          .attr('x', (d: any, i: number) => i === 0 ? 0 : this.config.scaleX(d.value))
+          .attr('y', 0)
+          .attr('width', (d: { value: number; }, i: number) => i === 0 ? Math.abs(this.config.scaleX(d.value)) : Math.abs(this.config.width - this.config.scaleX(d.value)))
+          .attr('height', this.config.height)
+          .style('shape-rendering', 'crispEdges')
+          .style('fill', 'rgba(0,0,0,0.3)');
+
+      trimLinesGroup.selectAll('rect.trim')
         .data(lines)
         .enter()
-        .append('line')
+        .append('rect')
         .attr('id', (d: { id: number }) => 'trimLine_' + d.id)
-        .attr('x1', (d: { value: number; }) => this.config.scaleX(d.value))
-        .attr('y1', this.config.scaleY(bounds.yMin * 1.05))
-        .attr('x2', (d: { value: number; }) => this.config.scaleX(d.value))
-        .attr('y2', this.config.scaleY(bounds.yMax * 1.05))
+        .attr('x', (d: { value: number; }) => this.config.scaleX(d.value) - 0.5)
+        .attr('y', 0)
+        .attr('width', 1)
+        .attr('height', this.config.height - this.config.margin)
         .style('shape-rendering', 'crispEdges')
-        .style('stroke', '#FF0000')
-        .style('stroke-width', 1)
+        .style('fill', '#df9b08')
+        .style('stroke', 'transparent')
+        .style('stroke-width', 4)
         .attr('cursor', 'e-resize')
         .call(dragLine);
 

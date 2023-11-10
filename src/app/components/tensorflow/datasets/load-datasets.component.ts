@@ -45,6 +45,7 @@ export class LoadDataSetsComponent implements OnInit {
 
   public export() {
     if (this.data.filter(d => d.selected).length > 0) {
+      // console.log(this.data.filter(d => d.selected));
       this.electronService.ipcRenderer.send('export-datasets', this.data.filter(d => d.selected));
     }
   }
