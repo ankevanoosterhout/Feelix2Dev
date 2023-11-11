@@ -94,7 +94,9 @@
   <!-- output column  -->
 
   <div id="inputs" class="column-20 fixed-height">
-    <label class="labelRow">Inputs <div class="buttonPlayWindow dataSetList" (click)="this.addInputItem()" title="add input item">+</div></label>
+    <label class="labelRow">Inputs
+      <div class="buttonPlayWindow dataSetList" (click)="this.addInputItem()" title="add input item">+</div>
+      <div id="resetInput" class="buttonPlayWindow dataSetList" (click)="this.resetInputList()" title="reset input variables"><img src="./assets/icons/buttons/refresh.svg" /></div></label>
     <ul>
       <li *ngFor="let input of this.d.selectedModel.inputs; let i = index" [attr.data-index]="i">
         <label class="radio-container">
@@ -130,7 +132,7 @@
 
 
 <div class="buttons">
-  <button id="deploy" (click)="this.classifyAtRunTime()">Deploy</button>
+  <button id="deploy" (click)="this.classifyAtRunTime()" disabled>Deploy</button>
   <button id="initialize" (click)="this.initializeNN_Model()" *ngIf="!this.d.processing">Train</button>
   <button id="initialize" (click)="this.stopTraining()" *ngIf="this.d.processing">Cancel</button>
 </div>

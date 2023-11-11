@@ -142,7 +142,7 @@ ul.file-list-sidebar li:hover {
 }
 
 ul.file-list-sidebar li.selected {
-  background-color: #4e4e4e;
+  background-color: #4c4c4c;
   color: rgb(194, 194, 194);
 }
 
@@ -260,7 +260,7 @@ ul.file-list-sidebar li .name {
 
 .column-20 {
   width: 20%;
-  min-width: 110px;
+  min-width: 120px;
 }
 
 .column-30 {
@@ -791,6 +791,7 @@ ul.motor-list li.header > span {
   float: right;
   border: none!important;
   cursor: default!important;
+  user-select: none;
 }
 
 .buttonPlayWindow:hover, .buttonPlayWindow:active {
@@ -811,6 +812,12 @@ ul.motor-list li.header > span {
   margin: 0px 4px 2px 0;
 }
 
+.buttonPlayWindow img {
+  padding: 3px 0;
+  height: 75%;
+  margin-left: -1px;
+}
+
 #delete.buttonPlayWindow.dataSetList img {
   padding: 4px 0;
 }
@@ -819,10 +826,9 @@ ul.motor-list li.header > span {
   height: 18px;
 } */
 
-.buttonPlayWindow img {
-  padding: 3px 0;
-  height: 75%;
-  margin-left: -1px;
+
+#resetInput.buttonPlayWindow.dataSetList img {
+  height: 70%;
 }
 
 .opencloseArrow {

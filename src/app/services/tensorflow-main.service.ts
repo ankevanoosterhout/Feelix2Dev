@@ -12,7 +12,7 @@ import { ElectronService } from 'ngx-electron';
 import { FileSaverService } from 'ngx-filesaver';
 // import * as tf from '@tensorflow/tfjs';
 import * as JSZip from 'jszip';
-import { TensorFlowData } from '../models/tensorflow-data.model';
+import { ML_Data, TensorFlowData } from '../models/tensorflow-data.model';
 // import { Tensor2D } from '@tensorflow/tfjs';
 
 @Injectable()
@@ -89,11 +89,15 @@ export class TensorFlowMainService {
       }
     }
 
-    exportDataSet(dataSets: Array<DataSet>) {
-      if (dataSets) {
+    exportDataSet(dataSets: Array<any>) {
+      if (dataSets.length > 1) {
         this.zipFiles(dataSets);
+      } else if (dataSets.length === 1) {
+        const dataBlob = this.createBlob(dataSets);
+        const filename = dataSets[0].name + '.json';
+        this._FileSaverService.save(dataBlob, filename, 'text/plain');
       } else {
-        this.updateProgess('No data set selected', 0);
+        this.updateProgess('No dataset selected', 0);
       }
     }
 
@@ -105,7 +109,7 @@ export class TensorFlowMainService {
       const zip = new JSZip();
 
       for (const file of files) {
-        const fileblob = this.createBlob(file);
+        const fileblob = this.createBlob([file]);
         const filename = file.name + '.json';
         zip.file(filename, fileblob);
       }
@@ -117,7 +121,6 @@ export class TensorFlowMainService {
       //open dialogue window
       if (data) {
         const dataObj = JSON.parse(data);
-        console.log(dataObj);
         this.loadData.next(dataObj);
       }
       if (this.d.dataSets.length > 0) {
@@ -141,34 +144,34 @@ export class TensorFlowMainService {
 
 
     trimSet() {
-      let Ymin = 0;
-      let Ymax = 1;
       const dataSetCopy = this.dataSetService.copyDataSet(this.d.selectedDataset);
       dataSetCopy.name = this.d.selectedDataset.name + '-copy';
 
-      for (const m of dataSetCopy.m) {
-        if (m.d.length > 0) {
-          for (let i = m.d.length - 1; i >= 0; i--) {
-            if (m.d[i].time < this.d.trimLines[0].value || m.d[i].time > this.d.trimLines[1].value) {
-              m.d.splice(i, 1);
-            } else {
-              m.d[i].time -= Math.floor(this.d.trimLines[0].value);
-              for (const el of m.d[i].inputs) {
-                if (el.name !== 'direction' && this.d.selectedModel.inputs.filter(i => i.name === el.name && i.active).length > 0) {
-                  if (el.value > Ymax) { Ymax = el.value; }
-                  if (el.value < Ymin) { Ymin = el.value; }
-                }
-              }
-            }
-          }
-        }
-      }
+      const bounds = this.trimmedDataSize(dataSetCopy);
+      console.log(bounds.dataSize);
+      // for (const m of dataSetCopy.m) {
+      //   if (m.d.length > 0) {
+      //     for (let i = m.d.length - 1; i >= 0; i--) {
+      //       if (m.d[i].time < this.d.trimLines[0].value || m.d[i].time > this.d.trimLines[1].value) {
+      //         m.d.splice(i, 1);
+      //       } else {
+      //         m.d[i].time -= Math.floor(this.d.trimLines[0].value);
+      //         for (const el of m.d[i].inputs) {
+      //           if (el.name !== 'direction' && this.d.selectedModel.inputs.filter(i => i.name === el.name && i.active).length > 0) {
+      //             if (Ymax === null || el.value > Ymax) { Ymax = el.value; }
+      //             if (Ymin === null || el.value < Ymin) { Ymin = el.value; }
+      //           }
+      //         }
+      //       }
+      //     }
+      //   }
+      // }
       const span = this.d.trimLines[1].value - this.d.trimLines[0].value;
 
       dataSetCopy.bounds.xMin = 0;
       dataSetCopy.bounds.xMax = span < 1000 ? Math.ceil(span / 100) * 100 : span < 3000 ? Math.ceil(span / 200) * 200 : Math.ceil(span / 500) * 500;
-      dataSetCopy.bounds.yMin = Ymin < -10 || Ymax > 10 ? Math.floor(Ymin/5) * 5 : Math.floor(Ymin/2) * 2;
-      dataSetCopy.bounds.yMax = Ymin < -10 || Ymax > 10 ? Math.ceil(Ymax/5) * 5 : Math.ceil(Ymax/2) * 2;
+      dataSetCopy.bounds.yMin = bounds.yMin < -10 || bounds.yMax > 10 ? Math.floor(bounds.yMin/5) * 5 : Math.floor(bounds.yMin*4) / 4;
+      dataSetCopy.bounds.yMax = bounds.yMin < -10 || bounds.yMax > 10 ? Math.ceil(bounds.yMax/5) * 5 : Math.ceil(bounds.yMax*4) / 4;
 
       this.d.trimLinesVisible = false;
 
@@ -177,21 +180,48 @@ export class TensorFlowMainService {
 
     }
 
+    trimmedDataSize(dataSet: DataSet = this.dataSetService.copyDataSet(this.d.selectedDataset)) {
+
+      let Ymin = null;
+      let Ymax = null;
+      let size = [];
+      for (const m of dataSet.m) {
+        if (m.d.length > 0) {
+          for (let i = m.d.length - 1; i >= 0; i--) {
+            if (m.d[i].time < this.d.trimLines[0].value || m.d[i].time > this.d.trimLines[1].value) {
+              m.d.splice(i, 1);
+            } else {
+              m.d[i].time -= Math.floor(this.d.trimLines[0].value);
+              for (const el of m.d[i].inputs) {
+                if (this.d.selectedModel.inputs.filter(i => i.name === el.name && i.active).length > 0) {
+                  if (Ymax === null || el.value > Ymax) { Ymax = el.value; }
+                  if (Ymin === null || el.value < Ymin) { Ymin = el.value; }
+                }
+              }
+            }
+          }
+          size.push(m.d.length);
+        }
+      }
+      return { yMin: Ymin, yMax: Ymax, dataSize: size };
+    }
+
 
     scaleYaxisBounds(dataSet: DataSet) {
-      let Ymin = -1;
-      let Ymax = 1;
+      let Ymin = null;
+      let Ymax = null;
       for (const m of dataSet.m) {
         for (const d of m.d) {
           for (const input of d.inputs) {
             if (input.name !== 'direction' && this.d.selectedModel.inputs.filter(i => i.name === input.name && i.active && i.visible).length > 0) {
-              if (input.value > Ymax) { Ymax = input.value; } else if (input.value < Ymin) { Ymin = input.value; }
+              if (Ymax === null ||input.value > Ymax) { Ymax = input.value; }
+              if (Ymin === null ||input.value < Ymin) { Ymin = input.value; }
             }
           }
         }
       }
-      dataSet.bounds.yMin = Ymin < -10 || Ymax > 10 ? Math.floor(Ymin/5) * 5 : Math.floor(Ymin);
-      dataSet.bounds.yMax = Ymin < -10 || Ymax > 10 ? Math.ceil(Ymax/5) * 5 : Math.ceil(Ymax);
+      dataSet.bounds.yMin = Ymin < -10 || Ymax > 10 ? Math.floor(Ymin/5) * 5 : Math.floor(Ymin*4) / 4;
+      dataSet.bounds.yMax = Ymin < -10 || Ymax > 10 ? Math.ceil(Ymax/5) * 5 : Math.ceil(Ymax*4) / 4;
     }
 
 
@@ -254,10 +284,17 @@ export class TensorFlowMainService {
           this.updateGraphBounds.next(set.bounds);
           this.d.selectedDataset = set;
           this.updateGraph.next({ set: set, model: this.d.selectedModel, mcus: this.d.selectedMicrocontrollers, trimLines: this.d.trimLinesVisible ? this.d.trimLines : null });
+          this.d.size = this.getDataSize(set);
         }
       }
 
     }
+
+
+  getDataSize(set: DataSet) {
+    const motorEl = set.m.filter(m => m.visible && m.d.length > 0)[0];
+    return motorEl ? motorEl.d.length : 0;
+  }
 
     updateBoundsActiveDataset() {
       if (this.d.selectedDataset && this.d.selectedDataset.m.length > 0 && this.d.selectedDataset.m[0].d.length > 0) {
@@ -269,7 +306,8 @@ export class TensorFlowMainService {
     }
 
     updateOutputDataSet(index: number) {
-      if (this.d.selectedDataset) {
+      // console.log(this.d.selectedDataset.output);
+      if (this.d.selectedDataset && this.d.selectedDataset.output.classifier_id !== this.d.selectedModel.outputs[index].id) {
         this.d.selectedDataset.output = new OutputItem(this.d.selectedModel.outputs[index].id, this.d.selectedModel.outputs[index].name);
         const selectClassifierDiv = (this.document.getElementById('dataset-output-select-' + this.d.selectedModel.outputs[index].id) as HTMLElement);
         if (selectClassifierDiv) selectClassifierDiv.classList.remove('invisible');
@@ -312,11 +350,21 @@ export class TensorFlowMainService {
 
     addInputItem(name = 'untitled') {
       const nrOfInputs = this.d.selectedModel.inputs.length;
-      this.d.selectedModel.inputs.push(new ModelVariable(name + '-' + (nrOfInputs - 5), false, false, '#FFFFFF', 'V' + (nrOfInputs - 5)));
+      this.d.selectedModel.inputs.push(new ModelVariable(name + '-' + (nrOfInputs - 5), false, false, '#999', 'C' + (nrOfInputs - 5)));
     }
 
     deleteInputItem(i: number) {
       this.d.selectedModel.inputs.splice(i, 1);
+    }
+
+    resetInputList() {
+      this.d.selectedModel.inputs = [
+        new ModelVariable('angle', true, true, '#43E6D5', 'A'),
+        new ModelVariable('velocity', true, true, '#00AEEF', 'V'),
+        new ModelVariable('direction', true, true, '#E18257', 'D'),
+        new ModelVariable('pressure', false, false, '#4390E6', 'P'),
+        new ModelVariable('target', false, false, '#7778E0', 'G')
+      ]
     }
 
     updateInput(i: number) {
@@ -354,6 +402,15 @@ export class TensorFlowMainService {
       this.d.selectedModel.outputs.filter(c => c.name === classifier_name)[0].labels.splice(i, 1);
     }
 
+    saveMLoutput() {
+      if (this.d.ML_OutputData.length > 0) {
+        this.exportDataSet(this.d.ML_OutputData);
+      }
+    }
+
+    clearData() {
+      this.d.ML_OutputData = [];
+    }
     updateClassifierLabel(classifier_name: String, i: number) {
       const value = (this.document.getElementById(classifier_name + '-label-' + i) as HTMLInputElement).value;
       this.d.selectedModel.outputs.filter(c => c.name === classifier_name)[0].labels[i].name = value;
@@ -386,8 +443,8 @@ export class TensorFlowMainService {
       }
     }
 
-    addMicrocontroller() {
-      if (this.d.selectOptionMicrocontroller !== undefined && this.d.selectedMicrocontrollers.filter(m => m.id === this.d.selectOptionMicrocontroller.id).length === 0) {
+    addMicrocontroller(updateInputs = true) {
+      if (this.d.selectOptionMicrocontroller !== undefined && this.d.selectedMicrocontrollers.filter(m => m.serialPort.path === this.d.selectOptionMicrocontroller.serialPort.path).length === 0) {
         for (const motor of this.d.selectOptionMicrocontroller.motors) {
           motor.record = true;
 
@@ -396,13 +453,16 @@ export class TensorFlowMainService {
             pressureInputItem.active = true;
             pressureInputItem.visible = true;
 
-            if (motor.config.nrOfSensors && motor.config.nrOfSensors > 1) {
-              for (let i = 1; i < motor.config.nrOfSensors; i++) {
-                const input = this.d.selectedModel.inputs.filter(i => i.name === 'pressure-' + i);
-                if (input.length === 0) {
-                  const inputModel = new ModelVariable('pressure-' + i, true, true, '#4390E6', 'P-' + i);
-                  this.d.selectedModel.inputs.push(inputModel);
-                  this.d.colorList.push(new InputColor(inputModel.name, inputModel.color));
+            if (updateInputs) {
+
+              if (motor.config.nrOfSensors && motor.config.nrOfSensors > 1) {
+                for (let i = 1; i < motor.config.nrOfSensors; i++) {
+                  const input = this.d.selectedModel.inputs.filter(i => i.name === 'pressure-' + i);
+                  if (input.length === 0) {
+                    const inputModel = new ModelVariable('pressure-' + i, true, true, '#4390E6', 'P-' + i);
+                    this.d.selectedModel.inputs.push(inputModel);
+                    this.d.colorList.push(new InputColor(inputModel.name, inputModel.color));
+                  }
                 }
               }
             }
@@ -410,7 +470,7 @@ export class TensorFlowMainService {
         }
         this.d.selectedMicrocontrollers.push(this.d.selectOptionMicrocontroller);
         for (const set of this.d.dataSets) {
-          if (set.m.filter(m => m.mcu.id === this.d.selectOptionMicrocontroller.id).length === 0) {
+          if (set.m.filter(m => m.mcu.serialPath === this.d.selectOptionMicrocontroller.serialPort.path).length === 0) {
             this.addMicrocontrollerToDataSet(this.d.selectOptionMicrocontroller, set);
           }
         }

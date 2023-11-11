@@ -18,6 +18,7 @@ export class LoadDataSetsComponent implements OnInit {
   mode = '';
   data: Array<any>;
   allSelected = false;
+  multipleSelect = {min: null, max: null, active: false};
 
   // tslint:disable-next-line: variable-name
   constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService, private dataSetService: DataSetService,
@@ -64,18 +65,40 @@ export class LoadDataSetsComponent implements OnInit {
     }
   }
 
-  selectDataSet(id: String) {
+  selectDataSet(id: String, event: any) {
     const dataSet = this.data.filter(d => d.id === id)[0];
 
     if (dataSet) {
-      if (this.mode === 'model') {
-        const selectedItem = this.data.filter(d => d.selected)[0];
-        if (selectedItem) {
+      const selectedItem = this.data.filter(d => d.selected)[0];
+
+      if (selectedItem) {
+        if (this.mode === 'model') {
           selectedItem.selected = false;
           (this.document.getElementById('select_item_' + selectedItem.id) as HTMLInputElement).checked = false;
         }
       }
-      dataSet.selected = !dataSet.selected;
+
+      if (!dataSet.selected) {
+        if (event.shiftKey && this.multipleSelect.min !== null) {
+          this.multipleSelect.max = this.data.indexOf(dataSet);
+          this.multipleSelect.active = true;
+          let index = 0;
+          for (const set of this.data) {
+            if (index >= this.multipleSelect.min && index <= this.multipleSelect.max) {
+              set.selected = true;
+            }
+            index++;
+          }
+        } else {
+          this.multipleSelect.min = this.data.indexOf(dataSet);
+          this.multipleSelect.max = null;
+          this.multipleSelect.active = false;
+        }
+        dataSet.selected = true;
+      } else {
+        dataSet.selected = !dataSet.selected;
+      }
+
       (this.document.getElementById('select_item_' + id) as HTMLInputElement).checked = dataSet.selected;
     }
   }

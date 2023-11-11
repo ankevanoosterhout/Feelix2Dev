@@ -174,6 +174,7 @@ export class DataComponent implements AfterViewInit {
 
   cancelTrim() {
     this.tensorflowDrawService.removeTrimlines();
+    this.d.size = this.tensorflowService.getDataSize(this.d.selectedDataset);
     this.d.trimLinesVisible = false;
   }
 
@@ -181,6 +182,7 @@ export class DataComponent implements AfterViewInit {
     this.tensorflowService.trimSet();
     this.tensorflowDrawService.removeTrimlines();
   }
+
 
 
   updateLine() {

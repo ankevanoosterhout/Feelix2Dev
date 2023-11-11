@@ -106,7 +106,7 @@
           <p class="date" *ngIf="!this.d.classify && this.d.selectedDataset && this.d.selectedDataset.date.created">{{ this.d.selectedDataset.date.created | date:'dd-MM-yyyy hh:mm' }}</p>
 
           <div class="data-size" *ngIf="!this.d.classify && this.d.selectedDataset && this.d.selectedDataset.m && this.d.selectedDataset.m.length > 0">
-            size: {{ this.d.selectedDataset.m[0].d.length }}
+            size: {{ this.d.size }}
           </div>
         </div>
       </div>

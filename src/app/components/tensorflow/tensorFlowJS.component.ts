@@ -10,6 +10,7 @@ import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service'
 import { TensorFlowConfig } from 'src/app/models/tensorflow-config.model';
 import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
 import { TensorFlowTrainService } from 'src/app/services/tensorflow-train.service';
+import { Subject } from 'rxjs/internal/Subject';
 
 @Component({
   selector: 'app-tensorflow-js',
@@ -84,6 +85,15 @@ export class TensorFlowJSComponent implements OnInit {
         this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.trimLinesVisible ? this.d.trimLines : null);
       });
 
+      this.tensorflowDrawService.updateTrimSize.subscribe(res => {
+        const bounds = this.tensorflowService.trimmedDataSize();
+        if (bounds.dataSize.length > 0) {
+          this.d.size = Math.max(...bounds.dataSize);
+          console.log(this.d.size);
+        }
+        console.log(bounds);
+      });
+
       this.tensorflowService.updateTensorflowProgress.subscribe(data => {
         this.progress = data.progress;
         this.status = data.status;
@@ -148,6 +158,8 @@ export class TensorFlowJSComponent implements OnInit {
       this.tensorflowService.loadData.subscribe((res) => {
         this.loadDataSets(res);
       });
+
+
   }
 
   ngOnInit(): void {
@@ -178,22 +190,22 @@ export class TensorFlowJSComponent implements OnInit {
         if (this.d.dataSets.filter(d => d.id === dataset.id).length === 0) {
 
           for (const motor of dataset.m) {
-            if (this.d.selectedMicrocontrollers.filter(m => m.id === motor.mcu.id).length === 0) {
-              const mcu = this.hardwareService.microcontrollers.filter(m => m.id === motor.mcu.id)[0];
+            if (this.d.selectedMicrocontrollers.filter(m => m.serialPort.path === motor.mcu.serialPath).length === 0) {
+              const mcu = this.hardwareService.microcontrollers.filter(m => m.serialPort.path === motor.mcu.serialPath)[0];
               if (mcu) {
                 this.d.selectOptionMicrocontroller = mcu;
-                this.tensorflowService.addMicrocontroller();
+                this.tensorflowService.addMicrocontroller(false);
               }
             }
             if (motor.d.length > 0) {
               for (const input of motor.d[0].inputs) {
-                let inputModel = this.d.selectedModel.inputs.filter(i => i.name === input.name)[0];
-                if (inputModel) {
-                  if (!inputModel.active) { inputModel.active = true; }
-                } else {
+                const inputModels = this.d.selectedModel.inputs.filter(i => i.name === input.name);
+                if (inputModels.length === 1) {
+                  if (!inputModels[0].active) { inputModels[0].active = true; }
+                } else if (inputModels.length === 0) {
+                  //console.log('add input');
                   this.tensorflowService.addInputItem(input.name);
-                  inputModel = this.d.selectedModel.inputs.filter(i => i.name === input.name)[0];
-                  this.d.colorList.push(inputModel ? new InputColor(inputModel.name, inputModel.color) : new InputColor('custom', '#999'));
+                  this.d.colorList.push(new InputColor(input.name, '#999'));
                 }
               }
             }
@@ -201,21 +213,21 @@ export class TensorFlowJSComponent implements OnInit {
               motor.colors = JSON.parse(JSON.stringify(this.d.colorList));
             }
           }
-          this.d.dataSets.push(dataset);
 
           if (dataset.output.classifier_id) {
             const outputClassifierInModel = this.d.selectedModel.outputs.filter(o => o.id === dataset.output.classifier_id)[0];
-
             if (!outputClassifierInModel) {
               const newClassifier = new Classifier(dataset.output.classifier_id, dataset.output.classifier_name);
               this.d.selectedModel.outputs.push(newClassifier);
-              this.tensorflowService.selectClassifier(newClassifier.id);
               this.checkIfHasLabel(newClassifier, dataset.output.label);
+              this.tensorflowService.selectClassifier(newClassifier.id);
             } else {
               this.checkIfHasLabel(outputClassifierInModel, dataset.output.label);
               this.tensorflowService.selectClassifier(outputClassifierInModel.id);
             }
           }
+
+          this.d.dataSets.push(dataset);
         }
       }
       if (this.d.dataSets.length > 0) {
@@ -297,7 +309,7 @@ export class TensorFlowJSComponent implements OnInit {
   }
 
   checkIfHasLabel(classifier: Classifier, label: Label) {
-    if (label && classifier) {
+    if (label && label.id && classifier && classifier.labels) {
       const l = classifier.labels.filter(l => l.id === label.id)[0];
       if (!l) {
         const newLabel = new Label(label.id, label.name);

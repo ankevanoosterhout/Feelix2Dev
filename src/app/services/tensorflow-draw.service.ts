@@ -9,7 +9,9 @@ import { DataSet, Bounds } from '../models/tensorflow.model';
 export class TensorFlowDrawService {
 
   public config: TensorFlowConfig;
+
   redraw: Subject<any> = new Subject<void>();
+  updateTrimSize: Subject<any> = new Subject<void>();
 
   constructor(@Inject(DOCUMENT) private document: Document) {
     this.config = new TensorFlowConfig();
@@ -30,7 +32,7 @@ export class TensorFlowDrawService {
       .attr('id', 'clipPathGraph')
       .append('svg:rect')
       .attr('width', this.config.width - (2 * this.config.margin))
-      .attr('height', this.config.height - (2 * this.config.margin))
+      .attr('height', this.config.height - this.config.margin)
       .attr('transform', 'translate(' + this.config.margin + ',0)');
 
     this.config.dataSVG.append('rect')
@@ -194,10 +196,31 @@ export class TensorFlowDrawService {
                   // .datum(m.d)
                   .attr('fill', 'none')
                   .attr('stroke', m.colors[i].hash)
-                  .attr('stroke-width', 1.2)
+                  .attr('stroke-width', 1.4)
                   .attr('d', line(m.d))
                     .append('svg:title')
-                      .text(() => m.mcu.name + '-' + m.id);
+                      .text(() => m.mcu.name + '-' + m.id + ' ' + input.name);
+
+
+                dataGroup.selectAll('circle.m-' + m.id + '-' + m.mcu.id + '-' + input.name)
+                  .data(m.d)
+                  .enter()
+                  .append('circle')
+                  .attr('r', 1.5)
+                  .attr('cx', (d: { time: number; }) => isNaN(this.config.scaleX(d.time)) ? d.time : this.config.scaleX(d.time))
+                  .attr('cy', (d: { inputs: { value: any; name: string }[]; }) => {
+                                  const inputItem = d.inputs.filter(n => n.name === input.name)[0];
+                                  return isNaN(this.config.scaleY(inputItem.value)) ? 0 : this.config.scaleY(inputItem.value)})
+                  .attr('class', 'm-' + m.id + '-' + m.mcu.id + '-' + input.name)
+                  .attr('fill', '#4a4a4a')
+                  .attr('stroke', m.colors[i].hash)
+                  .attr('stroke-width', 1)
+                    .append('svg:title')
+                      .text((d: any) => {
+                        const inputItem = d.inputs.filter(n => n.name === input.name)[0];
+                        return 'x ' + d.time + ' y ' + inputItem.value
+                      });
+
 
               }
             }
@@ -232,6 +255,9 @@ export class TensorFlowDrawService {
             .drag()
             .on('drag', (event: any, d: { id: number; value: number }) => {
               d.value = this.config.scaleX.invert(event.x);
+
+              this.updateTrimSize.next(true);
+
               d3.select('#trimLine_' + d.id).attr('x', event.x);
               d3.select('#trimLine_' + d.id).attr('x', event.x);
 
@@ -251,7 +277,7 @@ export class TensorFlowDrawService {
           .attr('x', (d: any, i: number) => i === 0 ? 0 : this.config.scaleX(d.value))
           .attr('y', 0)
           .attr('width', (d: { value: number; }, i: number) => i === 0 ? Math.abs(this.config.scaleX(d.value)) : Math.abs(this.config.width - this.config.scaleX(d.value)))
-          .attr('height', this.config.height)
+          .attr('height', this.config.height - (2 * this.config.margin))
           .style('shape-rendering', 'crispEdges')
           .style('fill', 'rgba(0,0,0,0.3)');
 

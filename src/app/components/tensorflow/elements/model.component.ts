@@ -4,8 +4,9 @@ import { Component, Inject } from '@angular/core';
 import { Activation, ActivationLabelMapping, ModelType, ModelTypeMapping } from 'src/app/models/tensorflow.model';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 import * as tf from '@tensorflow/tfjs';
-import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
+import { ML_Data, TensorFlowData } from 'src/app/models/tensorflow-data.model';
 import { TensorFlowTrainService } from 'src/app/services/tensorflow-train.service';
+import { v4 as uuid } from 'uuid';
 
 @Component({
   selector: 'app-model',
@@ -83,7 +84,9 @@ export class ModelComponent {
 
       for (const output of this.d.selectedModel.outputs) {
         for (const label of output.labels) {
-          if (!outputLabels.includes(label.name)) { outputLabels.push(label.name); }
+          if (label.name) {
+            if (!outputLabels.includes(label.name)) { outputLabels.push(label.name); }
+          }
         }
       }
 
@@ -91,6 +94,8 @@ export class ModelComponent {
       this.d.selectedModel.options.outputs = outputLabels;
 
       this.tensorflowTrainService.NN_createData(data, this.d.selectedModel);
+
+      (this.document.getElementById('deploy') as HTMLButtonElement).disabled = true;
 
     } else {
       this.tensorflowService.updateProgess(this.d.processing ? 'training in progress': 'no data', 0);
@@ -111,6 +116,7 @@ export class ModelComponent {
       if (!this.d.classify) {
         this.d.processing = false;
         this.d.classify = true;
+        this.d.ML_OutputData.push(new ML_Data(uuid()))
         this.tensorflowService.updateProgess('deploy', 100);
         this.document.getElementById('record-button').click();
       } else {
@@ -125,6 +131,10 @@ export class ModelComponent {
 
   addInputItem() {
     this.tensorflowService.addInputItem();
+  }
+
+  resetInputList() {
+    this.tensorflowService.resetInputList();
   }
 
   updateInput(index: number) {

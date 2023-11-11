@@ -2,7 +2,15 @@ import { MicroController } from "./hardware.model";
 import { DataSet, InputColor, Model, ModelType, NN_options } from "./tensorflow.model";
 import { v4 as uuid } from 'uuid';
 
+export class ML_Data {
+  id: string;
+  classifier: any;
+  data: Array<any> = [];
 
+  constructor(id: string) {
+    this.id = id;
+  }
+}
 
 export class TensorFlowData {
 
@@ -36,4 +44,8 @@ export class TensorFlowData {
                 new InputColor('target', '#7778E0') ];
 
   colorOptions = ['#43E6D5', '#00AEEF', '#E18257', '#4390E6', '#7778E0', '#F93858', '#B533FF', '#FCFF33', '#BBFF33' ];
+
+  size = 0;
+
+  ML_OutputData: Array<ML_Data> = [];
 }

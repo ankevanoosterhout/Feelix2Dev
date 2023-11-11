@@ -13,7 +13,8 @@
   </div>
   <div class="inputfield">
 
-      <div class="form-row list-item" *ngFor="let item of this.data" (click)="this.selectDataSet(item.id)">
+      <div class="form-row list-item" *ngFor="let item of this.data; let i = index;" (click)="this.selectDataSet(item.id, $event)"
+        [ngClass]="{ selected: (!this.multipleSelect.active && this.multipleSelect.min === i) || (this.multipleSelect.active && i >= this.multipleSelect.min && i <= this.multipleSelect.max) }">
 
         <ul class="data-columns">
           <li class="cb"><input type="checkbox" class="checkbox_input" id="select_item_{{ item.id }}" [(ngModel)]="item.selected" name="select_item_{{ item.id }}" [checked]="item.selected"></li>

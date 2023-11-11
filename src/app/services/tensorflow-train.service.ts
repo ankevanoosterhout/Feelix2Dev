@@ -202,6 +202,8 @@ export class TensorFlowTrainService {
       this.train(inputTensor, outputTensor, this.d.selectedModel.options.trainingOptions).then(() => {
         console.log('training is complete');
 
+        (this.document.getElementById('deploy') as HTMLButtonElement).disabled = false;
+
         this.document.body.style.cursor = 'default';
 
         this.d.processing = false;
@@ -249,18 +251,23 @@ export class TensorFlowTrainService {
   NN_Deploy(input: any, selectedModel: any) {
 
     // this.serialPath = path;
-    console.log('predict');
-    console.log(input);
+    // console.log('predict');
+    // console.log(input);
 
     if (selectedModel.type !== 'Regression') {
       const iTensor = tf.tensor(input);
       const inputTensor = tf.reshape(iTensor, [input.length, input[0][0][0].length, (input[0][0].length * input[0].length) ]);
-      console.log(iTensor, inputTensor);
+      // console.log(iTensor, inputTensor);
       const outputs = this.d.selectedModel.multiple ? this.d.selectedModel.model.predictOnBatch(inputTensor) : this.d.selectedModel.model.predict(inputTensor);
-      console.log(outputs);
+      // console.log(outputs);
       const prediction = Array.from((outputs as any).dataSync());
-      console.log(prediction);
+      // console.log(prediction);
       this.updatePredictionClassifiers(prediction);
+
+      if (this.d.ML_OutputData.length > 0) {
+        this.d.ML_OutputData[this.d.ML_OutputData.length - 1].data.push({ p: prediction, i: input });
+        this.d.ML_OutputData[this.d.ML_OutputData.length - 1].classifier = this.d.selectedModel.outputs.filter(o => o.active)[0].labels;
+      }
 
       iTensor.dispose();
     }
@@ -268,11 +275,11 @@ export class TensorFlowTrainService {
 
 
   updatePredictionClassifiers(results: Array<any>) {
-    console.log(this.d.selectedModel.outputs);
+    // console.log(this.d.selectedModel.outputs);
     for (const classifier of this.d.selectedModel.outputs) {
       let i  = 0;
       for (const label of classifier.labels) {
-        console.log(label);
+        // console.log(label);
         label.confidence = results[i];
         (this.document.getElementById('bar-' + classifier.id + '-' + label.id) as HTMLElement).style.width = (label.confidence * 100) + '%';
         (this.document.getElementById('confidence-' + classifier.id + '-' + label.id) as HTMLElement).innerHTML = (label.confidence * 100).toFixed(2) + '%';

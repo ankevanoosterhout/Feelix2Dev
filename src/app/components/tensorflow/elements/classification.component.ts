@@ -2,6 +2,7 @@
 import { Component, Inject } from '@angular/core';
 import { FilterService } from 'src/app/services/filter.service';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
+import { TensorFlowTrainService } from 'src/app/services/tensorflow-train.service';
 
 @Component({
   selector: 'app-classification',
@@ -11,7 +12,7 @@ import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service'
 export class ClassificationComponent {
 
 
-  
+
 
 
   constructor(public tensorflowService: TensorFlowMainService, public filterService: FilterService) {
@@ -28,4 +29,6 @@ export class ClassificationComponent {
   updateResults(results: any) {
     console.log(results);
   }
+
+
 }

@@ -274,9 +274,10 @@ button {
   user-select: none;
 }
 
-button.disabled {
+button.disabled, button[disabled], button:disabled {
   color:#666;
   background: #444;
+  pointer-events: none;
 }
 button.disabled:focus {
   outline:none;
