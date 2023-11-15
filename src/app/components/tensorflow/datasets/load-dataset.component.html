@@ -13,12 +13,20 @@
   </div>
   <div class="inputfield">
 
+      <div class="form-row list-item" *ngIf="this.currentLevel > 0" (click)="this.moveLevelUp()">
+        <ul class="data-columns"><li class="name">return</li></ul>
+      </div>
+
       <div class="form-row list-item" *ngFor="let item of this.data; let i = index;" (click)="this.selectDataSet(item.id, $event)"
         [ngClass]="{ selected: (!this.multipleSelect.active && this.multipleSelect.min === i) || (this.multipleSelect.active && i >= this.multipleSelect.min && i <= this.multipleSelect.max) }">
 
-        <ul class="data-columns">
-          <li class="cb"><input type="checkbox" class="checkbox_input" id="select_item_{{ item.id }}" [(ngModel)]="item.selected" name="select_item_{{ item.id }}" [checked]="item.selected"></li>
-          <li class="name">{{ item.name }}</li>
+        <ul class="data-columns" [ngClass]="{ folder: item.content }">
+          <li class="cb" *ngIf="!item.content">
+            <input type="checkbox" class="checkbox_input" id="select_item_{{ item.id }}" [(ngModel)]="item.selected" name="select_item_{{ item.id }}" [checked]="item.selected"></li>
+          <li class="cb" *ngIf="item.content"></li>
+          <li class="name">
+            <input type="text" class="list-item" [ngClass]="{ folder: item.content }" id="item-name-{{ item.id }}" [(ngModel)]="item.name" name="item-{{ item.id }}"
+            (change)="this.updateItem(item)"></li>
           <li class="date"><span *ngIf="item.date.created">{{ item.date.created | date:'dd-MM-yyyy hh:mm' }}</span></li>
           <li class="date"><span *ngIf="item.date.modified">{{ item.date.modified | date:'dd-MM-yyyy hh:mm' }}</span></li>
         </ul>
@@ -29,9 +37,10 @@
       </div>
   </div>
   <div class="form-row buttons settings">
-      <button (click)="delete()">Delete</button>
-      <button (click)="export()">Export</button>
-      <button id="submit" autofocus (click)="submit()">Load</button>
       <button (click)="close()">Close</button>
+      <button id="submit" autofocus (click)="submit()">Load</button>
+      <button (click)="export()">Export</button>
+      <button id="folder" (click)="createFolder()" *ngIf="this.mode === 'data'" disabled="!this.multipleSelect.active">New folder</button>
+      <button (click)="delete()">Delete</button>
   </div>
 </div>

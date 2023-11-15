@@ -27,7 +27,7 @@ export class TensorFlowTrainService {
     let i = 0;
     if (this.d.predictionDataset) {
       for (const motor of this.d.predictionDataset.m) {
-        if (motor.d.length <= 20 && motor.d.length !== 0) {
+        if (motor.d.length <= this.d.selectedModel.options.trainingOptions.batchSize && motor.d.length !== 0) { //20
           collectData = false;
         }
         i++;
@@ -53,6 +53,7 @@ export class TensorFlowTrainService {
 
 
   createJSONfromDataSet(dataSets: Array<DataSet>, train = true) {
+
     const data = { xs: [], ys: [] };
     let dataSize = 0;
 
@@ -63,11 +64,12 @@ export class TensorFlowTrainService {
 
         for (const classifier of this.d.selectedModel.outputs) {
           if (classifier.active && classifier.id === set.output.classifier_id) {
-            for (const label of classifier.labels) {
-              label.id === set.output.label.id ? outputs.push(1) : outputs.push(0);
+            for (let i = 0; i < classifier.labels.length; i++) {
+              classifier.labels[i].id === set.output.label.id ? outputs.push(1) : outputs.push(0);
             }
           }
         }
+
         if (outputs.length === 0) {
           this.d.processing = false;
           this.tensorflowService.updateProgess('cannot find outputs', 0);
@@ -106,7 +108,7 @@ export class TensorFlowTrainService {
 
             i++;
 
-            if (i >= 20) {
+            if (i >= this.d.selectedModel.options.trainingOptions.batchSize) {
               if (m === 0) {
                 data.xs.push(inputArray);
                 data.ys.push(outputs);
@@ -134,7 +136,6 @@ export class TensorFlowTrainService {
 
 
   NN_createData(data: any, modelObj: Model) {
-    console.log(data);
 
     this.d.selectedModel.model = tf.sequential();
 
@@ -149,7 +150,6 @@ export class TensorFlowTrainService {
       const inputShape = [null, data.xs[0][0][0].length, (data.xs[0][0].length * data.xs[0].length) ];
       const outputShape = [null, data.ys[0].length]
 
-      console.log(inputShape);
 
       const numSamples = data.xs.length;
       const iTensor = tf.tensor(data.xs, [numSamples, data.xs[0].length, data.xs[0][0].length, data.xs[0][0][0].length]);
@@ -157,7 +157,6 @@ export class TensorFlowTrainService {
 
       const inputTensor = tf.reshape(iTensor, [numSamples, data.xs[0][0][0].length, (data.xs[0][0].length * data.xs[0].length) ]);
 
-      console.log(iTensor, inputTensor, outputTensor);
 
 
       for (let layer = 0; layer < this.d.selectedModel.options.hiddenUnits; layer++) {
@@ -166,8 +165,6 @@ export class TensorFlowTrainService {
           inputShape: inputShape.slice(1), // [ number of inputs, batch size ]
           activation: this.d.selectedModel.options.activation // make activation function adjustable in model settings
         });
-
-        console.log(hiddenLayer);
 
         this.d.selectedModel.model.add(hiddenLayer);
         // this.selectedModel.model.add(tf.layers.maxPooling2d({ poolSize: 2 }));
@@ -183,12 +180,12 @@ export class TensorFlowTrainService {
       this.d.selectedModel.model.add(outputLayer);
 
       // const sgdOpt = tf.train.sgd(this.d.selectedModel.options.learningRate);
-      const optimizerFunction = this.d.selectedModel.options.optimizer(this.d.selectedModel.options.learningRate);
+      const optimizerFunction = this.d.selectedModel.options.optimizer.value(this.d.selectedModel.options.learningRate);
 
       this.d.selectedModel.model.compile({
         optimizer: optimizerFunction,
-        loss: this.d.selectedModel.options.losses,
-        metrics: [ this.d.selectedModel.options.metrics ]
+        loss: this.d.selectedModel.options.losses.value,
+        metrics: [ this.d.selectedModel.options.metrics.value ]
       });
       // console.log(this.d.selectedModel.options);
       // console.log(this.d.selectedModel.model);

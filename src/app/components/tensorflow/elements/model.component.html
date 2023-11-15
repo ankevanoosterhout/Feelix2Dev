@@ -18,36 +18,36 @@
 
     <div class="form-group" *ngIf="this.d.selectedModel.options.activation">
       <label class="label">Activation</label>
-      <select class="form-control playWindow" id="task" name="task" [(ngModel)]="this.d.selectedModel.options.activation">
+      <select class="form-control playWindow" id="activation" name="activation" [(ngModel)]="this.d.selectedModel.options.activation">
         <option *ngFor="let item of this.activationOptions" [ngValue]="item">{{ ActivationLabelMapping[item] }}</option>
       </select>
     </div>
 
     <div class="form-group" *ngIf="this.d.selectedModel.options.activationOutputLayer">
       <label class="label">Activation output</label>
-      <select class="form-control playWindow" id="task" name="task" [(ngModel)]="this.d.selectedModel.options.activationOutputLayer">
+      <select class="form-control playWindow" id="activation_output" name="activation_output" [(ngModel)]="this.d.selectedModel.options.activationOutputLayer">
         <option *ngFor="let item of this.activationOptions" [ngValue]="item">{{ ActivationLabelMapping[item] }}</option>
       </select>
     </div>
 
     <div class="form-group" *ngIf="this.d.selectedModel.options.losses">
       <label class="label">Loss function</label>
-      <select class="form-control playWindow" id="task" name="task" [(ngModel)]="this.d.selectedModel.options.losses">
-        <option *ngFor="let item of this.lossOptions" [ngValue]="item.value">{{ item.name }}</option>
+      <select class="form-control playWindow" id="losses" name="losses" [(ngModel)]="this.d.selectedModel.options.losses" [compareWith]="compareFunction">
+        <option *ngFor="let item of this.d.lossOptions" [ngValue]="item">{{ item.name }}</option>
       </select>
     </div>
 
     <div class="form-group" *ngIf="this.d.selectedModel.options.metrics">
       <label class="label">Metrics</label>
-      <select class="form-control playWindow" id="task" name="task" [(ngModel)]="this.d.selectedModel.options.metrics">
-        <option *ngFor="let item of this.metricsOptions" [ngValue]="item.value">{{ item.name }}</option>
+      <select class="form-control playWindow" id="metrics" name="metrics" [(ngModel)]="this.d.selectedModel.options.metrics" [compareWith]="compareFunction">
+        <option *ngFor="let item of this.d.metricsOptions" [ngValue]="item">{{ item.name }}</option>
       </select>
     </div>
 
-    <div class="form-group">
+    <div class="form-group" *ngIf="this.d.selectedModel.options.optimizer">
       <label class="label">Optimizer</label>
-      <select class="form-control playWindow" id="task" name="task" [(ngModel)]="this.d.selectedModel.options.optimizer">
-        <option *ngFor="let item of this.optimizerOptions" [ngValue]="item.value">{{ item.name }}</option>
+      <select class="form-control playWindow" id="optimizer" name="optimizer" [(ngModel)]="this.d.selectedModel.options.optimizer" [compareWith]="compareFunction">
+        <option *ngFor="let item of this.d.optimizerOptions" [ngValue]="item">{{ item.name }}</option>
       </select>
     </div>
   </div>

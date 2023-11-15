@@ -10,7 +10,6 @@ import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service'
 import { TensorFlowConfig } from 'src/app/models/tensorflow-config.model';
 import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
 import { TensorFlowTrainService } from 'src/app/services/tensorflow-train.service';
-import { Subject } from 'rxjs/internal/Subject';
 
 @Component({
   selector: 'app-tensorflow-js',
@@ -89,9 +88,7 @@ export class TensorFlowJSComponent implements OnInit {
         const bounds = this.tensorflowService.trimmedDataSize();
         if (bounds.dataSize.length > 0) {
           this.d.size = Math.max(...bounds.dataSize);
-          console.log(this.d.size);
         }
-        console.log(bounds);
       });
 
       this.tensorflowService.updateTensorflowProgress.subscribe(data => {
@@ -138,13 +135,6 @@ export class TensorFlowJSComponent implements OnInit {
         this.tensorflowDrawService.updateScale(scale);
       });
 
-      this.electronService.ipcRenderer.on('save-model', (event: Event) => {
-        this.tensorflowService.saveModel();
-      });
-
-      this.electronService.ipcRenderer.on('export-model', (event: Event) => {
-        this.tensorflowService.exportModel();
-      });
 
       this.electronService.ipcRenderer.on('deploy-model', (event: Event) => {
         this.document.getElementById('deploy').click();
@@ -274,6 +264,7 @@ export class TensorFlowJSComponent implements OnInit {
 
         if (dataSetEl.m && dataSetEl.m.length > 0) {
           const motorEl = dataSetEl.m.filter(m => m.mcu.serialPath === serialPath && m.id === motorID)[0]; //data.serialPath, data.motorID
+          console.log(motorEl);
 
           if (motorEl) {
             const dataObject = new Data();

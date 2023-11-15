@@ -103,9 +103,10 @@
 
   <ul id="data_output_list" class="results">
     <li *ngFor="let classifier of this.tensorflowService.d.selectedModel.outputs">
+      <label class="label label-title">{{ classifier.name }}</label>
       <ul *ngIf="classifier.active">
         <li *ngFor="let label of classifier.labels; let i=index;">
-          <label class="label label-title">{{ label.name }}</label>
+          <label class="label">{{ label.name }}</label>
           <div class="bar-container"><div class="bar" id="bar-{{ classifier.id }}-{{ label.id }}"></div></div>
           <span class="confidence" id="confidence-{{ classifier.id }}-{{ label.id }}"></span>
         </li>
@@ -119,7 +120,7 @@
 
   <ul id="data_output_list" class="results">
     <li *ngFor="let filter of this.tensorflowService.selectedModel.filters">
-      <label class="label label-title">{{ filter.type.name }}</label>
+      <label class="label">{{ filter.type.name }}</label>
       <div class="buttonPlayWindow dataSetList text-button" (click)="this.tensorflowService.deleteFilter(filter.id)" title="delete filter">
         -
       </div>

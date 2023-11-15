@@ -1,12 +1,13 @@
 
 import { DOCUMENT } from '@angular/common';
 import { Component, Inject } from '@angular/core';
-import { Activation, ActivationLabelMapping, ModelType, ModelTypeMapping } from 'src/app/models/tensorflow.model';
+import { Activation, ActivationLabelMapping, Model, ModelType, ModelTypeMapping } from 'src/app/models/tensorflow.model';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
-import * as tf from '@tensorflow/tfjs';
+
 import { ML_Data, TensorFlowData } from 'src/app/models/tensorflow-data.model';
 import { TensorFlowTrainService } from 'src/app/services/tensorflow-train.service';
 import { v4 as uuid } from 'uuid';
+import { ElectronService } from 'ngx-electron';
 
 @Component({
   selector: 'app-model',
@@ -23,44 +24,24 @@ export class ModelComponent {
   public ModelTypeMapping = ModelTypeMapping;
   public modelTypeOptions = Object.values(ModelType).filter(value => typeof value === 'number');
 
-  public lossOptions = [
-    { name: 'absoluteDifference', value: tf.losses.absoluteDifference },
-    { name: 'computeWeightedLoss', value: tf.losses.computeWeightedLoss },
-    { name: 'cosineDistance', value: tf.losses.cosineDistance },
-    { name: 'hingeLoss', value: tf.losses.hingeLoss },
-    { name: 'huberLoss', value: tf.losses.huberLoss },
-    { name: 'logLoss', value: tf.losses.logLoss },
-    { name: 'meanSquaredError', value: tf.losses.meanSquaredError },
-    { name: 'sigmoidCrossEntropy', value: tf.losses.sigmoidCrossEntropy },
-    { name: 'softmaxCrossEntropy', value: tf.losses.softmaxCrossEntropy },
-    { name: 'categoricalCrossentropy', value: tf.metrics.categoricalCrossentropy }
-  ];
 
-  public metricsOptions = [
-    { name: 'binaryAccuracy', value: tf.metrics.binaryAccuracy },
-    { name: 'binaryCrossentropy', value: tf.metrics.binaryCrossentropy },
-    { name: 'categoricalAccuracy', value: tf.metrics.categoricalAccuracy },
-    { name: 'categoricalCrossentropy', value: tf.metrics.categoricalCrossentropy },
-    { name: 'cosineProximity', value: tf.metrics.cosineProximity },
-    { name: 'meanAbsoluteError', value: tf.metrics.meanAbsoluteError },
-    { name: 'meanAbsolutePercentageError', value: tf.metrics.meanAbsolutePercentageError },
-    { name: 'meanSquaredError', value: tf.metrics.meanSquaredError },
-    { name: 'precision', value: tf.metrics.precision },
-    { name: 'recall', value: tf.metrics.recall },
-    { name: 'sparseCategoricalAccuracy', value: tf.metrics.sparseCategoricalAccuracy }
-  ];
 
-  public optimizerOptions = [
-    { name: 'sgd', value: tf.train.sgd },
-    { name: 'momentum', value: tf.train.momentum },
-    { name: 'adagrad', value: tf.train.adagrad },
-    { name: 'adadelta', value: tf.train.adadelta },
-    { name: 'adam', value: tf.train.adam },
-    { name: 'rmsprop', value: tf.train.rmsprop },
-  ];
-
-  constructor(@Inject(DOCUMENT) private document: Document, private tensorflowService: TensorFlowMainService, private tensorflowTrainService: TensorFlowTrainService) {
+  constructor(@Inject(DOCUMENT) private document: Document, private tensorflowService: TensorFlowMainService, private tensorflowTrainService: TensorFlowTrainService,
+              private electronService: ElectronService) {
     this.d = this.tensorflowService.d;
+
+    this.electronService.ipcRenderer.on('save-model', (event: Event, copy: boolean) => {
+      this.tensorflowService.saveModel(copy);
+    });
+
+    this.electronService.ipcRenderer.on('export-model', (event: Event) => {
+      this.tensorflowService.exportModel();
+    });
+
+    this.electronService.ipcRenderer.on('new-model', (event: Event) => {
+      this.d.selectedModel = new Model(uuid(), 'model', ModelType.neuralNetwork);
+      this.tensorflowService.updateModelSettings(this.d.selectedModel);
+    });
   }
 
 
@@ -164,5 +145,14 @@ export class ModelComponent {
   updateModelType() {
     this.tensorflowService.updateModelType();
   }
+
+  stopTraining() {
+    this.tensorflowService.stopTraining();
+  }
+
+  compareFunction(el1: any, el2: any) {
+    return el1 && el2 ? el1.name === el2.name : el1 === el2;
+  }
+
 
 }

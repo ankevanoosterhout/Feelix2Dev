@@ -107,7 +107,7 @@ export class Classifier  {
 export class Options {
   inputs: Array<any> = [];
   outputs: Array<any> = [];
-  optimizer: any = tf.train.sgd;
+  optimizer: any = { name:'sgd', value: tf.train.sgd };
   learningRate: number = 0.1;
   // debug: boolean = false; // determines whether or not to show the training visualizatio
 }
@@ -121,9 +121,9 @@ export class NN_options extends Options {
   hiddenUnits: number = 4;
   activation: Activation = Activation.relu;
   activationOutputLayer: Activation = Activation.softmax;
-  metrics: any = tf.metrics.categoricalAccuracy;
+  metrics: any = { name:'categoricalAccuracy', value: tf.metrics.categoricalAccuracy };
   trainingOptions = new TrainingOptions();
-  losses: any = tf.metrics.categoricalCrossentropy;
+  losses: any = { name:'categoricalCrossentropy', value: tf.metrics.categoricalCrossentropy };
 }
 
 export class Regression_options extends Options {

@@ -9,7 +9,7 @@
 <!-- tabs for each microcontroller -->
 <ul class="tabsContainer-vertical">
   <li *ngFor="let microcontroller of this.microcontrollers">
-    <div [ngClass]="{ active: selectedMicrocontroller !== null && microcontroller.id === selectedMicrocontroller.id }"
+    <div [ngClass]="{ active: selectedMicrocontroller !== null && microcontroller.serialPort.path === selectedMicrocontroller.serialPort.path }"
       (click)="selectMicrocontroller(microcontroller)">{{ microcontroller.name }}</div>
   </li>
   <li (click)="addNewMicrocontroller()" title="add microcontroller"><div class="add-button">+</div></li>
@@ -43,7 +43,7 @@
     </div>
 
     <div class="form-group">
-      <label class="labelRow motorsettings inset"><div class="question-mark" title="Update speed for angle and velocity values displayed in Feelix in ms.">?</div>Communication speed</label>
+      <label class="labelRow motorsettings inset"><div class="question-mark" title="Update speed for angle and velocity values displayed in Feelix">?</div>Communication interval</label>
       <input type="number" class="small motor-settings" id="updateSpeed" name="updateSpeed" [(ngModel)]="selectedMicrocontroller.updateSpeed" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
       <span class="units motor-settings">ms</span>
     </div>

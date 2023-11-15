@@ -2,11 +2,11 @@ import { Component, Inject, AfterViewInit } from '@angular/core';
 import { HardwareService } from 'src/app/services/hardware.service';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 import { ElectronService } from 'ngx-electron';
-import { ConnectModel } from 'src/app/models/effect-upload.model';
+// import { ConnectModel } from 'src/app/models/effect-upload.model';
 import { UploadService } from 'src/app/services/upload.service';
 import { DOCUMENT } from '@angular/common';
 import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
-import { Motor } from 'src/app/models/hardware.model';
+import { ActuatorType, Motor } from 'src/app/models/hardware.model';
 import { MotorEl } from 'src/app/models/tensorflow.model';
 import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
 import { TensorFlowConfig } from 'src/app/models/tensorflow-config.model';
@@ -75,8 +75,8 @@ export class DataComponent implements AfterViewInit {
   }
 
   toggleVisibilityInput(m: MotorEl, inputIndex: number) {
-    console.log(m, inputIndex);
-    console.log(this.d.selectedDataset);
+    // console.log(m, inputIndex);
+    // console.log(this.d.selectedDataset);
     m.colors[inputIndex].visible = !m.colors[inputIndex].visible;
     if (this.d.selectedDataset) {
       this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.trimLinesVisible ? this.d.trimLines : null);
@@ -90,10 +90,10 @@ export class DataComponent implements AfterViewInit {
     }
   }
 
-  toggleRecordMotor(mcuID: string, motor: Motor) {
+  toggleRecordMotor(serialPath: string, motor: Motor) {
     for (const set of this.d.dataSets) {
       for (const m of set.m) {
-        if (m.mcu.id === mcuID && m.id === motor.id) {
+        if (m.mcu.serialPath === serialPath && m.id === motor.id) {
           m.record = motor.record;
           m.visible = true;
         }
@@ -139,14 +139,18 @@ export class DataComponent implements AfterViewInit {
     }
   }
 
-  updateCommunicationSpeed(id: string) {
-    const microcontroller = this.d.selectedMicrocontrollers.filter(m => m.id === id)[0];
+  updateCommunicationSpeed(serialPath: string) {
+    const microcontroller = this.d.selectedMicrocontrollers.filter(m => m.serialPort.path === serialPath)[0];
     if (microcontroller) {
       this.hardwareService.updateMicroController(microcontroller);
-      const uploadModel = this.uploadService.createUploadModel(null, microcontroller);
-      uploadModel.config.motors = microcontroller.motors;
+
       // console.log(uploadModel);
-      this.electronService.ipcRenderer.send('updateMotorSetting', uploadModel);
+      if (microcontroller.motors[0].type !== ActuatorType.pneumatic) {
+        const uploadModel = this.uploadService.createUploadModel(null, microcontroller);
+        uploadModel.config.motors = microcontroller.motors;
+        this.electronService.ipcRenderer.send('updateMotorSetting', uploadModel);
+      }
+
       // console.log(microcontroller.updateSpeed);
     }
   }

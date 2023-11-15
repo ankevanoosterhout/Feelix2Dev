@@ -289,7 +289,7 @@ export class TensorFlowDrawService {
         .attr('x', (d: { value: number; }) => this.config.scaleX(d.value) - 0.5)
         .attr('y', 0)
         .attr('width', 1)
-        .attr('height', this.config.height - this.config.margin)
+        .attr('height', this.config.height - (2 * this.config.margin))
         .style('shape-rendering', 'crispEdges')
         .style('fill', '#df9b08')
         .style('stroke', 'transparent')

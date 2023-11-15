@@ -152,7 +152,7 @@ ul.file-list-sidebar li:active, ul.file-list-sidebar li.active {
 }
 
 ul.file-list-sidebar li .name {
-  max-width: calc(100% - 40px);
+  max-width: calc(100% - 20px);
   overflow: hidden;
 }
 
@@ -352,7 +352,8 @@ ul.file-list-sidebar li .name {
 
 #data_output_list.results {
   height: auto;
-  width: calc(100% - 50px)!important;
+  margin-top: 7px;
+  width: 100%;
 }
 
 #data_output_list.classifiers {
@@ -533,6 +534,10 @@ select#microcontroller {
 
 .label {
   width:120px;
+  /* color: #ddd; */
+}
+
+.label-title {
   color: #ddd;
 }
 

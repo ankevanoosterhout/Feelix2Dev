@@ -40,13 +40,11 @@ export class TensorFlowModelService {
     return this.models;
   }
 
-  saveModel(model: Model) {
+  saveModel(model: Model, copy: boolean) {
     this.getDataFromLocalStorage();
     let modelItem = this.models.filter(m => m.id === model.id)[0];
-    // console.log(modelItem);
-    if (modelItem) {
-      const model_str = JSON.stringify(model);
-      modelItem = JSON.parse(model_str);
+    if (!copy && modelItem) {
+      modelItem = model;
       return modelItem.id;
     } else {
       model.id = uuid();
@@ -59,8 +57,7 @@ export class TensorFlowModelService {
 
   getModel(id: String) {
     this.getDataFromLocalStorage();
-    let model = this.models.filter(m => m.id === id)[0];
-    return model;
+    return this.models.filter(m => m.id === id)[0];
 
   }
 
@@ -76,6 +73,13 @@ export class TensorFlowModelService {
     }
   }
 
+  updateModelName(model: Model) {
+    const m = this.models.filter(m => m.id === model.id)[0];
+    if (m) {
+      m.name = model.name;
+      this.store();
+    }
+  }
 
   clear() {
     this.models = [];
@@ -87,6 +91,7 @@ export class TensorFlowModelService {
     this.localSt.store('models', this.models);
     // console.log(this.models);
   }
+
 
 
 

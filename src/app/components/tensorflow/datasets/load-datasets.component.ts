@@ -5,12 +5,13 @@ import { ElectronService } from 'ngx-electron';
 import { DataSetService } from 'src/app/services/dataset.service';
 import { TensorFlowModelService } from 'src/app/services/tensorflow-model.service';
 import { Router } from '@angular/router';
+import { Folder } from 'src/app/models/file.model';
 
 
 @Component({
   selector: 'app-load-dataset',
   templateUrl: './load-dataset.component.html',
-  styleUrls: ['./load-dataset.component.css'],
+  styleUrls: ['./load-dataset.component.css', '../tensorflowJS.component.css'],
 })
 
 export class LoadDataSetsComponent implements OnInit {
@@ -19,6 +20,8 @@ export class LoadDataSetsComponent implements OnInit {
   data: Array<any>;
   allSelected = false;
   multipleSelect = {min: null, max: null, active: false};
+  currentLevel = 0;
+  activeFolder = { id: null, parent: null };
 
   // tslint:disable-next-line: variable-name
   constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService, private dataSetService: DataSetService,
@@ -58,6 +61,38 @@ export class LoadDataSetsComponent implements OnInit {
     }
   }
 
+  public createFolder(files: Array<any> = this.data.filter(d => d.selected), name: string = null) {
+    if (!name) {
+      name = 'new Folder ' + (this.data.filter(d => d instanceof Folder).length + 1);
+    }
+    this.dataSetService.createFolder(files, name, this.currentLevel);
+    this.multipleSelect = {min: null, max: null, active: false};
+  }
+
+  openFolder(folder: Folder) {
+    this.activeFolder = { id: folder.id, parent: folder.parent };
+    this.data = folder.content;
+    this.currentLevel = folder.level;
+  }
+
+  moveLevelUp() {
+    if (this.currentLevel > 0) {
+      this.currentLevel--;
+      if (this.currentLevel === 0) {
+        this.data = this.dataSetService.getAllDataSets(this.activeFolder.parent);
+      }
+    }
+  }
+
+  updateItem(item: any) {
+    if (this.mode === 'data') {
+      this.dataSetService.updateDataSet(item, this.activeFolder);
+    } else {
+      this.tensorflowModelService.updateModelName(item);
+    }
+
+  }
+
   selectAllItems() {
     for (const item of this.data) {
       item.selected = this.allSelected;
@@ -65,41 +100,50 @@ export class LoadDataSetsComponent implements OnInit {
     }
   }
 
-  selectDataSet(id: String, event: any) {
-    const dataSet = this.data.filter(d => d.id === id)[0];
+  selectDataSet(id: string, event: any) {
+    const inputFocus = (this.document.getElementById('item-name-' + id) as HTMLInputElement);
+    const isFocused = (this.document.activeElement === inputFocus);
 
-    if (dataSet) {
-      const selectedItem = this.data.filter(d => d.selected)[0];
+    if (!isFocused) {
+      const dataSet = this.data.filter(d => d.id === id)[0];
 
-      if (selectedItem) {
-        if (this.mode === 'model') {
-          selectedItem.selected = false;
-          (this.document.getElementById('select_item_' + selectedItem.id) as HTMLInputElement).checked = false;
-        }
-      }
-
-      if (!dataSet.selected) {
-        if (event.shiftKey && this.multipleSelect.min !== null) {
-          this.multipleSelect.max = this.data.indexOf(dataSet);
-          this.multipleSelect.active = true;
-          let index = 0;
-          for (const set of this.data) {
-            if (index >= this.multipleSelect.min && index <= this.multipleSelect.max) {
-              set.selected = true;
-            }
-            index++;
-          }
+      if (dataSet) {
+        if (dataSet.content) {
+          this.openFolder(dataSet);
         } else {
-          this.multipleSelect.min = this.data.indexOf(dataSet);
-          this.multipleSelect.max = null;
-          this.multipleSelect.active = false;
-        }
-        dataSet.selected = true;
-      } else {
-        dataSet.selected = !dataSet.selected;
-      }
+          const selectedItem = this.data.filter(d => d.selected)[0];
 
-      (this.document.getElementById('select_item_' + id) as HTMLInputElement).checked = dataSet.selected;
+          if (selectedItem) {
+            if (this.mode === 'model') {
+              selectedItem.selected = false;
+              (this.document.getElementById('select_item_' + selectedItem.id) as HTMLInputElement).checked = false;
+            }
+          }
+
+          if (!dataSet.selected) {
+            if (event.shiftKey && this.multipleSelect.min !== null) {
+              this.multipleSelect.max = this.data.indexOf(dataSet);
+              this.multipleSelect.active = true;
+              let index = 0;
+              for (const set of this.data) {
+                if (index >= this.multipleSelect.min && index <= this.multipleSelect.max) {
+                  set.selected = true;
+                }
+                index++;
+              }
+            } else {
+              this.multipleSelect.min = this.data.indexOf(dataSet);
+              this.multipleSelect.max = null;
+              this.multipleSelect.active = false;
+            }
+            dataSet.selected = true;
+          } else {
+            dataSet.selected = !dataSet.selected;
+          }
+
+          (this.document.getElementById('select_item_' + id) as HTMLInputElement).checked = dataSet.selected;
+        }
+      }
     }
   }
 

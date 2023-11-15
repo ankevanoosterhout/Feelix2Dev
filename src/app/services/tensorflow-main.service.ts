@@ -2,18 +2,18 @@ import { DOCUMENT } from '@angular/common';
 import { Injectable, Inject } from '@angular/core';
 import { v4 as uuid } from 'uuid';
 import { ActuatorType, MicroController } from '../models/hardware.model';
-import { Model, DataSet, Classifier, Data, NN_options, Label, MotorEl, ModelVariable, ModelType, Regression_options, OutputItem, InputColor } from '../models/tensorflow.model';
+import { Model, DataSet, Classifier, NN_options, Label, MotorEl, ModelVariable, ModelType, Regression_options, OutputItem, InputColor } from '../models/tensorflow.model';
 import { HardwareService } from './hardware.service';
 import { DataSetService } from './dataset.service';
 import { Subject } from 'rxjs';
 import { TensorFlowModelService } from './tensorflow-model.service';
-import { FilterModel, UploadStringModel } from '../models/effect-upload.model';
+import { UploadStringModel } from '../models/effect-upload.model';
 import { ElectronService } from 'ngx-electron';
 import { FileSaverService } from 'ngx-filesaver';
-// import * as tf from '@tensorflow/tfjs';
 import * as JSZip from 'jszip';
-import { ML_Data, TensorFlowData } from '../models/tensorflow-data.model';
-// import { Tensor2D } from '@tensorflow/tfjs';
+import { TensorFlowData } from '../models/tensorflow-data.model';
+import { CloneService } from './clone.service';
+
 
 @Injectable()
 export class TensorFlowMainService {
@@ -32,12 +32,11 @@ export class TensorFlowMainService {
     loadData: Subject<any> = new Subject<void>();
 
     constructor(@Inject(DOCUMENT) private document: Document, public hardwareService: HardwareService, private dataSetService: DataSetService,
-                private tensorflowModelService: TensorFlowModelService, private electronService: ElectronService, private _FileSaverService: FileSaverService) {
+                private tensorflowModelService: TensorFlowModelService, private electronService: ElectronService, private _FileSaverService: FileSaverService,
+                private cloneService: CloneService) {
 
                   this.d = new TensorFlowData();
                 }
-
-
 
 
     deleteDataSet(id: string = null) {
@@ -429,8 +428,8 @@ export class TensorFlowMainService {
 
 
 
-    deleteMicrocontroller(id: String) {
-      const microcontroller = this.d.selectedMicrocontrollers.filter(m => m.id === id)[0];
+    deleteMicrocontroller(serialPort: String) {
+      const microcontroller = this.d.selectedMicrocontrollers.filter(m => m.serialPort.path === serialPort)[0];
       if (microcontroller) {
         if (this.d.dataSets.length > 0) {
           for (const set of this.d.dataSets) {
@@ -512,7 +511,7 @@ export class TensorFlowMainService {
 
     stopTraining() {
       this.d.processing = false;
-      this.d.selectedModel.model.stopTraining = true;
+      // this.d.selectedModel.model.stopTraining = true;
     }
 
 
@@ -550,7 +549,6 @@ export class TensorFlowMainService {
 
     loadModel(id: String) {
       const modelData = this.tensorflowModelService.getModel(id);
-      // console.log(modelData);
       if (modelData) {
         this.d.selectedModel = modelData;
         if (modelData.model) {
@@ -559,6 +557,10 @@ export class TensorFlowMainService {
           this.d.selectedModel.model = JSON.parse(modelStr);
           // console.log(this.selectedModel.model);
         }
+        this.d.selectedModel.options.losses = this.d.lossOptions.filter(l => l.name === this.d.selectedModel.options.losses.name)[0];
+        this.d.selectedModel.options.metrics = this.d.metricsOptions.filter(l => l.name === this.d.selectedModel.options.metrics.name)[0];
+        this.d.selectedModel.options.optimizer = this.d.optimizerOptions.filter(l => l.name === this.d.selectedModel.options.optimizer.name)[0];
+
         this.updateModelSettings(this.d.selectedModel);
         this.updateProgess('Model loaded', 100);
       } else {
@@ -566,22 +568,31 @@ export class TensorFlowMainService {
       }
     }
 
-    saveModel() {
+    saveModel(copy: boolean) {
       if (this.d.selectedModel) {
-        this.d.selectedModel.id = this.tensorflowModelService.saveModel(this.d.selectedModel);
+
+        this.d.selectedModel.id = this.tensorflowModelService.saveModel(this.d.selectedModel, copy);
         this.updateProgess('model saved', 100);
       }
     }
 
     updateModelSettings(model: Model) {
-      (this.document.getElementById('model_type') as HTMLSelectElement).selectedIndex = ModelType.neuralNetwork;
 
       if (model.type === ModelType.neuralNetwork) {
+        (this.document.getElementById('model_type') as HTMLSelectElement).selectedIndex = ModelType.neuralNetwork;
+
         (this.document.getElementById('learningRate') as HTMLInputElement).value = model.options.learningRate;
         (this.document.getElementById('hiddenUnits') as HTMLInputElement).value = model.options.hiddenUnits;
 
         (this.document.getElementById('epochs') as HTMLInputElement).value = model.options.trainingOptions.epochs;
         (this.document.getElementById('batchsize') as HTMLInputElement).value = model.options.trainingOptions.batchSize;
+
+        (this.document.getElementById('activation') as HTMLSelectElement).selectedIndex = model.options.activation;
+        (this.document.getElementById('activation_output') as HTMLSelectElement).selectedIndex = model.options.activationOutputLayer;
+
+        // (this.document.getElementById('losses') as HTMLSelectElement).value = model.options.losses;
+        // (this.document.getElementById('metrics') as HTMLSelectElement).value = model.options.metrics;
+        // (this.document.getElementById('optimizer') as HTMLSelectElement).value = model.options.optimizer;
       }
 
       (this.document.getElementById('modelName') as HTMLInputElement).value = model.name;

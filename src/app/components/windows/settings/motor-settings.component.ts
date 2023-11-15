@@ -223,7 +223,7 @@ export class MotorSettingsComponent implements OnInit {
     // motor.state.position.start -= sensorOffset;
     // motor.state.position.end -= sensorOffset;
     uploadModel.config.motors = [ motor ];
-    if (this.selectedMicrocontroller) {
+    if (this.selectedMicrocontroller && motor.type !== ActuatorType.pneumatic) {
       this.electronService.ipcRenderer.send('updateMotorSetting', uploadModel);
     }
   }

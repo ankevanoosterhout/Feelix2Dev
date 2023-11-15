@@ -1,6 +1,7 @@
 import { MicroController } from "./hardware.model";
-import { DataSet, InputColor, Model, ModelType, NN_options } from "./tensorflow.model";
+import { DataSet, InputColor, Model, ModelType } from "./tensorflow.model";
 import { v4 as uuid } from 'uuid';
+import * as tf from '@tensorflow/tfjs';
 
 export class ML_Data {
   id: string;
@@ -48,4 +49,42 @@ export class TensorFlowData {
   size = 0;
 
   ML_OutputData: Array<ML_Data> = [];
-}
+
+  lossOptions = [
+    { name: 'absoluteDifference', value: tf.losses.absoluteDifference },
+    { name: 'computeWeightedLoss', value: tf.losses.computeWeightedLoss },
+    { name: 'cosineDistance', value: tf.losses.cosineDistance },
+    { name: 'hingeLoss', value: tf.losses.hingeLoss },
+    { name: 'huberLoss', value: tf.losses.huberLoss },
+    { name: 'logLoss', value: tf.losses.logLoss },
+    { name: 'meanSquaredError', value: tf.losses.meanSquaredError },
+    { name: 'sigmoidCrossEntropy', value: tf.losses.sigmoidCrossEntropy },
+    { name: 'softmaxCrossEntropy', value: tf.losses.softmaxCrossEntropy },
+    { name: 'categoricalCrossentropy', value: tf.metrics.categoricalCrossentropy }
+  ];
+
+  metricsOptions = [
+    { name: 'binaryAccuracy', value: tf.metrics.binaryAccuracy },
+    { name: 'binaryCrossentropy', value: tf.metrics.binaryCrossentropy },
+    { name: 'categoricalAccuracy', value: tf.metrics.categoricalAccuracy },
+    { name: 'categoricalCrossentropy', value: tf.metrics.categoricalCrossentropy },
+    { name: 'cosineProximity', value: tf.metrics.cosineProximity },
+    { name: 'meanAbsoluteError', value: tf.metrics.meanAbsoluteError },
+    { name: 'meanAbsolutePercentageError', value: tf.metrics.meanAbsolutePercentageError },
+    { name: 'meanSquaredError', value: tf.metrics.meanSquaredError },
+    { name: 'precision', value: tf.metrics.precision },
+    { name: 'recall', value: tf.metrics.recall },
+    { name: 'sparseCategoricalAccuracy', value: tf.metrics.sparseCategoricalAccuracy }
+  ];
+
+  optimizerOptions = [
+    { name: 'sgd', value: tf.train.sgd },
+    { name: 'momentum', value: tf.train.momentum },
+    { name: 'adagrad', value: tf.train.adagrad },
+    { name: 'adadelta', value: tf.train.adadelta },
+    { name: 'adam', value: tf.train.adam },
+    { name: 'rmsprop', value: tf.train.rmsprop },
+  ];
+};
+
+

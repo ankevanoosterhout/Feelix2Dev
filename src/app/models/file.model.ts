@@ -44,3 +44,17 @@ export class File {
   }
 }
 
+export class Folder {
+  id: string;
+  name: string;
+  date = new Dates();
+  content: Array<any> = [];
+  selected = false;
+  parent = null;
+  level = 0;
+
+  constructor(id:string, name: string) {
+    this.name = name;
+    this.id = id;
+  }
+};

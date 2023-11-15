@@ -58,26 +58,27 @@
     <ul>
       <li *ngFor="let microcontroller of this.d.selectedMicrocontrollers">
         <div class="row">
-          <div class="opencloseArrow open microcontroller" id="open_{{ microcontroller.id }}" (click)="openCloseItem(microcontroller.id)"><div></div></div>
+          <div class="opencloseArrow open microcontroller" id="open_{{ microcontroller.serialPort.path }}" (click)="openCloseItem(microcontroller.serialPort.path)"><div></div></div>
           <label class="labelRow nextToArrow">{{ microcontroller.name }}</label>
-          <div class="buttonPlayWindow dataSetList delete" (click)="this.tensorflowService.deleteMicrocontroller(microcontroller.id)" title="delete">
+          <div class="buttonPlayWindow dataSetList delete" (click)="this.tensorflowService.deleteMicrocontroller(microcontroller.serialPort.path)" title="delete">
             <img src="./assets/icons/buttons/bin.svg">
           </div>
         </div>
 
-        <div class="row" id="section_{{ microcontroller.id }}">
+        <div class="row" id="section_{{ microcontroller.serialPort.path }}">
           <div class="row">
             <label class="label">
               <div class="question-mark"
-              title="Frequency for data collection (ms): slow down by increasing the value. A higher value is recommended for microcontrollers with high processing power to reduce the amount of data captured">?</div>
-              frequency</label>
-            <input type="number" class="number small blue" id="updateFrequency" [(ngModel)]="microcontroller.updateSpeed" name="updateFrequency" (change)="updateCommunicationSpeed(microcontroller.id)">
+              title="Speed for communication with microcontroller: a low value indicates a shorter interval between communications increasing the number of data points">?</div>
+              comm. interval</label>
+            <input type="number" class="number small blue" id="updateFrequency" [(ngModel)]="microcontroller.updateSpeed" name="updateFrequency" (change)="updateCommunicationSpeed(microcontroller.serialPort.path)">
           </div>
           <div class="row">
             <ul class="motor-list">
               <li *ngFor="let motor of microcontroller.motors">
                 <label class="radio-container">{{ motor.id }}
-                  <input type="checkbox" class="type" id="motor-{{ motor.id }}" name="motor-{{ motor.id }}" [(ngModel)]="motor.record" [checked]="motor.record" (change)="toggleRecordMotor(microcontroller.id, motor)">
+                  <input type="checkbox" class="type" id="motor-{{ motor.id }}" name="motor-{{ motor.id }}" [(ngModel)]="motor.record" [checked]="motor.record"
+                    (change)="toggleRecordMotor(microcontroller.serialPort.path, motor)">
                   <span class="checkmark radio tensorflow"></span>
                 </label>
               </li>
@@ -165,11 +166,9 @@
                       </li>
                     </ul>
                   </div>
-
                 </li>
               </ul>
             </div>
-
           </div>
         </div>
 

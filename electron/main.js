@@ -354,6 +354,12 @@ const ml_control_menu_template = [
     label: 'Model',
     submenu: [
       {
+        label: 'New',
+        click() {
+          tensorflowWindow.webContents.send('new-model');
+        }
+      },
+      {
         label: 'Load',
         click() {
           createLoadDataSetWindow("load-model");
@@ -362,7 +368,13 @@ const ml_control_menu_template = [
       {
         label: 'Save',
         click() {
-          tensorflowWindow.webContents.send('save-model');
+          tensorflowWindow.webContents.send('save-model', false);
+        }
+      },
+      {
+        label: 'Save As',
+        click() {
+          tensorflowWindow.webContents.send('save-model', true);
         }
       },
       {
@@ -376,19 +388,19 @@ const ml_control_menu_template = [
         click() {
           tensorflowWindow.webContents.send('deploy-model');
         }
-      },
-      {
-        label: 'Import',
-        click() {
-          openFileDialog('json', 'loadMLModel', 'loadMLModelLocation');
-        }
-      },
-      {
-        label: 'Export',
-        click() {
-          tensorflowWindow.webContents.send('export-model');
-        }
       }
+      // {
+      //   label: 'Import',
+      //   click() {
+      //     openFileDialog('json', 'loadMLModel', 'loadMLModelLocation');
+      //   }
+      // },
+      // {
+      //   label: 'Export',
+      //   click() {
+      //     tensorflowWindow.webContents.send('export-model');
+      //   }
+      // }
     ]
   },
   {
