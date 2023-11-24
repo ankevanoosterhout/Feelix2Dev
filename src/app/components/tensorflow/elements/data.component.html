@@ -27,8 +27,9 @@
         <li id="new" (click)="this.tensorflowService.addDataSet()"><img src="./assets/icons/tools/collections.svg" title="Create new data set"></li>
         <li id="load" (click)="this.tensorflowService.loadDataSet()"><img src="./assets/icons/buttons/open.svg" title="Open data set"></li>
         <li id="save" (click)="this.tensorflowService.saveDataSet()"><img src="./assets/icons/buttons/save.svg" title="Save data set"></li>
-        <li id="save" (click)="this.tensorflowService.saveCopyDataSet()"><img src="./assets/icons/buttons/save-copy.svg" title="Save copy of data set"></li>
+        <li id="savecopy" (click)="this.tensorflowService.saveCopyDataSet()"><img src="./assets/icons/buttons/save-copy.svg" title="Save copy of data set"></li>
         <li id="trim" (click)="this.d.trimLinesVisible ? this.cancelTrim() : this.tensorflowService.trimDataSet()"><img src="./assets/icons/buttons/trim.svg" title="Trim data"></li>
+        <!-- <li id="merge" (click)="this.tensorflowService.mergeDataSets()" disabled="!this.multipleSelect.active"><img src="./assets/icons/buttons/merge2.svg" title="Merge data sets"></li> -->
       </ul>
 
       <div id="record-button" class="record-button" (click)="this.record()" [ngClass]="{ red: this.d.recording.active }">
@@ -179,7 +180,7 @@
           </div>
           <div class="sidebar-column-content">
             <ul class="file-list-sidebar" *ngIf="this.d.dataSets">
-              <li *ngFor="let set of this.d.dataSets; let i = index;" id="dataset-item-{{ set.id }}" (click)="this.tensorflowService.selectDataSet(set.id, $event)"
+              <li *ngFor="let set of this.d.dataSets; let i = index;" id="dataset-item-{{ set.id }}" (click)="this.selectDataSet(set.id, $event)"
                   [ngClass]="{ active: set.open, selected: this.d.multipleSelect.active && i >= this.d.multipleSelect.min && i <= this.d.multipleSelect.max }">
                 <div class="row name" >{{ set.name }}</div>
                 <div class="close close-button" (click)="this.tensorflowService.deleteDataSet(set.id)"><div></div></div>

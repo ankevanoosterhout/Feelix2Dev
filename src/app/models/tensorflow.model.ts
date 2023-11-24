@@ -37,14 +37,18 @@ export const ActivationLabelMapping: Record<Activation, string> = {
 
 export enum ModelType {
   neuralNetwork = 0,
-  regression = 1
-  // KNNClassifier = 2,
-  // kMeans = 3
+  regression = 1,
+  RNN = 2,
+  LSTM = 3,
+  GRU = 4
 };
 
 export const ModelTypeMapping: Record<ModelType, string> = {
   [ModelType.neuralNetwork]: 'NeuralNetwork',
-  [ModelType.regression]: 'Regression'
+  [ModelType.regression]: 'Regression',
+  [ModelType.RNN]: 'RNN',
+  [ModelType.LSTM]: 'LSTM',
+  [ModelType.GRU]: 'GRU'
 };
 
 
@@ -109,6 +113,10 @@ export class Options {
   outputs: Array<any> = [];
   optimizer: any = { name:'sgd', value: tf.train.sgd };
   learningRate: number = 0.1;
+  batchNormalization: boolean = true;
+  returnSequences: boolean = false;
+  regularizer = { name:'l2', value: tf.regularizers.l2() };
+  dropout = 0.2;
   // debug: boolean = false; // determines whether or not to show the training visualizatio
 }
 
@@ -124,9 +132,10 @@ export class NN_options extends Options {
   metrics: any = { name:'categoricalAccuracy', value: tf.metrics.categoricalAccuracy };
   trainingOptions = new TrainingOptions();
   losses: any = { name:'categoricalCrossentropy', value: tf.metrics.categoricalCrossentropy };
+  momentum = 10;
 }
 
-export class Regression_options extends Options {
+export class RegressionOptions extends Options {
   degree: number = 1;
   losses: any = tf.metrics.meanSquaredError;
 }
@@ -153,7 +162,7 @@ export class Model {
     this.date = new Date().getTime();
     this.type = type;
 
-    this.options =  this.type === ModelType.neuralNetwork ? new NN_options() : new Regression_options();
+    this.options =  this.type !== ModelType.regression ? new NN_options() : new RegressionOptions();
 
     this.inputs = [
       new ModelVariable('angle', true, true, '#43E6D5', 'A'),

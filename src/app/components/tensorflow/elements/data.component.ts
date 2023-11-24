@@ -42,6 +42,9 @@ export class DataComponent implements AfterViewInit {
   record() {
     this.d.recording.active = !this.d.recording.active;
 
+    this.tensorflowDrawService.enableZoom(!this.d.recording.active);
+
+
     if (!this.d.recording.active) {
       this.d.recording.starttime = null;
     } else {
@@ -66,6 +69,12 @@ export class DataComponent implements AfterViewInit {
         this.d.classify = false;
       }
     }
+  }
+
+
+  selectDataSet(id:string, event: any) {
+    this.tensorflowDrawService.enableZoom(true);
+    this.tensorflowService.selectDataSet(id, event);
   }
 
 

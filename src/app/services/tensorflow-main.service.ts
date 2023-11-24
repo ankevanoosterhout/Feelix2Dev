@@ -2,7 +2,7 @@ import { DOCUMENT } from '@angular/common';
 import { Injectable, Inject } from '@angular/core';
 import { v4 as uuid } from 'uuid';
 import { ActuatorType, MicroController } from '../models/hardware.model';
-import { Model, DataSet, Classifier, NN_options, Label, MotorEl, ModelVariable, ModelType, Regression_options, OutputItem, InputColor } from '../models/tensorflow.model';
+import { Model, DataSet, Classifier, NN_options, Label, MotorEl, ModelVariable, ModelType, RegressionOptions, OutputItem, InputColor } from '../models/tensorflow.model';
 import { HardwareService } from './hardware.service';
 import { DataSetService } from './dataset.service';
 import { Subject } from 'rxjs';
@@ -12,7 +12,6 @@ import { ElectronService } from 'ngx-electron';
 import { FileSaverService } from 'ngx-filesaver';
 import * as JSZip from 'jszip';
 import { TensorFlowData } from '../models/tensorflow-data.model';
-import { CloneService } from './clone.service';
 
 
 @Injectable()
@@ -32,8 +31,7 @@ export class TensorFlowMainService {
     loadData: Subject<any> = new Subject<void>();
 
     constructor(@Inject(DOCUMENT) private document: Document, public hardwareService: HardwareService, private dataSetService: DataSetService,
-                private tensorflowModelService: TensorFlowModelService, private electronService: ElectronService, private _FileSaverService: FileSaverService,
-                private cloneService: CloneService) {
+                private tensorflowModelService: TensorFlowModelService, private electronService: ElectronService, private _FileSaverService: FileSaverService) {
 
                   this.d = new TensorFlowData();
                 }
@@ -86,6 +84,12 @@ export class TensorFlowMainService {
         }
         index++;
       }
+    }
+
+    mergeDataSets() {
+      const dataSets = this.d.dataSets.slice(this.d.multipleSelect.min, this.d.multipleSelect.max + 1);
+      console.log(dataSets.length);
+
     }
 
     exportDataSet(dataSets: Array<any>) {
@@ -147,7 +151,7 @@ export class TensorFlowMainService {
       dataSetCopy.name = this.d.selectedDataset.name + '-copy';
 
       const bounds = this.trimmedDataSize(dataSetCopy);
-      console.log(bounds.dataSize);
+      // console.log(bounds.dataSize);
       // for (const m of dataSetCopy.m) {
       //   if (m.d.length > 0) {
       //     for (let i = m.d.length - 1; i >= 0; i--) {
@@ -344,7 +348,7 @@ export class TensorFlowMainService {
     }
 
     updateModelType() {
-      this.d.selectedModel.options = this.d.selectedModel.type === ModelType.neuralNetwork ? new NN_options() : new Regression_options();
+      this.d.selectedModel.options = this.d.selectedModel.type !== ModelType.regression ? new NN_options() : new RegressionOptions();
     }
 
     addInputItem(name = 'untitled') {
@@ -578,8 +582,8 @@ export class TensorFlowMainService {
 
     updateModelSettings(model: Model) {
 
-      if (model.type === ModelType.neuralNetwork) {
-        (this.document.getElementById('model_type') as HTMLSelectElement).selectedIndex = ModelType.neuralNetwork;
+      if (model.type !== ModelType.regression) {
+        (this.document.getElementById('model_type') as HTMLSelectElement).selectedIndex = model.type;
 
         (this.document.getElementById('learningRate') as HTMLInputElement).value = model.options.learningRate;
         (this.document.getElementById('hiddenUnits') as HTMLInputElement).value = model.options.hiddenUnits;
@@ -590,9 +594,9 @@ export class TensorFlowMainService {
         (this.document.getElementById('activation') as HTMLSelectElement).selectedIndex = model.options.activation;
         (this.document.getElementById('activation_output') as HTMLSelectElement).selectedIndex = model.options.activationOutputLayer;
 
-        // (this.document.getElementById('losses') as HTMLSelectElement).value = model.options.losses;
-        // (this.document.getElementById('metrics') as HTMLSelectElement).value = model.options.metrics;
-        // (this.document.getElementById('optimizer') as HTMLSelectElement).value = model.options.optimizer;
+        (this.document.getElementById('losses') as HTMLSelectElement).selectedIndex = model.options.losses;
+        (this.document.getElementById('metrics') as HTMLSelectElement).selectedIndex = model.options.metrics;
+        (this.document.getElementById('optimizer') as HTMLSelectElement).selectedIndex = model.options.optimizer;
       }
 
       (this.document.getElementById('modelName') as HTMLInputElement).value = model.name;

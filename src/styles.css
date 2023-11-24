@@ -834,3 +834,7 @@ button.disabled:focus {
   height: 100%;
 }
 
+.buttons-list:disabled {
+  opacity: 0.4;
+}
+

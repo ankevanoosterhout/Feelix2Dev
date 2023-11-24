@@ -238,14 +238,15 @@ export class TensorFlowJSComponent implements OnInit {
   processRecordedData(dataSetEl: any, time: number) {
     if (this.d.classify) {
       this.tensorflowTrainService.predictOutput();
-    }
 
-    if (!this.d.classify && time > dataSetEl.bounds.xMax - 500) {
+    } else if (!this.d.classify && time > dataSetEl.bounds.xMax - 500) {
+
       dataSetEl.bounds.xMax = dataSetEl.bounds.xMax < 3000 ?
-        Math.ceil(dataSetEl.bounds.xMax * 0.006) * 200 : Math.ceil(dataSetEl.bounds.xMax * 0.0024) * 500;
+      Math.ceil(dataSetEl.bounds.xMax * 0.006) * 200 : Math.ceil(dataSetEl.bounds.xMax * 0.0024) * 500;
 
       this.tensorflowDrawService.updateBounds(dataSetEl.bounds);
     }
+
     this.redraw(dataSetEl);
   }
 
@@ -264,7 +265,7 @@ export class TensorFlowJSComponent implements OnInit {
 
         if (dataSetEl.m && dataSetEl.m.length > 0) {
           const motorEl = dataSetEl.m.filter(m => m.mcu.serialPath === serialPath && m.id === motorID)[0]; //data.serialPath, data.motorID
-          console.log(motorEl);
+          // console.log(motorEl);
 
           if (motorEl) {
             const dataObject = new Data();
@@ -312,11 +313,11 @@ export class TensorFlowJSComponent implements OnInit {
   checkBounds(value: number) {
     if (!this.d.classify) {
       if (value > this.d.selectedDataset.bounds.yMax) {
-        this.d.selectedDataset.bounds.yMax = value >= 10 || this.d.selectedDataset.bounds.yMin <= -10 ? Math.ceil(value/5) * 5 : Math.ceil(value);
+        this.d.selectedDataset.bounds.yMax = value >= 10 || this.d.selectedDataset.bounds.yMin <= -10 ? Math.ceil(value/5) * 5 : Math.ceil(value * 2) / 2;
         this.tensorflowDrawService.updateBounds(this.d.selectedDataset.bounds);
 
       } else if (value < this.d.selectedDataset.bounds.yMin) {
-        this.d.selectedDataset.bounds.yMin = value <= -10 || this.d.selectedDataset.bounds.yMax >= 10 ? Math.floor(value/5) * 5 : Math.floor(value); //Math.floor(value/2) * 2
+        this.d.selectedDataset.bounds.yMin = value <= -10 || this.d.selectedDataset.bounds.yMax >= 10 ? Math.floor(value/5) * 5 : Math.floor(value * 2) / 2; //Math.floor(value/2) * 2
         this.tensorflowDrawService.updateBounds(this.d.selectedDataset.bounds);
       }
     }

@@ -94,6 +94,7 @@ export class ModelComponent {
 
   classifyAtRunTime() {
     if (this.d.selectedModel.model) {
+      
       if (!this.d.classify) {
         this.d.processing = false;
         this.d.classify = true;

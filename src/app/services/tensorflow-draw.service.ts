@@ -51,10 +51,13 @@ export class TensorFlowDrawService {
   }
 
 
+  enableZoom(enable: boolean) {
+    this.config.zoomable = enable;
+  }
+
+
 
   setScale() {
-
-    this.setZoom();
 
     this.config.scaleY = d3.scaleLinear()
       .domain([this.config.bounds.yMax, this.config.bounds.yMin])
@@ -64,15 +67,22 @@ export class TensorFlowDrawService {
       .domain([this.config.bounds.xMin, this.config.bounds.xMax])
       .range([this.config.margin, this.config.width - this.config.margin]);
 
-    if (!this.config.transform || isNaN(this.config.transform.k) || isNaN(this.config.transform.x)) {
-      this.config.transform = d3.zoomIdentity.translate(0, 0).scale(1);
-      this.config.scaleX = this.config.transform.rescaleX(this.config.baseScaleX);
-    } else {
-      const t = d3.zoomIdentity.translate(this.config.transform.x, 0).scale(this.config.transform.k);
-      this.config.scaleX = t.rescaleX(this.config.baseScaleX);
-    }
+    if (this.config.zoomable) {
 
-    this.config.dataSVG.call(this.config.zoom);
+      this.setZoom();
+
+      if (!this.config.transform || isNaN(this.config.transform.k) || isNaN(this.config.transform.x)) {
+        this.config.transform = d3.zoomIdentity.translate(0, 0).scale(1);
+        this.config.scaleX = this.config.transform.rescaleX(this.config.baseScaleX);
+      } else {
+        const t = d3.zoomIdentity.translate(this.config.transform.x, 0).scale(this.config.transform.k);
+        this.config.scaleX = t.rescaleX(this.config.baseScaleX);
+      }
+
+      this.config.dataSVG.call(this.config.zoom);
+    } else  {
+      this.config.scaleX = this.config.baseScaleX;
+    }
 
   }
 
@@ -83,8 +93,10 @@ export class TensorFlowDrawService {
       .scaleExtent([0.01, Infinity])
       .translateExtent([[0,0], [this.config.width, this.config.height]]) // 1.2
       .on('zoom', (event: any) => {
-        this.config.transform = event.transform;
-        this.scaleContent(this.config.transform);
+        if (this.config.zoomable) {
+          this.config.transform = event.transform;
+          this.scaleContent(this.config.transform);
+        }
       });
   }
 
@@ -190,6 +202,7 @@ export class TensorFlowDrawService {
                 });
 
 
+
               if (line) {
 
                 dataGroup.append('path')
@@ -201,27 +214,28 @@ export class TensorFlowDrawService {
                     .append('svg:title')
                       .text(() => m.mcu.name + '-' + m.id + ' ' + input.name);
 
+                if (this.config.zoomable) {
 
-                dataGroup.selectAll('circle.m-' + m.id + '-' + m.mcu.id + '-' + input.name)
-                  .data(m.d)
-                  .enter()
-                  .append('circle')
-                  .attr('r', 1.5)
-                  .attr('cx', (d: { time: number; }) => isNaN(this.config.scaleX(d.time)) ? d.time : this.config.scaleX(d.time))
-                  .attr('cy', (d: { inputs: { value: any; name: string }[]; }) => {
-                                  const inputItem = d.inputs.filter(n => n.name === input.name)[0];
-                                  return isNaN(this.config.scaleY(inputItem.value)) ? 0 : this.config.scaleY(inputItem.value)})
-                  .attr('class', 'm-' + m.id + '-' + m.mcu.id + '-' + input.name)
-                  .attr('fill', '#4a4a4a')
-                  .attr('stroke', m.colors[i].hash)
-                  .attr('stroke-width', 1)
-                    .append('svg:title')
-                      .text((d: any) => {
-                        const inputItem = d.inputs.filter(n => n.name === input.name)[0];
-                        return 'x ' + d.time + ' y ' + inputItem.value
-                      });
+                  dataGroup.selectAll('circle.m-' + m.id + '-' + m.mcu.id + '-' + input.name)
+                    .data(m.d)
+                    .enter()
+                    .append('circle')
+                    .attr('r', 1.5)
+                    .attr('cx', (d: { time: number; }) => isNaN(this.config.scaleX(d.time)) ? d.time : this.config.scaleX(d.time))
+                    .attr('cy', (d: { inputs: { value: any; name: string }[]; }) => {
+                                    const inputItem = d.inputs.filter(n => n.name === input.name)[0];
+                                    return isNaN(this.config.scaleY(inputItem.value)) ? 0 : this.config.scaleY(inputItem.value)})
+                    .attr('class', 'm-' + m.id + '-' + m.mcu.id + '-' + input.name)
+                    .attr('fill', '#4a4a4a')
+                    .attr('stroke', m.colors[i].hash)
+                    .attr('stroke-width', 1)
+                      .append('svg:title')
+                        .text((d: any) => {
+                          const inputItem = d.inputs.filter(n => n.name === input.name)[0];
+                          return 'x ' + d.time + ' y ' + inputItem.value
+                        });
 
-
+                    }
               }
             }
             i++;

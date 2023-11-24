@@ -9,6 +9,7 @@ export class TensorFlowConfig {
   scaleX: any;
   zoom: any;
   transform: any;
+  zoomable = true;
 
   bounds = new Bounds();
 

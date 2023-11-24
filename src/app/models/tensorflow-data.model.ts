@@ -58,6 +58,7 @@ export class TensorFlowData {
     { name: 'huberLoss', value: tf.losses.huberLoss },
     { name: 'logLoss', value: tf.losses.logLoss },
     { name: 'meanSquaredError', value: tf.losses.meanSquaredError },
+    // { name: 'KLDivergence', value: tf.losses. },
     { name: 'sigmoidCrossEntropy', value: tf.losses.sigmoidCrossEntropy },
     { name: 'softmaxCrossEntropy', value: tf.losses.softmaxCrossEntropy },
     { name: 'categoricalCrossentropy', value: tf.metrics.categoricalCrossentropy }
@@ -84,6 +85,13 @@ export class TensorFlowData {
     { name: 'adadelta', value: tf.train.adadelta },
     { name: 'adam', value: tf.train.adam },
     { name: 'rmsprop', value: tf.train.rmsprop },
+  ];
+
+  regularizerOptions = [
+    { name: 'l1', value: tf.regularizers.l1()  },
+    { name: 'l1l2', value: tf.regularizers.l1l2()  },
+    { name: 'l2', value: tf.regularizers.l2()  },
+    { name: 'none', value: undefined }
   ];
 };
 
