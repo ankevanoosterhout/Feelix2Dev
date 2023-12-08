@@ -278,7 +278,7 @@ class newSerialPort {
           for (let i = 0; i < dataArray.length; i++) {
             if (dataArray[i]) {
               const subArray = dataArray[i].split('&');
-              if (subArray) {
+              if (subArray && subArray.length > 3) {
                 const pressureDataList = subArray[1].split('$');
                 const dataList = [];
 

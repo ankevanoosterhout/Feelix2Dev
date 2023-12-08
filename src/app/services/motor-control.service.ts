@@ -401,7 +401,8 @@ export class MotorControlService {
             if (effect && (effect.paths.length > 0 || effect.type === EffectType.midi)) {
               const svg = effect.type === EffectType.midi || effect.type === EffectType.midiNote ? midiSVG : effectSVG;
               const height = effect.type === EffectType.midi || effect.type === EffectType.midiNote ? (this.height - 39) * 0.25 : (this.height - 39);
-              this.effectVisualizationService.drawCollectionEffect(svg, collection, collectionEffect, effect, height, this.file.activeCollectionEffect, this.file.configuration.colors);
+              this.effectVisualizationService.drawCollectionEffect(svg, collection, collectionEffect, effect, height,
+                (this.file.activeCollectionEffect ? this.file.activeCollectionEffect.id : null), this.file.configuration.colors);
             } else {
               this.removeCollectionsEffect(collection, collectionEffect);
             }
@@ -745,7 +746,7 @@ export class MotorControlService {
       if (tmpEffect && ((tmpEffect.type === EffectType.midi && tmpEffect.data) || tmpEffect.paths.length > 0)) {
 
         this.effectVisualizationService.drawCollectionEffect(tmpEffectSVG, collection, effectDetails, tmpEffect, (this.height - 39),
-        effectDetails, this.file.configuration.colors, true);
+        (effectDetails ? effectDetails.id : null), this.file.configuration.colors, true);
       }
   }
 

@@ -145,8 +145,6 @@ export class TensorFlowTrainService {
 
     this.tensorflowService.updateProgess('model created', 10);
 
-    console.log(data, modelObj);
-
     if (data.xs && data.ys) {
 
       const inputShape = [null, data.xs[0][0][0].length, (data.xs[0][0].length * data.xs[0].length) ];
@@ -158,7 +156,6 @@ export class TensorFlowTrainService {
       const outputTensor = tf.tensor(data.ys, [numSamples, data.ys[0].length]);
 
       const inputTensor = tf.reshape(iTensor, [numSamples, data.xs[0][0][0].length, (data.xs[0][0].length * data.xs[0].length) ]);
-
 
 
       for (let layer = 0; layer < this.d.selectedModel.options.hiddenUnits; layer++) {
@@ -176,7 +173,7 @@ export class TensorFlowTrainService {
 
           hiddenLayer = tf.layers.simpleRNN({
             units: (data.xs[0][0].length * data.xs[0].length), //data.xs[0][0][0].length
-            inputShape: data.xs[0].length, // [ number of inputs, batch size ]
+            inputShape: [data.xs[0][0][0].length, (data.xs[0][0].length * data.xs[0].length)], // [ number of inputs, batch size ]
             activation: this.d.selectedModel.options.activation, // make activation function adjustable in model settings
             returnSequences: this.d.selectedModel.options.returnSequences,
             kernelRegularizer: this.d.selectedModel.options.regularizer.value
@@ -184,8 +181,8 @@ export class TensorFlowTrainService {
         } else if (modelObj.type === ModelType.LSTM) {
 
           hiddenLayer = tf.layers.lstm({
-            units: (data.xs[0][0].length * data.xs[0].length), //data.xs[0][0][0].length
-            inputShape: data.xs[0].length, // [ number of inputs, batch size ]
+            units: (data.xs[0][0][0].length * data.xs[0][0].length * data.xs[0].length), //data.xs[0][0][0].length
+            inputShape: [data.xs[0][0][0].length, (data.xs[0][0].length * data.xs[0].length)], // [ number of inputs, batch size ]
             activation: this.d.selectedModel.options.activation, // make activation function adjustable in model settings
             returnSequences: this.d.selectedModel.options.returnSequences,
             kernelRegularizer: this.d.selectedModel.options.regularizer.value
@@ -193,8 +190,8 @@ export class TensorFlowTrainService {
         } else if (modelObj.type === ModelType.GRU) {
 
           hiddenLayer = tf.layers.gru({
-            units: (data.xs[0][0].length * data.xs[0].length), //data.xs[0][0][0].length
-            inputShape: data.xs[0].length, // [ number of inputs, batch size ]
+            units: (data.xs[0][0][0].length * data.xs[0][0].length * data.xs[0].length), //data.xs[0][0][0].length
+            inputShape: [data.xs[0][0][0].length, (data.xs[0][0].length * data.xs[0].length)], // [ number of inputs, batch size ]
             activation: this.d.selectedModel.options.activation, // make activation function adjustable in model settings
             returnSequences: this.d.selectedModel.options.returnSequences,
             kernelRegularizer: this.d.selectedModel.options.regularizer.value

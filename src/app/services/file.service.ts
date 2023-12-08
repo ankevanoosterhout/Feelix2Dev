@@ -140,11 +140,13 @@ export class FileService {
     const activeFile = this.files.filter(f => f.isActive)[0];
     if (activeFile) {
       activeFile.activeCollectionEffect = collEffect;
+      activeFile.activeCollection = collection;
       let collectionItem = activeFile.collections.filter(c => c.id === collection.id)[0];
       if (collectionItem) {
         collectionItem.effects.filter(e => e.id === collEffect.id)[0] = this.cloneService.deepClone(collEffect);
         // collectionItem.effects.filter(e => e.id === collEffect.id)[0].flip = this.cloneService.deepClone(collEffect.flip);
         // collectionItem.effects.filter(e => e.id === collEffect.id)[0].scale = this.cloneService.deepClone(collEffect.scale);
+        collectionItem.effects.filter(e => e.id === collEffect.id)[0].xUnit = this.cloneService.deepClone(collEffect.xUnit);
         this.store();
       }
     }

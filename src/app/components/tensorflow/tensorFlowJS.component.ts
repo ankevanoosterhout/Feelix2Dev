@@ -178,53 +178,54 @@ export class TensorFlowJSComponent implements OnInit {
     if (data) {
       for (const dataset of data) {
         if (this.d.dataSets.filter(d => d.id === dataset.id).length === 0) {
-
-          for (const motor of dataset.m) {
-            if (this.d.selectedMicrocontrollers.filter(m => m.serialPort.path === motor.mcu.serialPath).length === 0) {
-              const mcu = this.hardwareService.microcontrollers.filter(m => m.serialPort.path === motor.mcu.serialPath)[0];
-              if (mcu) {
-                this.d.selectOptionMicrocontroller = mcu;
-                this.tensorflowService.addMicrocontroller(false);
-              }
-            }
-            if (motor.d.length > 0) {
-              for (const input of motor.d[0].inputs) {
-                const inputModels = this.d.selectedModel.inputs.filter(i => i.name === input.name);
-                if (inputModels.length === 1) {
-                  if (!inputModels[0].active) { inputModels[0].active = true; }
-                } else if (inputModels.length === 0) {
-                  //console.log('add input');
-                  this.tensorflowService.addInputItem(input.name);
-                  this.d.colorList.push(new InputColor(input.name, '#999'));
+          if (dataset.m && dataset.m.length > 0) {
+            for (const motor of dataset.m) {
+              if (this.d.selectedMicrocontrollers.filter(m => m.serialPort.path === motor.mcu.serialPath).length === 0) {
+                const mcu = this.hardwareService.microcontrollers.filter(m => m.serialPort.path === motor.mcu.serialPath)[0];
+                if (mcu) {
+                  this.d.selectOptionMicrocontroller = mcu;
+                  this.tensorflowService.addMicrocontroller(false);
                 }
               }
+              if (motor.d.length > 0) {
+                for (const input of motor.d[0].inputs) {
+                  const inputModels = this.d.selectedModel.inputs.filter(i => i.name === input.name);
+                  if (inputModels.length === 1) {
+                    if (!inputModels[0].active) { inputModels[0].active = true; }
+                  } else if (inputModels.length === 0) {
+                    //console.log('add input');
+                    this.tensorflowService.addInputItem(input.name);
+                    this.d.colorList.push(new InputColor(input.name, '#999'));
+                  }
+                }
+              }
+              if (!motor.colors || motor.colors.length === 0) {
+                motor.colors = JSON.parse(JSON.stringify(this.d.colorList));
+              }
             }
-            if (!motor.colors || motor.colors.length === 0) {
-              motor.colors = JSON.parse(JSON.stringify(this.d.colorList));
-            }
-          }
 
-          if (dataset.output.classifier_id) {
-            const outputClassifierInModel = this.d.selectedModel.outputs.filter(o => o.id === dataset.output.classifier_id)[0];
-            if (!outputClassifierInModel) {
-              const newClassifier = new Classifier(dataset.output.classifier_id, dataset.output.classifier_name);
-              this.d.selectedModel.outputs.push(newClassifier);
-              this.checkIfHasLabel(newClassifier, dataset.output.label);
-              this.tensorflowService.selectClassifier(newClassifier.id);
-            } else {
-              this.checkIfHasLabel(outputClassifierInModel, dataset.output.label);
-              this.tensorflowService.selectClassifier(outputClassifierInModel.id);
+            if (dataset.output.classifier_id) {
+              const outputClassifierInModel = this.d.selectedModel.outputs.filter(o => o.id === dataset.output.classifier_id)[0];
+              if (!outputClassifierInModel) {
+                const newClassifier = new Classifier(dataset.output.classifier_id, dataset.output.classifier_name);
+                this.d.selectedModel.outputs.push(newClassifier);
+                this.checkIfHasLabel(newClassifier, dataset.output.label);
+                this.tensorflowService.selectClassifier(newClassifier.id);
+              } else {
+                this.checkIfHasLabel(outputClassifierInModel, dataset.output.label);
+                this.tensorflowService.selectClassifier(outputClassifierInModel.id);
+              }
             }
-          }
 
-          this.d.dataSets.push(dataset);
+            this.d.dataSets.push(dataset);
+          }
         }
-      }
-      if (this.d.dataSets.length > 0) {
-        this.config.transform = null;
-        this.tensorflowService.selectDataSet(this.d.dataSets[0].id);
-      } else {
-        this.d.dataSets.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0));
+        if (this.d.dataSets.length > 0) {
+          this.config.transform = null;
+          this.tensorflowService.selectDataSet(this.d.dataSets[0].id);
+        } else {
+          this.d.dataSets.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0));
+        }
       }
     }
   }

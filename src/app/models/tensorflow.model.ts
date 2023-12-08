@@ -114,7 +114,7 @@ export class Options {
   optimizer: any = { name:'sgd', value: tf.train.sgd };
   learningRate: number = 0.1;
   batchNormalization: boolean = true;
-  returnSequences: boolean = false;
+  returnSequences: boolean = true;
   regularizer = { name:'l2', value: tf.regularizers.l2() };
   dropout = 0.2;
   // debug: boolean = false; // determines whether or not to show the training visualizatio

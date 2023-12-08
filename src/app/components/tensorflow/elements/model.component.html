@@ -83,7 +83,7 @@
       <input type="number" class="number small blue" id="learningRate" [(ngModel)]="this.d.selectedModel.options.learningRate" name="learningRate">
     </div>
 
-    <div class="form-group" *ngIf="this.d.selectedModel.options.optimizer.name === 'momentum'">
+    <div class="form-group" *ngIf="this.d.selectedModel.options.optimizer && this.d.selectedModel.options.optimizer.name === 'momentum'">
       <label class="label"><div class="question-mark" title="The momentum to use for the momentum gradient descent algorithm.">?</div>Momentum</label>
       <input type="number" class="number small blue" id="momentum" [(ngModel)]="this.d.selectedModel.options.momentum" name="momentum">
     </div>
