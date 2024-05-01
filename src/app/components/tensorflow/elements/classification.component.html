@@ -92,6 +92,7 @@
   </div> -->
   <button class="add" id="clearOutput" *ngIf="this.tensorflowService.d.ML_OutputData.length > 0" (click)="this.tensorflowService.clearData()" title="clear data">clear data</button>
   <button class="add" id="saveOutput" *ngIf="this.tensorflowService.d.ML_OutputData.length > 0" (click)="this.tensorflowService.saveMLoutput()" title="export ML data log deployment">save data</button>
+  <button class="add" id="showOutput" *ngIf="this.tensorflowService.d.ML_OutputData.length > 0" (click)="this.tensorflowService.showMLoutput()" title="export ML data log deployment">show data</button>
 </div>
 
 

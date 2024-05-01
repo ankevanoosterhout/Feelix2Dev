@@ -1,5 +1,5 @@
 import { MicroController } from "./hardware.model";
-import { DataSet, InputColor, Model, ModelType } from "./tensorflow.model";
+import { DataSet, InputColor, MLDataSet, Model, ModelType } from "./tensorflow.model";
 import { v4 as uuid } from 'uuid';
 import * as tf from '@tensorflow/tfjs';
 
@@ -28,6 +28,8 @@ export class TensorFlowData {
   dataSets: Array<DataSet> = [];
   selectedDataset: DataSet = null;
   predictionDataset: DataSet = null;
+  mlOutputData: Array<MLDataSet> = [];
+
   multipleSelect = { min: 0, max: 0, active: false };
 
   processing = false;

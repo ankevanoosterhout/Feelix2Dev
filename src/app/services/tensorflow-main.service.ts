@@ -29,6 +29,7 @@ export class TensorFlowMainService {
     updateScale: Subject<any> = new Subject<void>();
     drawTrimLines: Subject<any> = new Subject<void>();
     loadData: Subject<any> = new Subject<void>();
+    loadMLData: Subject<any> = new Subject<void>();
 
     constructor(@Inject(DOCUMENT) private document: Document, public hardwareService: HardwareService, private dataSetService: DataSetService,
                 private tensorflowModelService: TensorFlowModelService, private electronService: ElectronService, private _FileSaverService: FileSaverService) {
@@ -37,14 +38,17 @@ export class TensorFlowMainService {
                 }
 
 
-    deleteDataSet(id: string = null) {
-      const set = this.d.dataSets.filter(s => id ? s.id === id : s.open)[0];
+    deleteDataSet(id: string = null, ML = false) {
+      let dataset = !ML ? this.d.dataSets : this.d.mlOutputData;
+      let set = dataset.filter(s => id ? s.id === id : s.open)[0];
       if (set) {
-        const index = this.d.dataSets.indexOf(set);
-        this.d.dataSets.splice(index, 1);
-        if (this.d.dataSets.length > 0) {
-          this.selectDataSet(this.d.dataSets[0].id);
-        } else {
+        const index = dataset.indexOf(set);
+        dataset.splice(index, 1);
+        if (index < dataset.length) {
+          this.selectDataSet(dataset[index].id);
+        } else if (dataset.length > 0) {
+          this.selectDataSet(dataset[0].id);
+        } else if (!ML) {
           this.addDataSet();
           // this.updateGraph.next(true);
           // this.d.selectedDataset = null;
@@ -88,7 +92,7 @@ export class TensorFlowMainService {
 
     mergeDataSets() {
       const dataSets = this.d.dataSets.slice(this.d.multipleSelect.min, this.d.multipleSelect.max + 1);
-      console.log(dataSets.length);
+      // console.log(dataSets.length);
 
     }
 
@@ -124,11 +128,25 @@ export class TensorFlowMainService {
       //open dialogue window
       if (data) {
         const dataObj = JSON.parse(data);
-        this.loadData.next(dataObj);
+        console.log(dataObj);
+
+        if (dataObj.length > 0 && dataObj[0].m && dataObj[0].m.length > 0) {
+          console.log('load dataset');
+          this.loadData.next(dataObj);
+
+          if (this.d.dataSets.length > 0) {
+            this.selectDataSet(this.d.dataSets[this.d.dataSets.length - 1].id);
+          }
+        } else {
+          console.log('load ml output');
+          this.loadMLData.next(dataObj);
+
+          // if (this.d.ML_OutputData.length > 0) {
+          //   this.selectDataSet(this.d.dataSets[this.d.dataSets.length - 1].id);
+          // }
+        }
       }
-      if (this.d.dataSets.length > 0) {
-        this.selectDataSet(this.d.dataSets[this.d.dataSets.length - 1].id);
-      }
+
     }
 
     trimDataSet() {
@@ -233,6 +251,9 @@ export class TensorFlowMainService {
       this.electronService.ipcRenderer.send('load-dataset');
     }
 
+    showOutputData() {
+      this.electronService.ipcRenderer.send('show-ml-output');
+    }
 
 
     saveDataNN(data: any) {
@@ -260,13 +281,17 @@ export class TensorFlowMainService {
 
 
     selectDataSet(id: String = this.d.selectedDataset.id, event = null) {
+      let ML = this.d.dataSets.filter(d => d.id === id)[0] === undefined ? true : false;
+
       this.d.trimLinesVisible = false;
+      this.d.classify = ML;
+
 
       const shift = event ? event.shiftKey : false;
-      const current = shift ? this.d.dataSets.filter(s => s.open)[0] : null;
-      const selected =  this.d.dataSets.filter(s => s.id === id)[0];
+      const current = shift && !ML ? this.d.dataSets.filter(s => s.open)[0] : null;
+      const selected = !ML ? this.d.dataSets.filter(s => s.id === id)[0] : null;
 
-      if (current && selected) {
+      if (current && selected && !ML) {
         this.d.multipleSelect.active = true;
         this.d.multipleSelect.min = this.d.dataSets.indexOf(current);
         this.d.multipleSelect.max = this.d.dataSets.indexOf(selected);
@@ -281,17 +306,37 @@ export class TensorFlowMainService {
         this.d.multipleSelect.max = 0;
       }
 
-      for (const set of this.d.dataSets) {
+      const dataSet = !ML ? this.d.dataSets : this.d.mlOutputData;
+
+
+      for (const set of dataSet) {
         set.open = set.id === id ? true : false;
         if (set.open) {
           this.updateGraphBounds.next(set.bounds);
           this.d.selectedDataset = set;
+
           this.updateGraph.next({ set: set, model: this.d.selectedModel, mcus: this.d.selectedMicrocontrollers, trimLines: this.d.trimLinesVisible ? this.d.trimLines : null });
           this.d.size = this.getDataSize(set);
+
+
+          if (ML) {
+            const mlData = this.d.mlOutputData.filter(m => m.id === set.id)[0];
+            for (const item of mlData.confidencesLevels) {
+              const label = this.d.selectedModel.outputs.filter(c => c.name === 'Classifier')[0].labels.filter(l => l.id === item.id)[0];
+              if (label) { label.confidence = item.confidence };
+
+              if (this.document.getElementById('bar-' + mlData.classifierID + '-' + label.id) !== null) {
+                (this.document.getElementById('bar-' + mlData.classifierID + '-' + label.id) as HTMLElement).style.width = (label.confidence * 100) + '%';
+                (this.document.getElementById('confidence-' + mlData.classifierID + '-' + label.id) as HTMLElement).innerHTML = (label.confidence * 100).toFixed(2) + '%';
+              }
+            }
+          }
         }
       }
-
     }
+
+
+
 
 
   getDataSize(set: DataSet) {
@@ -409,6 +454,12 @@ export class TensorFlowMainService {
       if (this.d.ML_OutputData.length > 0) {
         this.exportDataSet(this.d.ML_OutputData);
       }
+    }
+
+    showMLoutput() {
+      console.log(this.d.ML_OutputData);
+      console.log(this.d.dataSets[0]);
+      console.log(this.d.selectedDataset);
     }
 
     clearData() {
@@ -535,6 +586,7 @@ export class TensorFlowMainService {
       //select a folder
       if (model) {
         const modelObj = JSON.parse(model);
+        console.log(modelObj);
         this.d.selectedModel = modelObj;
       }
     }

@@ -1128,6 +1128,7 @@ ipcMain.on('load-dataset', () => {
   createLoadDataSetWindow('load-dataset');
 });
 
+
 ipcMain.on('addCollection', () => {
   mainWindow.webContents.send('addCollection');
 });

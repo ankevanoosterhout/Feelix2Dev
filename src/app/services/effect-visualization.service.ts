@@ -81,7 +81,7 @@ export class EffectVisualizationService {
 
     if ((effect.paths && effect.paths.length > 0) || (effect.data && effect.data.length > 0)) {
 
-      const yScale = (effect.type === EffectType.midi || effect.type === EffectType.midiNote) ? _collection.config.newMidiYscale : _collection.config.newYscale;
+      const yScale = ((effect.type === EffectType.midi || effect.type === EffectType.midiNote) && _collection.config.newMidiYscale) ? _collection.config.newMidiYscale : _collection.config.newYscale;
       const multiply = (_collection.rotation.units.PR / effect.grid.xUnit.PR);
 
       const width = (effect.paths && effect.paths.length === 0) || (effect.data && effect.data.length === 0) ? 30 :

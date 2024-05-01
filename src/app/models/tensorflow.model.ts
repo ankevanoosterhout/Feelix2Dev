@@ -262,7 +262,7 @@ export class DataSet {
   bounds = new Bounds();
   offsetTime = 0;
 
-  constructor(id: String, name: String, selectedMCUs: Array<MicroController>) {
+  constructor(id: String, name: String, selectedMCUs: Array<MicroController> = null) {
     this.id = id;
     this.name = name;
 
@@ -278,4 +278,12 @@ export class DataSet {
       }
     }
   }
+}
+
+
+
+export class MLDataSet extends DataSet {
+  classifierID: string;
+  confidencesLevels: Array<Label> = [];
+
 }

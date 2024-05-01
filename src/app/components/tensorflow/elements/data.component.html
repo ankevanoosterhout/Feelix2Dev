@@ -186,6 +186,15 @@
                 <div class="close close-button" (click)="this.tensorflowService.deleteDataSet(set.id)"><div></div></div>
               </li>
             </ul>
+
+
+            <ul class="file-list-sidebar last" *ngIf="this.d.mlOutputData">
+              <li *ngFor="let mlset of this.d.mlOutputData; let i = index;" id="dataset-item-{{ mlset.id }}" (click)="this.selectDataSet(mlset.id, $event)"
+                  [ngClass]="{ active: mlset.open, selected: this.d.multipleSelect.active && i >= this.d.multipleSelect.min && i <= this.d.multipleSelect.max }">
+                <div class="row name" >{{ mlset.name }}</div>
+                <div class="close close-button" (click)="this.tensorflowService.deleteDataSet(mlset.id, true)"><div></div></div>
+              </li>
+            </ul>
           </div>
 
         </div>

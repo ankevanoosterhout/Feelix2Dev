@@ -146,7 +146,7 @@ export class FileService {
         collectionItem.effects.filter(e => e.id === collEffect.id)[0] = this.cloneService.deepClone(collEffect);
         // collectionItem.effects.filter(e => e.id === collEffect.id)[0].flip = this.cloneService.deepClone(collEffect.flip);
         // collectionItem.effects.filter(e => e.id === collEffect.id)[0].scale = this.cloneService.deepClone(collEffect.scale);
-        collectionItem.effects.filter(e => e.id === collEffect.id)[0].xUnit = this.cloneService.deepClone(collEffect.xUnit);
+        collectionItem.effects.filter(e => e.id === collEffect.id)[0].xUnit = collEffect.xUnit;
         this.store();
       }
     }

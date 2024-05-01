@@ -1,7 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { Component, OnInit, Inject, HostListener } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
-import { Classifier, Data, DataSet, InputColor, InputItem, Label } from 'src/app/models/tensorflow.model';
+import { Classifier, Data, DataSet, InputColor, InputItem, Label, MLDataSet, MotorEl } from 'src/app/models/tensorflow.model';
 import { HardwareService } from 'src/app/services/hardware.service';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 import { MotorControlService } from 'src/app/services/motor-control.service';
@@ -135,6 +135,9 @@ export class TensorFlowJSComponent implements OnInit {
         this.tensorflowDrawService.updateScale(scale);
       });
 
+      this.tensorflowService.loadMLData.subscribe(res => {
+        this.loadMLdataSet(res);
+      });
 
       this.electronService.ipcRenderer.on('deploy-model', (event: Event) => {
         this.document.getElementById('deploy').click();
@@ -172,6 +175,95 @@ export class TensorFlowJSComponent implements OnInit {
 
   // }
 
+  loadMLdataSet(data: Array<any>) {
+
+    const tmpID = uuid();
+
+    if (data) {
+      let i = 0;
+
+      if (!this.d.selectedModel.outputs.filter(c => c.id === tmpID)[0]) {
+        const newClassifier = new Classifier(tmpID, 'Classifier');
+        
+        for (let c = 0; c < data[0].classifier.length; c++) {
+          const label = data[0].classifier[c];
+          console.log(label);
+          const newLabel = new Label(label.id, label.name);
+          newClassifier.labels.push(newLabel);
+        }
+        this.d.selectedModel.outputs.push(newClassifier);
+      }
+
+      for (const mlData of data) {
+
+
+        for (const data of mlData.data) {
+
+          for (const dataSequence of data.i) {
+
+            const actuators: Array<MotorEl> = [];
+
+            let nrOfMotors = dataSequence[0].length;
+            for (let m = 0; m < nrOfMotors; m++) {
+              const motorEl = new MotorEl('actuator-' + (m + 1), 'actuator-' + (m + 1), null, null, m);
+              motorEl.record = true;
+              motorEl.visible = true;
+              motorEl.colors = [ new InputColor('pressure', this.d.colorOptions[m]) ];
+              actuators.push(motorEl);
+            }
+
+            let j = 0;
+
+            const mlDataSet = new MLDataSet(uuid(), 'ml-output-' + (i + 1));
+            mlDataSet.classifierID = tmpID;
+
+            mlDataSet.selected = false;
+            mlDataSet.open = false;
+
+            for (const item of dataSequence) {
+
+              let n = 0;
+              for (const value of item) {
+                if (mlDataSet.m[n] === undefined) {
+                  actuators[n].d = [];
+                  mlDataSet.m[n] = actuators[n];
+                }
+                const inputItem = new InputItem('pressure');
+                inputItem.value = value[0];
+
+                mlDataSet.m[n].d.push({inputs: [ inputItem ], time: j});
+
+                n++;
+              }
+
+              j++;
+            }
+
+            let c = 0;
+            for (const value of data.p) {
+              const label = new Label(mlData.classifier[c].id, mlData.classifier[c].name);
+              label.confidence = value;
+
+              mlDataSet.confidencesLevels.push(label);
+              c++;
+            }
+
+            mlDataSet.bounds = { xMin: 0, xMax: dataSequence.length - 1, yMin: 0.6, yMax: 1.4 };
+
+
+            this.d.mlOutputData.push(mlDataSet);
+
+          }
+
+
+          i++;
+
+        }
+      }
+    }
+    console.log(this.d.mlOutputData);
+
+  }
 
 
   loadDataSets(data: Array<DataSet>) {
@@ -205,16 +297,7 @@ export class TensorFlowJSComponent implements OnInit {
             }
 
             if (dataset.output.classifier_id) {
-              const outputClassifierInModel = this.d.selectedModel.outputs.filter(o => o.id === dataset.output.classifier_id)[0];
-              if (!outputClassifierInModel) {
-                const newClassifier = new Classifier(dataset.output.classifier_id, dataset.output.classifier_name);
-                this.d.selectedModel.outputs.push(newClassifier);
-                this.checkIfHasLabel(newClassifier, dataset.output.label);
-                this.tensorflowService.selectClassifier(newClassifier.id);
-              } else {
-                this.checkIfHasLabel(outputClassifierInModel, dataset.output.label);
-                this.tensorflowService.selectClassifier(outputClassifierInModel.id);
-              }
+              this.addClassifierFromDataSet(dataset);
             }
 
             this.d.dataSets.push(dataset);
@@ -227,6 +310,30 @@ export class TensorFlowJSComponent implements OnInit {
           this.d.dataSets.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0));
         }
       }
+    }
+  }
+
+
+
+  addClassifierFromDataSet(dataset: any) {
+    const outputClassifierInModel = this.d.selectedModel.outputs.filter(o => o.id === dataset.output.classifier_id)[0];
+    if (!outputClassifierInModel) {
+      const newClassifier = new Classifier(dataset.output.classifier_id, dataset.output.classifier_name);
+      this.d.selectedModel.outputs.push(newClassifier);
+      this.checkIfHasLabel(newClassifier, dataset.output.label);
+      this.tensorflowService.selectClassifier(newClassifier.id);
+    } else {
+      this.checkIfHasLabel(outputClassifierInModel, dataset.output.label);
+      this.tensorflowService.selectClassifier(outputClassifierInModel.id);
+    }
+  }
+
+
+  addClassifier(classifier: Classifier) {
+    const outputClassifierInModel = this.d.selectedModel.outputs.filter(o => o.id === classifier.id)[0];
+    if (!outputClassifierInModel) {
+      this.d.selectedModel.outputs.push(classifier);
+      this.tensorflowService.selectClassifier(classifier.id);
     }
   }
 
