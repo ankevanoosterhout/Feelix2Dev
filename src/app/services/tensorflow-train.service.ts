@@ -54,6 +54,8 @@ export class TensorFlowTrainService {
 
   createJSONfromDataSet(dataSets: Array<DataSet>, train = true) {
 
+    this.tensorflowService.updateProgess('collecting data', 15);
+
     const data = { xs: [], ys: [] };
     let dataSize = 0;
 
@@ -135,7 +137,7 @@ export class TensorFlowTrainService {
   }
 
 
-  NN_createData(data: any, modelObj: Model) {
+  CreateTensors(data: any, modelObj: Model) {
 
     this.d.selectedModel.model = tf.sequential();
 
@@ -143,58 +145,69 @@ export class TensorFlowTrainService {
 
     this.d.selectedModel.model.name = modelObj.name;
 
-    this.tensorflowService.updateProgess('model created', 10);
+    this.tensorflowService.updateProgess('model created', 20);
 
     if (data.xs && data.ys) {
+      console.log(data);
 
-      const inputShape = [null, data.xs[0][0][0].length, (data.xs[0][0].length * data.xs[0].length) ];
+      const inputShape =  [null, data.xs[0][0][0].length, (data.xs[0][0].length * data.xs[0].length) ];
       const outputShape = [null, data.ys[0].length]
 
+      console.log(inputShape);
 
       const numSamples = data.xs.length;
       const iTensor = tf.tensor(data.xs, [numSamples, data.xs[0].length, data.xs[0][0].length, data.xs[0][0][0].length]);
       const outputTensor = tf.tensor(data.ys, [numSamples, data.ys[0].length]);
+      let inputTensor = tf.reshape(iTensor, [numSamples, data.xs[0][0][0].length, (data.xs[0][0].length * data.xs[0].length) ]);
 
-      const inputTensor = tf.reshape(iTensor, [numSamples, data.xs[0][0][0].length, (data.xs[0][0].length * data.xs[0].length) ]);
+      console.log(inputTensor);
 
-
-      for (let layer = 0; layer < this.d.selectedModel.options.hiddenUnits; layer++) {
+      for (let layer = 0; layer < this.d.selectedModel.options.hiddenLayers; layer++) {
         let hiddenLayer = null;
 
         if (modelObj.type === ModelType.neuralNetwork) {
 
           hiddenLayer = tf.layers.dense({
-            units: (data.xs[0][0].length * data.xs[0].length), //data.xs[0][0][0].length
+            name: this.d.selectedModel.options.name,
+            units: this.d.selectedModel.options.units, //data.xs[0][0][0].length
             inputShape: inputShape.slice(1), // [ number of inputs, batch size ]
             activation: this.d.selectedModel.options.activation, // make activation function adjustable in model settings
-            kernelRegularizer: this.d.selectedModel.options.regularizer.value
+            kernelRegularizer: this.d.selectedModel.options.kernelRegularizer.regularizer,
           });
         } else if (modelObj.type === ModelType.RNN) {
 
           hiddenLayer = tf.layers.simpleRNN({
             units: (data.xs[0][0].length * data.xs[0].length), //data.xs[0][0][0].length
-            inputShape: [data.xs[0][0][0].length, (data.xs[0][0].length * data.xs[0].length)], // [ number of inputs, batch size ]
+            inputShape: inputShape.slice(1), // [ batchsize, timesteps ]
             activation: this.d.selectedModel.options.activation, // make activation function adjustable in model settings
-            returnSequences: this.d.selectedModel.options.returnSequences,
-            kernelRegularizer: this.d.selectedModel.options.regularizer.value
+            returnSequences: layer < this.d.selectedModel.options.hiddenLayers - 1 ? this.d.selectedModel.options.returnSequences : false,
+            kernelRegularizer: this.d.selectedModel.options.kernelRegularizer.regularizer,
+            inputLength: this.d.selectedModel.options.trainingOptions.batchSize
           });
+
         } else if (modelObj.type === ModelType.LSTM) {
 
           hiddenLayer = tf.layers.lstm({
-            units: (data.xs[0][0][0].length * data.xs[0][0].length * data.xs[0].length), //data.xs[0][0][0].length
-            inputShape: [data.xs[0][0][0].length, (data.xs[0][0].length * data.xs[0].length)], // [ number of inputs, batch size ]
+            units: (data.xs[0][0].length * data.xs[0].length), //data.xs[0][0][0].length
+            inputShape: inputShape.slice(1),// [ number of inputs, batch size ]
+            recurrentActivation: this.d.selectedModel.options.activation,
             activation: this.d.selectedModel.options.activation, // make activation function adjustable in model settings
-            returnSequences: this.d.selectedModel.options.returnSequences,
-            kernelRegularizer: this.d.selectedModel.options.regularizer.value
+            returnSequences: layer < this.d.selectedModel.options.hiddenLayers - 1 ? this.d.selectedModel.options.returnSequences : false,
+            kernelRegularizer: this.d.selectedModel.options.kernelRegularizer.regularizer,
+            implementation: this.d.selectedModel.options.implementation
           });
+
+          console.log(hiddenLayer);
+
         } else if (modelObj.type === ModelType.GRU) {
 
           hiddenLayer = tf.layers.gru({
-            units: (data.xs[0][0][0].length * data.xs[0][0].length * data.xs[0].length), //data.xs[0][0][0].length
-            inputShape: [data.xs[0][0][0].length, (data.xs[0][0].length * data.xs[0].length)], // [ number of inputs, batch size ]
+            units: (data.xs[0][0].length * data.xs[0].length), //data.xs[0][0][0].length
+            inputShape: inputShape.slice(1), // [ number of inputs, batch size ]
             activation: this.d.selectedModel.options.activation, // make activation function adjustable in model settings
-            returnSequences: this.d.selectedModel.options.returnSequences,
-            kernelRegularizer: this.d.selectedModel.options.regularizer.value
+            returnSequences: layer < this.d.selectedModel.options.hiddenLayers - 1 ? this.d.selectedModel.options.returnSequences : false,
+            kernelRegularizer: this.d.selectedModel.options.kernelRegularizer.regularizer,
+            implementation: this.d.selectedModel.options.implementation
           });
         }
 
@@ -210,12 +223,14 @@ export class TensorFlowTrainService {
 
 
 
-
       if (this.d.selectedModel.options.dropout !== 0) {
         this.d.selectedModel.model.add(tf.layers.dropout({ rate: this.d.selectedModel.options.dropout }));
       }
+      console.log(this.d.selectedModel);
 
-      this.d.selectedModel.model.add(tf.layers.flatten());
+      if (this.d.selectedModel.type === ModelType.neuralNetwork) {
+        this.d.selectedModel.model.add(tf.layers.flatten());
+      }
       //add output layer
       const outputLayer = tf.layers.dense({
         units: outputShape[1],
@@ -236,11 +251,11 @@ export class TensorFlowTrainService {
         loss: this.d.selectedModel.options.losses.value,
         metrics: [ this.d.selectedModel.options.metrics.value ]
       });
-      // console.log(this.d.selectedModel.options);
-      // console.log(this.d.selectedModel.model);
-    //   this.selectedModel.model.normalizeData();
+      console.log(this.d.selectedModel.options);
+      console.log(this.d.selectedModel.model);
+      // this.d.selectedModel.model.normalizeData();
 
-      this.tensorflowService.updateProgess('start training', 20);
+      this.tensorflowService.updateProgess('start training', 25);
 
 
 
@@ -285,11 +300,10 @@ export class TensorFlowTrainService {
         if (i % 10 === 0) {
           console.log(response.history);
           const metric = this.getMetric(response.history);
-          this.tensorflowService.updateProgess('training: loss = ' + response.history.loss[0] + '' + (metric ? metric : ''), ((80/options.epochs) * i) + 20);
+          this.tensorflowService.updateProgess('training: loss = ' + response.history.loss[0] + '' + (metric ? metric : ''), ((75/options.epochs) * i) + 25);
         }
       } else {
-        const metric = this.getMetric(response.history);
-        this.tensorflowService.updateProgess('finished training: ' + response.history.loss[0] + '' + (metric ? metric : ''), 100);
+        this.tensorflowService.updateProgess('finished training: ' + response.history.loss[0] + '' + this.getMetric(response.history), 100);
       }
     }
   }
@@ -305,7 +319,7 @@ export class TensorFlowTrainService {
            history.binaryCrossentropy ? ', binary crossentropy: ' + history.binaryCrossentropy[0] :
            history.categoricalCrossentropy ? ', categorical crossentropy: ' + history.categoricalCrossentropy[0] :
            history.meanSquaredError ? ', mean squared error: ' +  history.meanSquaredError[0] :
-           null;
+           '';
  }
 
   NN_Deploy(input: any, selectedModel: any) {

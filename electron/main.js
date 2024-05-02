@@ -1448,8 +1448,8 @@ ipcMain.on('listDevices', (event, data) => {
 
 //tensorflow communication
 
-// ipcMain.on('NN_createData', (event, data) => {
-//   tensorflow.NN_createData(data.d, data.options, data.epochs, data.batchSize); //32, 12
+// ipcMain.on('CreateTensors', (event, data) => {
+//   tensorflow.CreateTensors(data.d, data.options, data.epochs, data.batchSize); //32, 12
 // });
 
 // ipcMain.on('NN_classify', (event, data) => {

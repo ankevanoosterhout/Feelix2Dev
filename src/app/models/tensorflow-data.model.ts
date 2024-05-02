@@ -90,11 +90,13 @@ export class TensorFlowData {
   ];
 
   regularizerOptions = [
-    { name: 'l1', value: tf.regularizers.l1()  },
-    { name: 'l1l2', value: tf.regularizers.l1l2()  },
-    { name: 'l2', value: tf.regularizers.l2()  },
-    { name: 'none', value: undefined }
+    { name: 'l1', regularizer: tf.regularizers.l1(), config: { l1: 0.01 } },
+    { name: 'l1l2', regularizer: tf.regularizers.l1l2(), config: { l1: 0.01, l2: 0.01 }},
+    { name: 'l2', regularizer: tf.regularizers.l2(), config: { l2: 0.01 }  },
+    { name: 'none', regularizer: undefined }
   ];
+
+
 };
 
 

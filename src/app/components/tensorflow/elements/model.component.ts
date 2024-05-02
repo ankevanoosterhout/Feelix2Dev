@@ -26,6 +26,7 @@ export class ModelComponent {
 
 
 
+
   constructor(@Inject(DOCUMENT) private document: Document, private tensorflowService: TensorFlowMainService, private tensorflowTrainService: TensorFlowTrainService,
               private electronService: ElectronService) {
     this.d = this.tensorflowService.d;
@@ -49,10 +50,12 @@ export class ModelComponent {
   initializeNN_Model() {
     if (!this.d.processing && this.d.dataSets.length > 0) {
 
+      this.tensorflowService.updateProgess('training', 0);
+
       this.document.body.style.cursor = 'wait';
 
       this.d.processing = true;
-      this.tensorflowService.updateProgess('initializing model', 20);
+      this.tensorflowService.updateProgess('initializing model', 10);
 
       const data = this.tensorflowTrainService.createJSONfromDataSet(this.d.dataSets, true);
 
@@ -74,7 +77,7 @@ export class ModelComponent {
       this.d.selectedModel.options.inputs = inputLabels;
       this.d.selectedModel.options.outputs = outputLabels;
 
-      this.tensorflowTrainService.NN_createData(data, this.d.selectedModel);
+      this.tensorflowTrainService.CreateTensors(data, this.d.selectedModel);
 
       (this.document.getElementById('deploy') as HTMLButtonElement).disabled = true;
 
@@ -94,7 +97,7 @@ export class ModelComponent {
 
   classifyAtRunTime() {
     if (this.d.selectedModel.model) {
-      
+
       if (!this.d.classify) {
         this.d.processing = false;
         this.d.classify = true;

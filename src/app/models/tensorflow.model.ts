@@ -35,6 +35,26 @@ export const ActivationLabelMapping: Record<Activation, string> = {
   [Activation.mish]: 'mish'
 };
 
+
+export enum Initializer {
+  constant = 'constant',
+  glorotNormal = 'glorotNormal',
+  glorotUniform = 'glorotUniform',
+  heNormal = 'heNormal',
+  heUniform = 'heUniform',
+  identity = 'identity',
+  leCunNormal = 'leCunNormal',
+  leCunUniform = 'leCunUniform',
+  ones = 'ones',
+  orthogonal = 'orthogonal',
+  randomNormal = 'randomNormal',
+  randomUniform = 'randomUniform',
+  truncatedNormal = 'truncatedNormal',
+  varianceScaling = 'varianceScaling',
+  zeros = 'zeros'
+}
+
+
 export enum ModelType {
   neuralNetwork = 0,
   regression = 1,
@@ -46,7 +66,7 @@ export enum ModelType {
 export const ModelTypeMapping: Record<ModelType, string> = {
   [ModelType.neuralNetwork]: 'NeuralNetwork',
   [ModelType.regression]: 'Regression',
-  [ModelType.RNN]: 'RNN',
+  [ModelType.RNN]: 'SimpleRNN',
   [ModelType.LSTM]: 'LSTM',
   [ModelType.GRU]: 'GRU'
 };
@@ -109,16 +129,24 @@ export class Classifier  {
 
 
 export class Options {
+  layerName: string;
   inputs: Array<any> = [];
   outputs: Array<any> = [];
+  inputDim: Array<any>; // Defines input shape as [inputDim].
   optimizer: any = { name:'sgd', value: tf.train.sgd };
   learningRate: number = 0.1;
   batchNormalization: boolean = true;
-  returnSequences: boolean = true;
-  regularizer = { name:'l2', value: tf.regularizers.l2() };
-  dropout = 0.2;
-  // debug: boolean = false; // determines whether or not to show the training visualizatio
+  kernelInitializer: any; // The convolutional kernel weights matrix’s initializer.
+  biasInitializer: any; //The bias vector’s initializer.
+  kernelRegularizer = { name:'l2', regularizer: tf.regularizers.l2(), config: { l2: 0.01 } };
+  kernelConstraint: any; //The constraint for the convolutional kernel weights.
+  biasConstraint: any; //The constraint for the bias vector.
+  dropout: number = 0.2; // between 0 and 1
+  useBias: boolean = true;
+  weights: Array<number>;
+  // debug: boolean = false; // determines whether or not to show the training visualization
 }
+
 
 export class TrainingOptions {
   epochs: number = 100;
@@ -126,18 +154,60 @@ export class TrainingOptions {
 }
 
 export class NN_options extends Options {
-  hiddenUnits: number = 4;
+  hiddenLayers: number = 2;
+  units: number = 4;
   activation: Activation = Activation.relu;
   activationOutputLayer: Activation = Activation.softmax;
+  activityRegularizer: any;
   metrics: any = { name:'categoricalAccuracy', value: tf.metrics.categoricalAccuracy };
   trainingOptions = new TrainingOptions();
   losses: any = { name:'categoricalCrossentropy', value: tf.metrics.categoricalCrossentropy };
   momentum = 10;
+  batchInputShape: any;
 }
 
 export class RegressionOptions extends Options {
   degree: number = 1;
   losses: any = tf.metrics.meanSquaredError;
+}
+
+export class simpleRNN_options extends Options {
+  returnSequences: boolean = true; //Whether the final output in the output series should be returned, or the entire sequence should be returned.
+  returnState: boolean = false; // Whether or not the last state should be returned along with the output.
+  goBackwards: boolean = false; //If this is true, process the input sequence backward and return the reversed sequence.
+  stateful: boolean = false; //If true, the final state of each sample at index I in a batch will be used as the beginning state of the next batch’s sample at index i
+  unroll: boolean = false; // The network will be unrolled if true; else, a symbolic loop will be utilized. Although unrolling can speed up an RNN, it is more memory-intensive. Only short sequences are acceptable for unrolling
+  inputLength: number = 10; //When the length of the input sequences is constant, it must be given. If you want to link Flatten and Dense layers upstream, you’ll need this parameter
+  recurrentInitializer: any; //The recurrentKernel weights matrix’s initializer. It is used for the linear transformation of the recurrent state.
+  recurrentRegularizer: any; //The regularizer function applied to the recurrentKernel weights matrix.
+  biasRegularizer: any; // The regularizer function applied to the bias vector.
+  recurrentConstraint: any; // The constraint for the recurrentKernel weights.
+  recurrentDropout: number = 0; //between 0 - 1
+  cell: any; //A RNN cell instance.
+
+}
+
+export class LSTM_options extends Options {
+  recurrentActivation: Activation = Activation.hardSigmoid;
+  returnSequences: boolean = true; //Whether the final output in the output series should be returned, or the entire sequence should be returned.
+  returnState: boolean = false; // Whether or not the last state should be returned along with the output.
+  goBackwards: boolean = false; //If this is true, process the input sequence backward and return the reversed sequence.
+  stateful: boolean = false; //If true, the final state of each sample at index I in a batch will be used as the beginning state of the next batch’s sample at index i
+  unroll: boolean = false; // The network will be unrolled if true; else, a symbolic loop will be utilized. Although unrolling can speed up an RNN, it is more memory-intensive. Only short sequences are acceptable for unrolling
+  unitForgetBias: boolean = false;
+  implementation: number = 1; //  It specifies the implementation mode. It can be either 1 or 2. For superior performance, implementation is recommended.
+  recurrentInitializer: any; //The recurrentKernel weights matrix’s initializer. It is used for the linear transformation of the recurrent state.
+  recurrentRegularizer: any; //The regularizer function applied to the recurrentKernel weights matrix.
+  biasRegularizer: any; // The regularizer function applied to the bias vector.
+  recurrentConstraint: any; // The constraint for the recurrentKernel weights.
+  recurrentDropout: number = 0; //between 0 - 1
+  cell: any; //A RNN cell instance.
+
+}
+
+export class GRU_options extends Options {
+  recurrentActivation: Activation = Activation.hardSigmoid;
+  implementation: number = 1; //  It specifies the implementation mode. It can be either 1 or 2. For superior performance, implementation is recommended.
 }
 
 

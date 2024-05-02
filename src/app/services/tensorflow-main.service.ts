@@ -93,8 +93,8 @@ export class TensorFlowMainService {
     mergeDataSets() {
       const dataSets = this.d.dataSets.slice(this.d.multipleSelect.min, this.d.multipleSelect.max + 1);
       // console.log(dataSets.length);
-
     }
+
 
     exportDataSet(dataSets: Array<any>) {
       if (dataSets.length > 1) {
@@ -107,6 +107,7 @@ export class TensorFlowMainService {
         this.updateProgess('No dataset selected', 0);
       }
     }
+
 
     createBlob(data: any) {
       return new Blob([JSON.stringify(data)], { type: 'text/plain' });
@@ -123,6 +124,7 @@ export class TensorFlowMainService {
       const content = await zip.generateAsync({ type: 'blob' });
       this._FileSaverService.save(content, 'folder.zip', 'application/zip');
     }
+
 
     importDataSet(data: any) {
       //open dialogue window
@@ -638,7 +640,7 @@ export class TensorFlowMainService {
         (this.document.getElementById('model_type') as HTMLSelectElement).selectedIndex = model.type;
 
         (this.document.getElementById('learningRate') as HTMLInputElement).value = model.options.learningRate;
-        (this.document.getElementById('hiddenUnits') as HTMLInputElement).value = model.options.hiddenUnits;
+        (this.document.getElementById('hiddenLayers') as HTMLInputElement).value = model.options.hiddenLayers;
 
         (this.document.getElementById('epochs') as HTMLInputElement).value = model.options.trainingOptions.epochs;
         (this.document.getElementById('batchsize') as HTMLInputElement).value = model.options.trainingOptions.batchSize;
