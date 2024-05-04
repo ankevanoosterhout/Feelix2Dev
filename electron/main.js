@@ -287,7 +287,14 @@ const mainMenuTemplate = [
         label: 'Machine Learning',
         // enabled: false,
         click() {
-          createTensorFlowWindow();
+          createTensorFlowWindow('tensorflow');
+        }
+      },
+      {
+        label: 'Machine Learning v2',
+        // enabled: false,
+        click() {
+          createTensorFlowWindow('tensorflowjs');
         }
       }
     ]
@@ -763,7 +770,7 @@ function createWindow() {
 
 }
 
-function createTensorFlowWindow() {
+function createTensorFlowWindow(hash) {
   if (!tensorflowWindow) {
     tensorflowWindow = new BrowserWindow({
       width: 1200,
@@ -791,7 +798,7 @@ function createTensorFlowWindow() {
         pathname: path.join(__dirname, `../dist/feelix/index.html`),
         protocol: "file:",
         slashes: true,
-        hash: '/tensorflow'
+        hash: '/' + hash
       })
     );
 

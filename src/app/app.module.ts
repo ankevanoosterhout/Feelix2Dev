@@ -48,8 +48,6 @@ import { EffectVisualizationService } from './services/effect-visualization.serv
 import { ExportDialogComponent } from './components/windows/export-dialog.component';
 import { CloneService } from './services/clone.service';
 import { GridService } from './services/grid.service';
-import { TensorFlowJSComponent } from './components/tensorflow/tensorflowJS.component';
-import { TensorFlowMainService } from './services/tensorflow-main.service';
 import { DataComponent } from './components/tensorflow/elements/data.component';
 import { ClassificationComponent } from './components/tensorflow/elements/classification.component';
 import { ModelComponent } from './components/tensorflow/elements/model.component';
@@ -70,6 +68,14 @@ import { PlaySequenceComponent } from './components/windows/play-sequence.compon
 import { TensorFlowTrainService } from './services/tensorflow-train.service';
 import { DrawAudioService } from './services/draw-audio.service';
 import { MidiDataService } from './services/midi-data.service';
+import { TensorFlowJSComponent } from './components/tensorflow/tensorFlowJS.component';
+import { TensorFlowMainService } from './services/tensorflow-main.service';
+import { TensorflowComponent } from './components/tensorflowJS/tensorflow.component';
+import { TensorflowDataComponent } from './components/tensorflowJS/datasets/tensorflow-data.component';
+import { TensorflowModelComponent } from './components/tensorflowJS/tensorflow-model/tensorflow-model.component';
+import { TensorflowDeployComponent } from './components/tensorflowJS/deploy/tensorflow-deploy.component';
+import { TensorflowTrainComponent } from './components/tensorflowJS/train/tensorflow-train.component';
+import { TensorFlowModelDrawService } from './services/tensorflow-model-draw.service';
 
 @NgModule({
     declarations: [
@@ -98,6 +104,11 @@ import { MidiDataService } from './services/midi-data.service';
         MotorControlToolbarComponent,
         PlaySequenceComponent,
         TensorFlowJSComponent,
+        TensorflowComponent,
+        TensorflowDataComponent,
+        TensorflowModelComponent,
+        TensorflowDeployComponent,
+        TensorflowTrainComponent,
         DataComponent,
         ClassificationComponent,
         ModelComponent,
@@ -138,6 +149,7 @@ import { MidiDataService } from './services/midi-data.service';
         TensorFlowMainService,
         TensorFlowDrawService,
         TensorFlowTrainService,
+        TensorFlowModelDrawService,
         DataSetService,
         TensorFlowModelService,
         FilterService,

@@ -1,0 +1,24 @@
+<div class="wrapper">
+
+  <div class="open-tabs">
+    <ul class="tabs" id="file-list">
+      <li *ngFor="let i of this.config.steps" [ngClass]="{ active: this.config.activeStep === i.id }" id="step-{{ i }}" (click)="this.selectStep(i.id)">
+        <div id="tab-{{ i.name }}" class="filename-tab">{{ (i.id + 1) }}. {{ i.name }} </div>
+      </li>
+    </ul>
+  </div>
+
+
+  <div class="content">
+
+    <div class="step-details" *ngIf="this.config.activeStep === 0"><app-tensorflow-model></app-tensorflow-model></div>
+    <div class="step-details" *ngIf="this.config.activeStep === 1"><app-tensorflow-data></app-tensorflow-data></div>
+    <div class="step-details" *ngIf="this.config.activeStep === 2"><app-tensorflow-train></app-tensorflow-train></div>
+    <div class="step-details" *ngIf="this.config.activeStep === 3"><app-tensorflow-deploy></app-tensorflow-deploy></div>
+
+  </div>
+
+
+  <app-statusbar [page]="this.config.page" [status]="this.config.status" [progress]="this.config.progress"></app-statusbar>
+
+</div>

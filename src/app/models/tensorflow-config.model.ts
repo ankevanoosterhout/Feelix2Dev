@@ -31,6 +31,21 @@ export class TensorFlowConfig {
   horizontalScreenDivision = 220;
   verticalScreenDivision = 70;
 
+  activeStep = 0;
+
+  steps = [
+    { id: 0, name: 'model' },
+    { id: 1, name: 'data' },
+    { id: 2, name: 'train' },
+    { id: 3, name: 'deploy' }
+  ];
+
+
+  page = 'tensorflow';
+  status = 'Ready';
+  progress = 0;
+
+
   // shift = false;
 
 }

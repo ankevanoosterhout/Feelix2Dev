@@ -1,5 +1,5 @@
 import { MicroController } from "./hardware.model";
-import { DataSet, InputColor, MLDataSet, Model, ModelType } from "./tensorflow.model";
+import { DataSet, InputColor, MLDataSet, Model, ModelType, Layer } from "./tensorflow.model";
 import { v4 as uuid } from 'uuid';
 import * as tf from '@tensorflow/tfjs';
 
@@ -52,6 +52,7 @@ export class TensorFlowData {
 
   ML_OutputData: Array<ML_Data> = [];
 
+
   lossOptions = [
     { name: 'absoluteDifference', value: tf.losses.absoluteDifference },
     { name: 'computeWeightedLoss', value: tf.losses.computeWeightedLoss },
@@ -90,10 +91,18 @@ export class TensorFlowData {
   ];
 
   regularizerOptions = [
-    { name: 'l1', regularizer: tf.regularizers.l1(), config: { l1: 0.01 } },
+    { name: 'l1', regularizer: tf.regularizers.l1(), config: { l1: 0.01 }},
     { name: 'l1l2', regularizer: tf.regularizers.l1l2(), config: { l1: 0.01, l2: 0.01 }},
-    { name: 'l2', regularizer: tf.regularizers.l2(), config: { l2: 0.01 }  },
+    { name: 'l2', regularizer: tf.regularizers.l2(), config: { l2: 0.01 } },
     { name: 'none', regularizer: undefined }
+  ];
+
+  constraintOptions = [
+    { name: 'maxNorm', value: tf.constraints.maxNorm, args: { max: 1, axis: 1 }},
+    { name: 'minMaxNorm', value: tf.constraints.minMaxNorm, args: {minValue: 0, maxValue: 1, axis: 1, rate: 0.1 }},
+    { name: 'nonNeg', value: tf.constraints.nonNeg, args: {}},
+    { name: 'unitNorm', value: tf.constraints.unitNorm, args: { axis: 1 } },
+    { name: 'none', value: undefined }
   ];
 
 

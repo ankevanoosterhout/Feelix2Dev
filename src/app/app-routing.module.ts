@@ -16,7 +16,8 @@ import { MotorControlToolbarInsetComponent } from './components/interface-elemen
 import { MotorControlToolbarComponent } from './components/interface-elements/toolbars/motor-control-toolbar.component';
 import { MotorSettingsComponent } from './components/windows/settings/motor-settings.component';
 import { EffectListComponent } from './components/file/effect-list.component';
-import { TensorFlowJSComponent } from './components/tensorflow/tensorflowJS.component';
+import { TensorFlowJSComponent } from './components/tensorflow/tensorFlowJS.component';
+import { TensorflowComponent } from './components/tensorflowJS/tensorflow.component';
 import { LoadDataSetsComponent } from './components/tensorflow/datasets/load-datasets.component';
 import { KinematicsComponent } from './components/kinematics/kinematics.component';
 import { KinematicsToolbarComponent } from './components/interface-elements/toolbars/kinematics-toolbar.component';
@@ -41,6 +42,7 @@ const routes: Routes = [
     { path: 'transform', component: TransformComponent },
     { path: 'info', component: InfoPageComponent },
     { path: 'tensorflow', component: TensorFlowJSComponent },
+    { path: 'tensorflowjs', component: TensorflowComponent },
     { path: 'motor-control-component', component: MotorControlComponent },
     { path: 'motor-control-toolbar-inset', component: MotorControlToolbarInsetComponent },
     { path: 'motor-control-toolbar', component: MotorControlToolbarComponent },
@@ -51,7 +53,7 @@ const routes: Routes = [
     { path: 'kinematics', component: KinematicsComponent },
     { path: 'kinematics-control', component: KinematicsControlComponent},
     { path: 'kinematics-toolbar', component: KinematicsToolbarComponent },
-    { path: 'kinematics-cursor', component: KinematicsCursorComponent }
+    { path: 'kinematics-cursor', component: KinematicsCursorComponent },
   ];
 
 @NgModule({

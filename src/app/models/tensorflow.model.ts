@@ -127,9 +127,17 @@ export class Classifier  {
 }
 
 
+export class Layer {
+  name: string;
+  options = new Options();
+
+  constructor(name: string) {
+    this.name = name;
+  }
+ }
+
 
 export class Options {
-  layerName: string;
   inputs: Array<any> = [];
   outputs: Array<any> = [];
   inputDim: Array<any>; // Defines input shape as [inputDim].
@@ -144,6 +152,7 @@ export class Options {
   dropout: number = 0.2; // between 0 and 1
   useBias: boolean = true;
   weights: Array<number>;
+  units: number = 4;
   // debug: boolean = false; // determines whether or not to show the training visualization
 }
 
@@ -155,7 +164,6 @@ export class TrainingOptions {
 
 export class NN_options extends Options {
   hiddenLayers: number = 2;
-  units: number = 4;
   activation: Activation = Activation.relu;
   activationOutputLayer: Activation = Activation.softmax;
   activityRegularizer: any;
@@ -224,7 +232,12 @@ export class Model {
   model: any;
   selected: boolean = false;
   filters: Array<Filter> = [];
-  multiple = true;
+  multiple = true
+
+  inputLayer = new Layer('input');
+  hiddenLayers: Array<Layer> = [];
+  outputLayer = new Layer('output');
+  
 
   constructor(id: string, name: string, type: ModelType) {
     this.id = id;
@@ -357,3 +370,5 @@ export class MLDataSet extends DataSet {
   confidencesLevels: Array<Label> = [];
 
 }
+
+
