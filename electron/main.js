@@ -25,6 +25,7 @@ let tensorflowWindow = null;
 app.on('ready', createWindow)
 
 app.on('window-all-closed', () => {
+
   if (process.platform !== 'darwin') {
     app.quit()
   }
@@ -766,8 +767,11 @@ function createWindow() {
 
   // mainWindow.webContents.openDevTools();
 
-  mainWindow.webContents.on('did-finish-load', () => displayStatus('Ready', 'main'));
-
+  mainWindow.webContents.on('did-finish-load', () => {
+    displayStatus('Ready', 'main');
+    disconnectMicrocontrollers();
+    serialPort.checkSerialPorts();
+  });
 }
 
 function createTensorFlowWindow(hash) {
@@ -836,8 +840,8 @@ function drawTemporaryWindow(width, minWidth, height, minHeight, title, resizabl
     backgroundColor: '#333',
     alwaysOnTop: true,
     frame: false,
-    resizable: resizable,
-    // resizable: true,
+    // resizable: resizable,
+    resizable: true,
     fullscreenable:false,
     center: false,
     movable: true,
@@ -866,7 +870,7 @@ function drawTemporaryWindow(width, minWidth, height, minHeight, title, resizabl
     mainWindow.webContents.send('resetCursor');
   })
 
-  // tmpWindow.webContents.openDevTools();
+  tmpWindow.webContents.openDevTools();
 
   tmpWindow.on('close', () => {
     tmpWindow = null
@@ -1051,16 +1055,22 @@ function createTransform() {
 }
 
 function createConnectToCOM(comPorts) {
-
   mainWindow.webContents.send('updateAvailableCOMPorts', comPorts.serialPort);
 
-  if (tmpWindow !== null && (activeWindow === 'motor-settings')) {
-    tmpWindow.webContents.send('comports', comPorts);
-  } else {
+  if (activeWindow !== 'motor-settings') {
+  //   tmpWindow.webContents.send('comports', comPorts);
+  // } else {
     createMotorSettingsWindow();
+
+    setTimeout(() => tmpWindow.webContents.send('comports', comPorts), 1000);
   }
 }
 
+function getPorts(comPorts) {
+  if (tmpWindow && activeWindow === 'motor-settings') {
+    tmpWindow.webContents.send('comports', comPorts);
+  }
+}
 
 
 // function openFile(file, tab) {
@@ -1193,7 +1203,11 @@ ipcMain.on('updateHeightSettings', (e, height) => {
 });
 
 ipcMain.on('listSerialPorts', (e, data) => {
-  serialPort.listSerialPorts(createConnectToCOM);
+  if (data) {
+    serialPort.listSerialPorts(createConnectToCOM);
+  } else {
+    serialPort.listSerialPorts(getPorts);
+  }
 });
 
 
@@ -1490,6 +1504,10 @@ function displayStatus(data, page) {
   }
 }
 
+function disconnectMicrocontrollers() {
+  mainWindow.webContents.send('disconnect');
+}
+
 function visualizaMotorData(data) {
   mainWindow.webContents.send('playData', data);
   if (tensorflowWindow !== null) {
@@ -1536,6 +1554,14 @@ function returnData(data) {
   }
 }
 
+function checkPorts(portlist) {
+  if (tmpWindow !== null && (activeWindow === 'motor-settings')) {
+    tmpWindow.webContents.send('checkPorts', portlist);
+  } else if (tensorflowWindow) {
+    tensorflowWindow.webContents.send('checkPorts', portlist);
+  }
+}
+
 
 
 
@@ -1550,3 +1576,4 @@ exports.uploadSuccesful = uploadSuccesful;
 exports.updateCurrentSenseCalibration = updateCurrentSenseCalibration;
 exports.showMessageConfirmation = showMessageConfirmation;
 exports.returnData = returnData;
+exports.checkPorts = checkPorts;

@@ -76,6 +76,7 @@ import { TensorflowModelComponent } from './components/tensorflowJS/tensorflow-m
 import { TensorflowDeployComponent } from './components/tensorflowJS/deploy/tensorflow-deploy.component';
 import { TensorflowTrainComponent } from './components/tensorflowJS/train/tensorflow-train.component';
 import { TensorFlowModelDrawService } from './services/tensorflow-model-draw.service';
+import { TensorflowDefaultModelComponent } from './components/tensorflowJS/tensorflow-model/tensorflow-default-model.component';
 
 @NgModule({
     declarations: [
@@ -107,6 +108,7 @@ import { TensorFlowModelDrawService } from './services/tensorflow-model-draw.ser
         TensorflowComponent,
         TensorflowDataComponent,
         TensorflowModelComponent,
+        TensorflowDefaultModelComponent,
         TensorflowDeployComponent,
         TensorflowTrainComponent,
         DataComponent,

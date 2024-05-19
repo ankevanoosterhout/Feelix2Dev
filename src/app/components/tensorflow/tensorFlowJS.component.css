@@ -47,9 +47,9 @@ select {
 #svg_graph {
   display: inline-flex;
   position: relative;
-  height: calc(100% - 70px);
+  height: calc(100vh - 100px);
   margin-top: 20px;
-  width: calc(100% - 320px);
+  width: calc(100vw - 300px);
   vertical-align: top;
 }
 

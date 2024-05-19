@@ -27,7 +27,7 @@ export class TensorFlowTrainService {
     let i = 0;
     if (this.d.predictionDataset) {
       for (const motor of this.d.predictionDataset.m) {
-        if (motor.d.length <= this.d.selectedModel.options.trainingOptions.batchSize && motor.d.length !== 0) { //20
+        if (motor.d.length <= this.d.selectedModel.layers[0].options.batchSize && motor.d.length !== 0) { //20
           collectData = false;
         }
         i++;
@@ -110,7 +110,7 @@ export class TensorFlowTrainService {
 
             i++;
 
-            if (i >= this.d.selectedModel.options.trainingOptions.batchSize) {
+            if (i >= this.d.selectedModel.layers[0].options.batchSize) {
               if (m === 0) {
                 data.xs.push(inputArray);
                 data.ys.push(outputs);
@@ -162,96 +162,98 @@ export class TensorFlowTrainService {
 
       console.log(inputTensor);
 
-      for (let layer = 0; layer < this.d.selectedModel.options.hiddenLayers; layer++) {
+      for (let layer = 0; layer < this.d.selectedModel.layers.length - 1; layer++) {
         let hiddenLayer = null;
 
-        if (modelObj.type === ModelType.neuralNetwork) {
+        if (modelObj.type === ModelType.CNN) {
 
-          hiddenLayer = tf.layers.dense({
-            name: this.d.selectedModel.options.name,
-            units: this.d.selectedModel.options.units, //data.xs[0][0][0].length
-            inputShape: inputShape.slice(1), // [ number of inputs, batch size ]
-            activation: this.d.selectedModel.options.activation, // make activation function adjustable in model settings
-            kernelRegularizer: this.d.selectedModel.options.kernelRegularizer.regularizer,
-          });
+          // hiddenLayer = tf.layers.dense({
+          //   name: layer.name
+            // units: this.d.selectedModel.options.units, //data.xs[0][0][0].length
+            // inputShape: inputShape.slice(1), // [ number of inputs, batch size ]
+            // activation: this.d.selectedModel.options.activation, // make activation function adjustable in model settings
+            // kernelRegularizer: this.d.selectedModel.options.kernelRegularizer.regularizer,
+          // });
         } else if (modelObj.type === ModelType.RNN) {
 
           hiddenLayer = tf.layers.simpleRNN({
             units: (data.xs[0][0].length * data.xs[0].length), //data.xs[0][0][0].length
             inputShape: inputShape.slice(1), // [ batchsize, timesteps ]
-            activation: this.d.selectedModel.options.activation, // make activation function adjustable in model settings
-            returnSequences: layer < this.d.selectedModel.options.hiddenLayers - 1 ? this.d.selectedModel.options.returnSequences : false,
-            kernelRegularizer: this.d.selectedModel.options.kernelRegularizer.regularizer,
-            inputLength: this.d.selectedModel.options.trainingOptions.batchSize
+            // activation: this.d.selectedModel.options.activation, // make activation function adjustable in model settings
+            // returnSequences: layer < this.d.selectedModel.options.hiddenLayers - 1 ? this.d.selectedModel.options.returnSequences : false,
+            // kernelRegularizer: this.d.selectedModel.options.kernelRegularizer.regularizer,
+            // inputLength: this.d.selectedModel.options.trainingOptions.batchSize
           });
 
-        } else if (modelObj.type === ModelType.LSTM) {
-
-          hiddenLayer = tf.layers.lstm({
-            units: (data.xs[0][0].length * data.xs[0].length), //data.xs[0][0][0].length
-            inputShape: inputShape.slice(1),// [ number of inputs, batch size ]
-            recurrentActivation: this.d.selectedModel.options.activation,
-            activation: this.d.selectedModel.options.activation, // make activation function adjustable in model settings
-            returnSequences: layer < this.d.selectedModel.options.hiddenLayers - 1 ? this.d.selectedModel.options.returnSequences : false,
-            kernelRegularizer: this.d.selectedModel.options.kernelRegularizer.regularizer,
-            implementation: this.d.selectedModel.options.implementation
-          });
-
-          console.log(hiddenLayer);
-
-        } else if (modelObj.type === ModelType.GRU) {
-
-          hiddenLayer = tf.layers.gru({
-            units: (data.xs[0][0].length * data.xs[0].length), //data.xs[0][0][0].length
-            inputShape: inputShape.slice(1), // [ number of inputs, batch size ]
-            activation: this.d.selectedModel.options.activation, // make activation function adjustable in model settings
-            returnSequences: layer < this.d.selectedModel.options.hiddenLayers - 1 ? this.d.selectedModel.options.returnSequences : false,
-            kernelRegularizer: this.d.selectedModel.options.kernelRegularizer.regularizer,
-            implementation: this.d.selectedModel.options.implementation
-          });
         }
+        //  else if (modelObj.type === ModelType.LSTM) {
+
+        //   hiddenLayer = tf.layers.lstm({
+        //     units: (data.xs[0][0].length * data.xs[0].length), //data.xs[0][0][0].length
+        //     inputShape: inputShape.slice(1),// [ number of inputs, batch size ]
+        //     recurrentActivation: this.d.selectedModel.options.activation,
+        //     activation: this.d.selectedModel.options.activation, // make activation function adjustable in model settings
+        //     returnSequences: layer < this.d.selectedModel.options.hiddenLayers - 1 ? this.d.selectedModel.options.returnSequences : false,
+        //     kernelRegularizer: this.d.selectedModel.options.kernelRegularizer.regularizer,
+        //     implementation: this.d.selectedModel.options.implementation
+        //   });
+
+        //   console.log(hiddenLayer);
+
+        // }
+        // else if (modelObj.type === ModelType.GRU) {
+
+        //   hiddenLayer = tf.layers.gru({
+        //     units: (data.xs[0][0].length * data.xs[0].length), //data.xs[0][0][0].length
+        //     inputShape: inputShape.slice(1), // [ number of inputs, batch size ]
+        //     activation: this.d.selectedModel.options.activation, // make activation function adjustable in model settings
+        //     returnSequences: layer < this.d.selectedModel.options.hiddenLayers - 1 ? this.d.selectedModel.options.returnSequences : false,
+        //     kernelRegularizer: this.d.selectedModel.options.kernelRegularizer.regularizer,
+        //     implementation: this.d.selectedModel.options.implementation
+        //   });
+        // }
 
         this.d.selectedModel.model.add(hiddenLayer);
 
-        if (this.d.selectedModel.options.batchNormalization) {
-          const batchNormalizationLayer = tf.layers.batchNormalization();
-          this.d.selectedModel.model.add(batchNormalizationLayer);
-        }
+        // if (this.d.selectedModel.options.batchNormalization) {
+        //   const batchNormalizationLayer = tf.layers.batchNormalization();
+        //   this.d.selectedModel.model.add(batchNormalizationLayer);
+        // }
         // this.selectedModel.model.add(tf.layers.maxPooling2d({ poolSize: 2 }));
       }
 
 
 
 
-      if (this.d.selectedModel.options.dropout !== 0) {
-        this.d.selectedModel.model.add(tf.layers.dropout({ rate: this.d.selectedModel.options.dropout }));
-      }
+      // if (this.d.selectedModel.options.dropout !== 0) {
+      //   this.d.selectedModel.model.add(tf.layers.dropout({ rate: this.d.selectedModel.options.dropout }));
+      // }
       console.log(this.d.selectedModel);
 
-      if (this.d.selectedModel.type === ModelType.neuralNetwork) {
+      if (this.d.selectedModel.type === ModelType.CNN) {
         this.d.selectedModel.model.add(tf.layers.flatten());
       }
       //add output layer
-      const outputLayer = tf.layers.dense({
-        units: outputShape[1],
-        activation: this.d.selectedModel.options.activationOutputLayer
-      });
+      // const outputLayer = tf.layers.dense({
+      //   units: outputShape[1],
+      //   activation: this.d.selectedModel.options.activationOutputLayer
+      // });
 
-      this.d.selectedModel.model.add(outputLayer);
-
-
+      // this.d.selectedModel.model.add(outputLayer);
 
 
-      const optimizerFunction = this.d.selectedModel.options.optimizer.name === 'momentum' ?
-          this.d.selectedModel.options.optimizer.value(this.d.selectedModel.options.learningRate, this.d.selectedModel.options.momentum) :
-          this.d.selectedModel.options.optimizer.value(this.d.selectedModel.options.learningRate);
+
+
+      const optimizerFunction = this.d.selectedModel.training.optimizer.name === 'momentum' ?
+          this.d.selectedModel.training.optimizer.value(this.d.selectedModel.training.learningRate, this.d.selectedModel.training.momentum) :
+          this.d.selectedModel.training.optimizer.value(this.d.selectedModel.training.learningRate);
 
       this.d.selectedModel.model.compile({
         optimizer: optimizerFunction,
-        loss: this.d.selectedModel.options.losses.value,
-        metrics: [ this.d.selectedModel.options.metrics.value ]
+        loss: this.d.selectedModel.training.losses.value,
+        metrics: [ this.d.selectedModel.training.metrics.value ]
       });
-      console.log(this.d.selectedModel.options);
+      console.log(this.d.selectedModel.training);
       console.log(this.d.selectedModel.model);
       // this.d.selectedModel.model.normalizeData();
 
@@ -260,7 +262,7 @@ export class TensorFlowTrainService {
 
 
 
-      this.train(inputTensor, outputTensor, this.d.selectedModel.options.trainingOptions).then(() => {
+      this.train(inputTensor, outputTensor, this.d.selectedModel.training.epochs, this.d.selectedModel.layers[0].options.batchSize).then(() => {
         console.log('training is complete');
 
         (this.document.getElementById('deploy') as HTMLButtonElement).disabled = false;
@@ -287,20 +289,20 @@ export class TensorFlowTrainService {
   }
 
 
-  async train(iTensor: any, oTensor: any, options: any) {
+  async train(iTensor: any, oTensor: any, epochs: any, batchSize: number) {
     // console.log(iTensor, oTensor);
-    for (let i = 0; i < options.epochs; i++) {
+    for (let i = 0; i < epochs; i++) {
       const response = await this.d.selectedModel.model.fit(iTensor, oTensor, {
         verbose: true,
         shuffle: true,
-        batchSize: options.batchSize,
+        batchSize: batchSize,
         epochs: 1
       });
-      if (i < options.epochs - 1) {
+      if (i < epochs - 1) {
         if (i % 10 === 0) {
           console.log(response.history);
           const metric = this.getMetric(response.history);
-          this.tensorflowService.updateProgess('training: loss = ' + response.history.loss[0] + '' + (metric ? metric : ''), ((75/options.epochs) * i) + 25);
+          this.tensorflowService.updateProgess('training: loss = ' + response.history.loss[0] + '' + (metric ? metric : ''), ((75/epochs) * i) + 25);
         }
       } else {
         this.tensorflowService.updateProgess('finished training: ' + response.history.loss[0] + '' + this.getMetric(response.history), 100);

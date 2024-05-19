@@ -17,6 +17,8 @@ export class HardwareService {
   microcontrollers: Array<MicroController> = [];
   public microcontrollerObservable = new Subject<MicroController[]>();
   public registeredDevicesObservable = new Subject<ConnectedDevice[]>();
+  public connectWithMicrocontroller = new Subject<any>();
+
 
   constructor(private localSt: LocalStorageService) {
     // retrieve files stored in local storage
@@ -52,20 +54,36 @@ export class HardwareService {
     );
   }
 
-  addMicroController(COM: any, type: string) {
+
+  checkPorts(portlist: Array<any>) {
+    console.log('checkPorts', portlist)
+    for (const port of portlist) {
+      console.log(this.microcontrollers);
+      const savedItem = this.microcontrollers.filter(m => m.serialPort.path === port.serialPort.path)[0];
+      console.log(savedItem);
+      if (savedItem) {
+        console.log(savedItem);
+        savedItem.connected = true;
+        this.connectWithMicrocontroller.next( savedItem );
+      }
+    }
+
+  }
+
+  addMicroController(COM: any, vendor: string) {
     if (COM && COM.serialPort) {
       if (this.microcontrollers.length > 0) {
-        const controller = this.microcontrollers.filter(m => m.serialPort.path === COM.serialPort.path);
-        if (controller.length === 0) {
-          this.microcontrollers.push(new MicroController(uuid(), COM.serialPort, type));
-          this.store();
+        let controller = this.microcontrollers.filter(m => m.serialPort.path === COM.serialPort.path)[0];
+        if (!controller) {
+          this.microcontrollers.push(new MicroController(uuid(), COM.serialPort, vendor));
         } else {
-          controller[0] = new MicroController(controller[0].id, COM.serialPort, type);
+          controller = new MicroController(controller.id, COM.serialPort, vendor);
+          controller.connected;
         }
       } else {
-        this.microcontrollers.push(new MicroController(uuid(), COM.serialPort, type));
-        this.store();
+        this.microcontrollers.push(new MicroController(uuid(), COM.serialPort, vendor));
       }
+      this.store();
       // console.log(this.microcontrollers);
     }
   }
@@ -239,13 +257,13 @@ export class HardwareService {
     return;
   }
 
-  updatePlay(com: string, type: string, playing: boolean) {
+  updatePlay(com: string, vendor: string, playing: boolean) {
     const microcontroller = this.microcontrollers.filter(m => m.serialPort.path === com)[0];
     if (microcontroller) {
       microcontroller.playing = playing;
       this.store();
-    } else if (com && type) {
-      this.addMicroController(com, type);
+    } else if (com && vendor) {
+      this.addMicroController(com, vendor);
     }
   }
 

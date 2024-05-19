@@ -1,6 +1,6 @@
 <div class="select-modeltype">
   <div class="form-group">
-    <label class="label">Model type</label>
+    <!-- <label class="label">Model type</label> -->
     <select class="form-control playWindow" id="model_type" name="model_type" [(ngModel)]="this.d.selectedModel.type" (change)="this.updateModelType()">
       <option *ngFor="let item of this.modelTypeOptions" [ngValue]="item">{{ ModelTypeMapping[item] }}</option>
     </select>
@@ -9,70 +9,331 @@
 
 <div id="neuralnetwork"></div>
 
-
 <div id="model-settings">
 
   <div class="fixed-toolbar" id="fixed-toolbar">
-    <div class="row" id="toolbar-content">
+    <div class="form-row">
+      <ul class="buttons-list">
+        <li id="newOutput" (click)="addClassifier()"><img src="./assets/icons/tools/collections.svg" title="New effect"></li>
+      </ul>
+    </div>
 
-    <div class="attach-toolbar" id="toggleDataSection"><div class="attach-arrow"></div></div>
+    <div class="row" id="toolbar-content"><div class="attach-toolbar" id="toggleDataSection"><div class="attach-arrow"></div></div></div>
   </div>
 
 
-  <div class="columns">
 
-    <ul>
-      <li id="inputlayer-details">
-        <div id="inputs" class="column-20 fixed-height">
+  <ul class="columns">
 
-          <label class="labelRow">Input <div class="buttonPlayWindow dataSetList" (click)="this.addInputItem()" title="add input item">+</div></label>
-          <ul>
+
+    <!-- input -->
+
+
+
+    <li *ngFor="let layer of this.d.selectedModel.layers; let i = index" [attr.data-index]="i">
+
+      <div class="layer-settings" [ngStyle]="{ width: (100 / this.d.selectedModel.layers.length) + 'vw'}"  *ngIf="i === 0">
+        <div class="layer-name">{{ layer.name }}</div>
+        <div class="button-round" id="addLayer" (click)="this.addLayer(0)">+</div>
+
+        <div class="layer-content scrollDiv">
+
+          <ul class="column-list-items">
             <li *ngFor="let input of this.d.selectedModel.inputs; let i = index" [attr.data-index]="i">
-              <label class="radio-container">
-                <span *ngIf="i < 5" id="label-{{ input.slug }}">{{ input.name }}</span>
-                <input type="checkbox" class="type" id="{{ input.id }}" name="{{ input.id }}" [(ngModel)]="input.active" [checked]="input.active">
-                <span class="checkmark radio tensorflow"></span>
-              </label>
-              <div class="row flexbox-row-even input" *ngIf="i >= 5" id="label-{{ input.slug }}">
-                <input type="text" class="list-item inputList" id="input-{{ i }}" value="{{ input.name }}" name="input-{{ i }}" (change)="this.updateInput(i)">
-                <div class="buttonPlayWindow dataSetList delete" (click)="this.deleteInputItem(i)" title="delete input item">-</div>
+
+                <label class="radio-container">
+                  <span *ngIf="i < 5" id="label-{{ input.slug }}">{{ input.name }}</span>
+                  <input type="checkbox" class="type" id="{{ input.id }}" name="{{ input.id }}" [(ngModel)]="input.active" [checked]="input.active" (change)="this.updateInputUnits()">
+                  <span class="checkmark radio tensorflow"></span>
+                </label>
+                <div class="row flexbox-row-even input" *ngIf="i >= 5" id="label-{{ input.slug }}">
+                  <input type="text" class="list-item inputList" id="input-{{ i }}" value="{{ input.name }}" name="input-{{ i }}" (change)="this.updateInput(i)">
+                  <div class="buttonPlayWindow dataSetList delete" (click)="this.deleteInputItem(i)" title="delete input item"><img src="./assets/icons/buttons/bin.svg"></div>
+                </div>
+            </li>
+          </ul>
+
+          <button class="add left noMarginTop" id="addInputItem" (click)="this.addInputItem()" title="add input variable">add variable</button>
+
+
+          <div class="form-group microcontroller">
+            <select class="form-control playWindow microcontroller" id="microcontroller" name="microcontroller" [(ngModel)]="this.d.selectOptionMicrocontroller">
+              <option class="placeholder" [ngValue]="undefined" selected="selected">-- select microcontroller --</option>
+              <option *ngFor="let item of this.hardwareService.microcontrollers" [ngValue]="item">{{ item.name }}</option>
+            </select>
+            <button class="add left" (click)="this.tensorflowService.addMicrocontroller()" title="add microcontroller">Add</button>
+          </div>
+
+          <ul class="microcontroller-list">
+            <li *ngFor="let microcontroller of this.d.selectedMicrocontrollers">
+              <div class="row">
+                <div class="opencloseArrow open microcontroller" id="open_{{ microcontroller.serialPort.path }}" (click)="openCloseItem(microcontroller.serialPort.path)"><div></div></div>
+                <label class="labelRow nextToArrow">{{ microcontroller.name }}</label>
+                <div class="buttonPlayWindow dataSetList delete mcu" (click)="this.tensorflowService.deleteMicrocontroller(microcontroller.serialPort.path)" title="delete">
+                  <img src="./assets/icons/buttons/bin.svg">
+                </div>
+              </div>
+
+              <div class="row" id="section_{{ microcontroller.serialPort.path }}">
+                <div class="row">
+                  <label class="label">
+                    <div class="question-mark"
+                    title="Speed for communication with microcontroller: a low value indicates a shorter interval between communications increasing the number of data points">?</div>
+                    comm. interval</label>
+                  <input type="number" class="number small blue" id="updateFrequency" [(ngModel)]="microcontroller.updateSpeed" name="updateFrequency" (change)="updateCommunicationSpeed(microcontroller.serialPort.path)">
+                </div>
+                <div class="row">
+                  <ul class="motor-list">
+                    <li *ngFor="let motor of microcontroller.motors">
+                      <label class="radio-container">{{ motor.id }}
+                        <input type="checkbox" class="type" id="motor-{{ motor.id }}" name="motor-{{ motor.id }}" [(ngModel)]="motor.record" [checked]="motor.record"
+                          (change)="toggleRecordMotor(microcontroller.serialPort.path, motor)">
+                        <span class="checkmark radio tensorflow"></span>
+                      </label>
+                    </li>
+                  </ul>
+                </div>
               </div>
             </li>
           </ul>
+
+          <div class="form-group" *ngIf="this.d.selectedModel.type === 1 && layer.options.inputLength && layer.options.inputLength.description">
+            <label class="label"><div class="question-mark" title="When the length of the input sequences is constant, it must be given. If you want to link Flatten and Dense layers upstream, you’ll need this parameter">?</div>Input length</label>
+            <input type="number" class="number small blue" id="inputLength" [(ngModel)]="layer.options.inputLength.value" name="inputLength">
+          </div>
+
+          <div class="form-group" *ngIf="layer.options.batchSize">
+            <label class="label"><div class="question-mark" title="The number of elements desired per batch.">?</div>Batch size</label>
+            <input type="number" class="number small blue" id="batchsize" [(ngModel)]="layer.options.batchSize.value" name="batchsize">
+          </div>
+
+
+
         </div>
-      </li>
+      </div>
 
-      <li *ngFor="let hiddenlayer of this.d.selectedModel.hiddenLayers">
 
-        <div class="form-group" *ngIf="this.d.selectedModel.options.units !== undefined">
-          <label class="label"><div class="question-mark" title="Number of units in layer">?</div>Units</label>
-          <input type="number" class="number small blue" id="layerUnits" [(ngModel)]="this.d.selectedModel.options.hiddenLayers" name="layerUnits">
+
+
+<!-- hidden layers -->
+
+
+      <div class="layer-settings" [ngStyle]="{ width: (100 / this.d.selectedModel.layers.length) + 'vw' }" *ngIf="i > 0 && i < this.d.selectedModel.layers.length - 1">
+
+        <div *ngIf="layer.type" class="layer-name {{ layer.type.subgroup }}">{{ layer.type.subgroup }}</div>
+        <div *ngIf="!layer.type" class="layer-name">{{ layer.name }}</div>
+        <div class="button-round" id="addLayer" (click)="this.addLayer(i)">+</div>
+
+
+        <div class="layer-content scrollDiv">
+
+          <div class="form-group">
+            <label class="label"><div *ngIf="layer.type" class="question-mark" title="{{ layer.type.description }}">?</div>Layer type</label>
+            <select class="form-control playWindow" id="type" name="type" [(ngModel)]="layer.type" [compareWith]="compareFunction" (change)="this.updateLayerOptions(i)">
+              <option *ngFor="let type of this.LayerTypes" [ngValue]="type">{{ type.name }}</option>
+            </select>
+          </div>
+
+          <div class="form-group" *ngIf="layer.options.units">
+            <label class="label"><div class="question-mark" title="Positive integer, dimensionality of the output space.">?</div>Units</label>
+            <input type="number" class="number small blue" id="layerUnits" [(ngModel)]="layer.options.units.value" name="layerUnits" (change)="this.updateNetworkVisualization()">
+          </div>
+
+          <div class="form-group" *ngIf="layer.options.kernelSize">
+            <label class="label"><div class="question-mark" title="Positive integer, dimensionality of the output space.">?</div>Kernel size</label>
+            <input type="number" class="number small blue" id="kernelSizeX" [(ngModel)]="layer.options.kernelSize.value.x" name="kernelSizeX" (change)="this.updateNetworkVisualization()">
+            <label class="label small">x</label>
+            <input type="number" class="number small blue" id="kernelSizeY" [(ngModel)]="layer.options.kernelSize.value.y" name="kernelSizeY" (change)="this.updateNetworkVisualization()">
+          </div>
+
+
+          <div class="form-group" *ngIf="layer.options.filters && layer.options.filters.value !== undefined">
+            <label class="label"><div class="question-mark" title="The dimensionality of the output space (i.e. the number of filters in the convolution).">?</div>Filters</label>
+            <input type="number" class="number small blue" id="layerFilters" [(ngModel)]="layer.options.filters.value" name="layerFilters">
+          </div>
+
+
+          <div class="form-group" *ngIf="layer.options.padding && layer.options.padding.value !== undefined">
+            <label class="label"><div class="question-mark" title="Padding mode.">?</div>Padding</label>
+            <select class="form-control playWindow" id="padding" name="padding" [(ngModel)]="layer.options.padding.value">
+              <option *ngFor="let option of this.paddingOptions" [ngValue]="option">{{ option }}</option>
+            </select>
+          </div>
+
+
+          <div class="form-group" *ngIf="layer.options.activation">
+            <label class="label"><div class="question-mark" title="Activation function of the layer.">?</div>Activation</label>
+            <select class="form-control playWindow" id="activation" name="activation" [(ngModel)]="layer.options.activation.value" (change)="this.updateNetworkVisualization()">
+              <option *ngFor="let item of this.activationOptions" [ngValue]="item">{{ ActivationLabelMapping[item] }}</option>
+            </select>
+          </div>
+
+          <div class="form-group" *ngIf="layer.options.activityRegularizer">
+            <label class="label"><div class="question-mark" title="Regularizer function applied to the activation.">?</div>Activity regularizer</label>
+            <select class="form-control playWindow" id="activationReg" name="activationReg" [(ngModel)]="layer.options.activityRegularizer.value">
+              <option *ngFor="let item of this.regularizerOptions" [ngValue]="item">{{ RegularizerLabelMapping[item] }}</option>
+            </select>
+          </div>
+
+
+          <div class="form-group" *ngIf="layer.options.trainable && layer.options.trainable.value !== undefined">
+            <label class="radio-container">Trainable <div class="question-mark" title="Whether the weights of this layer are updatable by fit. Defaults to true.">?</div>
+              <input type="checkbox" class="type" id="batchNormalization" name="batchNormalization" [(ngModel)]="layer.options.trainable.value" [checked]="layer.options.trainable.value">
+              <span class="checkmark radio tensorflow"></span>
+            </label>
+          </div>
+
+          <div class="form-group" *ngIf="layer.options.useBias && layer.options.useBias.value !== undefined">
+            <label class="radio-container">Use bias <div class="question-mark" title="Whether to apply a bias.">?</div>
+              <input type="checkbox" class="type" id="batchNormalization" name="batchNormalization" [(ngModel)]="layer.options.useBias.value" [checked]="layer.options.useBias.value" (change)="this.updateNetworkVisualization()">
+              <span class="checkmark radio tensorflow"></span>
+            </label>
+          </div>
+
+          <div class="form-group" *ngIf="layer.options.biasConstraint && layer.options.biasConstraint.value !== undefined">
+            <label class="label"><div class="question-mark" title="Constraint for the bias vector.">?</div>Bias constraint</label>
+            <select class="form-control playWindow" id="biasConstraint" name="biasConstraint" [(ngModel)]="layer.options.biasConstraint.value">
+              <option *ngFor="let item of this.constraintOptions" [ngValue]="item">{{ ConstraintLabelMapping[item] }}</option>
+            </select>
+          </div>
+
+          <div class="form-group" *ngIf="layer.options.kernelConstraint">
+            <label class="label"><div class="question-mark" title="The constraint for the convolutional kernel weights">?</div>Kernel constraint</label>
+            <select class="form-control playWindow" id="kernelConstraint" name="kernelConstraint" [(ngModel)]="layer.options.kernelConstraint.value">
+              <option *ngFor="let item of this.constraintOptions" [ngValue]="item">{{ ConstraintLabelMapping[item] }}</option>
+            </select>
+          </div>
+
+          <div class="form-group" *ngIf="layer.options.biasRegularizer">
+            <label class="label"><div class="question-mark" title="Regularizer function applied to the bias vector.">?</div>Bias regularizer</label>
+            <select class="form-control playWindow" id="biasRegularizer" name="biasRegularizer" [(ngModel)]="layer.options.biasRegularizer.value">
+              <option *ngFor="let item of this.regularizerOptions" [ngValue]="item">{{ RegularizerLabelMapping[item] }}</option>
+            </select>
+          </div>
+
+          <div class="form-group" *ngIf="layer.options.kernelRegularizer">
+            <label class="label"><div class="question-mark" title="Regularizer function applied to the dense kernel weights matrix.">?</div>Kernel regularizer</label>
+            <select class="form-control playWindow" id="kernelRegularizer" name="kernelRegularizer" [(ngModel)]="layer.options.kernelRegularizer.value">
+              <option *ngFor="let item of this.regularizerOptions" [ngValue]="item">{{ RegularizerLabelMapping[item] }}</option>
+            </select>
+          </div>
+
+
+          <div class="form-group" *ngIf="layer.options.dropout">
+            <label class="label"><div class="question-mark" title="Number between 0 and 1. Fraction of the units to drop for the linear transformation of the inputs.">?</div>Dropout</label>
+            <input type="number" class="number small blue" id="dropout" [(ngModel)]="layer.options.dropout.value" name="dropout">
+          </div>
+
+
+
+          <div class="row" *ngIf="layer.options.returnSequences && layer.options.returnSequences.value !== undefined">
+            <label class="radio-container">Return sequences <div class="question-mark" title="Whether to return the last output in the output sequence, or the full sequence.">?</div>
+              <input type="checkbox" class="type" id="returnSequences" name="returnSequences" [(ngModel)]="layer.options.returnSequences.value" [checked]="layer.options.returnSequences.value">
+              <span class="checkmark radio tensorflow"></span>
+            </label>
+          </div>
+
+          <div class="row" *ngIf="layer.options.returnState && layer.options.returnState.value !== undefined">
+            <label class="radio-container">Return state <div class="question-mark" title="Whether to return the last state in addition to the output.">?</div>
+              <input type="checkbox" class="type" id="returnState" name="returnState" [(ngModel)]="layer.options.returnState.value" [checked]="layer.options.returnState.value">
+              <span class="checkmark radio tensorflow"></span>
+            </label>
+          </div>
+
+          <div class="row" *ngIf="layer.options.goBackwards && layer.options.goBackwards.value !== undefined">
+            <label class="radio-container">Go backwards <div class="question-mark" title="If this is true, process the input sequence backward and return the reversed sequence.">?</div>
+              <input type="checkbox" class="type" id="goBackwards" name="goBackwards" [(ngModel)]="layer.options.goBackwards.value" [checked]="layer.options.goBackwards.value">
+              <span class="checkmark radio tensorflow"></span>
+            </label>
+          </div>
+
+          <!-- pooling layers -->
+
+          <div class="form-group" *ngIf="layer.type && layer.type.subgroup === 'pooling'">
+            <label class="label"><div class="question-mark" title="Size of the window to pool over, should be an integer.">?</div>Pool size</label>
+            <input type="number" class="number small blue" id="poolSize" [(ngModel)]="layer.options.poolSize.value" name="poolSize">
+          </div>
+
+          <div class="form-group" *ngIf="layer.type && layer.type.subgroup === 'pooling'">
+            <label class="label"><div class="question-mark" title="The data format to use for the pooling layer.">?</div>Data format</label>
+            <select class="form-control playWindow" id="dataFormat" name="dataFormat" [(ngModel)]="layer.options.dataFormat.value">
+              <option *ngFor="let item of this.dataFormatOptions" [ngValue]="item">{{ DataFormatMapping[item] }}</option>
+            </select>
+          </div>
+
+
+          <!-- normalization layers -->
+
+          <div class="form-group" *ngIf="layer.options.axis">
+            <label class="label"><div class="question-mark" title="The integer axis that should be normalized (typically the features axis).">?</div>Axis</label>
+            <input type="number" class="number small blue" id="axis" [(ngModel)]="layer.options.axis.value" name="axis">
+          </div>
+
+
+          <button class="add" id="deleteLayer" (click)="this.deleteLayer(i)" title="delete layer">delete layer</button>
         </div>
+      </div>
 
 
-        
-      </li>
 
-      <li id="outputlayer-details">
 
-        <div id="outputs" class="column-20 fixed-height">
-          <label class="labelRow">Output <div class="buttonPlayWindow dataSetList" (click)="this.addClassifier()" title="add output item">+</div></label>
+<!-- output -->
 
-          <ul>
-            <li *ngFor="let output of this.d.selectedModel.outputs; let i = index" [attr.data-index]="i">
-              <label class="radio-container">
-                <input type="checkbox" class="type" id="{{ output.name }}" name="{{ output.name }}" [(ngModel)]="output.active" [checked]="output.active" (change)="this.selectClassifier(output.id)">
-                <span class="checkmark radio tensorflow"></span>
-              </label>
-              <div class="row flexbox-row-even input" id="label-{{ output.id }}">
-                <input type="text" class="list-item inputList" id="classifier-1-{{ i }}" value="{{ output.name }}" name="classifier-1-{{ i }}" (change)="this.updateClassifier(i, 1)">
-                <div class="buttonPlayWindow dataSetList delete" (click)="this.deleteClassifier(i)" title="delete input item">-</div>
+
+
+
+
+      <div class="layer-settings" [ngStyle]="{ width: (100 / this.d.selectedModel.layers.length) + 'vw' }" *ngIf="i === this.d.selectedModel.layers.length - 1">
+
+        <div class="layer-name">{{ layer.name }}</div>
+
+        <div class="layer-content scrollDiv">
+          <ul class="column-list-items">
+            <li class="column" *ngFor="let output of this.d.selectedModel.outputs; let i = index" [attr.data-index]="i">
+
+              <div class="flexbox-row-even">
+                <label class="radio-container">
+                  <input type="checkbox" class="type" id="{{ output.name }}" name="{{ output.name }}" [(ngModel)]="output.active" [checked]="output.active" (change)="this.updateOutputUnits()">
+                  <span class="checkmark radio tensorflow"></span>
+                </label>
+
+                <div class="flexbox-row-even autoWidth" id="label-{{ output.id }}">
+                  <input type="text" class="list-item inputList" id="classifier-1-{{ i }}" value="{{ output.name }}" name="classifier-1-{{ i }}" (change)="this.updateClassifier(i, 1)">
+                  <div class="buttonPlayWindow dataSetList delete" (click)="this.deleteClassifier(i)" title="delete input item"><img src="./assets/icons/buttons/bin.svg"></div>
+                </div>
               </div>
+
+              <div class="flexbox-row-even">
+                <ul class="classifierLabels">
+                  <li *ngFor="let label of output.labels; let i=index;" class="values" class="data-list-{{ i }}-row">
+                    <div class="flexbox-row-even">
+                      <input type="text" class="list-item padding-left" id="{{ output.name }}-label-{{ i }}" value="{{ label.name }}" name="{{ output.name }}-label-{{ i }}"
+                        (change)="this.tensorflowService.updateClassifierLabel(output.name, i)">
+                      <div class="buttonPlayWindow dataSetList delete" (click)="this.tensorflowService.deleteLabel(output.name, i)" title="delete label"><img src="./assets/icons/buttons/bin.svg"></div>
+                    </div>
+                  </li>
+                  <li>
+                    <button class="add left noMarginTop" (click)="this.tensorflowService.addLabelToClassifier(i)" title="add label">Add label</button>
+                  </li>
+                </ul>
+              </div>
+
             </li>
           </ul>
-        </div>
-      </li>
-    </ul>
 
-  </div>
+
+          <button class="add left noMarginTop" id="addOutputItem" (click)="this.addClassifier()" title="add classifier">add classifier</button>
+
+          <div class="form-group">
+            <label class="label"><div class="question-mark" title="Activation function of the layer.">?</div>Activation</label>
+            <select class="form-control playWindow" id="activationB" name="activationB" [(ngModel)]="layer.options.activation.value"  (change)="this.updateNetworkVisualization()">
+              <option *ngFor="let item of this.activationOptions" [ngValue]="item">{{ ActivationLabelMapping[item] }}</option>
+            </select>
+          </div>
+
+        </div>
+      </div>
+
+    </li>
+  </ul>
 </div>

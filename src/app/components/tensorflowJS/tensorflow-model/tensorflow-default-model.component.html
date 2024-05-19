@@ -1,0 +1,15 @@
+<ul class="steps">
+  <li>select default model</li>
+  <li>design model</li>
+  <li>collect data</li>
+  <li>train model</li>
+  <li>test model</li>
+</ul>
+<ul class="default-models">
+  <li *ngFor="let model of this.defaultModelOptions" (click)="this.createDefaultModel(model.slug)">
+    <div class="model-tile" [ngStyle]="{ backgroundColor: model.color }">
+      <div class="name">{{ model.name }}</div>
+      <div class="description">{{ model.description }}</div>
+    </div>
+  </li>
+</ul>

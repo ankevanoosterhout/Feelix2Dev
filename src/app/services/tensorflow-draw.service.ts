@@ -19,6 +19,9 @@ export class TensorFlowDrawService {
 
 
   drawGraph() {
+
+    // console.log(this.config.width, this.config.height);
+
     d3.selectAll('#datagraph').remove();
 
     this.config.dataSVG = d3.select('#svg_graph')

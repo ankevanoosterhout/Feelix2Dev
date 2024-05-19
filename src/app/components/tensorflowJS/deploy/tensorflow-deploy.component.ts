@@ -1,4 +1,6 @@
 import { Component, Inject } from '@angular/core';
+import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
+import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 
 
 @Component({
@@ -8,6 +10,13 @@ import { Component, Inject } from '@angular/core';
 })
 export class TensorflowDeployComponent {
 
+  public d: TensorFlowData;
+
+  constructor(private tensorflowService: TensorFlowMainService,) {
+    this.d = this.tensorflowService.d;
+  }
+
+  
 
 
 

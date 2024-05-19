@@ -9,6 +9,8 @@ import { ActuatorLabelMapping, ActuatorType, BLDCConfig, MicroController, Motor,
 import { MagneticSensor, Encoder } from 'src/app/models/position-sensors.model';
 
 
+
+
 @Component({
   selector: 'app-motor-settings',
   templateUrl: './motor-settings.component.html',
@@ -27,7 +29,6 @@ export class MotorSettingsComponent implements OnInit {
   selectedMicrocontroller: MicroController = null;
 
   selectedPort: any = null;
-  selectedController = 'Teensy';
   showSelectMicrocontroller = false;
   searchRange = 0;
 
@@ -46,17 +47,7 @@ export class MotorSettingsComponent implements OnInit {
     { name: 'deg', PR: 360 }
   ];
 
-  public vendors = [
-    { name: 'STM32' },
-    { name: 'Teensy' },
-    { name: 'ESP32' },
-    { name: 'ESP8266' },
-    { name: 'Arduino' },
-    { name: 'Arduino MEGA' },
-    { name: 'Arduino DUE' },
-    { name: 'Arduino Nano' },
-    { name: 'Raspberry PICO' }
-  ];
+  public vendors = [ 'STM32', 'Teensy', 'ESP32', 'ESP8266', 'Arduino', 'Arduino MEGA', 'Arduino DUE', 'Arduino Nano', 'Raspberry PICO' ];
 
   public qualityOptions = [
     { level: 0, name: 'low', division: 8 },
@@ -94,11 +85,16 @@ export class MotorSettingsComponent implements OnInit {
     { name: 'slave', value: 2 }
   ];
 
+
+
   constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService, private uploadService: UploadService,
               private hardwareService: HardwareService, private fileService: FileService, private router: Router ) {
 
 
+
+
     this.electronService.ipcRenderer.on('comports', (event: Event, comports: any) => {
+      console.log(comports);
       this.comports = comports;
       if (this.comports.length > 0) {
         this.selectedPort = this.comports[0];
@@ -129,6 +125,12 @@ export class MotorSettingsComponent implements OnInit {
         this.hardwareService.updateMicroController(microcontroller);
         (this.document.getElementById('currentSenseCalibrationValue-' + data.serialPath + '-' + data.motorID) as HTMLInputElement).value = data.current_sense_calibration.toString();
       }
+    });
+
+
+    this.electronService.ipcRenderer.on('checkPorts',  (event: Event, portlist: any) => {
+      console.log(portlist);
+      this.hardwareService.checkPorts(portlist);
     });
 
     this.electronService.ipcRenderer.on('receiveData', (event: Event, data: any) => {
@@ -173,8 +175,10 @@ export class MotorSettingsComponent implements OnInit {
           this.electronService.ipcRenderer.send('run', { motor_id: data.motorID, port: data.serialPath, run: 0 });
         }
       }
-    })
+    });
   }
+
+
 
   selectMicrocontroller(microcontroller: MicroController) {
     this.selectedMicrocontroller = microcontroller;
@@ -182,9 +186,10 @@ export class MotorSettingsComponent implements OnInit {
   }
 
   updateSelectedController() {
+    console.log (this.selectedPort);
     if (this.selectedPort.vendor !== 'unknown') {
-      this.selectedController = this.selectedPort.vendor;
-      (this.document.getElementById('controllerType') as HTMLSelectElement).value = this.selectedController;
+      // this.selectedController = this.selectedPort.vendor;
+      (this.document.getElementById('controllerTypeSelect') as HTMLSelectElement).value = this.selectedPort.vendor;
     }
   }
 
@@ -304,8 +309,11 @@ export class MotorSettingsComponent implements OnInit {
   }
 
 
+
+
   getComports() {
-    this.electronService.ipcRenderer.send('listSerialPorts');
+    console.log('get comports');
+    this.electronService.ipcRenderer.send('listSerialPorts', false);
   }
 
 
@@ -371,11 +379,11 @@ export class MotorSettingsComponent implements OnInit {
     }
   }
 
-  saveMicrocontroller(selectedPort: any, selectedController: string) {
+  saveMicrocontroller(selectedPort: any) {
 
-    if (selectedPort !== null && selectedController !== null) {
-      this.hardwareService.addMicroController(selectedPort, this.selectedController);
-      this.electronService.ipcRenderer.send('addMicrocontroller', { port: selectedPort.serialPort, type: this.selectedController, baudrate: 115200 });
+    if (selectedPort !== null) {
+      this.hardwareService.addMicroController(selectedPort, selectedPort.vendor);
+      this.electronService.ipcRenderer.send('addMicrocontroller', { port: selectedPort.serialPort, vendor: selectedPort.vendor, baudrate: 115200 });
       this.selectedMicrocontroller = this.microcontrollers[this.microcontrollers.length - 1];
       this.showSelectMicrocontroller = false;
     }

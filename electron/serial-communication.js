@@ -8,10 +8,17 @@ let port;
 let receivingPort = null;
 let progress = 0;
 
+const checkSerialPortTimeInterval = 60000;
+
+
 let dataSendWaitList = [];
 let datalist = [];
 
 const softwareVersion = { major: 3, minor: 1, patch: 1 };
+
+function checkSerialPorts() {
+  setInterval(getSerialConnections, checkSerialPortTimeInterval);
+}
 
 
 function listSerialPorts(callback) {
@@ -21,25 +28,47 @@ function listSerialPorts(callback) {
       let vendor = 'unknown';
 
       if (item.vendorId !== undefined && item.productId !== undefined) {
-        if (item.vendorId === '16C0' && item.productId === '0483') {
+        if (item.vendorId === '0483' && (item.productId === '5740' || item.productId === '0003')) {
+          vendor = 'STM32';
+        } else if (item.vendorId === '16C0' && item.productId === '0483') {
           vendor = 'Teensy';
         } else if (item.vendorId === '2341' || item.vendorId === '2A03') {
           if (item.productId === '003D') {
             vendor = 'Arduino DUE';
           } else if (item.productId === '0042') {
             vendor = 'Arduino MEGA';
+          } else if (item.productId === '805A') {
+            vendor = 'Arduino Nano';
           } else if (item.productId === '0001') {
             vendor = 'Arduino';
           }
-        } else if (item.vendorId === '0483' && (item.productId === '5740' || item.productId === '0003')) {
-          vendor = 'STM32';
+        } else if (item.vendorId === '10C4' && item.productId === 'EA60') {
+          vendor = 'ESP32';
         }
       }
-      portsList.push({ serialPort: item, vendor: vendor });
+      if (!activePorts.includes(item.COM)) {
+        portsList.push({ serialPort: item, vendor: vendor });
+      }
     });
-    callback(portsList);
+    if (callback !== null) {
+      callback(portsList);
+    }
   })
 };
+
+
+function getSerialConnections() {
+  listSerialPorts(checkIfSerialPortIsKnown);
+
+}
+
+function checkIfSerialPortIsKnown(portsList) {
+  if (portsList && portsList.length > 0) {
+    main.checkPorts(portsList);
+  }
+}
+
+
 
 function checkIfAvailable(serialData, callback, connect) {
   SerialPort.list().then(ports => {
@@ -223,7 +252,7 @@ class newSerialPort {
         } else {
           updateProgress(50, (this.COM + ' has been added'));
 
-          if (this.portData.type !== 'Arduino MEGA' && this.portData.type !== 'Arduino') {
+          if (this.portData.type !== 'Arduino MEGA' && this.portData.type !== 'Arduino' && this.portData.type !== 'ESP32') {
             sendDataStr([ 'FS' ],  this.COM, true);
             this.connected = true;
             main.updateSerialStatus({ microcontroller: this.portData, connected: this.connected });
@@ -240,7 +269,11 @@ class newSerialPort {
 
         // uncomment to print incoming data
         // if (d.charAt(0) === '#') {
-        //   console.log('received data ', d);
+          // console.log('received data ', d);
+        // } else
+        // if (d === 'waiting for download') {
+        //   console.log('waiting');
+        //   sendDataStr([ 'FS' ],  this.COM, true);
         // } else
         if (d.charAt(0) === '*') {
           if (dataSendWaitList.filter(d => d.port === this.COM).length > 0) {
@@ -404,10 +437,11 @@ function updateProgress(_progress, _str) {
 
 
 function prepareMotorData(uploadContent, motor, datalist, index) {
-
   // datalist.unshift('FM' + motor.id + 'F');
 
-  datalist.unshift('FM' + motor.id + 'I' + index);
+  if (index) {
+    datalist.unshift('FM' + motor.id + 'I' + index);
+  }
   // datalist.unshift('FM' + motor.id + '' + (motor.I2C_communication));
   if (motor.config.supplyVoltage) {
     datalist.unshift('FM' + motor.id + 'S' + motor.config.supplyVoltage);
@@ -696,6 +730,7 @@ function uploadFromWaitList(receivingPort) {
         if (item.length > 19) {
           item = item.slice(0, (19 - item.length));
         }
+        console.log(item + '&');
         receivingPort.writeData(item + '&');
         datalist.data.pop();
       }
@@ -971,7 +1006,7 @@ function sendDataStr(str, port, first = false) {
 
 
 
-
+exports.checkSerialPorts = checkSerialPorts;
 exports.listSerialPorts = listSerialPorts;
 exports.writeDataString = writeDataString;
 exports.createConnection = createConnection;

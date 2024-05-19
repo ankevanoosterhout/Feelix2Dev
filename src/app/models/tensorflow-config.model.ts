@@ -15,10 +15,10 @@ export class TensorFlowConfig {
 
   sidebarColumnWidth = [150, 150];
 
-  width = window.innerWidth - 250 - (this.sidebarColumnWidth[0] + this.sidebarColumnWidth[1]);
-  height = window.innerHeight - 340;
+  width = window.innerWidth - (this.sidebarColumnWidth[0] + this.sidebarColumnWidth[1]);
+  height = window.innerHeight - 100;
 
-  margin = 30;
+  margin = 50;
 
   xAxis: any;
   xAxisBottom: any;
@@ -44,7 +44,7 @@ export class TensorFlowConfig {
   page = 'tensorflow';
   status = 'Ready';
   progress = 0;
-
+  stopRecordingCounter = 0;
 
   // shift = false;
 

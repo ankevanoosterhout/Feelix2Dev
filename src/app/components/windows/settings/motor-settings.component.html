@@ -32,7 +32,7 @@
     <div class="form-group">
       <label class="labelRow select motorsettings">Microcontroller</label>
       <select class="form-control playWindow" id="select-controller-type" [(ngModel)]="selectedMicrocontroller.vendor" name="controller" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
-        <option *ngFor="let vendor of vendors" [ngValue]="vendor.name">{{ vendor.name }}</option>
+        <option *ngFor="let vendor of vendors" [ngValue]="vendor">{{ vendor }}</option>
       </select>
     </div>
 
@@ -478,20 +478,20 @@
   <div class="innerContent-details motorsettings" id="inner" *ngIf="selectedMicrocontroller === null || showSelectMicrocontroller">
     <div class="form-group">
       <label class="labelRow select motorsettings">Port</label>
-      <select class="form-control playWindow" id="COMPortList" [(ngModel)]="selectedPort" name="comportList" (change)="updateSelectedController()">
-        <option selected="selected" *ngIf="comports.length === 0">-- select a comport --</option>
+      <select class="form-control playWindow" id="COMPortList" [(ngModel)]="this.selectedPort" name="comportList" (change)="updateSelectedController()">
+        <option selected="selected" *ngIf="comports.length === 0" [ngValue]="undefined">-- select a comport --</option>
         <option *ngFor="let port of comports" [ngValue]="port">{{ port.serialPort.path }} - {{ port.vendor }}</option>
       </select>
       <div (click)="getComports()" class="image-button" title="search for open ports"><img src="./assets/icons/buttons/return.svg"></div>
     </div>
-    <div class="form-group">
+    <div class="form-group" *ngIf="this.selectedPort && this.selectedPort !== undefined">
       <label class="labelRow select motorsettings">Microcontroller</label>
-      <select class="form-control playWindow" id="controllerType" [(ngModel)]="selectedController" name="controllerType">
-          <option *ngFor="let vendor of vendors" [ngValue]="vendor.name">{{ vendor.name }}</option>
+      <select class="form-control playWindow" id="controllerTypeSelect" [ngValue]="this.selectedPort.vendor" name="controllerType">
+          <option *ngFor="let vendor of vendors" [ngValue]="vendor">{{ vendor }}</option>
       </select>
     </div>
     <div class="form-row buttons">
-      <button id="submit" (click)="saveMicrocontroller(selectedPort, selectedController)">Save</button>
+      <button id="submit" (click)="saveMicrocontroller(selectedPort)">Save</button>
     </div>
   </div>
 

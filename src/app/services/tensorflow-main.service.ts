@@ -2,7 +2,7 @@ import { DOCUMENT } from '@angular/common';
 import { Injectable, Inject } from '@angular/core';
 import { v4 as uuid } from 'uuid';
 import { ActuatorType, MicroController } from '../models/hardware.model';
-import { Model, DataSet, Classifier, NN_options, Label, MotorEl, ModelVariable, ModelType, RegressionOptions, OutputItem, InputColor } from '../models/tensorflow.model';
+import { Model, DataSet, Classifier, Convolutional_options, Label, MotorEl, ModelVariable, ModelType, Regression_options, OutputItem, InputColor } from '../models/tensorflow.model';
 import { HardwareService } from './hardware.service';
 import { DataSetService } from './dataset.service';
 import { Subject } from 'rxjs';
@@ -372,14 +372,19 @@ export class TensorFlowMainService {
     }
 
     selectClassifier(id: string) {
-      let index = 0;
-      for (const output of this.d.selectedModel.outputs) {
-        output.active = output.id === id ? true : false;
-        if (output.active) {
-          this.updateOutputDataSet(index);
-        }
-        index++;
+      const output  = this.d.selectedModel.outputs.filter(o => o.id === id)[0];
+      output.active = !output.active;
+      const index = this.d.selectedModel.outputs.indexOf(output);
+      if (index > -1) {
+        this.updateOutputDataSet(index);
       }
+      // for (const output of this.d.selectedModel.outputs) {
+      //   output.active = output.id === id ? true : false;
+      //   if (output.active) {
+      //     this.updateOutputDataSet(index);
+      //   }
+      //   index++;
+      // }
     }
 
     updateDataSetName(id: String) {
@@ -395,7 +400,7 @@ export class TensorFlowMainService {
     }
 
     updateModelType() {
-      this.d.selectedModel.options = this.d.selectedModel.type !== ModelType.regression ? new NN_options() : new RegressionOptions();
+      // this.d.selectedModel.options = this.d.selectedModel.type !== ModelType.regression ? new Convolutional_options() : new Regression_options();
     }
 
     addInputItem(name = 'untitled') {
@@ -405,6 +410,10 @@ export class TensorFlowMainService {
 
     deleteInputItem(i: number) {
       this.d.selectedModel.inputs.splice(i, 1);
+    }
+
+    getNrOfActiveInputs() {
+      return this.d.selectedModel.inputs.filter(i => i.active).length;
     }
 
     resetInputList() {
@@ -436,6 +445,8 @@ export class TensorFlowMainService {
     addClassifier() {
       this.d.selectedModel.outputs.push(new Classifier(uuid(), 'Classifier-' + (this.d.selectedModel.outputs.length + 1)));
     }
+
+    getNrOfActiveClassifiers() { return this.d.selectedModel.outputs.filter(o => o.active).length };
 
     updateClassifier(i: number, pos: number) {
       const value = (this.document.getElementById('classifier-' + pos + '-' + i) as HTMLInputElement).value;
@@ -499,9 +510,13 @@ export class TensorFlowMainService {
       }
     }
 
-    addMicrocontroller(updateInputs = true) {
-      if (this.d.selectOptionMicrocontroller !== undefined && this.d.selectedMicrocontrollers.filter(m => m.serialPort.path === this.d.selectOptionMicrocontroller.serialPort.path).length === 0) {
-        for (const motor of this.d.selectOptionMicrocontroller.motors) {
+    addMicrocontroller(microcontroller: MicroController = null, updateInputs = true) {
+      // console.log('add ', microcontroller);
+      if (microcontroller === null) {
+        microcontroller = this.d.selectOptionMicrocontroller;
+      }
+      if (microcontroller !== undefined && this.d.selectedMicrocontrollers.filter(m => m.serialPort.path === microcontroller.serialPort.path).length === 0) {
+        for (const motor of microcontroller.motors) {
           motor.record = true;
 
           if (motor.type === ActuatorType.pneumatic) {
@@ -524,10 +539,11 @@ export class TensorFlowMainService {
             }
           }
         }
-        this.d.selectedMicrocontrollers.push(this.d.selectOptionMicrocontroller);
+        this.d.selectedMicrocontrollers.push(microcontroller);
+        // console.log(this.d.selectedMicrocontrollers);
         for (const set of this.d.dataSets) {
-          if (set.m.filter(m => m.mcu.serialPath === this.d.selectOptionMicrocontroller.serialPort.path).length === 0) {
-            this.addMicrocontrollerToDataSet(this.d.selectOptionMicrocontroller, set);
+          if (set.m.filter(m => m.mcu.serialPath === microcontroller.serialPort.path).length === 0) {
+            this.addMicrocontrollerToDataSet(microcontroller, set);
           }
         }
       }
@@ -615,9 +631,9 @@ export class TensorFlowMainService {
           this.d.selectedModel.model = JSON.parse(modelStr);
           // console.log(this.selectedModel.model);
         }
-        this.d.selectedModel.options.losses = this.d.lossOptions.filter(l => l.name === this.d.selectedModel.options.losses.name)[0];
-        this.d.selectedModel.options.metrics = this.d.metricsOptions.filter(l => l.name === this.d.selectedModel.options.metrics.name)[0];
-        this.d.selectedModel.options.optimizer = this.d.optimizerOptions.filter(l => l.name === this.d.selectedModel.options.optimizer.name)[0];
+        this.d.selectedModel.training.losses = this.d.lossOptions.filter(l => l.name === this.d.selectedModel.training.losses.name)[0];
+        this.d.selectedModel.training.metrics = this.d.metricsOptions.filter(l => l.name === this.d.selectedModel.training.metrics.name)[0];
+        this.d.selectedModel.training.optimizer = this.d.optimizerOptions.filter(l => l.name === this.d.selectedModel.training.optimizer.name)[0];
 
         this.updateModelSettings(this.d.selectedModel);
         this.updateProgess('Model loaded', 100);
@@ -639,18 +655,18 @@ export class TensorFlowMainService {
       if (model.type !== ModelType.regression) {
         (this.document.getElementById('model_type') as HTMLSelectElement).selectedIndex = model.type;
 
-        (this.document.getElementById('learningRate') as HTMLInputElement).value = model.options.learningRate;
-        (this.document.getElementById('hiddenLayers') as HTMLInputElement).value = model.options.hiddenLayers;
+        // (this.document.getElementById('learningRate') as HTMLInputElement).value = model.options.learningRate;
+        // (this.document.getElementById('hiddenLayers') as HTMLInputElement).value = model.options.hiddenLayers;
 
-        (this.document.getElementById('epochs') as HTMLInputElement).value = model.options.trainingOptions.epochs;
-        (this.document.getElementById('batchsize') as HTMLInputElement).value = model.options.trainingOptions.batchSize;
+        // (this.document.getElementById('epochs') as HTMLInputElement).value = model.options.trainingOptions.epochs;
+        // (this.document.getElementById('batchsize') as HTMLInputElement).value = model.options.trainingOptions.batchSize;
 
-        (this.document.getElementById('activation') as HTMLSelectElement).selectedIndex = model.options.activation;
-        (this.document.getElementById('activation_output') as HTMLSelectElement).selectedIndex = model.options.activationOutputLayer;
+        // (this.document.getElementById('activation') as HTMLSelectElement).selectedIndex = model.options.activation;
+        // (this.document.getElementById('activation_output') as HTMLSelectElement).selectedIndex = model.options.activationOutputLayer;
 
-        (this.document.getElementById('losses') as HTMLSelectElement).selectedIndex = model.options.losses;
-        (this.document.getElementById('metrics') as HTMLSelectElement).selectedIndex = model.options.metrics;
-        (this.document.getElementById('optimizer') as HTMLSelectElement).selectedIndex = model.options.optimizer;
+        // (this.document.getElementById('losses') as HTMLSelectElement).selectedIndex = model.options.losses;
+        // (this.document.getElementById('metrics') as HTMLSelectElement).selectedIndex = model.options.metrics;
+        // (this.document.getElementById('optimizer') as HTMLSelectElement).selectedIndex = model.options.optimizer;
       }
 
       (this.document.getElementById('modelName') as HTMLInputElement).value = model.name;

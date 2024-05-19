@@ -184,7 +184,7 @@ export class TensorFlowJSComponent implements OnInit {
 
       if (!this.d.selectedModel.outputs.filter(c => c.id === tmpID)[0]) {
         const newClassifier = new Classifier(tmpID, 'Classifier');
-        
+
         for (let c = 0; c < data[0].classifier.length; c++) {
           const label = data[0].classifier[c];
           console.log(label);
@@ -275,8 +275,8 @@ export class TensorFlowJSComponent implements OnInit {
               if (this.d.selectedMicrocontrollers.filter(m => m.serialPort.path === motor.mcu.serialPath).length === 0) {
                 const mcu = this.hardwareService.microcontrollers.filter(m => m.serialPort.path === motor.mcu.serialPath)[0];
                 if (mcu) {
-                  this.d.selectOptionMicrocontroller = mcu;
-                  this.tensorflowService.addMicrocontroller(false);
+                  // this.d.selectOptionMicrocontroller = mcu;
+                  this.tensorflowService.addMicrocontroller(mcu, false);
                 }
               }
               if (motor.d.length > 0) {

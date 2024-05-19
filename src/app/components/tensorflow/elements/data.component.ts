@@ -80,7 +80,7 @@ export class DataComponent implements AfterViewInit {
 
   toggleDataSection() {
     this.dataVisible = !this.dataVisible;
-    this.tensorflowService.updateResize((!this.dataVisible ? window.innerHeight - 60 : window.innerHeight * 0.45));
+    // this.tensorflowService.updateResize((!this.dataVisible ? window.innerHeight - 60 : window.innerHeight * 0.45));
   }
 
   toggleVisibilityInput(m: MotorEl, inputIndex: number) {
@@ -145,22 +145,6 @@ export class DataComponent implements AfterViewInit {
     } else {
       this.d.colorOptions.push(color);
       return this.d.colorOptions[0];
-    }
-  }
-
-  updateCommunicationSpeed(serialPath: string) {
-    const microcontroller = this.d.selectedMicrocontrollers.filter(m => m.serialPort.path === serialPath)[0];
-    if (microcontroller) {
-      this.hardwareService.updateMicroController(microcontroller);
-
-      // console.log(uploadModel);
-      if (microcontroller.motors[0].type !== ActuatorType.pneumatic) {
-        const uploadModel = this.uploadService.createUploadModel(null, microcontroller);
-        uploadModel.config.motors = microcontroller.motors;
-        this.electronService.ipcRenderer.send('updateMotorSetting', uploadModel);
-      }
-
-      // console.log(microcontroller.updateSpeed);
     }
   }
 

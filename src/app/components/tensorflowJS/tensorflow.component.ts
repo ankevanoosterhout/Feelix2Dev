@@ -2,11 +2,12 @@ import { DOCUMENT } from '@angular/common';
 import { Component, OnInit, Inject, HostListener } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
-// import { v4 as uuid } from 'uuid';
+import { v4 as uuid } from 'uuid';
 import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
 import { TensorFlowConfig } from 'src/app/models/tensorflow-config.model';
 import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
-import { TensorFlowTrainService } from 'src/app/services/tensorflow-train.service';
+import { Model, ModelType } from 'src/app/models/tensorflow.model';
+import { TensorFlowModelDrawService } from 'src/app/services/tensorflow-model-draw.service';
 
 @Component({
   selector: 'app-tensorflow',
@@ -20,17 +21,55 @@ export class TensorflowComponent {
 
 
 
-  constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService, public tensorflowService: TensorFlowMainService,
-              private tensorflowDrawService: TensorFlowDrawService, private tensorflowTrainService: TensorFlowTrainService) {
+  constructor(@Inject(DOCUMENT) private document: Document, public tensorflowService: TensorFlowMainService,
+      private tensorflowDrawService: TensorFlowDrawService, private tensorflowModelDrawService: TensorFlowModelDrawService) {
 
-                this.config = this.tensorflowDrawService.config;
-                this.d = this.tensorflowService.d;
-              }
+    this.config = this.tensorflowDrawService.config;
+    this.d = this.tensorflowService.d;
+
+    this.tensorflowService.updateTensorflowProgress.subscribe(data => {
+      this.config.progress = data.progress;
+      this.config.status = data.status;
+      this.document.getElementById('msg').innerHTML = this.config.status;
+      const width = 244 * (this.config.progress / 100);
+      this.document.getElementById('progress').style.width = width + 'px';
+    });
+
+  }
 
 
   selectStep(step: number) {
     this.config.activeStep = step;
+
+    if (step === 0) {
+      if (this.d.selectedModel === undefined) {
+        this.d.selectedModel = new Model(uuid(), 'custom model', ModelType.custom);
+      }
+      this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
+    } else if (step === 1) {
+      this.tensorflowDrawService.drawGraph();
+    } else if (step === 2) {
+
+    } else if (step === 3) {
+
+    }
   }
+
+
+
+
+
+
+
+  // @HostListener('window:keydown', ['$event'])
+  // onKeyDown(e: KeyboardEvent) {
+
+  // }
+
+  // @HostListener('window:keyup', ['$event'])
+  // onKeyDown(e: KeyboardEvent) {
+
+  // }
 
 
 

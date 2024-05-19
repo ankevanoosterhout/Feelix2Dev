@@ -71,6 +71,10 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       this.showPlayInSequenceWindow(res);
     });
 
+    this.electronService.ipcRenderer.on('disconnect', (event: Event) => {
+      this.hardwareService.disconnectAll();
+    });
+
 
 
     this.electronService.ipcRenderer.on('rulers:toggle', (event: Event, visible: boolean) => {
@@ -192,6 +196,13 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
     this.electronService.ipcRenderer.on('clearApplicationData', () => {
       this.showMessage('By clicking yes all data will be removed. When the application restarts, all files and effects will be lost. Do you want to proceed?', 'verification', 'clearApplicationData');
     });
+
+
+    // this.hardwareService.connectWithMicrocontroller.subscribe(res => {
+    //   console.log(res);
+    //   this.electronService.ipcRenderer.send('addMicrocontroller', { port: res.serialPort.path, vendor: res.vendor, baudrate: res.baudrate });
+    // });
+
 
   }
 

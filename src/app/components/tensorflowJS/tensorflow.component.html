@@ -11,7 +11,10 @@
 
   <div class="content">
 
-    <div class="step-details" *ngIf="this.config.activeStep === 0"><app-tensorflow-model></app-tensorflow-model></div>
+    <div class="step-details" *ngIf="this.config.activeStep === 0">
+      <app-tensorflow-default-model *ngIf="!this.d.selectedModel"></app-tensorflow-default-model>
+      <app-tensorflow-model *ngIf="this.d.selectedModel"></app-tensorflow-model>
+    </div>
     <div class="step-details" *ngIf="this.config.activeStep === 1"><app-tensorflow-data></app-tensorflow-data></div>
     <div class="step-details" *ngIf="this.config.activeStep === 2"><app-tensorflow-train></app-tensorflow-train></div>
     <div class="step-details" *ngIf="this.config.activeStep === 3"><app-tensorflow-deploy></app-tensorflow-deploy></div>

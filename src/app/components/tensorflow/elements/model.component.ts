@@ -40,7 +40,7 @@ export class ModelComponent {
     });
 
     this.electronService.ipcRenderer.on('new-model', (event: Event) => {
-      this.d.selectedModel = new Model(uuid(), 'model', ModelType.neuralNetwork);
+      this.d.selectedModel = new Model(uuid(), 'model', ModelType.custom);
       this.tensorflowService.updateModelSettings(this.d.selectedModel);
     });
   }
@@ -74,8 +74,8 @@ export class ModelComponent {
         }
       }
 
-      this.d.selectedModel.options.inputs = inputLabels;
-      this.d.selectedModel.options.outputs = outputLabels;
+      this.d.selectedModel.layers[0].options.inputs = inputLabels;
+      this.d.selectedModel.layers[this.d.selectedModel.layers.length - 1].options.outputs = outputLabels;
 
       this.tensorflowTrainService.CreateTensors(data, this.d.selectedModel);
 

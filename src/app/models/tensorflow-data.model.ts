@@ -17,7 +17,7 @@ export class TensorFlowData {
 
   selectedMicrocontrollers: Array<MicroController> = [];
   selectOptionMicrocontroller: MicroController;
-  selectedModel: Model = new Model(uuid(), 'model', ModelType.neuralNetwork);
+  selectedModel: Model;
 
   kMeans_options = [{ name: 'k clusters', value: 3 },
                     { name: 'Max iterations', value: 4 },
