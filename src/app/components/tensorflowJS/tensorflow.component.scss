@@ -52,9 +52,9 @@
 
 ul.default-models {
   display: inline-flex;
-  position: absolute;
+  position: relative;
   left: 0;
-  height: 0;
+  height: calc(100% - 80px);
   box-sizing: border-box;
   width: 100%;
   padding: 20px;
@@ -118,11 +118,63 @@ ul.default-models {
 ul.steps {
   display: inline-flex;
   width: 100%;
-  height: 60px;
+  height: 50px;
   flex-direction: row;
+  justify-content: space-evenly;
 
   li {
-    width: 20%;
+    display: inline-flex;
+    box-sizing: border-box;
+    height: 52px;
+
+    &.step {
+      display: inline-flex;
+      position: relative;
+      width: 97px;
+      text-align: center;
+      padding: 10px;
+      height: 60px;
+      flex-direction: row;
+      justify-content: baseline;
+      margin-top: 0;
+      border: 2px solid #ccc;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 15px;
+      color: #ccc;
+
+      .middle {
+        margin: 0;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        -ms-transform: translate(-50%, -50%);
+        transform: translate(-50%, -50%);
+      }
+
+    }
+
+    &.arrow {
+      width: 40px;
+      margin-top: 29px;
+      position: relative;
+      height: 3px;
+      display: inline-block;
+      background-color: #ccc;
+
+      div {
+        position: absolute;
+        left: 15px;
+        top: -10px;
+        border: solid #ccc;
+        border-width: 0 3px 3px 0;
+        display: inline-block;
+        padding: 10px;
+        transform: rotate(-45deg);
+        -webkit-transform: rotate(-45deg);
+      }
+    }
   }
 }
 
@@ -159,7 +211,6 @@ ul.classifierLabels {
   min-width: 60px;
   right: 0;
   height: 100%;
-  padding-top: 5px;
   background: #2b2b2b;
   /* border-left: 1px solid #222; */
   overflow: hidden;
@@ -169,7 +220,7 @@ ul.classifierLabels {
   position: relative;
   display: inline-block;
   width: 145px;
-  height: calc(100% - 19px);
+  height: calc(100vh - 19px);
   overflow: hidden;
   top:0;
   padding-top: 19px;
@@ -184,6 +235,11 @@ ul.classifierLabels {
   overflow-y: auto;
   overflow-x: hidden;
   padding-bottom: 50px;
+}
+
+#sidebar-column-left {
+  background: #2b2b2b;
+  border-right: 1px solid #222;
 }
 
 #file_list {
@@ -276,7 +332,7 @@ ul.file-list-sidebar li .name {
 .form-group {
   display: inline-block;
   width: 100%;
-  padding: 2px 0;
+  padding: 4px 0;
   box-sizing: border-box;
 }
 
@@ -394,25 +450,43 @@ ul.column-list-items {
   overflow-x: hidden;
   padding: 10px 10px 50px;
   box-sizing: border-box;
+
+  &.sidebar {
+    width: 290px;
+    border-left: 1px solid #1c1c1c;
+    margin-top: 0;
+    padding-top: 75px;
+    background: #2b2b2b;
+  }
 }
 
 .button-round {
   position: absolute;
-    display: inline-block;
-    width: 16px;
-    height: 16px;
-    right: -9px;
-    top: 5px;
-    border-radius: 10px;
-    background: #ec3838;
-    font-size: 18px;
-    line-height: 15px;
-    font-weight: 600;
-    text-align: center;
-    color: #1c1c1c;
-    border: 1px solid #1c1c1c;
-    z-index: 100;
-    cursor: pointer;
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  right: -9px;
+  top: 5px;
+  border-radius: 10px;
+  background: #ec3838;
+  font-size: 18px;
+  line-height: 15px;
+  font-weight: 600;
+  text-align: center;
+  color: #1c1c1c;
+  border: 1px solid #1c1c1c;
+  z-index: 100;
+  cursor: pointer;
+
+  &.hide {
+    right: 12px;
+
+    img {
+      width: 12px;
+      height: auto;
+      padding: 2px;
+    }
+  }
 
   &:hover {
     transition: ease-in 0.2s;
@@ -489,33 +563,27 @@ ul.column-list-items {
   flex-direction: row;
 }
 
-#data_output_list {
-  min-width: 200px;
-  width: calc(100% - 50px);
+ul#data_output_list {
+  width: 100%;
+  display: inline-flex;
+  flex-direction: row;
   height: auto;
+  justify-content: space-evenly;
+  padding: 20px 0;
+
+  li {
+    min-width: 300px;
+  }
   /* max-height: calc(100% - 105px); */
 }
 
-#data_output_list.results {
-  height: auto;
-  margin-top: 7px;
+#results {
   width: 100%;
+  height: 150px;
+  border-bottom: 1px solid #1c1c1c;
 }
 
-#data_output_list.classifiers {
-  width: calc(100% - 50px)!important;
-}
 
-#create_classifiers, #results {
-  padding: 15px;
-  width: calc(100% - 25px);
-  min-width: 250px;
-  box-sizing: border-box;
-  left: 25px;
-  position: absolute;
-  height: 100%;
-  overflow-y: auto;
-}
 
 .row-padding-10 {
   padding-top: 10px;
@@ -694,17 +762,26 @@ select#microcontroller {
   min-width: 150px;
   width: auto;
   /* color: #ddd; */
+
+  &.small {
+    width: auto;
+    margin: -2px 2px;
+    min-width: 20px;
+  }
+
+  &.classifier {
+    width: 100px;
+    min-width: 80px;
+  }
+
+  &.title {
+    position: relative;
+    color: #ddd;
+    font-weight: 600;
+  }
+
 }
 
-.label-title {
-  color: #ddd;
-}
-
-.label.small {
-  width: auto;
-  margin: -2px 2px;
-  min-width: auto;
-}
 
 label {
   color: #999;
@@ -734,6 +811,14 @@ label {
 
 .column.tableheader {
   margin: 5px 0;
+}
+
+.column-left, .column-right {
+  display: inline-flex;
+  height: calc(100vh - 85px);
+  width: 33vw;
+  margin-top: 44px;
+  vertical-align: top;
 }
 
 .row.hidden {
@@ -1054,6 +1139,10 @@ ul.motor-list li.header > span {
   display: none;
 }
 
+.opencloseArrow.layer {
+  left: 0px;
+}
+
 .bar-container {
   display: inline-block;
   vertical-align: top;
@@ -1294,4 +1383,46 @@ input[type=number].header {
   font-family: 'Open Sans', Arial, sans-serif;
   text-align: right;
 }
+
+ul.training-sample-distr-list {
+  display: inline-flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+  justify-content: space-between;
+
+  li {
+    display: inline-flex;
+    height: 100%;
+    flex-direction: column;
+    color: #ccc;
+    text-align: center;
+  }
+}
+
+#training-sample-distribution {
+  position: relative;
+  width: calc(100% - 145px);
+  height: 150px;
+  box-sizing: border-box;
+  padding: 0 50px;
+  border-bottom: 1px solid #1c1c1c;
+}
+
+#distribution-slider {
+  position: relative;
+  width: 60%;
+  max-width: 500px;
+  height: 200px;
+}
+
+.bottom-row {
+  display: inline-flex;
+  flex-direction: row;
+  height: calc(100vh - 162px);
+  position: relative;
+  width: 100%;
+}
+
+
 

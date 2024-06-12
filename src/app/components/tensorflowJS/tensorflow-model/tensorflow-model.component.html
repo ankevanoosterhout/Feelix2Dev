@@ -34,6 +34,7 @@
 
       <div class="layer-settings" [ngStyle]="{ width: (100 / this.d.selectedModel.layers.length) + 'vw'}"  *ngIf="i === 0">
         <div class="layer-name">{{ layer.name }}</div>
+
         <div class="button-round" id="addLayer" (click)="this.addLayer(0)">+</div>
 
         <div class="layer-content scrollDiv">
@@ -55,13 +56,26 @@
 
           <button class="add left noMarginTop" id="addInputItem" (click)="this.addInputItem()" title="add input variable">add variable</button>
 
+          <div class="form-group" *ngIf="this.d.selectedModel.type === 1 && layer.options.inputLength && layer.options.inputLength.description">
+            <label class="label"><div class="question-mark" title="When the length of the input sequences is constant, it must be given. If you want to link Flatten and Dense layers upstream, you’ll need this parameter">?</div>Input length</label>
+            <input type="number" class="number small blue" id="inputLength" [(ngModel)]="layer.options.inputLength.value" name="inputLength">
+          </div>
+
+          <div class="form-group" *ngIf="layer.options.batchSize">
+            <label class="label"><div class="question-mark" title="The number of elements desired per batch.">?</div>Batch size</label>
+            <input type="number" class="number small blue" id="batchsize" [(ngModel)]="layer.options.batchSize.value" name="batchsize">
+          </div>
+
+          <div class="horizontalSeparator"></div>
+
+          <label class="labelRow">Actuators</label>
 
           <div class="form-group microcontroller">
             <select class="form-control playWindow microcontroller" id="microcontroller" name="microcontroller" [(ngModel)]="this.d.selectOptionMicrocontroller">
               <option class="placeholder" [ngValue]="undefined" selected="selected">-- select microcontroller --</option>
               <option *ngFor="let item of this.hardwareService.microcontrollers" [ngValue]="item">{{ item.name }}</option>
             </select>
-            <button class="add left" (click)="this.tensorflowService.addMicrocontroller()" title="add microcontroller">Add</button>
+            <button class="add left" (click)="this.tensorflowService.addMicrocontroller()" title="add microcontroller">add</button>
           </div>
 
           <ul class="microcontroller-list">
@@ -97,16 +111,6 @@
             </li>
           </ul>
 
-          <div class="form-group" *ngIf="this.d.selectedModel.type === 1 && layer.options.inputLength && layer.options.inputLength.description">
-            <label class="label"><div class="question-mark" title="When the length of the input sequences is constant, it must be given. If you want to link Flatten and Dense layers upstream, you’ll need this parameter">?</div>Input length</label>
-            <input type="number" class="number small blue" id="inputLength" [(ngModel)]="layer.options.inputLength.value" name="inputLength">
-          </div>
-
-          <div class="form-group" *ngIf="layer.options.batchSize">
-            <label class="label"><div class="question-mark" title="The number of elements desired per batch.">?</div>Batch size</label>
-            <input type="number" class="number small blue" id="batchsize" [(ngModel)]="layer.options.batchSize.value" name="batchsize">
-          </div>
-
 
 
         </div>
@@ -122,6 +126,11 @@
 
         <div *ngIf="layer.type" class="layer-name {{ layer.type.subgroup }}">{{ layer.type.subgroup }}</div>
         <div *ngIf="!layer.type" class="layer-name">{{ layer.name }}</div>
+
+        <div class="button-round hide" id="hideLayer" (click)="this.hideLayer(0)" (click)="layer.hidden = !layer.hidden">
+          <img src="./assets/icons/layers/non-visible-icon-black.svg" *ngIf="layer.hidden">
+          <img src="./assets/icons/layers/visible-icon-black.svg" *ngIf="!layer.hidden">
+        </div>
         <div class="button-round" id="addLayer" (click)="this.addLayer(i)">+</div>
 
 
@@ -141,19 +150,25 @@
 
           <div class="form-group" *ngIf="layer.options.kernelSize">
             <label class="label"><div class="question-mark" title="Positive integer, dimensionality of the output space.">?</div>Kernel size</label>
-            <input type="number" class="number small blue" id="kernelSizeX" [(ngModel)]="layer.options.kernelSize.value.x" name="kernelSizeX" (change)="this.updateNetworkVisualization()">
+            <input type="number" class="number extra small blue" id="kernelSizeX" [(ngModel)]="layer.options.kernelSize.value.x" name="kernelSizeX" (change)="this.updateNetworkVisualization()">
             <label class="label small">x</label>
-            <input type="number" class="number small blue" id="kernelSizeY" [(ngModel)]="layer.options.kernelSize.value.y" name="kernelSizeY" (change)="this.updateNetworkVisualization()">
+            <input type="number" class="number extra small blue" id="kernelSizeY" [(ngModel)]="layer.options.kernelSize.value.y" name="kernelSizeY" (change)="this.updateNetworkVisualization()">
           </div>
 
 
-          <div class="form-group" *ngIf="layer.options.filters && layer.options.filters.value !== undefined">
+          <div class="horizontalSeparator"></div>
+
+          <div class="opencloseArrow layer" id="advanced_layer_{{ i }}" [ngClass]="{ open: layer.settingsVisible }" (click)="layer.settingsVisible = !layer.settingsVisible"><div></div></div>
+          <label class="labelRow nextToArrow">Advanced</label>
+
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.filters && layer.options.filters.value !== undefined">
             <label class="label"><div class="question-mark" title="The dimensionality of the output space (i.e. the number of filters in the convolution).">?</div>Filters</label>
             <input type="number" class="number small blue" id="layerFilters" [(ngModel)]="layer.options.filters.value" name="layerFilters">
           </div>
 
 
-          <div class="form-group" *ngIf="layer.options.padding && layer.options.padding.value !== undefined">
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.padding && layer.options.padding.value !== undefined">
             <label class="label"><div class="question-mark" title="Padding mode.">?</div>Padding</label>
             <select class="form-control playWindow" id="padding" name="padding" [(ngModel)]="layer.options.padding.value">
               <option *ngFor="let option of this.paddingOptions" [ngValue]="option">{{ option }}</option>
@@ -161,14 +176,14 @@
           </div>
 
 
-          <div class="form-group" *ngIf="layer.options.activation">
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.activation">
             <label class="label"><div class="question-mark" title="Activation function of the layer.">?</div>Activation</label>
             <select class="form-control playWindow" id="activation" name="activation" [(ngModel)]="layer.options.activation.value" (change)="this.updateNetworkVisualization()">
               <option *ngFor="let item of this.activationOptions" [ngValue]="item">{{ ActivationLabelMapping[item] }}</option>
             </select>
           </div>
 
-          <div class="form-group" *ngIf="layer.options.activityRegularizer">
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.activityRegularizer">
             <label class="label"><div class="question-mark" title="Regularizer function applied to the activation.">?</div>Activity regularizer</label>
             <select class="form-control playWindow" id="activationReg" name="activationReg" [(ngModel)]="layer.options.activityRegularizer.value">
               <option *ngFor="let item of this.regularizerOptions" [ngValue]="item">{{ RegularizerLabelMapping[item] }}</option>
@@ -176,42 +191,42 @@
           </div>
 
 
-          <div class="form-group" *ngIf="layer.options.trainable && layer.options.trainable.value !== undefined">
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.trainable && layer.options.trainable.value !== undefined">
             <label class="radio-container">Trainable <div class="question-mark" title="Whether the weights of this layer are updatable by fit. Defaults to true.">?</div>
               <input type="checkbox" class="type" id="batchNormalization" name="batchNormalization" [(ngModel)]="layer.options.trainable.value" [checked]="layer.options.trainable.value">
               <span class="checkmark radio tensorflow"></span>
             </label>
           </div>
 
-          <div class="form-group" *ngIf="layer.options.useBias && layer.options.useBias.value !== undefined">
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.useBias && layer.options.useBias.value !== undefined">
             <label class="radio-container">Use bias <div class="question-mark" title="Whether to apply a bias.">?</div>
               <input type="checkbox" class="type" id="batchNormalization" name="batchNormalization" [(ngModel)]="layer.options.useBias.value" [checked]="layer.options.useBias.value" (change)="this.updateNetworkVisualization()">
               <span class="checkmark radio tensorflow"></span>
             </label>
           </div>
 
-          <div class="form-group" *ngIf="layer.options.biasConstraint && layer.options.biasConstraint.value !== undefined">
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.biasConstraint && layer.options.biasConstraint.value !== undefined">
             <label class="label"><div class="question-mark" title="Constraint for the bias vector.">?</div>Bias constraint</label>
             <select class="form-control playWindow" id="biasConstraint" name="biasConstraint" [(ngModel)]="layer.options.biasConstraint.value">
               <option *ngFor="let item of this.constraintOptions" [ngValue]="item">{{ ConstraintLabelMapping[item] }}</option>
             </select>
           </div>
 
-          <div class="form-group" *ngIf="layer.options.kernelConstraint">
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.kernelConstraint">
             <label class="label"><div class="question-mark" title="The constraint for the convolutional kernel weights">?</div>Kernel constraint</label>
             <select class="form-control playWindow" id="kernelConstraint" name="kernelConstraint" [(ngModel)]="layer.options.kernelConstraint.value">
               <option *ngFor="let item of this.constraintOptions" [ngValue]="item">{{ ConstraintLabelMapping[item] }}</option>
             </select>
           </div>
 
-          <div class="form-group" *ngIf="layer.options.biasRegularizer">
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.biasRegularizer">
             <label class="label"><div class="question-mark" title="Regularizer function applied to the bias vector.">?</div>Bias regularizer</label>
             <select class="form-control playWindow" id="biasRegularizer" name="biasRegularizer" [(ngModel)]="layer.options.biasRegularizer.value">
               <option *ngFor="let item of this.regularizerOptions" [ngValue]="item">{{ RegularizerLabelMapping[item] }}</option>
             </select>
           </div>
 
-          <div class="form-group" *ngIf="layer.options.kernelRegularizer">
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.kernelRegularizer">
             <label class="label"><div class="question-mark" title="Regularizer function applied to the dense kernel weights matrix.">?</div>Kernel regularizer</label>
             <select class="form-control playWindow" id="kernelRegularizer" name="kernelRegularizer" [(ngModel)]="layer.options.kernelRegularizer.value">
               <option *ngFor="let item of this.regularizerOptions" [ngValue]="item">{{ RegularizerLabelMapping[item] }}</option>
@@ -219,28 +234,28 @@
           </div>
 
 
-          <div class="form-group" *ngIf="layer.options.dropout">
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.dropout">
             <label class="label"><div class="question-mark" title="Number between 0 and 1. Fraction of the units to drop for the linear transformation of the inputs.">?</div>Dropout</label>
             <input type="number" class="number small blue" id="dropout" [(ngModel)]="layer.options.dropout.value" name="dropout">
           </div>
 
 
 
-          <div class="row" *ngIf="layer.options.returnSequences && layer.options.returnSequences.value !== undefined">
+          <div class="row" *ngIf="layer.settingsVisible && layer.options.returnSequences && layer.options.returnSequences.value !== undefined">
             <label class="radio-container">Return sequences <div class="question-mark" title="Whether to return the last output in the output sequence, or the full sequence.">?</div>
               <input type="checkbox" class="type" id="returnSequences" name="returnSequences" [(ngModel)]="layer.options.returnSequences.value" [checked]="layer.options.returnSequences.value">
               <span class="checkmark radio tensorflow"></span>
             </label>
           </div>
 
-          <div class="row" *ngIf="layer.options.returnState && layer.options.returnState.value !== undefined">
+          <div class="row" *ngIf="layer.settingsVisible && layer.options.returnState && layer.options.returnState.value !== undefined">
             <label class="radio-container">Return state <div class="question-mark" title="Whether to return the last state in addition to the output.">?</div>
               <input type="checkbox" class="type" id="returnState" name="returnState" [(ngModel)]="layer.options.returnState.value" [checked]="layer.options.returnState.value">
               <span class="checkmark radio tensorflow"></span>
             </label>
           </div>
 
-          <div class="row" *ngIf="layer.options.goBackwards && layer.options.goBackwards.value !== undefined">
+          <div class="row" *ngIf="layer.settingsVisible && layer.options.goBackwards && layer.options.goBackwards.value !== undefined">
             <label class="radio-container">Go backwards <div class="question-mark" title="If this is true, process the input sequence backward and return the reversed sequence.">?</div>
               <input type="checkbox" class="type" id="goBackwards" name="goBackwards" [(ngModel)]="layer.options.goBackwards.value" [checked]="layer.options.goBackwards.value">
               <span class="checkmark radio tensorflow"></span>
@@ -264,7 +279,7 @@
 
           <!-- normalization layers -->
 
-          <div class="form-group" *ngIf="layer.options.axis">
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.axis">
             <label class="label"><div class="question-mark" title="The integer axis that should be normalized (typically the features axis).">?</div>Axis</label>
             <input type="number" class="number small blue" id="axis" [(ngModel)]="layer.options.axis.value" name="axis">
           </div>
@@ -288,6 +303,8 @@
         <div class="layer-name">{{ layer.name }}</div>
 
         <div class="layer-content scrollDiv">
+
+
           <ul class="column-list-items">
             <li class="column" *ngFor="let output of this.d.selectedModel.outputs; let i = index" [attr.data-index]="i">
 
@@ -313,7 +330,7 @@
                     </div>
                   </li>
                   <li>
-                    <button class="add left noMarginTop" (click)="this.tensorflowService.addLabelToClassifier(i)" title="add label">Add label</button>
+                    <button class="add left noMarginTop" (click)="this.tensorflowService.addLabelToClassifier(i)" title="add label">add label</button>
                   </li>
                 </ul>
               </div>
@@ -323,6 +340,10 @@
 
 
           <button class="add left noMarginTop" id="addOutputItem" (click)="this.addClassifier()" title="add classifier">add classifier</button>
+
+          <div class="horizontalSeparator"></div>
+
+          <div class="labelRow">Layer settings</div>
 
           <div class="form-group">
             <label class="label"><div class="question-mark" title="Activation function of the layer.">?</div>Activation</label>

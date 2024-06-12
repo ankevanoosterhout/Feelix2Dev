@@ -540,7 +540,7 @@ select#microcontroller {
   /* color: #ddd; */
 }
 
-.label-title {
+.title {
   color: #ddd;
 }
 
@@ -858,6 +858,8 @@ ul.motor-list li.header > span {
 .opencloseArrow.hidden {
   display: none;
 }
+
+
 
 .bar-container {
   display: inline-block;

@@ -35,6 +35,7 @@ export class TensorFlowData {
   processing = false;
 
   classify = false;
+  
   recording = { active: false, starttime: null };
 
   trimLinesVisible = false;

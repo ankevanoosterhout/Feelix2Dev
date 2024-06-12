@@ -36,7 +36,6 @@ import { DrawingService } from './services/drawing.service';
 import { BBoxService } from './services/bbox.service';
 import { DrawElementsService } from './services/draw-elements.service';
 import { HardwareService } from './services/hardware.service';
-import { StatusbarComponent } from './components/interface-elements/statusbar.component';
 import { MotorSettingsComponent } from './components/windows/settings/motor-settings.component';
 import { MotorControlComponent } from './components/interface-elements/motor-control/motor-control.component';
 import { MotorControlToolbarInsetComponent } from './components/interface-elements/toolbars/motor-control-toolbar-inset.component';
@@ -48,35 +47,20 @@ import { EffectVisualizationService } from './services/effect-visualization.serv
 import { ExportDialogComponent } from './components/windows/export-dialog.component';
 import { CloneService } from './services/clone.service';
 import { GridService } from './services/grid.service';
-import { DataComponent } from './components/tensorflow/elements/data.component';
-import { ClassificationComponent } from './components/tensorflow/elements/classification.component';
-import { ModelComponent } from './components/tensorflow/elements/model.component';
-import { DataSetService } from './services/dataset.service';
-import { LoadDataSetsComponent } from './components/tensorflow/datasets/load-datasets.component';
-import { TensorFlowModelService } from './services/tensorflow-model.service';
-import { TensorFlowDrawService } from './services/tensorflow-draw.service';
 import { FilterService } from './services/filter.service';
 import { KinematicsComponent } from './components/kinematics/kinematics.component';
 import { KinematicService } from './services/kinematic.service';
-import { KinematicsToolbarComponent } from './components/interface-elements/toolbars/kinematics-toolbar.component';
+import { KinematicsToolbarComponent } from './components/kinematics/kinematics-toolbar.component';
 import { KinematicsControlComponent } from './components/kinematics/control/kinematics-controls.component';
 import { KinematicsDrawingService } from './services/kinematics-drawing.service';
 import { KinematicsCursorComponent } from './components/kinematics/control/kinematics-cursor.component';
 import { DragControlsService } from './services/drag-controls.service';
 import { IKService } from './services/IK.service';
 import { PlaySequenceComponent } from './components/windows/play-sequence.component';
-import { TensorFlowTrainService } from './services/tensorflow-train.service';
 import { DrawAudioService } from './services/draw-audio.service';
 import { MidiDataService } from './services/midi-data.service';
-import { TensorFlowJSComponent } from './components/tensorflow/tensorFlowJS.component';
-import { TensorFlowMainService } from './services/tensorflow-main.service';
-import { TensorflowComponent } from './components/tensorflowJS/tensorflow.component';
-import { TensorflowDataComponent } from './components/tensorflowJS/datasets/tensorflow-data.component';
-import { TensorflowModelComponent } from './components/tensorflowJS/tensorflow-model/tensorflow-model.component';
-import { TensorflowDeployComponent } from './components/tensorflowJS/deploy/tensorflow-deploy.component';
-import { TensorflowTrainComponent } from './components/tensorflowJS/train/tensorflow-train.component';
-import { TensorFlowModelDrawService } from './services/tensorflow-model-draw.service';
-import { TensorflowDefaultModelComponent } from './components/tensorflowJS/tensorflow-model/tensorflow-default-model.component';
+import { TensorflowModule } from './components/tensorflowJS/tensorflow.module';
+import { StatusbarModule } from './components/interface-elements/statusbar.module';
 
 @NgModule({
     declarations: [
@@ -98,23 +82,11 @@ import { TensorflowDefaultModelComponent } from './components/tensorflowJS/tenso
         ExportDialogComponent,
         ZigZagComponent,
         TransformComponent,
-        StatusbarComponent,
         MotorSettingsComponent,
         MotorControlComponent,
         MotorControlToolbarInsetComponent,
         MotorControlToolbarComponent,
         PlaySequenceComponent,
-        TensorFlowJSComponent,
-        TensorflowComponent,
-        TensorflowDataComponent,
-        TensorflowModelComponent,
-        TensorflowDefaultModelComponent,
-        TensorflowDeployComponent,
-        TensorflowTrainComponent,
-        DataComponent,
-        ClassificationComponent,
-        ModelComponent,
-        LoadDataSetsComponent,
         KinematicsComponent,
         KinematicsControlComponent,
         KinematicsToolbarComponent,
@@ -129,7 +101,9 @@ import { TensorflowDefaultModelComponent } from './components/tensorflowJS/tenso
         NgxFsModule,
         MatDialogModule,
         BrowserAnimationsModule,
-        FileSaverModule
+        FileSaverModule,
+        StatusbarModule,
+        TensorflowModule
     ],
     providers: [
         FileService,
@@ -148,12 +122,6 @@ import { TensorflowDefaultModelComponent } from './components/tensorflowJS/tenso
         EffectVisualizationService,
         MotorControlService,
         CloneService,
-        TensorFlowMainService,
-        TensorFlowDrawService,
-        TensorFlowTrainService,
-        TensorFlowModelDrawService,
-        DataSetService,
-        TensorFlowModelService,
         FilterService,
         KinematicService,
         KinematicsDrawingService,

@@ -163,6 +163,10 @@ export class TensorflowModelComponent implements OnInit {
     this.tensorflowService.updateInput(index);
   }
 
+  deleteInputItem(index: number) {
+    this.tensorflowService.deleteInputItem(index);
+  }
+
   addClassifier() {
     this.tensorflowService.addClassifier();
     this.updateOutputUnits();
@@ -276,6 +280,8 @@ export class TensorflowModelComponent implements OnInit {
       default:
         layer.options = new Options();
     }
+
+    this.updateNetworkVisualization();
 
   }
 

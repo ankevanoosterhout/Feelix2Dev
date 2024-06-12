@@ -11,7 +11,7 @@ import { Folder } from 'src/app/models/file.model';
 @Component({
   selector: 'app-load-dataset',
   templateUrl: './load-dataset.component.html',
-  styleUrls: ['./load-dataset.component.css', '../tensorflowJS.component.css'],
+  styleUrls: ['./load-dataset.component.css', '../tensorflow.component.scss'],
 })
 
 export class LoadDataSetsComponent implements OnInit {

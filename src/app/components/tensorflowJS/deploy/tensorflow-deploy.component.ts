@@ -1,5 +1,6 @@
-import { Component, Inject } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
+import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 
 
@@ -12,12 +13,19 @@ export class TensorflowDeployComponent {
 
   public d: TensorFlowData;
 
-  constructor(private tensorflowService: TensorFlowMainService,) {
+  public graphID = 'svg_graph_deploy';
+  public size = { width: innerWidth - 290, height: innerHeight - 219, margin: 80 };
+
+  constructor(public tensorflowService: TensorFlowMainService, private tensorflowDrawService: TensorFlowDrawService) {
     this.d = this.tensorflowService.d;
   }
 
-  
 
+  @HostListener('window:resize', ['$event'])
+  onResize(event: Event) {
+    this.size = { width: innerWidth - 436, height: innerHeight - 219, margin: 80 };
+    this.tensorflowDrawService.drawGraph(this.graphID, this.size);
+  }
 
 
 }

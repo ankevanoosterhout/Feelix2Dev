@@ -18,6 +18,7 @@ export class TensorFlowConfig {
   width = window.innerWidth - (this.sidebarColumnWidth[0] + this.sidebarColumnWidth[1]);
   height = window.innerHeight - 100;
 
+
   margin = 50;
 
   xAxis: any;
@@ -28,8 +29,8 @@ export class TensorFlowConfig {
   updateVerticalScreenDivision = false;
   resultWindowVisible = true;
 
-  horizontalScreenDivision = 220;
-  verticalScreenDivision = 70;
+  // horizontalScreenDivision = 220;
+  // verticalScreenDivision = 70;
 
   activeStep = 0;
 

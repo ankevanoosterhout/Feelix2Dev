@@ -18,39 +18,66 @@ export class TensorFlowDrawService {
   }
 
 
-  drawGraph() {
+  drawTrainingSlider() {
+    d3.selectAll('#trainingSliderSVG').remove();
 
-    // console.log(this.config.width, this.config.height);
+    const sliderEl = d3.select('#trainingSlider')
+      .append('svg')
+      .attr('id', 'trainingSliderSVG');
+
+    sliderEl.append('rect')
+      .attr('x', 0)
+      .attr('y', 100)
+      .attr('width', 300)
+      .attr('height', 2)
+      .attr('id', 'bar')
+      .style('fill', '#ccc');
+
+    sliderEl.append('rect')
+      .attr('x', 0)
+      .attr('y', 100)
+      .attr('width', 300)
+      .attr('height', 2)
+      .attr('id', 'handle')
+      .style('fill', '#ccc');
+  }
+
+
+  drawGraph(id="svg_graph", size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
+
+    console.log(id, size);
 
     d3.selectAll('#datagraph').remove();
 
-    this.config.dataSVG = d3.select('#svg_graph')
+    console.log(d3.select('#' + id));
+
+    this.config.dataSVG = d3.select('#' + id)
         .append('svg')
           .attr('id', 'datagraph')
-          .attr('width', this.config.width)
-          .attr('height', this.config.height);
+          .attr('width', size.width)
+          .attr('height', size.height);
           // .attr("viewBox", [0, 0, this.config.width, this.config.height]);
 
     this.config.dataSVG.append('clipPath')
       .attr('id', 'clipPathGraph')
       .append('svg:rect')
-      .attr('width', this.config.width - (2 * this.config.margin))
-      .attr('height', this.config.height - this.config.margin)
-      .attr('transform', 'translate(' + this.config.margin + ',0)');
+      .attr('width', size.width - (2 * size.margin))
+      .attr('height', size.height - size.margin)
+      .attr('transform', 'translate(' + size.margin + ',0)');
 
     this.config.dataSVG.append('rect')
       .attr('id', 'border')
       .attr('x', 0)
       .attr('y', 0)
-      .attr('width', this.config.width - (2 * this.config.margin))
-      .attr('height', this.config.height - (2 * this.config.margin))
-      .attr('transform', 'translate(' + this.config.margin + ',' + this.config.margin + ')')
+      .attr('width', size.width - (2 * size.margin))
+      .attr('height', size.height - (2 * size.margin))
+      .attr('transform', 'translate(' + size.margin + ',' + size.margin + ')')
       .style('stroke', '#999')
       .style('stroke-width', 0.5)
       .style('fill', 'transparent');
 
-    this.setScale();
-    this.drawTicks();
+    this.setScale(size);
+    this.drawTicks(size);
   }
 
 
@@ -60,15 +87,15 @@ export class TensorFlowDrawService {
 
 
 
-  setScale() {
+  setScale(size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
 
     this.config.scaleY = d3.scaleLinear()
       .domain([this.config.bounds.yMax, this.config.bounds.yMin])
-      .range([this.config.margin, this.config.height - this.config.margin]);
+      .range([size.margin, size.height - size.margin]);
 
     this.config.baseScaleX = d3.scaleLinear()
       .domain([this.config.bounds.xMin, this.config.bounds.xMax])
-      .range([this.config.margin, this.config.width - this.config.margin]);
+      .range([size.margin, size.width - size.margin]);
 
     if (this.config.zoomable) {
 
@@ -90,11 +117,11 @@ export class TensorFlowDrawService {
   }
 
 
-  setZoom() {
+  setZoom(size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
     this.config.zoom = d3
       .zoom()
       .scaleExtent([0.01, Infinity])
-      .translateExtent([[0,0], [this.config.width, this.config.height]]) // 1.2
+      .translateExtent([[0,0], [size.width, size.height]]) // 1.2
       .on('zoom', (event: any) => {
         if (this.config.zoomable) {
           this.config.transform = event.transform;
@@ -136,30 +163,30 @@ export class TensorFlowDrawService {
   }
 
 
-  drawTicks() {
+  drawTicks(size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
     this.config.yAxis = this.config.dataSVG.append('g');
 
     const yAxis = d3
         .axisLeft(this.config.scaleY)
         .ticks(5)
-        .tickSize(this.config.width - (2 * this.config.margin))
+        .tickSize(size.width - (2 * size.margin))
         .tickFormat((e: any) => {
           if (Math.floor(e) !== e) { return; }
           return e;
         });
 
     this.config.yAxis.append('g')
-        .attr('transform', 'translate(' + (this.config.width - this.config.margin) + ', 0)')
+        .attr('transform', 'translate(' + (size.width - size.margin) + ', 0)')
         .attr('class', 'datagraphTicks')
         .call(yAxis)
           .selectAll('text')
           .attr('y', 0)
-          .attr('x', -(this.config.width - (2 * this.config.margin)) - 10);
+          .attr('x', -(size.width - (2 * size.margin)) - 10);
 
     this.config.xAxisBottom = d3
         .axisBottom(this.config.scaleX)
         .ticks(10)
-        .tickSize(this.config.height - (2 * this.config.margin))
+        .tickSize(size.height - (2 * size.margin))
         .tickFormat((e: any) => {
           if (Math.floor(e) !== e) { return; }
           return e;
@@ -171,10 +198,10 @@ export class TensorFlowDrawService {
     this.config.xAxis.append('g')
         .attr('id', 'xAxis')
         .attr('class', 'datagraphTicks axisBottom')
-        .attr('transform', 'translate(0,'+ this.config.margin + ')')
+        .attr('transform', 'translate(0,'+ size.margin + ')')
         .call(this.config.xAxisBottom)
           .selectAll('text')
-          .attr('y', this.config.height - (2 * this.config.margin) + 10)
+          .attr('y', size.height - (2 * size.margin) + 10)
           .attr('x', 0);
   }
 

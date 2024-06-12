@@ -203,6 +203,8 @@ export class Layer {
   name: string;
   options: any = new Options();
   type: LayerType = null;
+  settingsVisible = false;
+  hidden = false;
 
   constructor(name: string) {
     this.name = name;
@@ -231,6 +233,7 @@ export class TrainingOptions {
   metrics: any = { name:'categoricalAccuracy', value: tf.metrics.categoricalAccuracy };
   losses: any = { name:'categoricalCrossentropy', value: tf.metrics.categoricalCrossentropy };
   momentum = 10;
+  distribution = [1.0, 0];
 };
 
 export class Options {

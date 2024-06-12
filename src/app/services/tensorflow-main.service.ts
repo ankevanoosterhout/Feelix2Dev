@@ -463,6 +463,10 @@ export class TensorFlowMainService {
       this.d.selectedModel.outputs.filter(c => c.name === classifier_name)[0].labels.splice(i, 1);
     }
 
+    saveTrainingSettings() {
+      //
+    }
+
     saveMLoutput() {
       if (this.d.ML_OutputData.length > 0) {
         this.exportDataSet(this.d.ML_OutputData);
@@ -687,6 +691,9 @@ export class TensorFlowMainService {
         }
       }
     }
+
+
+
 
 
 }

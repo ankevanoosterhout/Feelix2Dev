@@ -104,7 +104,7 @@
 
   <ul id="data_output_list" class="results">
     <li *ngFor="let classifier of this.tensorflowService.d.selectedModel.outputs">
-      <label class="label label-title">{{ classifier.name }}</label>
+      <label class="label title">{{ classifier.name }}</label>
       <ul *ngIf="classifier.active">
         <li *ngFor="let label of classifier.labels; let i=index;">
           <label class="label">{{ label.name }}</label>

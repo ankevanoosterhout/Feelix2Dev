@@ -36,8 +36,9 @@ export class TensorFlowModelDrawService {
     let i = 0;
     const columnWidth = (window.innerWidth / model.layers.length);
     const maxUnits = this.getMaxNrOfUnits(model.layers);
-    const distance = (this.height - (this.margin * 2)) / maxUnits;
+    let distance = (this.height - (this.margin * 2)) / maxUnits;
 
+    if (distance > 70) { distance = 70; }
 
 
 
@@ -101,7 +102,7 @@ export class TensorFlowModelDrawService {
       .attr('y', 0)
       .attr('width', width)
       .attr('height', this.height)
-      .style('fill', layerIndex%2 === 0 ? 'rgba(255,255,255,0.1' : 'transparent');
+      .style('fill', layerIndex%2 === 0 ? 'rgba(133,133,133,0.05' : 'transparent');
 
 
     this.modelSVG.selectAll('line.layer_' + layerIndex)

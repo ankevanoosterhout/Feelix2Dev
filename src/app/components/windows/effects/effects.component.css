@@ -834,6 +834,11 @@ input.small, input.small:focus {
   max-width: 40px;
 }
 
+input.extra.small, input.extra.small:focus {
+  width: 20px;
+  max-width: 20px;
+}
+
 input[type=number].settings:focus {
   max-width: 45px;
 }

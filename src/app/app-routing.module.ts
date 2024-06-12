@@ -16,11 +16,11 @@ import { MotorControlToolbarInsetComponent } from './components/interface-elemen
 import { MotorControlToolbarComponent } from './components/interface-elements/toolbars/motor-control-toolbar.component';
 import { MotorSettingsComponent } from './components/windows/settings/motor-settings.component';
 import { EffectListComponent } from './components/file/effect-list.component';
-import { TensorFlowJSComponent } from './components/tensorflow/tensorFlowJS.component';
+// import { TensorFlowJSComponent } from './components/tensorflow/tensorFlowJS.component';
 import { TensorflowComponent } from './components/tensorflowJS/tensorflow.component';
-import { LoadDataSetsComponent } from './components/tensorflow/datasets/load-datasets.component';
+import { LoadDataSetsComponent } from './components/tensorflowJS/loadData/load-datasets.component';
 import { KinematicsComponent } from './components/kinematics/kinematics.component';
-import { KinematicsToolbarComponent } from './components/interface-elements/toolbars/kinematics-toolbar.component';
+import { KinematicsToolbarComponent } from './components/kinematics/kinematics-toolbar.component';
 import { KinematicsControlComponent } from './components/kinematics/control/kinematics-controls.component';
 import { KinematicsCursorComponent } from './components/kinematics/control/kinematics-cursor.component';
 import { PlaySequenceComponent } from './components/windows/play-sequence.component';
@@ -41,7 +41,7 @@ const routes: Routes = [
     { path: 'zigzag', component: ZigZagComponent },
     { path: 'transform', component: TransformComponent },
     { path: 'info', component: InfoPageComponent },
-    { path: 'tensorflow', component: TensorFlowJSComponent },
+    // { path: 'tensorflow', component: TensorFlowJSComponent },
     { path: 'tensorflowjs', component: TensorflowComponent },
     { path: 'motor-control-component', component: MotorControlComponent },
     { path: 'motor-control-toolbar-inset', component: MotorControlToolbarInsetComponent },
