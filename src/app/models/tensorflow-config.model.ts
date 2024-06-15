@@ -13,9 +13,9 @@ export class TensorFlowConfig {
 
   bounds = new Bounds();
 
-  sidebarColumnWidth = [150, 150];
+  // sidebarColumnWidth = [170, 170];
 
-  width = window.innerWidth - (this.sidebarColumnWidth[0] + this.sidebarColumnWidth[1]);
+  width = window.innerWidth - 320;
   height = window.innerHeight - 100;
 
 
@@ -32,9 +32,10 @@ export class TensorFlowConfig {
   // horizontalScreenDivision = 220;
   // verticalScreenDivision = 70;
 
-  activeStep = 0;
+  activeStep = -1;
 
   steps = [
+    { id: -1, name: 'default' },
     { id: 0, name: 'model' },
     { id: 1, name: 'data' },
     { id: 2, name: 'train' },

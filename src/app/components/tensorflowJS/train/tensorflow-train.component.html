@@ -1,43 +1,26 @@
 <div id="presets">
 
-  <div class="sidebar-column" id="sidebar-column-left">
-    <div class="sidebar-column-content">
-      <ul class="file-list-sidebar" *ngIf="this.d.dataSets">
-        <li *ngFor="let set of this.d.dataSets; let i = index;" id="dataset-item-{{ set.id }}" (click)="this.selectDataSet(set.id, $event)"
-            [ngClass]="{ active: set.open, selected: this.d.multipleSelect.active && i >= this.d.multipleSelect.min && i <= this.d.multipleSelect.max }">
-          <div class="row name" >{{ set.name }}</div>
-          <!-- <div class="close close-button" (click)="this.tensorflowService.deleteDataSet(set.id)"><div></div></div> -->
-        </li>
-      </ul>
-
-      <!-- <ul class="file-list-sidebar last" *ngIf="this.d.mlOutputData">
-        <li *ngFor="let mlset of this.d.mlOutputData; let i = index;" id="dataset-item-{{ mlset.id }}" (click)="this.selectDataSet(mlset.id, $event)"
-            [ngClass]="{ active: mlset.open, selected: this.d.multipleSelect.active && i >= this.d.multipleSelect.min && i <= this.d.multipleSelect.max }">
-          <div class="row name" >{{ mlset.name }}</div>
-          <div class="close close-button" (click)="this.tensorflowService.deleteDataSet(mlset.id, true)"><div></div></div>
-        </li>
-      </ul> -->
-    </div>
-  </div>
-
+  <app-sidebar [double]="false" [train]="true" [inputDataVisible]="true" [outputDataVisible]="false"></app-sidebar>
 
 
   <div class="content">
 
-
-
     <div id="training-sample-distribution">
       <ul class="training-sample-distr-list">
-        <li>
-          <p>training</p>
-          <h1>{{ (this.d.selectedModel.training.distribution[0] * 100) }}%</h1>
+        <li class="small-column">
+          <p>Training</p>
+          <h1>{{ (this.d.selectedModel.training.distribution * 100) | number : '1.2-2' }}%</h1>
+          <p class="sub" *ngIf="this.d.dataSets.length > 0">{{ ((this.d.selectedModel.training.distribution) * this.d.dataSets.length) | number : '1.0-0'  }} data samples</p>
         </li>
-        <li>
-          <div id="distribution-slider"></div>
+        <li class="slider-column">
+          <div id="distribution-slider">
+            <input type="range" min="0" max="1" [(ngModel)]="this.d.selectedModel.training.distribution" step="0.01" class="slider" id="trainingSlider">
+          </div>
         </li>
-        <li>
-          <p>validation</p>
-          <h1>{{ (this.d.selectedModel.training.distribution[1] * 100) }}%</h1>
+        <li class="small-column">
+          <p>Validation</p>
+          <h1>{{ (1 - this.d.selectedModel.training.distribution) * 100 | number : '1.2-2'  }}%</h1>
+          <p class="sub" *ngIf="this.d.dataSets.length > 0">{{ ((1 - this.d.selectedModel.training.distribution) * this.d.dataSets.length) | number : '1.0-0'  }} data samples</p>
         </li>
       </ul>
     </div>
@@ -48,15 +31,30 @@
 
 
       <div class="fixed-toolbar" id="fixed-toolbar">
-        <div class="row" id="toolbar-content">
+
+        <div class="right train" id="toolbar-content">
 
           <div>
             <ul class="buttons-list">
-              <li id="save" (click)="this.tensorflowService.saveTrainingSettings()"><img src="./assets/icons/buttons/save.svg" title="Save training settings"></li>
+
+              <li id="shuffle" (click)="this.d.random = !this.d.random" [ngClass]="{ 'active': this.d.random }"><img src="./assets/icons/buttons/random.svg" title="Randomly assign training and validation sets"></li>
+              <li id="load" (click)="this.tensorflowService.loadDataSet()"><img src="./assets/icons/buttons/open.svg" title="Open data set"></li>
+              <li id="save" (click)="this.tensorflowService.saveTrainingSettings()"><img src="./assets/icons/buttons/save.svg" title="Save trained model"></li>
+              <!-- <li id="delete"><img src="./assets/icons/buttons/bin.svg" title="Delete output files"></li> -->
+
               <!-- <li id="merge" (click)="this.tensorflowService.mergeDataSets()" disabled="!this.multipleSelect.active"><img src="./assets/icons/buttons/merge2.svg" title="Merge data sets"></li> -->
             </ul>
           </div>
+
+
+          <div class="text-buttons-toolbar">
+            <button class="add" id="train" (click)="this.train()" title="delete layer">train</button>
+            <button class="add disabled" id="validate" (click)="this.validate()" title="validate model using data samples">validate</button>
+            <button class="add disabled" id="deploy" (click)="this.deploy()" title="test model with real time input data">deploy</button>
+          </div>
+
         </div>
+
       </div>
 
 
@@ -105,9 +103,7 @@
         </div>
         <!-- <div class="horizontalSeparator"></div> -->
 
-        <button class="add" id="train" (click)="this.train()" title="delete layer">train</button>
-        <button class="add inactive" id="validate" (click)="this.validate()" title="validate model using data samples">validate</button>
-        <button class="add inactive" id="deploy" (click)="this.deploy()" title="test model with real time input data">deploy</button>
+
 
       </div>
     </div>

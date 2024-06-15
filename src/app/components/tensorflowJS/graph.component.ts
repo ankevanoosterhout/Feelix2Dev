@@ -10,9 +10,9 @@ import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service'
 
       #svg_graph_training, #svg_graph_deploy {
         display: inline-flex;
-        height: calc(100vh - 219px);
+        height: calc(100vh - 210px);
         position: relative;
-        width: calc(100vw - 436px);
+        width: calc(100vw - 470px);
       }
 
       #svg_graph_deploy {
@@ -35,7 +35,6 @@ export class GraphComponent implements AfterViewInit {
     //Add 'implements AfterViewInit' to the class.
 
     this.tensorflowDrawService.drawGraph(this._id, this._size);
-    console.log(this._size);
   }
 
   @Input()

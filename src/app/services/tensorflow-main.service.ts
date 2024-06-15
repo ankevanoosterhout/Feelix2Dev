@@ -2,7 +2,7 @@ import { DOCUMENT } from '@angular/common';
 import { Injectable, Inject } from '@angular/core';
 import { v4 as uuid } from 'uuid';
 import { ActuatorType, MicroController } from '../models/hardware.model';
-import { Model, DataSet, Classifier, Convolutional_options, Label, MotorEl, ModelVariable, ModelType, Regression_options, OutputItem, InputColor } from '../models/tensorflow.model';
+import { Model, DataSet, Classifier, Convolutional_options, Label, MotorEl, ModelVariable, ModelType, Regression_options, OutputItem, InputColor, InputLayerOptions } from '../models/tensorflow.model';
 import { HardwareService } from './hardware.service';
 import { DataSetService } from './dataset.service';
 import { Subject } from 'rxjs';
@@ -30,6 +30,8 @@ export class TensorFlowMainService {
     drawTrimLines: Subject<any> = new Subject<void>();
     loadData: Subject<any> = new Subject<void>();
     loadMLData: Subject<any> = new Subject<void>();
+    redrawNN: Subject<any> = new Subject<void>();
+    createModel: Subject<any> = new Subject<void>();
 
     constructor(@Inject(DOCUMENT) private document: Document, public hardwareService: HardwareService, private dataSetService: DataSetService,
                 private tensorflowModelService: TensorFlowModelService, private electronService: ElectronService, private _FileSaverService: FileSaverService) {
@@ -544,6 +546,8 @@ export class TensorFlowMainService {
           }
         }
         this.d.selectedMicrocontrollers.push(microcontroller);
+        this.d.selectedModel.layers[0].options.actuators.value = this.getNrOfActiveMotors();
+
         // console.log(this.d.selectedMicrocontrollers);
         for (const set of this.d.dataSets) {
           if (set.m.filter(m => m.mcu.serialPath === microcontroller.serialPort.path).length === 0) {
@@ -551,6 +555,19 @@ export class TensorFlowMainService {
           }
         }
       }
+    }
+
+
+    getNrOfActiveMotors() {
+      let nr = 0;
+      for (const mcu of this.d.selectedMicrocontrollers) {
+        for (const motor of mcu.motors) {
+          if (motor.record) {
+            nr++;
+          }
+        }
+      }
+      return nr;
     }
 
     addMicrocontrollerToDataSet(mcu: MicroController, dataSet: DataSet) {
@@ -691,6 +708,7 @@ export class TensorFlowMainService {
         }
       }
     }
+
 
 
 

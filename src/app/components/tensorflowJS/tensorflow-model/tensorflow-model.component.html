@@ -12,13 +12,26 @@
 <div id="model-settings">
 
   <div class="fixed-toolbar" id="fixed-toolbar">
-    <div class="form-row">
-      <ul class="buttons-list">
-        <li id="newOutput" (click)="addClassifier()"><img src="./assets/icons/tools/collections.svg" title="New effect"></li>
-      </ul>
-    </div>
 
-    <div class="row" id="toolbar-content"><div class="attach-toolbar" id="toggleDataSection"><div class="attach-arrow"></div></div></div>
+    <div class="right" id="toolbar-content">
+
+      <div>
+        <ul class="buttons-list">
+          <li id="newOutput"><img src="./assets/icons/tools/collections.svg" title="Create new model"></li>
+          <li id="load"><img src="./assets/icons/buttons/open.svg" title="Open data set"></li>
+          <li id="save"><img src="./assets/icons/buttons/save.svg" title="Save trained model"></li>
+          <!-- <li id="delete"><img src="./assets/icons/buttons/bin.svg" title="Delete output files"></li> -->
+
+          <!-- <li id="merge" (click)="this.tensorflowService.mergeDataSets()" disabled="!this.multipleSelect.active"><img src="./assets/icons/buttons/merge2.svg" title="Merge data sets"></li> -->
+        </ul>
+      </div>
+
+
+      <div class="text-buttons-toolbar">
+        <button class="add" id="train" (click)="this.initializeModel()" title="initialize model">build model</button>
+      </div>
+
+    </div>
   </div>
 
 
@@ -28,14 +41,14 @@
 
     <!-- input -->
 
+    <li *ngFor="let layer of this.d.selectedModel.layers; let i = index" [attr.data-index]="i" [ngClass]="{ small: layer.hidden }">
 
-
-    <li *ngFor="let layer of this.d.selectedModel.layers; let i = index" [attr.data-index]="i">
-
-      <div class="layer-settings" [ngStyle]="{ width: (100 / this.d.selectedModel.layers.length) + 'vw'}"  *ngIf="i === 0">
+      <div class="layer-settings"  *ngIf="i === 0">
         <div class="layer-name">{{ layer.name }}</div>
 
-        <div class="button-round" id="addLayer" (click)="this.addLayer(0)">+</div>
+        <div class="layer-buttons">
+          <div class="button-round" id="addLayer" (click)="this.addLayer(0)">+</div>
+        </div>
 
         <div class="layer-content scrollDiv">
 
@@ -43,7 +56,7 @@
             <li *ngFor="let input of this.d.selectedModel.inputs; let i = index" [attr.data-index]="i">
 
                 <label class="radio-container">
-                  <span *ngIf="i < 5" id="label-{{ input.slug }}">{{ input.name }}</span>
+                  <span *ngIf="i < 5" id="label-{{ input.slug }}">{{ input.name }} ({{input.slug}})</span>
                   <input type="checkbox" class="type" id="{{ input.id }}" name="{{ input.id }}" [(ngModel)]="input.active" [checked]="input.active" (change)="this.updateInputUnits()">
                   <span class="checkmark radio tensorflow"></span>
                 </label>
@@ -75,7 +88,7 @@
               <option class="placeholder" [ngValue]="undefined" selected="selected">-- select microcontroller --</option>
               <option *ngFor="let item of this.hardwareService.microcontrollers" [ngValue]="item">{{ item.name }}</option>
             </select>
-            <button class="add left" (click)="this.tensorflowService.addMicrocontroller()" title="add microcontroller">add</button>
+            <button class="add left" (click)="this.addMicrocontroller()" title="add microcontroller">add</button>
           </div>
 
           <ul class="microcontroller-list">
@@ -122,19 +135,22 @@
 <!-- hidden layers -->
 
 
-      <div class="layer-settings" [ngStyle]="{ width: (100 / this.d.selectedModel.layers.length) + 'vw' }" *ngIf="i > 0 && i < this.d.selectedModel.layers.length - 1">
+      <div class="layer-settings" *ngIf="i > 0 && i < this.d.selectedModel.layers.length - 1">
 
-        <div *ngIf="layer.type" class="layer-name {{ layer.type.subgroup }}">{{ layer.type.subgroup }}</div>
-        <div *ngIf="!layer.type" class="layer-name">{{ layer.name }}</div>
+        <div *ngIf="layer.type" class="layer-name {{ layer.type.subgroup }}">{{ !layer.hidden ? layer.type.subgroup : '' }}</div>
+        <div *ngIf="!layer.type" class="layer-name">{{ !layer.hidden ? layer.name : '' }}</div>
 
-        <div class="button-round hide" id="hideLayer" (click)="this.hideLayer(0)" (click)="layer.hidden = !layer.hidden">
-          <img src="./assets/icons/layers/non-visible-icon-black.svg" *ngIf="layer.hidden">
-          <img src="./assets/icons/layers/visible-icon-black.svg" *ngIf="!layer.hidden">
+        <div class="layer-buttons" [ngClass]="{ small: layer.hidden }">
+          <div class="button-round hide" id="hideLayer" (click)="this.hideLayer(i)">
+            <img src="./assets/icons/layers/non-visible-icon-black.svg" *ngIf="layer.hidden">
+            <img src="./assets/icons/layers/visible-icon-black.svg" *ngIf="!layer.hidden">
+          </div>
+          <div class="button-round" id="deleteLayer" (click)="this.deleteLayer(i)" *ngIf="!layer.hidden">-</div>
+          <div class="button-round" id="addLayer" (click)="this.addLayer(i)" *ngIf="!layer.hidden">+</div>
         </div>
-        <div class="button-round" id="addLayer" (click)="this.addLayer(i)">+</div>
 
 
-        <div class="layer-content scrollDiv">
+        <div class="layer-content scrollDiv" *ngIf="!layer.hidden">
 
           <div class="form-group">
             <label class="label"><div *ngIf="layer.type" class="question-mark" title="{{ layer.type.description }}">?</div>Layer type</label>
@@ -145,12 +161,12 @@
 
           <div class="form-group" *ngIf="layer.options.units">
             <label class="label"><div class="question-mark" title="Positive integer, dimensionality of the output space.">?</div>Units</label>
-            <input type="number" class="number small blue" id="layerUnits" [(ngModel)]="layer.options.units.value" name="layerUnits" (change)="this.updateNetworkVisualization()">
+            <input type="number" class="number small blue" id="layerUnits" [(ngModel)]="layer.options.units.value" name="layerUnits" (change)="this.updateUnits(i)">
           </div>
 
           <div class="form-group" *ngIf="layer.options.kernelSize">
             <label class="label"><div class="question-mark" title="Positive integer, dimensionality of the output space.">?</div>Kernel size</label>
-            <input type="number" class="number extra small blue" id="kernelSizeX" [(ngModel)]="layer.options.kernelSize.value.x" name="kernelSizeX" (change)="this.updateNetworkVisualization()">
+            <input type="number" class="number extra small blue" id="kernelSizeX" [(ngModel)]="layer.options.kernelSize.value.x" name="kernelSizeX" (change)="this.updateUnits(i)">
             <label class="label small">x</label>
             <input type="number" class="number extra small blue" id="kernelSizeY" [(ngModel)]="layer.options.kernelSize.value.y" name="kernelSizeY" (change)="this.updateNetworkVisualization()">
           </div>
@@ -236,14 +252,14 @@
 
           <div class="form-group" *ngIf="layer.settingsVisible && layer.options.dropout">
             <label class="label"><div class="question-mark" title="Number between 0 and 1. Fraction of the units to drop for the linear transformation of the inputs.">?</div>Dropout</label>
-            <input type="number" class="number small blue" id="dropout" [(ngModel)]="layer.options.dropout.value" name="dropout">
+            <input type="number" class="number small blue" id="dropout" [(ngModel)]="layer.options.dropout.value" name="dropout" [disabled]="layer.type && layer.type.subgroup !== 'normalization'"/>
           </div>
 
 
 
           <div class="row" *ngIf="layer.settingsVisible && layer.options.returnSequences && layer.options.returnSequences.value !== undefined">
             <label class="radio-container">Return sequences <div class="question-mark" title="Whether to return the last output in the output sequence, or the full sequence.">?</div>
-              <input type="checkbox" class="type" id="returnSequences" name="returnSequences" [(ngModel)]="layer.options.returnSequences.value" [checked]="layer.options.returnSequences.value">
+              <input type="checkbox" class="type" id="returnSequences" name="returnSequences" [(ngModel)]="layer.options.returnSequences.value" [checked]="layer.options.returnSequences.value"/>
               <span class="checkmark radio tensorflow"></span>
             </label>
           </div>
@@ -285,7 +301,7 @@
           </div>
 
 
-          <button class="add" id="deleteLayer" (click)="this.deleteLayer(i)" title="delete layer">delete layer</button>
+          <!-- <button class="add" id="deleteLayer" (click)="this.deleteLayer(i)" title="delete layer">delete layer</button> -->
         </div>
       </div>
 
@@ -298,7 +314,7 @@
 
 
 
-      <div class="layer-settings" [ngStyle]="{ width: (100 / this.d.selectedModel.layers.length) + 'vw' }" *ngIf="i === this.d.selectedModel.layers.length - 1">
+      <div class="layer-settings" *ngIf="i === this.d.selectedModel.layers.length - 1">
 
         <div class="layer-name">{{ layer.name }}</div>
 

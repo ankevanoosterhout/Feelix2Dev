@@ -233,7 +233,7 @@ export class TrainingOptions {
   metrics: any = { name:'categoricalAccuracy', value: tf.metrics.categoricalAccuracy };
   losses: any = { name:'categoricalCrossentropy', value: tf.metrics.categoricalCrossentropy };
   momentum = 10;
-  distribution = [1.0, 0];
+  distribution = 0.7;
 };
 
 export class Options {
@@ -257,6 +257,7 @@ export class InputLayerOptions extends Options {
   inputs: Array<any> = [];
   inputDim: Array<any>; // Defines input shape as [inputDim].
   units = new Option(3);
+  actuators = new Option(1);
   batchSize = new Option(32);
   batchInputShape: any;
   inputLength = new Option(undefined);
@@ -320,6 +321,7 @@ export class Pooling_options extends Options {
 
 export class Normalization_options extends Options {
   axis = new Option(-1);
+  units = new Option(4);
 };
 
 // export class LSTM_options extends Options {

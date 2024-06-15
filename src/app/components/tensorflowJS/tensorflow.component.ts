@@ -22,7 +22,7 @@ export class TensorflowComponent {
 
 
   constructor(@Inject(DOCUMENT) private document: Document, public tensorflowService: TensorFlowMainService,
-      private tensorflowDrawService: TensorFlowDrawService, private tensorflowModelDrawService: TensorFlowModelDrawService) {
+      private tensorflowDrawService: TensorFlowDrawService, private tensorflowModelDrawService: TensorFlowModelDrawService, private electronService: ElectronService) {
 
     this.config = this.tensorflowDrawService.config;
     this.d = this.tensorflowService.d;
@@ -34,6 +34,20 @@ export class TensorflowComponent {
       const width = 244 * (this.config.progress / 100);
       this.document.getElementById('progress').style.width = width + 'px';
     });
+
+
+    this.electronService.ipcRenderer.on('deploy-model', (event: Event) => {
+      this.document.getElementById('deploy').click();
+    });
+
+    this.electronService.ipcRenderer.on('train-model', (event: Event) => {
+      this.document.getElementById('train').click();
+    });
+
+    this.tensorflowService.createModel.subscribe(res => {
+      this.selectStep(res);
+    });
+
 
   }
 

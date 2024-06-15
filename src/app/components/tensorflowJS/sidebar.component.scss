@@ -1,0 +1,290 @@
+$sidebarWidth: 170px;
+
+ul {
+  margin:0;
+  padding:0;
+  list-style-type: none;
+}
+
+.sidebar-column {
+  position: relative;
+  display: inline-block;
+  width: $sidebarWidth;
+  height: calc(100vh - 19px);
+  overflow: hidden;
+  top:0;
+  padding-top: 19px;
+  border-left: 1px solid #222;
+
+  &.left {
+    background: #2b2b2b;
+    border-right: 1px solid #222;
+  }
+}
+
+.sidebar-column-content {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  height: calc(100vh - 250px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 50px;
+  top: 9px;
+
+  &.full-height {
+    height: 100%;
+  }
+}
+
+.labelRow {
+  display:inline-block;
+  width: 87px;
+  font-family: 'Open Sans', Arial, sans-serif;
+  font-size: 11px;
+  padding: 0 5px 0 3px;
+  color: #ccc;
+  vertical-align: top;
+  margin-top: -1px;
+}
+    /* width */
+.sidebar-column-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+/* Track */
+.sidebar-column-content::-webkit-scrollbar-track {
+  background: 'transparent';
+}
+
+/* Handle */
+.sidebar-column-content::-webkit-scrollbar-thumb {
+  background: #1c1c1c;
+}
+
+/* Handle on hover */
+.sidebar-column-content::-webkit-scrollbar-thumb:hover {
+  background: #111;
+}
+
+.column-header-sidebar {
+  position: absolute;
+  top: 0px;
+  padding-top: 6px;
+  left: 0;
+  margin-left: -10px;
+  width: calc(100% + 10px);
+  background: #333;
+  border-bottom: 1px solid #1c1c1c;
+  z-index: 1;
+}
+
+
+ul.file-list-sidebar {
+  position: relative;
+  width: 100%;
+  top:1px;
+  display: inline-flex;
+  flex-direction: column;
+
+  &.last {
+    margin-bottom: 200px;
+  }
+
+  li {
+    display: inline-flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 0 8px;
+    font-size: 11px;
+    border-bottom: 1px solid #333;
+    color: #888;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+    overflow-x: hidden;
+    /* width: 134px; */
+    height: 28px;
+    line-height: 28px;
+    overflow: hidden;
+
+    &:hover {
+      background-color: #4a4a4a;
+      color: #999;
+    }
+
+    &.selected {
+      background-color: #4c4c4c;
+      color: rgb(194, 194, 194);
+    }
+
+    &:active, &.active {
+      background-color: #5b5b5b;
+      color: #ccc;
+    }
+
+    .name {
+      max-width: calc(100% - 25px);
+      overflow: hidden;
+
+      &.small {
+        max-width: calc(100% - 45px);
+      }
+    }
+  }
+}
+
+
+
+.close-button {
+  margin:6px 3px;
+}
+
+
+
+
+.color-editor {
+  position: relative;
+  display:inline-block;
+  vertical-align: top;
+  margin-left: 5px!important;
+  margin-top: 1px!important;
+  border-radius: 10px!important;
+  padding:0;
+  box-sizing: border-box;
+  height: 20px!important;
+  width: 20px!important;
+  opacity: 0;
+
+  img {
+    position: absolute;
+    height: 56%;
+    left: 0;
+    margin: 20%;
+    width: auto;
+    pointer-events: none;
+  }
+}
+
+
+
+.input-list-button-item-content {
+  display: inline-block;
+  width: auto;
+  padding:0!important;
+  min-width: 100%;
+  margin-left: -20px!important;
+
+  &:hover .color-editor {
+    opacity: 1;
+  }
+}
+
+
+
+.input-list-buttons, .motor-list-buttons {
+  list-style-type: none;
+  vertical-align: top;
+  position: relative;
+  padding:0;
+  width: auto;
+  display: inline-flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+}
+.motor-list-buttons {
+  margin-left: -5px;
+}
+
+.input-list-button-item, .motor-list-button-item {
+  width: auto;
+}
+
+
+
+/* .input-list-button-item div:hover, .motor-list-button-item div:hover {
+
+}
+
+.input-list-button-item:active, .motor-list-button-item:active {
+
+} */
+
+
+.input-list-button-item, .motor-list-button-item div {
+   display: inline-block;
+   font-size: 10px;
+   padding: 0 10px;
+   line-height: 18px;
+   width: auto;
+   font-weight: 600;
+   color: #999;
+   cursor:pointer;
+   user-select: none;
+   /* margin: 2px; */
+   border-top-right-radius: 10px;
+   border-bottom-right-radius: 10px;
+}
+
+
+
+
+
+.list-text-item {
+  white-space: nowrap;
+  width: 100%;
+  display: inline-block;
+}
+
+
+
+.motor-list-button-item div.active {
+  /* background: #00AEEF; */
+  background: #999;
+  color: #222;
+  margin: 2px 0;
+}
+
+.input-list-button-item div.active {
+  color: #222;
+  margin: 2px 0;
+}
+
+ul.training-type-options {
+  position: relative;
+  display: inline-flex;
+  flex-direction: row;
+  top: 4px;
+  overflow: hidden;
+
+  li {
+    display: inline-flex;
+    height: 17px;
+    width: 17px;
+    border-radius: 17px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #ccc;
+    line-height: 17px;
+    text-align: center;
+    background: #2b2b2b;
+    margin: 0 2px;
+    padding: 0;
+    justify-content: center;
+    border: 1px solid #ccc;
+
+    &:hover {
+      pointer-events: none;
+    }
+
+    &.train.active {
+      background: #F0747A;
+    }
+
+    &.validate.active {
+      background: #ED1A75;
+    }
+
+  }
+
+}

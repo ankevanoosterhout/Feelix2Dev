@@ -817,6 +817,7 @@ button.disabled:focus {
   opacity: 0.8;
   text-align: center;
   margin: -1px 10px 0 -5px !important;
+
 }
 
 .buttons-list li:hover {
@@ -832,6 +833,13 @@ button.disabled:focus {
 .buttons-list li img {
   width: auto;
   height: 100%;
+}
+
+.buttons-list li.padding {
+  padding: 3px;
+  box-sizing: border-box;
+  height: 27px;
+  width: 27px;
 }
 
 .buttons-list:disabled {

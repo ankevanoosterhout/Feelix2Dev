@@ -3,6 +3,7 @@ import { Model, ModelType} from 'src/app/models/tensorflow.model';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
 import { v4 as uuid } from 'uuid';
+import { TensorFlowConfig } from 'src/app/models/tensorflow-config.model';
 
 @Component({
   selector: 'app-tensorflow-default-model',
@@ -12,6 +13,7 @@ import { v4 as uuid } from 'uuid';
 export class TensorflowDefaultModelComponent {
 
   public d: TensorFlowData;
+  public config: TensorFlowConfig;
 
   defaultModelOptions = [
     {
@@ -85,6 +87,8 @@ export class TensorflowDefaultModelComponent {
           this.d.selectedModel = new Model(uuid(), 'custom model', ModelType.custom);
         }
     }
+
+    this.tensorflowService.createModel.next(0);
 
   }
 

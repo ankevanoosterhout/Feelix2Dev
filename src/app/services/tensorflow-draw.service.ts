@@ -18,38 +18,12 @@ export class TensorFlowDrawService {
   }
 
 
-  drawTrainingSlider() {
-    d3.selectAll('#trainingSliderSVG').remove();
-
-    const sliderEl = d3.select('#trainingSlider')
-      .append('svg')
-      .attr('id', 'trainingSliderSVG');
-
-    sliderEl.append('rect')
-      .attr('x', 0)
-      .attr('y', 100)
-      .attr('width', 300)
-      .attr('height', 2)
-      .attr('id', 'bar')
-      .style('fill', '#ccc');
-
-    sliderEl.append('rect')
-      .attr('x', 0)
-      .attr('y', 100)
-      .attr('width', 300)
-      .attr('height', 2)
-      .attr('id', 'handle')
-      .style('fill', '#ccc');
-  }
 
 
   drawGraph(id="svg_graph", size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
 
-    console.log(id, size);
 
     d3.selectAll('#datagraph').remove();
-
-    console.log(d3.select('#' + id));
 
     this.config.dataSVG = d3.select('#' + id)
         .append('svg')

@@ -1,6 +1,6 @@
 
 import { DOCUMENT } from '@angular/common';
-import { Component, HostListener, Inject, Input } from '@angular/core';
+import { Component, HostListener, Inject, Input, OnInit } from '@angular/core';
 import { TensorFlowConfig } from 'src/app/models/tensorflow-config.model';
 import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
 import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
@@ -19,17 +19,25 @@ import { TensorFlowTrainService } from 'src/app/services/tensorflow-train.servic
   templateUrl: 'tensorflow-train.component.html',
   styleUrls: ['../../windows/effects/effects.component.css','./../tensorflow.component.scss'],
 })
-export class TensorflowTrainComponent {
+export class TensorflowTrainComponent implements OnInit {
 
   public d: TensorFlowData;
   public config: TensorFlowConfig;
 
   public graphID = 'svg_graph_training';
-  public size = { width: innerWidth - 436, height: innerHeight - 219, margin: 80 };
+  public size: { width: number, height: number, margin: number };
 
-  constructor(@Inject(DOCUMENT) private document: Document, public tensorflowService: TensorFlowMainService, private tensorflowDrawService: TensorFlowDrawService, private tensorflowTrainingService: TensorFlowTrainService) {
+  constructor(@Inject(DOCUMENT) private document: Document, public tensorflowService: TensorFlowMainService, private tensorflowDrawService: TensorFlowDrawService,
+              private tensorflowTrainingService: TensorFlowTrainService) {
     this.d = this.tensorflowService.d;
+    this.size = { width: innerWidth - (this.d.sidebarWidth + 300), height: innerHeight - 205, margin: 80 };
     this.config = this.tensorflowDrawService.config;
+
+  }
+
+
+  ngOnInit(): void {
+    // this.tensorflowDrawService.drawTrainingSlider();
   }
 
 
@@ -58,9 +66,10 @@ export class TensorflowTrainComponent {
 
   @HostListener('window:resize', ['$event'])
   onResize(event: Event) {
-    this.size = { width: innerWidth - 436, height: innerHeight - 219, margin: 80 };
+    this.size = { width: innerWidth - 470, height: innerHeight - 219, margin: 80 };
     this.tensorflowDrawService.drawGraph(this.graphID, this.size);
   }
+
 
 
 

@@ -288,16 +288,10 @@ const mainMenuTemplate = [
         label: 'Machine Learning',
         // enabled: false,
         click() {
-          createTensorFlowWindow('tensorflow');
-        }
-      },
-      {
-        label: 'Machine Learning v2',
-        // enabled: false,
-        click() {
-          createTensorFlowWindow('tensorflowjs');
+          createTensorFlowWindow();
         }
       }
+
     ]
   },
   {
@@ -774,7 +768,7 @@ function createWindow() {
   });
 }
 
-function createTensorFlowWindow(hash) {
+function createTensorFlowWindow() {
   if (!tensorflowWindow) {
     tensorflowWindow = new BrowserWindow({
       width: 1200,
@@ -802,7 +796,7 @@ function createTensorFlowWindow(hash) {
         pathname: path.join(__dirname, `../dist/feelix/index.html`),
         protocol: "file:",
         slashes: true,
-        hash: '/' + hash
+        hash: '/tensorflowjs'
       })
     );
 
@@ -840,8 +834,8 @@ function drawTemporaryWindow(width, minWidth, height, minHeight, title, resizabl
     backgroundColor: '#333',
     alwaysOnTop: true,
     frame: false,
-    // resizable: resizable,
-    resizable: true,
+    resizable: resizable,
+    // resizable: true,
     fullscreenable:false,
     center: false,
     movable: true,
@@ -870,7 +864,7 @@ function drawTemporaryWindow(width, minWidth, height, minHeight, title, resizabl
     mainWindow.webContents.send('resetCursor');
   })
 
-  tmpWindow.webContents.openDevTools();
+  // tmpWindow.webContents.openDevTools();
 
   tmpWindow.on('close', () => {
     tmpWindow = null

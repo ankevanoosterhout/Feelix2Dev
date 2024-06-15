@@ -21,7 +21,7 @@ import { v4 as uuid } from 'uuid';
 export class TensorflowDataComponent implements OnInit, AfterViewInit {
 
 
-  dataVisible = true;
+
   public d: TensorFlowData;
   public config: TensorFlowConfig;
 
@@ -37,6 +37,7 @@ export class TensorflowDataComponent implements OnInit, AfterViewInit {
                 });
 
                 this.tensorflowService.loadData.subscribe((res) => {
+                  console.log(res);
                   this.loadDataSets(res);
                 });
 
@@ -62,6 +63,7 @@ export class TensorflowDataComponent implements OnInit, AfterViewInit {
 
 
                 this.electronService.ipcRenderer.on('load-datasets', (event: Event, data: Array<DataSet>) => {
+                  console.log(data);
                   this.loadDataSets(data);
                 });
 
@@ -127,14 +129,7 @@ export class TensorflowDataComponent implements OnInit, AfterViewInit {
                 });
 
 
-                this.electronService.ipcRenderer.on('deploy-model', (event: Event) => {
-                  this.document.getElementById('deploy').click();
-                });
-
-                this.electronService.ipcRenderer.on('train-model', (event: Event) => {
-                  this.document.getElementById('initialize').click();
-                });
-
+    
 
 
 
@@ -143,7 +138,7 @@ export class TensorflowDataComponent implements OnInit, AfterViewInit {
 
 
   ngAfterViewInit(): void {
-    // this.config.width = window.innerWidth - (this.config.sidebarColumnWidth[0] + this.config.sidebarColumnWidth[1]);
+    // this.config.width = window.innerWidth - (this.d.sidebarWidth);
     // (this.document.getElementById('svg_graph') as HTMLElement).style.width = this.config.width + 'px';
     // this.config.height = window.innerHeight - 100;
     this.tensorflowDrawService.drawGraph();
@@ -194,72 +189,15 @@ export class TensorflowDataComponent implements OnInit, AfterViewInit {
   }
 
 
-  selectDataSet(id:string, event: any) {
-    this.tensorflowDrawService.enableZoom(true);
-    this.tensorflowService.selectDataSet(id, event);
-  }
+  // selectDataSet(id:string, event: any) {
+  //   this.tensorflowDrawService.enableZoom(true);
+  //   this.tensorflowService.selectDataSet(id, event);
+  // }
 
 
-  toggleDataSection() {
-    this.dataVisible = !this.dataVisible;
-    this.tensorflowService.updateResize((!this.dataVisible ? window.innerHeight - 60 : window.innerHeight * 0.45));
-  }
-
-  toggleVisibilityInput(m: MotorEl, inputIndex: number) {
-    // console.log(m, inputIndex);
-    // console.log(this.d.selectedDataset);
-    m.colors[inputIndex].visible = !m.colors[inputIndex].visible;
-    if (this.d.selectedDataset) {
-      this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.trimLinesVisible ? this.d.trimLines : null);
-    }
-  }
-
-  toggleVisibilityMotor(m: MotorEl) {
-    if (m) {
-      m.visible = !m.visible;
-      this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.trimLinesVisible ? this.d.trimLines : null);
-    }
-  }
 
 
-  getFirstChar(fullName: string) {
-    return fullName.charAt(0);
-  }
 
-  updateSidebarColumn(index: number) {
-    this.tensorflowDrawService.config.sidebarColumnWidth[index] = this.tensorflowDrawService.config.sidebarColumnWidth[index] === 150 ? 30 : 150;
-    (this.document.getElementById('sidebar-column-' + index) as HTMLElement).style.width = this.tensorflowDrawService.config.sidebarColumnWidth[index] + 'px';
-
-    this.tensorflowDrawService.config.sidebarColumnWidth[index] === 150 ?
-      this.document.getElementById('toggleSidebarColumn' + index).classList.remove('hidden') : this.document.getElementById('toggleSidebarColumn' + index).classList.add('hidden');
-
-    this.tensorflowDrawService.config.width = window.innerWidth - (this.tensorflowDrawService.config.sidebarColumnWidth[0] + this.tensorflowDrawService.config.sidebarColumnWidth[1]);
-
-    (this.document.getElementById('svg_graph') as HTMLElement).style.width = this.tensorflowDrawService.config.width + 'px';
-    (this.document.getElementById('graph-header') as HTMLElement).style.width = this.tensorflowDrawService.config.width + 'px';
-
-    this.tensorflowDrawService.drawGraph();
-
-    if (this.d.selectedDataset) {
-      this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.trimLinesVisible ? this.d.trimLines : null);
-    }
-  }
-
-  changeColorInputItem(m: MotorEl, inputIndex: number) {
-    m.colors[inputIndex].hash = this.getNextColor(m.colors[inputIndex].hash);
-    this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.trimLinesVisible ? this.d.trimLines : null);
-  }
-
-  getNextColor(color: string) {
-    const index = this.d.colorOptions.indexOf(color);
-    if (index > -1) {
-      const nextIndex = (index + 1) % this.d.colorOptions.length;
-      return this.d.colorOptions[nextIndex];
-    } else {
-      this.d.colorOptions.push(color);
-      return this.d.colorOptions[0];
-    }
-  }
 
   updateCommunicationSpeed(serialPath: string) {
     const microcontroller = this.d.selectedMicrocontrollers.filter(m => m.serialPort.path === serialPath)[0];
@@ -309,7 +247,7 @@ export class TensorflowDataComponent implements OnInit, AfterViewInit {
 
   @HostListener('window:resize', ['$event'])
   onResize(event: Event) {
-    this.config.width = window.innerWidth - (this.config.sidebarColumnWidth[0] + this.config.sidebarColumnWidth[1]);
+    this.config.width = window.innerWidth - (2 * this.d.sidebarWidth);
     // (this.document.getElementById('svg_graph') as HTMLElement).style.width = this.config.width + 'px';
     this.config.height = window.innerHeight - 100;
     this.redraw();
@@ -551,6 +489,8 @@ export class TensorflowDataComponent implements OnInit, AfterViewInit {
         } else {
           this.d.dataSets.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0));
         }
+
+        console.log(this.d.dataSets);
       }
     }
   }

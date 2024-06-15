@@ -35,8 +35,11 @@ export class TensorFlowData {
   processing = false;
 
   classify = false;
-  
+  dataVisible = true;
+  sidebarWidth = 150;
+
   recording = { active: false, starttime: null };
+  random = true;
 
   trimLinesVisible = false;
   trimLines = [ { id: 0, value: null }, { id: 1, value: null } ];

@@ -21,10 +21,14 @@
 
   <div class="fixed-toolbar" id="fixed-toolbar">
 
-    <div class="row" id="toolbar-content">
+    <div class="right" id="toolbar-content">
       <div>
         <ul class="buttons-list">
-          <li id="save" (click)="this.tensorflowService.saveMLoutput()"><img src="./assets/icons/buttons/save.svg" title="Save ML output"></li>
+          <li class="padding" id="import"><img src="./assets/icons/buttons/import.svg" title="Import output data from file"></li>
+          <li class="padding" id="export"><img src="./assets/icons/buttons/export.svg" title="Export output data to file"></li>
+          <li id="load" (click)="this.tensorflowService.loadDataSet()"><img src="./assets/icons/buttons/open.svg" title="Open output files"></li>
+          <li id="save" (click)="this.tensorflowService.saveMLoutput()"><img src="./assets/icons/buttons/save.svg" title="Save output model"></li>
+          <li class="padding" id="delete"><img src="./assets/icons/buttons/bin.svg" title="Delete output files"></li>
         </ul>
 
         <div id="record-button" class="record-button" [ngClass]="{ red: this.d.recording.active }">
@@ -41,75 +45,11 @@
   <app-graph [id]="this.graphID" [size]="this.size"></app-graph>
 
 
-  <div class="sidebar-graph">
-
-    <div class="sidebar-column" id="sidebar-column-0">
-      <div class="column-header-sidebar">
-        <div class="hide-sidebar" id="toggleSidebarColumn0"><div></div></div>
-        <div class="labelRow marginLeft">Input variables</div>
-      </div>
-
-      <div class="sidebar-column-content" *ngIf="this.d.selectedDataset && this.d.selectedDataset.m.length > 0">
-
-        <div class="row" id="section_motors">
-          <ul class="motor-list-buttons">
-            <li class="motor-list-button-item" *ngFor="let m of this.d.selectedDataset.m; let n = index;">
-              <div class="list-text-item" [ngClass]="{ active: m.visible }" *ngIf="m.record" (click)="toggleVisibilityMotor(m)">{{ m.id }}</div>
-
-              <div class="row" *ngIf="(!m.d || m.d.length === 0) && this.d.selectedModel && m.visible && m.record">
-                <ul class="input-list-buttons">
-                  <li class="input-list-button-item" *ngFor="let input of this.d.selectedModel.inputs; let i = index;">
-
-                    <div class="list-text-item input-list-button-item-content" *ngIf="input.active && m.colors[i] && m.colors[i].visible">
-                      <div [ngStyle]="{'background': m.colors[i].hash }" class="active" (click)="toggleVisibilityInput(m, i)" *ngIf="this.config.sidebarColumnWidth[0] > 30">{{ input.name }}</div>
-                      <div [ngStyle]="{'background': m.colors[i].hash }" class="active uppercase" (click)="toggleVisibilityInput(m, i)" *ngIf="this.config.sidebarColumnWidth[0] === 30">{{ getFirstChar(input.name) }}</div>
-
-                      <div [ngStyle]="{'background': m.colors[i].hash }" class="color-editor" id="color-editor-{{ m.id }}-{{ i }}" (click)="changeColorInputItem(m, i)">
-                        <img src="./assets/icons/buttons/brush.svg"/>
-                      </div>
-                    </div>
-                    <div class="list-text-item input-list-button-item-content" *ngIf="input.active && m.colors[i] && !m.colors[i].visible && this.config.sidebarColumnWidth[0] > 30" (click)="toggleVisibilityInput(m, i)"><div>{{ input.name }}</div></div>
-                    <div class="list-text-item" *ngIf="m.colors[i] && !m.colors[i].visible && this.config.sidebarColumnWidth[0] === 30" (click)="toggleVisibilityInput(m, i)"><div>{{ getFirstChar(input.name) }}</div></div>
-                  </li>
-                </ul>
-              </div>
-
-              <div class="row" *ngIf="m.d && m.d.length > 0 && m.visible && m.record">
-                <ul class="input-list-buttons">
-                  <li class="input-list-button-item" *ngFor="let input of m.d[0].inputs; let i = index;">
-
-                    <div class="list-text-item input-list-button-item-content" *ngIf="m.colors[i] && m.colors[i].visible">
-                      <div [ngStyle]="{'background': m.colors[i].hash }" class="active" (click)="toggleVisibilityInput(m, i)" *ngIf="this.config.sidebarColumnWidth[0] > 30">{{ input.name }}</div>
-                      <div [ngStyle]="{'background': m.colors[i].hash }" class="active uppercase" (click)="toggleVisibilityInput(m, i)" *ngIf="this.config.sidebarColumnWidth[0] === 30">{{ getFirstChar(input.name) }}</div>
-
-                      <div [ngStyle]="{'background': m.colors[i].hash }" class="color-editor" id="color-editor-{{ m.id }}-{{ i }}" (click)="changeColorInputItem(m, i)">
-                        <img src="./assets/icons/buttons/brush.svg"/>
-                      </div>
-                    </div>
-                    <div class="list-text-item input-list-button-item-content" *ngIf="!m.colors[i].visible && this.config.sidebarColumnWidth[0] > 30" (click)="toggleVisibilityInput(m, i)"><div>{{ input.name }}</div></div>
-                    <div class="list-text-item" *ngIf="!m.colors[i].visible && this.config.sidebarColumnWidth[0] === 30" (click)="toggleVisibilityInput(m, i)"><div>{{ getFirstChar(input.name) }}</div></div>
-                  </li>
-                </ul>
-              </div>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
-
-
-    <div class="sidebar-column" id="sidebar-column-1">
-      <div class="sidebar-column-content">
-        <ul class="file-list-sidebar last" *ngIf="this.d.mlOutputData">
-          <li *ngFor="let mlset of this.d.mlOutputData; let i = index;" id="dataset-item-{{ mlset.id }}" (click)="this.selectDataSet(mlset.id, $event)"
-              [ngClass]="{ active: mlset.open, selected: this.d.multipleSelect.active && i >= this.d.multipleSelect.min && i <= this.d.multipleSelect.max }">
-            <div class="row name" >{{ mlset.name }}</div>
-            <div class="close close-button" (click)="this.tensorflowService.deleteDataSet(mlset.id, true)"><div></div></div>
-          </li>
-        </ul>
-      </div>
-    </div>
+  <div class="sidebar-graph deploy">
+    <app-sidebar [double]="true" [train]="false" [inputDataVisible]="false" [outputDataVisible]="true"></app-sidebar>
   </div>
+
+
 </div>
 
 

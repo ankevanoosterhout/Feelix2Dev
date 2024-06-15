@@ -19,6 +19,7 @@ import { NgxFsModule } from "ngx-fs";
 import { MatDialogModule } from "@angular/material/dialog";
 import { StatusbarModule } from "../interface-elements/statusbar.module";
 import { GraphComponent } from "./graph.component";
+import { SidebarComponent } from "./sidebar.component";
 
 @NgModule({
   imports: [
@@ -37,7 +38,8 @@ import { GraphComponent } from "./graph.component";
     TensorflowDeployComponent,
     TensorflowTrainComponent,
     LoadDataSetsComponent,
-    GraphComponent
+    GraphComponent,
+    SidebarComponent
   ],
   providers: [
     TensorFlowModelDrawService,

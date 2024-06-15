@@ -139,13 +139,6 @@ export class TensorFlowJSComponent implements OnInit {
         this.loadMLdataSet(res);
       });
 
-      this.electronService.ipcRenderer.on('deploy-model', (event: Event) => {
-        this.document.getElementById('deploy').click();
-      });
-
-      this.electronService.ipcRenderer.on('train-model', (event: Event) => {
-        this.document.getElementById('initialize').click();
-      });
 
 
       this.tensorflowService.loadData.subscribe((res) => {

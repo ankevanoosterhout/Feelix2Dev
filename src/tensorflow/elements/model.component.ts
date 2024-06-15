@@ -74,7 +74,7 @@ export class ModelComponent {
         }
       }
 
-      this.d.selectedModel.layers[0].options.inputs = inputLabels;
+      this.d.selectedModel.inputs = inputLabels;
       this.d.selectedModel.layers[this.d.selectedModel.layers.length - 1].options.outputs = outputLabels;
 
       this.tensorflowTrainService.CreateTensors(data, this.d.selectedModel);

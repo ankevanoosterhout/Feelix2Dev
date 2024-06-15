@@ -43,6 +43,9 @@ export class TensorflowModelComponent implements OnInit {
   public LayerTypes = [
     new LayerType('dense', 'basic', 'Creates a dense (fully connected) layer.', tf.layers.dense),
 
+    new LayerType('layerNormalization', 'normalization', 'Layer-normalization layer', tf.layers.layerNormalization),
+    new LayerType('batchNormalization', 'normalization', 'Batch normalization layer', tf.layers.batchNormalization),
+
     new LayerType('conv1d', 'convolutional', 'This layer creates a convolution kernel that is convolved with the layer input over a single spatial (or temporal) dimension to produce a tensor of outputs.', tf.layers.conv1d),
     new LayerType('conv2d', 'convolutional', 'This layer creates a convolution kernel that is convolved with the layer input to produce a tensor of outputs.', tf.layers.conv2d),
     new LayerType('conv2dTranspose', 'convolutional', 'This layer creates a convolution kernel that is convolved with the layer input to produce a tensor of outputs.', tf.layers.conv2dTranspose),
@@ -72,10 +75,9 @@ export class TensorflowModelComponent implements OnInit {
     new LayerType('globalMaxPooling2d', 'pooling', 'Global max pooling operation for spatial data.', tf.layers.globalMaxPooling2d),
     new LayerType('maxPooling1d', 'pooling', 'Max pooling operation for temporal data.', tf.layers.maxPooling1d),
     new LayerType('maxPooling2d', 'pooling', 'Max pooling operation for spatial data.', tf.layers.maxPooling2d),
-    new LayerType('maxPooling3d', 'pooling',  'Max pooling operation for 3D data.', tf.layers.maxPooling3d),
+    new LayerType('maxPooling3d', 'pooling',  'Max pooling operation for 3D data.', tf.layers.maxPooling3d)
 
-    new LayerType('layerNormalization', 'normalization', 'Layer-normalization layer', tf.layers.layerNormalization),
-    new LayerType('batchNormalization', 'normalization', 'Batch normalization layer', tf.layers.batchNormalization)
+
   ];
 
 
@@ -121,6 +123,8 @@ export class TensorflowModelComponent implements OnInit {
         this.tensorflowService.addMicrocontroller(res, true);
       });
 
+
+
   }
 
 
@@ -148,6 +152,14 @@ export class TensorflowModelComponent implements OnInit {
 
   updateNetworkVisualization() {
     this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
+  }
+
+  updateUnits(index: number) {
+    const nextLayer = this.d.selectedModel.layers[index + 1];
+    if (nextLayer && nextLayer.type && nextLayer.type.subgroup === 'normalization') {
+      nextLayer.options.units.value = this.getUnits(index);
+    }
+    this.updateNetworkVisualization();
   }
 
   updateModelType() {
@@ -201,6 +213,10 @@ export class TensorflowModelComponent implements OnInit {
     return el1 && el2 ? el1.name === el2.name : el1 === el2;
   }
 
+  addMicrocontroller() {
+    this.tensorflowService.addMicrocontroller();
+    this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
+  }
 
   toggleRecordMotor(serialPath: string, motor: Motor) {
     for (const set of this.d.dataSets) {
@@ -211,6 +227,8 @@ export class TensorflowModelComponent implements OnInit {
         }
       }
     }
+    this.d.selectedModel.layers[0].options.actuators.value = this.tensorflowService.getNrOfActiveMotors();
+    this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
   }
 
   openCloseItem(id: string) {
@@ -256,10 +274,19 @@ export class TensorflowModelComponent implements OnInit {
     this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
   }
 
+  hideLayer(index: number) {
+    this.d.selectedModel.layers[index].hidden = !this.d.selectedModel.layers[index].hidden;
+    this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
+  }
+
+  getUnits(index: number) {
+    return this.d.selectedModel.layers[index].options.units !== undefined ? this.d.selectedModel.layers[index].options.units.value :
+      this.d.selectedModel.layers[index].options.kernelSize.value.x;
+  }
+
   updateLayerOptions(index: number) {
 
     const layer = this.d.selectedModel.layers[index];
-    console.log(layer);
 
     switch(layer.type.subgroup) {
       case 'convolutional':
@@ -274,8 +301,10 @@ export class TensorflowModelComponent implements OnInit {
       case 'basic':
         layer.options = new Basic_options();
         break;
-      case 'normalization':
-        layer.options = new Normalization_options();
+      case 'normalization': {
+          layer.options = new Normalization_options();
+          layer.options.units.value = this.getUnits(index - 1);
+        }
         break;
       default:
         layer.options = new Options();
@@ -283,6 +312,11 @@ export class TensorflowModelComponent implements OnInit {
 
     this.updateNetworkVisualization();
 
+  }
+
+  initializeModel() {
+      //next step
+      this.tensorflowService.createModel.next(1);
   }
 
 }

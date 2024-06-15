@@ -233,10 +233,6 @@ ul.file-list-sidebar li .name {
   flex-direction: row;
 }
 
-.column-header-sidebar {
-  position: absolute;
-  top:0;
-}
 
 .padding-15 {
   padding: 15px;

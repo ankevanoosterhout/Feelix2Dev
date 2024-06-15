@@ -14,7 +14,7 @@ export class TensorflowDeployComponent {
   public d: TensorFlowData;
 
   public graphID = 'svg_graph_deploy';
-  public size = { width: innerWidth - 290, height: innerHeight - 219, margin: 80 };
+  public size = { width: innerWidth - 290, height: innerHeight - 205, margin: 80 };
 
   constructor(public tensorflowService: TensorFlowMainService, private tensorflowDrawService: TensorFlowDrawService) {
     this.d = this.tensorflowService.d;
@@ -23,7 +23,7 @@ export class TensorflowDeployComponent {
 
   @HostListener('window:resize', ['$event'])
   onResize(event: Event) {
-    this.size = { width: innerWidth - 436, height: innerHeight - 219, margin: 80 };
+    this.size = { width: innerWidth - (2 * this.d.sidebarWidth), height: innerHeight - 205, margin: 80 };
     this.tensorflowDrawService.drawGraph(this.graphID, this.size);
   }
 

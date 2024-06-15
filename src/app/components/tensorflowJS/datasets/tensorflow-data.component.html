@@ -29,6 +29,7 @@
         <li id="save" (click)="this.tensorflowService.saveDataSet()"><img src="./assets/icons/buttons/save.svg" title="Save data set"></li>
         <li id="savecopy" (click)="this.tensorflowService.saveCopyDataSet()"><img src="./assets/icons/buttons/save-copy.svg" title="Save copy of data set"></li>
         <li id="trim" (click)="this.d.trimLinesVisible ? this.cancelTrim() : this.tensorflowService.trimDataSet()"><img src="./assets/icons/buttons/trim.svg" title="Trim data"></li>
+        <li id="delete"><img src="./assets/icons/buttons/bin.svg" title="Delete dataset(s)"></li>
         <!-- <li id="merge" (click)="this.tensorflowService.mergeDataSets()" disabled="!this.multipleSelect.active"><img src="./assets/icons/buttons/merge2.svg" title="Merge data sets"></li> -->
       </ul>
 
@@ -40,7 +41,7 @@
   </div>
 </div>
 
-<div class="columns" *ngIf="this.dataVisible">
+<div class="columns" *ngIf="this.d.dataVisible">
 
   <div class="flexbox">
 
@@ -66,90 +67,10 @@
 
       <div id="svg_graph"></div>
 
-
       <div class="sidebar-graph">
-
-        <div class="sidebar-column" id="sidebar-column-0">
-          <div class="column-header-sidebar" (click)="this.updateSidebarColumn(0)">
-            <div class="hide-sidebar" id="toggleSidebarColumn0"><div></div></div>
-            <div class="labelRow marginLeft" *ngIf="this.config.sidebarColumnWidth[0] > 30">Input variables</div>
-          </div>
-
-          <div class="sidebar-column-content" *ngIf="this.d.selectedDataset && this.d.selectedDataset.m.length > 0">
-
-            <div class="row" id="section_motors">
-              <ul class="motor-list-buttons">
-                <li class="motor-list-button-item" *ngFor="let m of this.d.selectedDataset.m; let n = index;">
-                  <div class="list-text-item" [ngClass]="{ active: m.visible }" *ngIf="m.record && this.config.sidebarColumnWidth[0] > 30" (click)="toggleVisibilityMotor(m)">{{ m.mcu.name }} - {{ m.id }}</div>
-                  <div class="list-text-item" [ngClass]="{ active: m.visible }" *ngIf="m.record && this.config.sidebarColumnWidth[0] === 30" (click)="toggleVisibilityMotor(m)">{{ m.id }}</div>
-
-                  <div class="row" *ngIf="(!m.d || m.d.length === 0) && this.d.selectedModel && m.visible && m.record">
-                    <ul class="input-list-buttons">
-                      <li class="input-list-button-item" *ngFor="let input of this.d.selectedModel.inputs; let i = index;">
-
-                        <div class="list-text-item input-list-button-item-content" *ngIf="input.active && m.colors[i] && m.colors[i].visible">
-                          <div [ngStyle]="{'background': m.colors[i].hash }" class="active" (click)="toggleVisibilityInput(m, i)" *ngIf="this.config.sidebarColumnWidth[0] > 30">{{ input.name }}</div>
-                          <div [ngStyle]="{'background': m.colors[i].hash }" class="active uppercase" (click)="toggleVisibilityInput(m, i)" *ngIf="this.config.sidebarColumnWidth[0] === 30">{{ getFirstChar(input.name) }}</div>
-
-                          <div [ngStyle]="{'background': m.colors[i].hash }" class="color-editor" id="color-editor-{{ m.id }}-{{ i }}" (click)="changeColorInputItem(m, i)">
-                            <img src="./assets/icons/buttons/brush.svg"/>
-                          </div>
-                        </div>
-                        <div class="list-text-item input-list-button-item-content" *ngIf="input.active && m.colors[i] && !m.colors[i].visible && this.config.sidebarColumnWidth[0] > 30" (click)="toggleVisibilityInput(m, i)"><div>{{ input.name }}</div></div>
-                        <div class="list-text-item" *ngIf="m.colors[i] && !m.colors[i].visible && this.config.sidebarColumnWidth[0] === 30" (click)="toggleVisibilityInput(m, i)"><div>{{ getFirstChar(input.name) }}</div></div>
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div class="row" *ngIf="m.d && m.d.length > 0 && m.visible && m.record">
-                    <ul class="input-list-buttons">
-                      <li class="input-list-button-item" *ngFor="let input of m.d[0].inputs; let i = index;">
-
-                        <div class="list-text-item input-list-button-item-content" *ngIf="m.colors[i] && m.colors[i].visible">
-                          <div [ngStyle]="{'background': m.colors[i].hash }" class="active" (click)="toggleVisibilityInput(m, i)" *ngIf="this.config.sidebarColumnWidth[0] > 30">{{ input.name }}</div>
-                          <div [ngStyle]="{'background': m.colors[i].hash }" class="active uppercase" (click)="toggleVisibilityInput(m, i)" *ngIf="this.config.sidebarColumnWidth[0] === 30">{{ getFirstChar(input.name) }}</div>
-
-                          <div [ngStyle]="{'background': m.colors[i].hash }" class="color-editor" id="color-editor-{{ m.id }}-{{ i }}" (click)="changeColorInputItem(m, i)">
-                            <img src="./assets/icons/buttons/brush.svg"/>
-                          </div>
-                        </div>
-                        <div class="list-text-item input-list-button-item-content" *ngIf="!m.colors[i].visible && this.config.sidebarColumnWidth[0] > 30" (click)="toggleVisibilityInput(m, i)"><div>{{ input.name }}</div></div>
-                        <div class="list-text-item" *ngIf="!m.colors[i].visible && this.config.sidebarColumnWidth[0] === 30" (click)="toggleVisibilityInput(m, i)"><div>{{ getFirstChar(input.name) }}</div></div>
-                      </li>
-                    </ul>
-                  </div>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        <div class="sidebar-column" id="sidebar-column-1">
-          <div class="column-header-sidebar" (click)="this.updateSidebarColumn(1)">
-            <div class="hide-sidebar" id="toggleSidebarColumn1" [ngClass]="{ hidden: this.config.sidebarColumnWidth[1] === 30 }"><div></div></div>
-            <div class="labelRow marginLeft" *ngIf="this.config.sidebarColumnWidth[1] > 30">Data sets</div>
-          </div>
-          <div class="sidebar-column-content">
-            <ul class="file-list-sidebar" *ngIf="this.d.dataSets">
-              <li *ngFor="let set of this.d.dataSets; let i = index;" id="dataset-item-{{ set.id }}" (click)="this.selectDataSet(set.id, $event)"
-                  [ngClass]="{ active: set.open, selected: this.d.multipleSelect.active && i >= this.d.multipleSelect.min && i <= this.d.multipleSelect.max }">
-                <div class="row name" >{{ set.name }}</div>
-                <div class="close close-button" (click)="this.tensorflowService.deleteDataSet(set.id)"><div></div></div>
-              </li>
-            </ul>
-
-
-            <ul class="file-list-sidebar last" *ngIf="this.d.mlOutputData">
-              <li *ngFor="let mlset of this.d.mlOutputData; let i = index;" id="dataset-item-{{ mlset.id }}" (click)="this.selectDataSet(mlset.id, $event)"
-                  [ngClass]="{ active: mlset.open, selected: this.d.multipleSelect.active && i >= this.d.multipleSelect.min && i <= this.d.multipleSelect.max }">
-                <div class="row name" >{{ mlset.name }}</div>
-                <div class="close close-button" (click)="this.tensorflowService.deleteDataSet(mlset.id, true)"><div></div></div>
-              </li>
-            </ul>
-          </div>
-
-        </div>
+        <app-sidebar [double]="true" [train]="false" [inputDataVisible]="true" [outputDataVisible]="false"></app-sidebar>
       </div>
+
     </div>
   </div>
 
