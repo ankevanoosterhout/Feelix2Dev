@@ -50,16 +50,15 @@ function listSerialPorts(callback) {
         portsList.push({ serialPort: item, vendor: vendor });
       }
     });
-    if (callback !== null) {
-      callback(portsList);
-    }
+    // if (callback !== null) {
+    callback(portsList);
+    // }
   })
 };
 
 
 function getSerialConnections() {
   listSerialPorts(checkIfSerialPortIsKnown);
-
 }
 
 function checkIfSerialPortIsKnown(portsList) {
@@ -252,7 +251,7 @@ class newSerialPort {
         } else {
           updateProgress(50, (this.COM + ' has been added'));
 
-          if (this.portData.type !== 'Arduino MEGA' && this.portData.type !== 'Arduino' && this.portData.type !== 'ESP32') {
+          if (this.portData.type !== 'Arduino MEGA' && this.portData.type !== 'Arduino') {
             sendDataStr([ 'FS' ],  this.COM, true);
             this.connected = true;
             main.updateSerialStatus({ microcontroller: this.portData, connected: this.connected });
@@ -270,10 +269,6 @@ class newSerialPort {
         // uncomment to print incoming data
         // if (d.charAt(0) === '#') {
           // console.log('received data ', d);
-        // } else
-        // if (d === 'waiting for download') {
-        //   console.log('waiting');
-        //   sendDataStr([ 'FS' ],  this.COM, true);
         // } else
         if (d.charAt(0) === '*') {
           if (dataSendWaitList.filter(d => d.port === this.COM).length > 0) {
@@ -439,9 +434,9 @@ function updateProgress(_progress, _str) {
 function prepareMotorData(uploadContent, motor, datalist, index) {
   // datalist.unshift('FM' + motor.id + 'F');
 
-  if (index) {
+  // if (index) {
     datalist.unshift('FM' + motor.id + 'I' + index);
-  }
+  // }
   // datalist.unshift('FM' + motor.id + '' + (motor.I2C_communication));
   if (motor.config.supplyVoltage) {
     datalist.unshift('FM' + motor.id + 'S' + motor.config.supplyVoltage);
@@ -730,7 +725,7 @@ function uploadFromWaitList(receivingPort) {
         if (item.length > 19) {
           item = item.slice(0, (19 - item.length));
         }
-        console.log(item + '&');
+        // console.log(item + '&');
         receivingPort.writeData(item + '&');
         datalist.data.pop();
       }

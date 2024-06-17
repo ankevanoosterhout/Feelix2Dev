@@ -1,6 +1,8 @@
-import { Component, Input, OnInit, Inject, HostListener, AfterViewInit } from '@angular/core';
+import { Component, Input, HostListener, ChangeDetectorRef } from '@angular/core';
+import { ElectronService } from 'ngx-electron';
 import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
-import { MotorEl } from 'src/app/models/tensorflow.model';
+import { Classifier, DataSet, InputColor, Label, MotorEl } from 'src/app/models/tensorflow.model';
+import { HardwareService } from 'src/app/services/hardware.service';
 import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 
@@ -9,31 +11,30 @@ import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service'
   selector: 'app-sidebar',
   template: `
 
-        <div class="sidebar-column" *ngIf="this._double">
+        <div class="sidebar-column small" *ngIf="this._page !== 'train'">
           <div class="column-header-sidebar">
-            <div class="labelRow marginLeft">Input variables</div>
+            <div class="labelRow marginLeft">Input</div>
           </div>
 
-          <div class="sidebar-column-content" [ngClass]="{ 'full-height': this._inputDataVisible && this._outputDataVisible }"
-             *ngIf="this.d.selectedDataset && this.d.selectedDataset.m.length > 0">
+          <div class="sidebar-column-content" *ngIf="this.d.selectedDataset && this.d.selectedDataset.m.length > 0">
 
             <div class="row" id="section_motors">
               <ul class="motor-list-buttons">
                 <li class="motor-list-button-item" *ngFor="let m of this.d.selectedDataset.m; let n = index;">
-                  <div class="list-text-item" [ngClass]="{ active: m.visible }" *ngIf="m.record" (click)="toggleVisibilityMotor(m)">{{ m.mcu.name }} - {{ m.id }}</div>
+                  <div class="list-text-item" [ngClass]="{ active: m.visible }" *ngIf="m.record" (click)="toggleVisibilityMotor(m)">{{ m.id }}</div>
 
                   <div class="row" *ngIf="(!m.d || m.d.length === 0) && this.d.selectedModel && m.visible && m.record">
                     <ul class="input-list-buttons">
                       <li class="input-list-button-item" *ngFor="let input of this.d.selectedModel.inputs; let i = index;">
 
                         <div class="list-text-item input-list-button-item-content" *ngIf="input.active && m.colors[i] && m.colors[i].visible">
-                          <div [ngStyle]="{'background': m.colors[i].hash }" class="active" (click)="toggleVisibilityInput(m, i)">{{ input.name }}</div>
+                          <div [ngStyle]="{'background': m.colors[i].hash }" class="active" (click)="toggleVisibilityInput(m, i)">{{ input.slug }}</div>
 
                           <div [ngStyle]="{'background': m.colors[i].hash }" class="color-editor" id="color-editor-{{ m.id }}-{{ i }}" (click)="changeColorInputItem(m, i)">
                             <img src="./assets/icons/buttons/brush.svg"/>
                           </div>
                         </div>
-                        <div class="list-text-item input-list-button-item-content" *ngIf="input.active && m.colors[i] && !m.colors[i].visible" (click)="toggleVisibilityInput(m, i)"><div>{{ input.name }}</div></div>
+                        <div class="list-text-item input-list-button-item-content" *ngIf="input.active && m.colors[i] && !m.colors[i].visible" (click)="toggleVisibilityInput(m, i)"><div>{{ input.slug }}</div></div>
                       </li>
                     </ul>
                   </div>
@@ -43,13 +44,13 @@ import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service'
                       <li class="input-list-button-item" *ngFor="let input of m.d[0].inputs; let i = index;">
 
                         <div class="list-text-item input-list-button-item-content" *ngIf="m.colors[i] && m.colors[i].visible">
-                          <div [ngStyle]="{'background': m.colors[i].hash }" class="active" (click)="toggleVisibilityInput(m, i)">{{ input.name }}</div>
+                          <div [ngStyle]="{'background': m.colors[i].hash }" class="active" (click)="toggleVisibilityInput(m, i)">{{ input.slug }}</div>
 
                           <div [ngStyle]="{'background': m.colors[i].hash }" class="color-editor" id="color-editor-{{ m.id }}-{{ i }}" (click)="changeColorInputItem(m, i)">
                             <img src="./assets/icons/buttons/brush.svg"/>
                           </div>
                         </div>
-                        <div class="list-text-item input-list-button-item-content" *ngIf="!m.colors[i].visible" (click)="toggleVisibilityInput(m, i)"><div>{{ input.name }}</div></div>
+                        <div class="list-text-item input-list-button-item-content" *ngIf="!m.colors[i].visible" (click)="toggleVisibilityInput(m, i)"><div>{{ input.slug }}</div></div>
                       </li>
                     </ul>
                   </div>
@@ -59,25 +60,68 @@ import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service'
           </div>
         </div>
 
-        <div class="sidebar-column" [ngClass]="{ 'left': !this._double }">
+
+
+
+        <div class="sidebar-column" *ngIf="this._page !== 'train'">
+          <div class="column-header-sidebar" >
+            <div class="labelRow marginLeft">Output</div>
+          </div>
+
+          <div class="sidebar-column-content" *ngIf="this._page === 'data'">
+            <ul class="data_output_list" *ngIf="this.d.selectedDataset.outputs.length > 0">
+              <li class="row variable_name data_element selectbox" *ngFor="let output of this.d.selectedDataset.outputs; let o=index;" id="dataset-output-select-{{ output.classifier_id }}">
+                <label class="labelRow small">{{ output.classifier_name }}</label>
+                <select class="form-control playWindow microcontroller" id="{{ this.d.selectedDataset.id }}-{{ output.classifier_id }}" name="{{ this.d.selectedDataset.id }}-{{ output.classifier_id }}"
+                    [(ngModel)]="output.label.id" title="select label that is associated with the selected data set" [compareWith]="compareID"
+                    (change)="this.updateOutputLabel(output.classifier_id, output.label.id)">
+                  <option class="placeholder" value="undefined" selected="selected">-- select label --</option>
+                  <option *ngFor="let label of this.getOutputLabels(output.classifier_id)" [ngValue]="label.id">{{ label.name }}</option>
+                </select>
+              </li>
+            </ul>
+          </div>
+
+          <div class="sidebar-column-content" *ngIf="this._page === 'deploy'">
+            <ul id="data_output_list" class="results">
+              <li *ngFor="let classifier of this.d.selectedModel.outputs">
+                <label class="label bold" [ngClass]="{ inactive: !classifier.active }">{{ classifier.name }}</label>
+
+                <ul id="data_output_list_items" *ngIf="classifier.active">
+                  <li *ngFor="let label of classifier.labels; let i=index;">
+                    <label class="label list">{{ label.name }}</label>
+                    <div class="confidence-levels">
+                      <div class="bar-container"><div class="bar" id="bar-{{ classifier.id }}-{{ label.id }}"></div></div>
+                      <span class="confidence" id="confidence-{{ classifier.id }}-{{ label.id }}">0%</span>
+                    </div>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+
+
+        <div class="sidebar-column" [ngClass]="{ left: this._page === 'train' }">
           <div class="column-header-sidebar" >
             <div class="labelRow marginLeft">Data</div>
           </div>
-          <div class="sidebar-column-content" [ngClass]="{ 'full-height': this._inputDataVisible }">
-            <ul class="file-list-sidebar" *ngIf="this.d.dataSets && this._inputDataVisible">
+          <div class="sidebar-column-content">
+            <ul class="file-list-sidebar" *ngIf="this._page !== 'deploy'">
               <li *ngFor="let set of this.d.dataSets; let i = index;" id="dataset-item-{{ set.id }}" (click)="this.tensorflowService.selectDataSet(set.id, $event)"
                   [ngClass]="{ active: set.open, selected: this.d.multipleSelect.active && i >= this.d.multipleSelect.min && i <= this.d.multipleSelect.max }">
-                <div class="row name" [ngClass]="{ small: this._train }">{{ set.name }}</div>
-                <div class="close close-button" (click)="this.tensorflowService.deleteDataSet(set.id)" *ngIf="!this._train"><div></div></div>
-                <ul class="training-type-options" *ngIf="this._train">
-                  <li class="train">T</li>
-                  <li class="validate">V</li>
+                <div class="row name" [ngClass]="{ small: this._page === 'train' }">{{ set.name }}</div>
+                <div class="close close-button" (click)="this.tensorflowService.deleteDataSet(set.id)" *ngIf="this._page !== 'train'"><div></div></div>
+                <ul class="training-type-options" *ngIf="this._page === 'train'">
+                  <li class="train" [ngClass]="{ active: set.trainingType === 0 }">T</li>
+                  <li class="validate" [ngClass]="{ active: set.trainingType === 1 }">V</li>
                 </ul>
               </li>
             </ul>
 
 
-            <ul class="file-list-sidebar last" *ngIf="this.d.mlOutputData && this._outputDataVisible">
+            <ul class="file-list-sidebar last" *ngIf="this._page === 'deploy'">
               <li *ngFor="let mlset of this.d.mlOutputData; let i = index;" id="dataset-item-{{ mlset.id }}" (click)="this.tensorflowService.selectDataSet(mlset.id, $event)"
                   [ngClass]="{ active: mlset.open, selected: this.d.multipleSelect.active && i >= this.d.multipleSelect.min && i <= this.d.multipleSelect.max }">
                 <div class="row name" >{{ mlset.name }}</div>
@@ -87,7 +131,7 @@ import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service'
           </div>
         </div>
   `,
-  styleUrls: ['./tensorflow.component.scss','./sidebar.component.scss' ] //'../../windows/effects/effects.component.css',
+  styleUrls: ['./tensorflow.component.scss','./sidebar.component.scss', './../windows/effects/effects.component.css' ] //'../../windows/effects/effects.component.css',
 })
 export class SidebarComponent {
 
@@ -96,13 +140,20 @@ export class SidebarComponent {
   public _outputDataVisible: boolean;
   public _inputDataVisible: boolean;
 
-  public _double: boolean;
-
-  public _train: boolean;
+  public _page: string;
 
 
-  constructor(private tensorflowService: TensorFlowMainService, private tensorflowDrawService: TensorFlowDrawService) {
+  constructor(private tensorflowService: TensorFlowMainService, private tensorflowDrawService: TensorFlowDrawService, private hardwareService: HardwareService,
+              private electronService: ElectronService, private changeDetection: ChangeDetectorRef) {
     this.d = this.tensorflowService.d;
+
+    this.tensorflowService.loadData.subscribe((res) => {
+      this.loadDataSets(res);
+    });
+
+    this.electronService.ipcRenderer.on('load-datasets', (event: Event, data: Array<DataSet>) => {
+      this.loadDataSets(data);
+    });
   }
 
   @Input()
@@ -116,13 +167,8 @@ export class SidebarComponent {
   }
 
   @Input()
-  set double(double: boolean) {
-    this._double = double;
-  }
-
-  @Input()
-  set train(train: boolean) {
-    this._train = train;
+  set page(page: string) {
+    this._page = (page && page.trim()) || '';
   }
 
 
@@ -164,5 +210,129 @@ export class SidebarComponent {
       return this.d.colorOptions[0];
     }
   }
+
+  selectNextFile(next: boolean) {
+    if (this.d.selectedDataset) {
+      const index = this.d.dataSets.indexOf(this.d.selectedDataset);
+      if (index > -1) {
+        const newIndex = index + (next ? 1 : -1);
+        this.tensorflowService.selectDataSet(this._page === 'data' ? this.d.dataSets[newIndex].id : this.d.mlOutputData[newIndex].id);
+      }
+    }
+  }
+
+  updateOutputLabel(classifierID:string, labelID: string) {
+    const dataItem = this.d.selectedDataset.outputs.filter(o => o.classifier_id === classifierID)[0];
+    const classifier = this.d.selectedModel.outputs.filter(o => o.id === classifierID)[0];
+
+    if (classifier) {
+      const label = classifier.labels.filter(l => l.id === labelID)[0];
+      if (label) {
+        dataItem.label = label;
+      }
+    }
+  }
+
+
+
+  getOutputLabels(classifierID: string) {
+    const outputItem = this.d.selectedModel.outputs.filter(o => o.id === classifierID)[0];
+    return outputItem ? outputItem.labels : [];
+  }
+
+
+  compareID(el1: any, el2: any) {
+    return el1 && el2 ? el1.id === el2.id : el1 === el2;
+  }
+
+  @HostListener('window:keydown', ['$event'])
+    onKeyDown(e: KeyboardEvent) {
+
+      if (e.key === 'ArrowDown') { //down
+        this.selectNextFile(true);
+      } else if (e.key === 'ArrowUp') { //up
+        this.selectNextFile(false);
+      }
+
+    }
+
+    loadDataSets(data: Array<DataSet>) {
+      if (data) {
+        for (const dataset of data) {
+          if (this.d.dataSets.filter(d => d.id === dataset.id).length === 0) {
+            if (dataset.m && dataset.m.length > 0) {
+              for (const motor of dataset.m) {
+                if (this.d.selectedMicrocontrollers.filter(m => m.serialPort.path === motor.mcu.serialPath).length === 0) {
+                  const mcu = this.hardwareService.microcontrollers.filter(m => m.serialPort.path === motor.mcu.serialPath)[0];
+                  if (mcu) {
+                    // this.d.selectOptionMicrocontroller = mcu;
+                    this.tensorflowService.addMicrocontroller(mcu, false);
+                  }
+                }
+                if (motor.d.length > 0) {
+                  for (const input of motor.d[0].inputs) {
+                    const inputModels = this.d.selectedModel.inputs.filter(i => i.name === input.name);
+                    if (inputModels.length === 1) {
+                      if (!inputModels[0].active) { inputModels[0].active = true; }
+                    } else if (inputModels.length === 0) {
+                      //console.log('add input');
+                      this.tensorflowService.addInputItem(input.name);
+                      this.d.colorList.push(new InputColor(input.name, '#999'));
+                    }
+                  }
+                }
+                if (!motor.colors || motor.colors.length === 0) {
+                  motor.colors = JSON.parse(JSON.stringify(this.d.colorList));
+                }
+              }
+
+              if (dataset.outputs && dataset.outputs.filter(o => o.classifier_id).length > 0) {
+                this.addClassifierFromDataSet(dataset);
+              }
+
+              this.d.dataSets.push(dataset);
+            }
+          }
+          if (this.d.dataSets.length > 0) {
+            // this.config.transform = null;
+            this.d.dataSets.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0));
+            this.tensorflowService.selectDataSet(this.d.dataSets[0].id);
+          }
+        }
+      }
+      this.changeDetection.detectChanges();
+    }
+
+
+    addClassifierFromDataSet(dataset: any) {
+      for (const output of dataset.outputs) {
+        const outputClassifierInModel = this.d.selectedModel.outputs.filter(o => o.id === output.classifier_id)[0];
+
+        if (!outputClassifierInModel) {
+          const newClassifier = new Classifier(output.classifier_id, output.classifier_name);
+          this.d.selectedModel.outputs.push(newClassifier);
+          this.checkIfHasLabel(newClassifier, output.label);
+          this.tensorflowService.selectClassifier(newClassifier.id);
+        } else {
+          this.checkIfHasLabel(outputClassifierInModel, output.label);
+          this.tensorflowService.selectClassifier(outputClassifierInModel.id);
+        }
+      }
+    }
+
+
+    checkIfHasLabel(classifier: Classifier, label: Label) {
+      if (label && label.id && classifier && classifier.labels) {
+        const l = classifier.labels.filter(l => l.id === label.id)[0];
+        if (!l) {
+          const newLabel = new Label(label.id, label.name);
+          classifier.labels.push(newLabel);
+        }
+      }
+    }
+
+
+
+
 
 }

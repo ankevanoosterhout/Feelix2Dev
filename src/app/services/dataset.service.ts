@@ -96,13 +96,16 @@ export class DataSetService {
       this.getDataFromLocalStorage();
       let dataSetLib = this.dataSetLibrary.filter(d => d.id === dataSet.id)[0];
       if (dataSetLib) {
-        dataSet.date.modified = new Date().getTime();
         dataSetLib = this.cloneService.deepClone(dataSet);
+        dataSetLib.name = dataSet.name;
+        dataSet.date.modified = new Date().getTime();
         dataSetLib.date = this.cloneService.deepClone(dataSet.date);
+        dataSetLib.selected = false;
 
       } else {
         dataSet.id = uuid();
         dataSet.date.modified = new Date().getTime();
+        dataSet.selected = false;
         this.dataSetLibrary.push(dataSet);
       }
       this.store();

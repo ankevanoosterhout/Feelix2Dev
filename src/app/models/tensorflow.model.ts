@@ -131,14 +131,16 @@ export class LayerType {
   name: string;
   tf: Function;
   description: string;
-  arguments: object;
+  args: any = { dimensions: 1 };
   subgroup: string;
 
-  constructor(name: string, subgroup:string, description: string, tf: Function) {
+  constructor(name: string, subgroup:string, tf: Function, args: object = null) {
     this.name = name;
     this.subgroup = subgroup;
-    this.description = description;
     this.tf = tf;
+    if (args) {
+      this.args = args;
+    }
   }
 };
 
@@ -274,7 +276,7 @@ export class OutputLayerOptions extends Options {
 
 
 export class Convolutional_options extends Options {
-  kernelSize = new Option({x: 4, y: 2});
+  kernelSize = new Option({x: 4, y: 2, z: 1});
   padding = new Option(Padding.none);
   filters = new Option(1);
   activation = new Option(Activation.relu);
@@ -314,7 +316,7 @@ export class Recurrent_options extends Options {
 };
 
 export class Pooling_options extends Options {
-  poolSize = new Option(2);
+  poolSize = new Option({x: 2, y: 1, z: 1});
   dataFormat = new Option('channelsFirst');
 };
 
@@ -467,34 +469,47 @@ export class InputColor {
   }
 }
 
+export enum TrainingType  {
+  training = 0,
+  validation = 1
+}
+
 export class DataSet {
   id: String;
   name: String;
   // date: any;
   date = new Dates();
   m: Array<MotorEl> = [];
-  output = new OutputItem(null, null);
+  outputs: Array<OutputItem> = [];
   // outputs: Array<any> = []; //convert to single outputItem
   open = true;
   selected = false;
   bounds = new Bounds();
   offsetTime = 0;
+  trainingType: TrainingType;
 
-  constructor(id: String, name: String, selectedMCUs: Array<MicroController> = null) {
+
+  constructor(id: String, name: String, selectedMCUs: Array<MicroController> = [], outputs: Array<Classifier> = []) {
     this.id = id;
     this.name = name;
 
-    if (selectedMCUs) {
-      for (const mcu of selectedMCUs) {
-        for (const m of mcu.motors) {
-          if (m.record) {
-            const index = mcu.motors.indexOf(m);
-            const motorEl = new MotorEl(mcu.id, mcu.name, mcu.serialPort.path, m.id, index);
-            this.m.push(motorEl);
-          }
+    for (const mcu of selectedMCUs) {
+      for (const m of mcu.motors) {
+        if (m.record) {
+          const index = mcu.motors.indexOf(m);
+          const motorEl = new MotorEl(mcu.id, mcu.name, mcu.serialPort.path, m.id, index);
+          this.m.push(motorEl);
         }
       }
     }
+
+
+    for (const output of outputs) {
+      if (this.outputs.filter(o => o.classifier_id === output.id).length === 0) {
+        this.outputs.push(new OutputItem(output.id, output.name));
+      }
+    }
+
   }
 }
 

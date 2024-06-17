@@ -22,14 +22,13 @@ export class TensorFlowDrawService {
 
   drawGraph(id="svg_graph", size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
 
-
-    d3.selectAll('#datagraph').remove();
+    d3.selectAll('#svg_' + id).remove();
 
     this.config.dataSVG = d3.select('#' + id)
         .append('svg')
-          .attr('id', 'datagraph')
-          .attr('width', size.width)
-          .attr('height', size.height);
+        .attr('id', 'svg_' + id)
+        .attr('width', size.width)
+        .attr('height', size.height);
           // .attr("viewBox", [0, 0, this.config.width, this.config.height]);
 
     this.config.dataSVG.append('clipPath')
@@ -117,7 +116,7 @@ export class TensorFlowDrawService {
     this.redraw.next(true);
   }
 
-  updateBounds(bounds: Bounds) {
+  updateBounds(bounds: Bounds, size: any = null) {
     this.config.bounds.xMax = bounds.xMax;
     this.config.bounds.xMin = bounds.xMin;
     this.config.bounds.yMax = bounds.yMax;
@@ -125,7 +124,7 @@ export class TensorFlowDrawService {
 
     this.config.transform = null;
 
-    this.setScale();
+    size ? this.setScale(size) : this.setScale();
   }
 
   updateScale(scale: number) {
@@ -180,8 +179,7 @@ export class TensorFlowDrawService {
   }
 
 
-  drawTensorFlowGraphData(data: DataSet, trimLines: any) {
-
+  drawTensorFlowGraphData(data: DataSet, trimLines: any, size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
 
     if (data && data.m.length > 0) {
       d3.selectAll('#dataGroup').remove();
@@ -206,9 +204,7 @@ export class TensorFlowDrawService {
                 });
 
 
-
               if (line) {
-
                 dataGroup.append('path')
                   // .datum(m.d)
                   .attr('fill', 'none')
@@ -248,17 +244,18 @@ export class TensorFlowDrawService {
       }
 
       if (trimLines) {
-        this.drawTrimLines(true, trimLines);
+        this.drawTrimLines(true, trimLines, size);
       }
     }
   }
+
 
   removeTrimlines() {
     d3.selectAll('#dataTrimLines').remove();
   }
 
 
-  drawTrimLines(visible: boolean, lines: any) {
+  drawTrimLines(visible: boolean, lines: any, size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
 
     d3.selectAll('#dataTrimLines').remove();
 
@@ -267,7 +264,7 @@ export class TensorFlowDrawService {
       const trimLinesGroup = this.config.dataSVG.append('g')
         .attr('id', 'dataTrimLines')
         .attr('clip-path', 'url(#clipPathGraph)')
-        .attr('transform', 'translate(0,'+ this.config.margin +')');
+        .attr('transform', 'translate(0,'+ size.margin +')');
 
       const dragLine = d3
             .drag()
@@ -282,7 +279,7 @@ export class TensorFlowDrawService {
               if (lines[0].id === d.id) {
                 d3.select('#trimLineRect_' + d.id).attr('width', event.x);
               } else {
-                d3.select('#trimLineRect_' + d.id).attr('x', event.x).attr('width', this.config.width - event.x);
+                d3.select('#trimLineRect_' + d.id).attr('x', event.x).attr('width', size.width - event.x);
               }
             });
 
@@ -294,8 +291,8 @@ export class TensorFlowDrawService {
           .attr('id', (d: { id: number }) => 'trimLineRect_' + d.id)
           .attr('x', (d: any, i: number) => i === 0 ? 0 : this.config.scaleX(d.value))
           .attr('y', 0)
-          .attr('width', (d: { value: number; }, i: number) => i === 0 ? Math.abs(this.config.scaleX(d.value)) : Math.abs(this.config.width - this.config.scaleX(d.value)))
-          .attr('height', this.config.height - (2 * this.config.margin))
+          .attr('width', (d: { value: number; }, i: number) => i === 0 ? Math.abs(this.config.scaleX(d.value)) : Math.abs(size.width - this.config.scaleX(d.value)))
+          .attr('height', size.height - (2 * size.margin))
           .style('shape-rendering', 'crispEdges')
           .style('fill', 'rgba(0,0,0,0.3)');
 
@@ -307,7 +304,7 @@ export class TensorFlowDrawService {
         .attr('x', (d: { value: number; }) => this.config.scaleX(d.value) - 0.5)
         .attr('y', 0)
         .attr('width', 1)
-        .attr('height', this.config.height - (2 * this.config.margin))
+        .attr('height', size.height - (2 * size.margin))
         .style('shape-rendering', 'crispEdges')
         .style('fill', '#df9b08')
         .style('stroke', 'transparent')
@@ -317,6 +314,4 @@ export class TensorFlowDrawService {
 
     }
   }
-
-
 }

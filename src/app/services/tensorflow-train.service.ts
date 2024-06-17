@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@angular/core';
 import * as tf from '@tensorflow/tfjs';
 import { TensorFlowData } from '../models/tensorflow-data.model';
-import { DataSet, Model, ModelType } from '../models/tensorflow.model';
+import { DataSet, Model, ModelType, TrainingType } from '../models/tensorflow.model';
 import { TensorFlowMainService } from './tensorflow-main.service';
 import { Subject } from 'rxjs';
 import { DOCUMENT } from '@angular/common';
@@ -50,6 +50,76 @@ export class TensorFlowTrainService {
     }
   }
 
+  splitData(distribution: number, first:boolean) {
+    if ((first && this.d.dataSets.filter(d => d.trainingType === null || d.trainingType === undefined).length > 0) || !first) { //online sort when training types are not yet assigned
+      let Tsample = Math.round(distribution * this.d.dataSets.length);
+
+      if (this.d.random) {
+        this.shuffle(this.d.dataSets);
+      }
+
+      let index = 0;
+      for (const el of this.d.dataSets) {
+        index < Tsample ? el.trainingType = TrainingType.training : el.trainingType = TrainingType.validation;
+        index++;
+      }
+
+      this.d.dataSets.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0));
+    }
+  }
+
+  shuffle(arr: Array<any>) {
+    let currentIndex = arr.length;
+
+    while (currentIndex != 0) {
+
+      let randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex--;
+
+      [arr[currentIndex], arr[randomIndex]] = [
+        arr[randomIndex], arr[currentIndex]];
+    }
+  }
+
+
+
+  processingModel() {
+
+    if (!this.d.processing && this.d.dataSets.length > 0) {
+      this.tensorflowService.updateProgess('training', 0);
+
+      this.document.body.style.cursor = 'wait';
+
+      this.d.processing = true;
+      this.tensorflowService.updateProgess('initializing model', 10);
+
+      const data = this.createJSONfromDataSet(this.d.dataSets, true);
+
+      const inputLabels = [];
+      const outputLabels = [];
+
+      for (const input of this.d.selectedModel.inputs) {
+        if (input.active) { inputLabels.push(input.name); }
+      }
+
+      for (const output of this.d.selectedModel.outputs) {
+        for (const label of output.labels) {
+          if (label.name) {
+            if (!outputLabels.includes(label.name)) { outputLabels.push(label.name); }
+          }
+        }
+      }
+
+      this.d.selectedModel.inputs = inputLabels;
+      this.d.selectedModel.layers[this.d.selectedModel.layers.length - 1].options.outputs = outputLabels;
+
+      this.createTensors(data, this.d.selectedModel);
+
+      (this.document.getElementById('deploy') as HTMLButtonElement).disabled = true;
+
+    }
+  }
+
 
 
   createJSONfromDataSet(dataSets: Array<DataSet>, train = true) {
@@ -62,22 +132,27 @@ export class TensorFlowTrainService {
     dataSets.forEach(set => {
 
       let outputs = [];
-      if (set.output.label.id) {
+      for (const output of set.outputs) {
+        const outputEl = [];
+        if (output.label.id) {
 
-        for (const classifier of this.d.selectedModel.outputs) {
-          if (classifier.active && classifier.id === set.output.classifier_id) {
-            for (let i = 0; i < classifier.labels.length; i++) {
-              classifier.labels[i].id === set.output.label.id ? outputs.push(1) : outputs.push(0);
+          for (const classifier of this.d.selectedModel.outputs) {
+            if (classifier.active && classifier.id === output.classifier_id) {
+              for (let i = 0; i < classifier.labels.length; i++) {
+                classifier.labels[i].id === output.label.id ? outputEl.push(1) : outputEl.push(0);
+              }
             }
           }
-        }
 
-        if (outputs.length === 0) {
-          this.d.processing = false;
-          this.tensorflowService.updateProgess('cannot find outputs', 0);
-          return false;
+          outputs.push(outputEl);
+
+          if (outputs.length === 0) {
+            this.d.processing = false;
+            this.tensorflowService.updateProgess('cannot find outputs', 0);
+            return false;
+          }
+          console.log(outputs);
         }
-        // console.log(outputs);
       }
 
       // console.log(set.m);
@@ -137,7 +212,7 @@ export class TensorFlowTrainService {
   }
 
 
-  CreateTensors(data: any, modelObj: Model) {
+  createTensors(data: any, modelObj: Model) {
 
     this.d.selectedModel.model = tf.sequential();
 

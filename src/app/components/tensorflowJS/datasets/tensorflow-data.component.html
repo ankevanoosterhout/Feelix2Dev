@@ -1,20 +1,7 @@
 <div class="fixed-toolbar" id="fixed-toolbar">
 
 
-  <div class="row" id="toolbar-content">
-
-    <div class="offset-left" *ngIf="this.d.selectedDataset && this.d.selectedModel">
-      <div class="row variable_name" class="data_element selectbox" *ngFor="let output of this.d.selectedModel.outputs; let o=index;"  id="dataset-output-select-{{ output.id }}" [ngClass]="{ invisible: !output.active }">
-
-        <label class="labelRow small">{{ output.name }}</label>
-        <select class="form-control playWindow microcontroller" id="{{ this.d.selectedDataset.id }}-output-{{ o }}" name="{{ this.d.selectedDataset.id }}-output-{{ o }}"
-            [(ngModel)]="this.d.selectedDataset.output.label" title="select label that is associated with the selected data set"
-            (change)="this.tensorflowService.updateOutputLabel(o)" [compareWith]="compareID">
-          <option class="placeholder" value="undefined" selected="selected">-- select label --</option>
-          <option *ngFor="let label of output.labels" [ngValue]="label">{{ label.name }}</option>
-        </select>
-      </div>
-    </div>
+  <div class="row right" id="toolbar-content">
 
     <div id="trimlines-input-data" *ngIf="this.d.trimLinesVisible">
       <input type="number" class="small header" id="trimline-0" name="trimline-0" [(ngModel)]="this.d.trimLines[0].value" (change)="updateLine()">
@@ -25,11 +12,12 @@
     <div>
       <ul class="buttons-list">
         <li id="new" (click)="this.tensorflowService.addDataSet()"><img src="./assets/icons/tools/collections.svg" title="Create new data set"></li>
+        <li id="classifiers" (click)="this.tensorflowService.importClassifiersFromModel()"><img src="./assets/icons/buttons/classifier.svg" title="Import classifiers from model"></li>
         <li id="load" (click)="this.tensorflowService.loadDataSet()"><img src="./assets/icons/buttons/open.svg" title="Open data set"></li>
         <li id="save" (click)="this.tensorflowService.saveDataSet()"><img src="./assets/icons/buttons/save.svg" title="Save data set"></li>
         <li id="savecopy" (click)="this.tensorflowService.saveCopyDataSet()"><img src="./assets/icons/buttons/save-copy.svg" title="Save copy of data set"></li>
         <li id="trim" (click)="this.d.trimLinesVisible ? this.cancelTrim() : this.tensorflowService.trimDataSet()"><img src="./assets/icons/buttons/trim.svg" title="Trim data"></li>
-        <li id="delete"><img src="./assets/icons/buttons/bin.svg" title="Delete dataset(s)"></li>
+        <li class="padding" id="delete"><img src="./assets/icons/buttons/bin.svg" title="Delete dataset(s)"></li>
         <!-- <li id="merge" (click)="this.tensorflowService.mergeDataSets()" disabled="!this.multipleSelect.active"><img src="./assets/icons/buttons/merge2.svg" title="Merge data sets"></li> -->
       </ul>
 
@@ -50,25 +38,20 @@
       <div class="form-group absolute" id="graph-header" *ngIf="this.d.selectedDataset">
         <!-- <label class="label">Dataset</label> -->
         <div class="row">
-          <span *ngIf="!this.d.classify">
-            <input type="text" id="dataSetName" [(ngModel)]="this.d.selectedDataset.name" name="dataSetName">
-          </span>
-          <span *ngIf="this.d.classify && this.d.predictionDataset">
-            <input type="text" id="dataSetName" [(ngModel)]="this.d.predictionDataset.name" name="dataSetName" disabled>
-          </span>
 
-          <p class="date" *ngIf="!this.d.classify && this.d.selectedDataset && this.d.selectedDataset.date.created">{{ this.d.selectedDataset.date.created | date:'dd-MM-yyyy hh:mm' }}</p>
+          <input type="text" id="dataSetName" [(ngModel)]="this.d.selectedDataset.name" name="dataSetName">
 
-          <div class="data-size" *ngIf="!this.d.classify && this.d.selectedDataset && this.d.selectedDataset.m && this.d.selectedDataset.m.length > 0">
-            size: {{ this.d.size }}
-          </div>
+          <p class="date" *ngIf="this.d.selectedDataset && this.d.selectedDataset.date.created">{{ this.d.selectedDataset.date.created | date:'dd-MM-yyyy hh:mm' }}</p>
+
+          <div class="data-size" *ngIf="!this.d.classify && this.d.selectedDataset && this.d.selectedDataset.m && this.d.selectedDataset.m.length > 0">size: {{ this.d.size }}</div>
         </div>
       </div>
 
-      <div id="svg_graph"></div>
+      <!-- <div id="svg_graph"></div> -->
+      <app-graph [id]="this.graphID" [size]="this.size"></app-graph>
 
       <div class="sidebar-graph">
-        <app-sidebar [double]="true" [train]="false" [inputDataVisible]="true" [outputDataVisible]="false"></app-sidebar>
+        <app-sidebar [page]="'data'" [inputDataVisible]="true" [outputDataVisible]="false"></app-sidebar>
       </div>
 
     </div>

@@ -1,8 +1,5 @@
 
-import { DOCUMENT } from '@angular/common';
-import { Component, HostListener, Inject, Input, OnInit } from '@angular/core';
-import { TensorFlowConfig } from 'src/app/models/tensorflow-config.model';
-import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 import { TensorFlowTrainService } from 'src/app/services/tensorflow-train.service';
@@ -21,28 +18,26 @@ import { TensorFlowTrainService } from 'src/app/services/tensorflow-train.servic
 })
 export class TensorflowTrainComponent implements OnInit {
 
-  public d: TensorFlowData;
-  public config: TensorFlowConfig;
-
   public graphID = 'svg_graph_training';
   public size: { width: number, height: number, margin: number };
 
-  constructor(@Inject(DOCUMENT) private document: Document, public tensorflowService: TensorFlowMainService, private tensorflowDrawService: TensorFlowDrawService,
+  constructor(public tensorflowService: TensorFlowMainService, private tensorflowDrawService: TensorFlowDrawService,
               private tensorflowTrainingService: TensorFlowTrainService) {
-    this.d = this.tensorflowService.d;
-    this.size = { width: innerWidth - (this.d.sidebarWidth + 300), height: innerHeight - 205, margin: 80 };
-    this.config = this.tensorflowDrawService.config;
-
+    this.size = { width: innerWidth - (this.tensorflowService.d.sidebarWidth + 300), height: innerHeight - 190, margin: 70 };
   }
 
 
   ngOnInit(): void {
-    // this.tensorflowDrawService.drawTrainingSlider();
+    this.split(true);
+  }
+
+  split(first: boolean = false) {
+    this.tensorflowTrainingService.splitData(this.tensorflowService.d.selectedModel.training.distribution, first);
   }
 
 
   train() {
-    this.tensorflowTrainingService.CreateTensors(this.d.dataSets, this.d.selectedModel);
+    this.tensorflowTrainingService.processingModel();
   }
 
   validate() {
@@ -66,7 +61,7 @@ export class TensorflowTrainComponent implements OnInit {
 
   @HostListener('window:resize', ['$event'])
   onResize(event: Event) {
-    this.size = { width: innerWidth - 470, height: innerHeight - 219, margin: 80 };
+    this.size = { width: innerWidth - (this.tensorflowService.d.sidebarWidth + 300), height: innerHeight - 190, margin: 70 };
     this.tensorflowDrawService.drawGraph(this.graphID, this.size);
   }
 

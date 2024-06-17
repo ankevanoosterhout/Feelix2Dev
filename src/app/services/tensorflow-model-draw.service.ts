@@ -12,7 +12,7 @@ export class TensorFlowModelDrawService {
   public d: TensorFlowData;
 
   modelSVG: any;
-  height = (window.innerHeight - 41) * 0.6;
+  height = (window.innerHeight - 70) * 0.6;
   margin = 30;
   smallColumnWidth = 40;
 
@@ -22,8 +22,6 @@ export class TensorFlowModelDrawService {
 
 
   drawModel(model: Model) {
-
-    console.log(model);
 
     d3.select('#neuralnetworkSVG').remove();
 
@@ -47,9 +45,12 @@ export class TensorFlowModelDrawService {
     for (const layer of model.layers) {
       const coords = [];
       const lines = [];
-      const xUnits = layer.options.units ? layer.options.units.value : layer.options.kernelSize ? layer.options.kernelSize.value.x : 1;
+      const xUnits = layer.options.units ? layer.options.units.value : layer.options.kernelSize ? layer.options.kernelSize.value.x : layer.options.poolSize ? layer.options.poolSize.value.x : 1;
       const last = i < model.layers.length - 1 ? false : true;
-      const duplicates = layer.options.kernelSize ? layer.options.kernelSize.value.y : layer.options.actuators ? layer.options.actuators.value : 1;
+      const duplicates = layer.options.kernelSize && layer.type.args.dimensions > 1 ? layer.options.kernelSize.value.y : layer.options.actuators ? layer.options.actuators.value :
+                         layer.options.poolSize && layer.type.args.dimensions > 1 ? layer.options.poolSize.value.y : 1;
+
+
       const xPos = layer.hidden ? layerOffset + 15 : layerOffset + (columnWidth / 2);
 
       for (let j = 0; j < xUnits; j++) {
@@ -69,7 +70,10 @@ export class TensorFlowModelDrawService {
 
 
         if (!last) {
-          const nextUnits = model.layers[i + 1].options.units ? model.layers[i + 1].options.units.value : model.layers[i + 1].options.kernelSize ? model.layers[i + 1].options.kernelSize.value.x : 1;
+          const nextUnits = model.layers[i + 1].options.units ? model.layers[i + 1].options.units.value :
+                            model.layers[i + 1].options.kernelSize ? model.layers[i + 1].options.kernelSize.value.x :
+                            model.layers[i + 1].options.poolSize ? model.layers[i + 1].options.poolSize.value.x : 1;
+
           const nextLayerMargin = (this.height - (this.margin * 2) - (distance * (nextUnits - 1))) / 2;
           const nextLayerOffset = model.layers[i + 1].hidden ? (this.smallColumnWidth / 2) : (columnWidth / 2);
 
@@ -96,8 +100,6 @@ export class TensorFlowModelDrawService {
           }
         }
       }
-
-
 
       this.drawLayer(layer, coords, lines, i, layer.hidden ? this.smallColumnWidth : columnWidth, layerOffset, distance, model.inputs);
 
@@ -204,7 +206,7 @@ export class TensorFlowModelDrawService {
         .attr('class', 'recurrentLayer_' + layerIndex)
         .attr('r', layer.hidden ? distance/10 : distance/5)
         .attr('cx', (d: { x: number }) => layer.hidden ? d.x + (distance/10) : d.x + (distance/5))
-        .attr('cy', (d: { y: number }) => d.y - distance/3.5)
+        .attr('cy', (d: { y: number }) => layer.hidden ? d.y - distance/7 : d.y - distance/3.5)
         .style('stroke', '#666')
         .style('stroke-width', 1)
         .style('fill', 'transparent');

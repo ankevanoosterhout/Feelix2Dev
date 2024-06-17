@@ -1,5 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { Component, Input, OnInit, Inject, HostListener, AfterViewInit } from '@angular/core';
+import { DataSet } from 'src/app/models/tensorflow.model';
 import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
 
 
@@ -16,7 +17,8 @@ import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service'
       }
 
       #svg_graph_deploy {
-        width: calc(100vw - 300px);
+        width: calc(100vw - 395px);
+        height: calc(100vh - 41px);
       }
 
   ` ]
@@ -24,18 +26,16 @@ import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service'
 export class GraphComponent implements AfterViewInit {
 
   public _id = '';
-
   public _size = { width: innerWidth, height: innerHeight, margin: 100 };
 
-  constructor(private tensorflowDrawService: TensorFlowDrawService) {
 
-  }
+  constructor(private tensorflowDrawService: TensorFlowDrawService) { }
+
+  
   ngAfterViewInit(): void {
-    //Called after ngAfterContentInit when the component's view has been initialized. Applies to components only.
-    //Add 'implements AfterViewInit' to the class.
-
     this.tensorflowDrawService.drawGraph(this._id, this._size);
   }
+
 
   @Input()
   set size(size: any) {

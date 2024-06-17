@@ -1,55 +1,65 @@
-<div id="results">
 
-  <ul id="data_output_list" class="results">
-    <li *ngFor="let classifier of this.d.selectedModel.outputs">
-      <label class="label title">{{ classifier.name }}</label>
-      <ul *ngIf="classifier.active">
-        <li *ngFor="let label of classifier.labels; let i=index;">
-          <label class="label classifier">{{ label.name }}</label>
-          <div class="bar-container"><div class="bar" id="bar-{{ classifier.id }}-{{ label.id }}"></div></div>
-          <span class="confidence" id="confidence-{{ classifier.id }}-{{ label.id }}"></span>
-        </li>
+
+
+<div class="fixed-toolbar" id="fixed-toolbar">
+
+  <div class="right" id="toolbar-content">
+    <div>
+      <ul class="buttons-list">
+        <li class="padding" id="import"><img src="./assets/icons/buttons/import.svg" title="Import output data from file"></li>
+        <li class="padding" id="export"><img src="./assets/icons/buttons/export.svg" title="Export output data to file"></li>
+        <li id="load" (click)="this.tensorflowService.loadDataSet()"><img src="./assets/icons/buttons/open.svg" title="Open output files"></li>
+        <li id="save" (click)="this.tensorflowService.saveMLoutput()"><img src="./assets/icons/buttons/save.svg" title="Save output model"></li>
+        <li class="padding" id="delete"><img src="./assets/icons/buttons/bin.svg" title="Delete output files"></li>
       </ul>
-    </li>
-  </ul>
 
-</div>
-
-
-<div class="bottom-row">
-
-
-  <div class="fixed-toolbar" id="fixed-toolbar">
-
-    <div class="right" id="toolbar-content">
-      <div>
-        <ul class="buttons-list">
-          <li class="padding" id="import"><img src="./assets/icons/buttons/import.svg" title="Import output data from file"></li>
-          <li class="padding" id="export"><img src="./assets/icons/buttons/export.svg" title="Export output data to file"></li>
-          <li id="load" (click)="this.tensorflowService.loadDataSet()"><img src="./assets/icons/buttons/open.svg" title="Open output files"></li>
-          <li id="save" (click)="this.tensorflowService.saveMLoutput()"><img src="./assets/icons/buttons/save.svg" title="Save output model"></li>
-          <li class="padding" id="delete"><img src="./assets/icons/buttons/bin.svg" title="Delete output files"></li>
-        </ul>
-
-        <div id="record-button" class="record-button" [ngClass]="{ red: this.d.recording.active }">
-           <!-- (click)="this.record()" -->
-          <div class="circle"></div>
-          <div class="rec-text">rec</div>
-        </div>
+      <div id="record-button" class="record-button" [ngClass]="{ red: this.d.recording.active }">
+          <!-- (click)="this.record()" -->
+        <div class="circle"></div>
+        <div class="rec-text">rec</div>
       </div>
     </div>
   </div>
+</div>
 
+<div class="columns">
 
-  <!-- <div id="svg_graph_training"></div> -->
-  <app-graph [id]="this.graphID" [size]="this.size"></app-graph>
+  <div class="flexbox">
 
+    <div class="data_content">
 
-  <div class="sidebar-graph deploy">
-    <app-sidebar [double]="true" [train]="false" [inputDataVisible]="false" [outputDataVisible]="true"></app-sidebar>
+      <div class="form-group absolute" id="graph-header" *ngIf="this.d.selectedDataset">
+        <!-- <label class="label">Dataset</label> -->
+        <div class="row">
+          <span *ngIf="this.d.selectedDataset">
+            <input type="text" id="dataSetName" [(ngModel)]="this.d.selectedDataset.name" name="dataSetName">
+          </span>
+
+          <span *ngIf="!this.d.selectedDataset && this.d.predictionDataset">
+            <input type="text" id="dataSetName" [(ngModel)]="this.d.predictionDataset.name" name="dataSetName" disabled>
+          </span>
+
+          <p class="date" *ngIf="this.d.selectedDataset && this.d.selectedDataset.date.created">{{ this.d.selectedDataset.date.created | date:'dd-MM-yyyy hh:mm' }}</p>
+
+          <div class="data-size" *ngIf="this.d.selectedDataset && this.d.selectedDataset.m && this.d.selectedDataset.m.length > 0">
+            size: {{ this.d.size }}
+          </div>
+        </div>
+
+      </div>
+
+      <app-graph [id]="this.graphID" [size]="this.size"></app-graph>
+
+      <div class="sidebar-graph">
+        <app-sidebar [page]="'deploy'" [inputDataVisible]="false" [outputDataVisible]="true"></app-sidebar>
+      </div>
+
+    </div>
   </div>
 
-
 </div>
+
+
+
 
 

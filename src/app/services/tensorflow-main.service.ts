@@ -60,8 +60,9 @@ export class TensorFlowMainService {
 
     addDataSet() {
       const newID = uuid();
-      this.d.dataSets.push(new DataSet(newID, 'Data set ' + (this.d.dataSets.length + 1), this.d.selectedMicrocontrollers));
+      this.d.dataSets.push(new DataSet(newID, 'Data set ' + (this.d.dataSets.length + 1), this.d.selectedMicrocontrollers, this.d.selectedModel.outputs));
       this.selectDataSet(newID);
+      console.log(this.d.dataSets);
     }
 
     saveDataSet(dataSet: DataSet = this.d.selectedDataset) {
@@ -128,26 +129,34 @@ export class TensorFlowMainService {
     }
 
 
+    importClassifiersFromModel() {
+      const dataSets = this.d.multipleSelect.active ? this.d.dataSets.slice(this.d.multipleSelect.min, this.d.multipleSelect.max + 1) : this.d.dataSets;
+
+      for (const set of dataSets) {
+        for (const classifier of this.d.selectedModel.outputs) {
+          this.addClassifierToDataSet(set, classifier);
+        }
+      }
+    }
+
+
     importDataSet(data: any) {
       //open dialogue window
       if (data) {
         const dataObj = JSON.parse(data);
-        console.log(dataObj);
 
         if (dataObj.length > 0 && dataObj[0].m && dataObj[0].m.length > 0) {
-          console.log('load dataset');
           this.loadData.next(dataObj);
 
           if (this.d.dataSets.length > 0) {
             this.selectDataSet(this.d.dataSets[this.d.dataSets.length - 1].id);
           }
         } else {
-          console.log('load ml output');
           this.loadMLData.next(dataObj);
 
-          // if (this.d.ML_OutputData.length > 0) {
-          //   this.selectDataSet(this.d.dataSets[this.d.dataSets.length - 1].id);
-          // }
+          if (!this.d.predictionDataset && this.d.ML_OutputData.length > 0) {
+            this.selectDataSet(this.d.ML_OutputData[0].id);
+          }
         }
       }
 
@@ -202,7 +211,6 @@ export class TensorFlowMainService {
 
       this.d.dataSets.push(dataSetCopy);
       this.selectDataSet(dataSetCopy.id);
-
     }
 
     trimmedDataSize(dataSet: DataSet = this.dataSetService.copyDataSet(this.d.selectedDataset)) {
@@ -264,7 +272,20 @@ export class TensorFlowMainService {
       // if (this.d.selectedModel.model) {
       //   this.d.selectedModel.model.saveData('training-data-' + this.d.selectedModel.name, this.itemsSaved);
       // }
-      const dataSets = this.d.multipleSelect.active ? this.d.dataSets.slice(this.d.multipleSelect.min, this.d.multipleSelect.max + 1) : [ this.d.selectedDataset ];
+      console.log(data);
+      const dataSets: Array<any> = this.d.multipleSelect.active ? this.d.dataSets.slice(this.d.multipleSelect.min, this.d.multipleSelect.max + 1) : [ this.d.selectedDataset ];
+
+
+      for (const set of dataSets) {
+        console.log(set);
+        if (set.classifierID) {
+          const output  = this.d.selectedModel.outputs.filter(o => o.id === set.classifierID)[0];
+          const index = this.d.selectedModel.outputs.indexOf(output);
+          if (index > -1) {
+            this.updateOutputDataSet(set, index);
+          }
+        }
+      }
 
       this.exportDataSet(data ? data : dataSets);
     }
@@ -284,50 +305,50 @@ export class TensorFlowMainService {
 
 
 
-    selectDataSet(id: String = this.d.selectedDataset.id, event = null) {
-      let ML = this.d.dataSets.filter(d => d.id === id)[0] === undefined ? true : false;
+  selectDataSet(id: String = this.d.selectedDataset.id, event = null) {
+    let ML = this.d.dataSets.filter(d => d.id === id)[0] === undefined ? true : false;
 
-      this.d.trimLinesVisible = false;
-      this.d.classify = ML;
+    this.d.trimLinesVisible = false;
+    this.d.classify = ML;
 
+    const shift = event ? event.shiftKey : false;
+    const current = shift && !ML ? this.d.dataSets.filter(s => s.open)[0] : null;
+    const selected = !ML ? this.d.dataSets.filter(s => s.id === id)[0] : null;
 
-      const shift = event ? event.shiftKey : false;
-      const current = shift && !ML ? this.d.dataSets.filter(s => s.open)[0] : null;
-      const selected = !ML ? this.d.dataSets.filter(s => s.id === id)[0] : null;
-
-      if (current && selected && !ML) {
-        this.d.multipleSelect.active = true;
-        this.d.multipleSelect.min = this.d.dataSets.indexOf(current);
-        this.d.multipleSelect.max = this.d.dataSets.indexOf(selected);
-        if (this.d.multipleSelect.min > this.d.multipleSelect.max) {
-          const tmp = this.d.multipleSelect.max;
-          this.d.multipleSelect.max = this.d.multipleSelect.min;
-          this.d.multipleSelect.min = tmp;
-        }
-      } else {
-        this.d.multipleSelect.active = false;
-        this.d.multipleSelect.min = 0;
-        this.d.multipleSelect.max = 0;
+    if (current && selected && !ML) {
+      this.d.multipleSelect.active = true;
+      this.d.multipleSelect.min = this.d.dataSets.indexOf(current);
+      this.d.multipleSelect.max = this.d.dataSets.indexOf(selected);
+      if (this.d.multipleSelect.min > this.d.multipleSelect.max) {
+        const tmp = this.d.multipleSelect.max;
+        this.d.multipleSelect.max = this.d.multipleSelect.min;
+        this.d.multipleSelect.min = tmp;
       }
+    } else {
+      this.d.multipleSelect.active = false;
+      this.d.multipleSelect.min = 0;
+      this.d.multipleSelect.max = 0;
+    }
 
-      const dataSet = !ML ? this.d.dataSets : this.d.mlOutputData;
+    const dataSet = !ML ? this.d.dataSets : this.d.mlOutputData;
+
+    for (const set of dataSet) {
+      set.open = set.id === id ? true : false;
+      if (set.open) {
+        this.updateGraphBounds.next(set.bounds);
+        this.d.selectedDataset = set;
+
+        this.updateGraph.next({ set: set, model: this.d.selectedModel, mcus: this.d.selectedMicrocontrollers, trimLines: this.d.trimLinesVisible ? this.d.trimLines : null });
+        this.d.size = this.getDataSize(set);
 
 
-      for (const set of dataSet) {
-        set.open = set.id === id ? true : false;
-        if (set.open) {
-          this.updateGraphBounds.next(set.bounds);
-          this.d.selectedDataset = set;
+        if (ML) {
+          const mlData = this.d.mlOutputData.filter(m => m.id === set.id)[0];
 
-          this.updateGraph.next({ set: set, model: this.d.selectedModel, mcus: this.d.selectedMicrocontrollers, trimLines: this.d.trimLinesVisible ? this.d.trimLines : null });
-          this.d.size = this.getDataSize(set);
-
-
-          if (ML) {
-            const mlData = this.d.mlOutputData.filter(m => m.id === set.id)[0];
-            for (const item of mlData.confidencesLevels) {
-              const label = this.d.selectedModel.outputs.filter(c => c.name === 'Classifier')[0].labels.filter(l => l.id === item.id)[0];
-              if (label) { label.confidence = item.confidence };
+          for (const item of mlData.confidencesLevels) {
+            const label = this.d.selectedModel.outputs.filter(c => c.name === 'Classifier')[0].labels.filter(l => l.id === item.id)[0];
+            if (label) {
+              label.confidence = item.confidence;
 
               if (this.document.getElementById('bar-' + mlData.classifierID + '-' + label.id) !== null) {
                 (this.document.getElementById('bar-' + mlData.classifierID + '-' + label.id) as HTMLElement).style.width = (label.confidence * 100) + '%';
@@ -338,6 +359,7 @@ export class TensorFlowMainService {
         }
       }
     }
+  }
 
 
 
@@ -357,19 +379,23 @@ export class TensorFlowMainService {
       }
     }
 
-    updateOutputDataSet(index: number) {
+    updateOutputDataSet(set = this.d.selectedDataset, index: number) {
       // console.log(this.d.selectedDataset.output);
-      if (this.d.selectedDataset && this.d.selectedDataset.output.classifier_id !== this.d.selectedModel.outputs[index].id) {
-        this.d.selectedDataset.output = new OutputItem(this.d.selectedModel.outputs[index].id, this.d.selectedModel.outputs[index].name);
+      if (set && set.outputs.filter(o => o.classifier_id === this.d.selectedModel.outputs[index].id).length === 0) {
+        set.outputs.push(new OutputItem(this.d.selectedModel.outputs[index].id, this.d.selectedModel.outputs[index].name));
         const selectClassifierDiv = (this.document.getElementById('dataset-output-select-' + this.d.selectedModel.outputs[index].id) as HTMLElement);
         if (selectClassifierDiv) selectClassifierDiv.classList.remove('invisible');
       }
     }
 
-    updateOutputLabel(index: number) {
-      if (this.d.selectedDataset.output) {
-        this.d.selectedDataset.output.classifier_id = this.d.selectedModel.outputs[index].id;
-        this.d.selectedDataset.output.classifier_name = this.d.selectedModel.outputs[index].name;
+
+    addClassifierToDataSet(set: DataSet = this.d.selectedDataset, classifier: Classifier, label: any = null) {
+      if (set.outputs.filter(o => o.classifier_id === classifier.id).length === 0) {
+        set.outputs.push(new OutputItem(classifier.id, classifier.name));
+        if (label) {
+          set.outputs[set.outputs.length - 1].label.id = label.id;
+          set.outputs[set.outputs.length - 1].label.name = label.name;
+        }
       }
     }
 
@@ -378,7 +404,7 @@ export class TensorFlowMainService {
       output.active = !output.active;
       const index = this.d.selectedModel.outputs.indexOf(output);
       if (index > -1) {
-        this.updateOutputDataSet(index);
+        this.updateOutputDataSet(this.d.selectedDataset, index);
       }
       // for (const output of this.d.selectedModel.outputs) {
       //   output.active = output.id === id ? true : false;
@@ -435,13 +461,13 @@ export class TensorFlowMainService {
 
     deleteClassifier(i: number) {
 
-      if (this.d.selectedModel.outputs.length === 1) {
-        this.addClassifier();
-      }
-      if (this.d.selectedModel.outputs[i].active) {
-        this.d.selectedModel.outputs.filter(o => o.id !== this.d.selectedModel.outputs[i].id && !o.active)[0].active = true;
-      }
       this.d.selectedModel.outputs.splice(i, 1);
+
+      if (this.d.selectedModel.outputs.length === 0) {
+        this.addClassifier();
+      } else if (this.d.selectedModel.outputs.filter(o => o.active).length === 0) {
+        this.d.selectedModel.outputs[0].active = true;
+      }
     }
 
     addClassifier() {
@@ -514,6 +540,7 @@ export class TensorFlowMainService {
         const index = this.d.selectedMicrocontrollers.indexOf(microcontroller);
         this.d.selectedMicrocontrollers.splice(index, 1);
       }
+      this.d.selectedModel.layers[0].options.actuators.value = this.getNrOfActiveMotors();
     }
 
     addMicrocontroller(microcontroller: MicroController = null, updateInputs = true) {

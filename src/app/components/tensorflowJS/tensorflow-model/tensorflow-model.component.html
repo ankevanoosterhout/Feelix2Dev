@@ -1,11 +1,10 @@
-<div class="select-modeltype">
+<!-- <div class="select-modeltype">
   <div class="form-group">
-    <!-- <label class="label">Model type</label> -->
     <select class="form-control playWindow" id="model_type" name="model_type" [(ngModel)]="this.d.selectedModel.type" (change)="this.updateModelType()">
       <option *ngFor="let item of this.modelTypeOptions" [ngValue]="item">{{ ModelTypeMapping[item] }}</option>
     </select>
   </div>
-</div>
+</div> -->
 
 <div id="neuralnetwork"></div>
 
@@ -159,18 +158,35 @@
             </select>
           </div>
 
+
           <div class="form-group" *ngIf="layer.options.units">
             <label class="label"><div class="question-mark" title="Positive integer, dimensionality of the output space.">?</div>Units</label>
             <input type="number" class="number small blue" id="layerUnits" [(ngModel)]="layer.options.units.value" name="layerUnits" (change)="this.updateUnits(i)">
           </div>
 
-          <div class="form-group" *ngIf="layer.options.kernelSize">
-            <label class="label"><div class="question-mark" title="Positive integer, dimensionality of the output space.">?</div>Kernel size</label>
-            <input type="number" class="number extra small blue" id="kernelSizeX" [(ngModel)]="layer.options.kernelSize.value.x" name="kernelSizeX" (change)="this.updateUnits(i)">
-            <label class="label small">x</label>
-            <input type="number" class="number extra small blue" id="kernelSizeY" [(ngModel)]="layer.options.kernelSize.value.y" name="kernelSizeY" (change)="this.updateNetworkVisualization()">
-          </div>
+          <div *ngIf="layer.options.kernelSize">
+            <div class="form-group" *ngIf="layer.type.args && layer.type.args.dimensions === 1">
+              <label class="label"><div class="question-mark" title="Positive integer, dimensionality of the output space.">?</div>Kernel size</label>
+              <input type="number" class="number extra small blue" id="kernelSizeX" [(ngModel)]="layer.options.kernelSize.value.x" name="kernelSizeX" (change)="this.updateUnits(i)">
+            </div>
 
+            <div class="form-group" *ngIf="layer.type.args && layer.type.args.dimensions === 2">
+              <label class="label"><div class="question-mark" title="Positive integer, dimensionality of the output space.">?</div>Kernel size</label>
+              <input type="number" class="number extra small blue" id="kernelSizeX" [(ngModel)]="layer.options.kernelSize.value.x" name="kernelSizeX" (change)="this.updateUnits(i)">
+              <label class="label auto">x</label>
+              <input type="number" class="number extra small blue" id="kernelSizeY" [(ngModel)]="layer.options.kernelSize.value.y" name="kernelSizeY" (change)="this.updateUnits(i)">
+            </div>
+
+            <div class="form-group" *ngIf="layer.type.args && layer.type.args.dimensions === 3">
+              <label class="label"><div class="question-mark" title="Size of the window to pool over, should be an integer.">?</div>Pool size</label>
+              <input type="number" class="number extra small blue" id="kernelSizeX" [(ngModel)]="layer.options.kernelSize.value.x" name="kernelSizeX" (change)="this.updateUnits(i)">
+              <label class="label auto">x</label>
+              <input type="number" class="number extra small blue" id="kernelSizeY" [(ngModel)]="layer.options.kernelSize.value.y" name="kernelSizeY" (change)="this.updateUnits(i)">
+              <label class="label auto">x</label>
+              <input type="number" class="number extra small blue" id="kernelSizeZ" [(ngModel)]="layer.options.kernelSize.value.z" name="kernelSizeZ" (change)="this.updateUnits(i)">
+            </div>
+
+          </div>
 
           <div class="horizontalSeparator"></div>
 
@@ -216,7 +232,7 @@
 
           <div class="form-group" *ngIf="layer.settingsVisible && layer.options.useBias && layer.options.useBias.value !== undefined">
             <label class="radio-container">Use bias <div class="question-mark" title="Whether to apply a bias.">?</div>
-              <input type="checkbox" class="type" id="batchNormalization" name="batchNormalization" [(ngModel)]="layer.options.useBias.value" [checked]="layer.options.useBias.value" (change)="this.updateNetworkVisualization()">
+              <input type="checkbox" class="type" id="useBias" name="useBias" [(ngModel)]="layer.options.useBias.value" [checked]="layer.options.useBias.value" (change)="this.updateNetworkVisualization()">
               <span class="checkmark radio tensorflow"></span>
             </label>
           </div>
@@ -279,17 +295,35 @@
           </div>
 
           <!-- pooling layers -->
+          <div *ngIf="layer.type && layer.type.subgroup === 'pooling'">
+            <div class="form-group" *ngIf="layer.type.args && layer.type.args.dimensions === 1">
+              <label class="label"><div class="question-mark" title="Size of the window to pool over, should be an integer.">?</div>Pool size</label>
+              <input type="number" class="number small blue" id="poolSize" [(ngModel)]="layer.options.poolSize.value.x" name="poolSize">
+            </div>
 
-          <div class="form-group" *ngIf="layer.type && layer.type.subgroup === 'pooling'">
-            <label class="label"><div class="question-mark" title="Size of the window to pool over, should be an integer.">?</div>Pool size</label>
-            <input type="number" class="number small blue" id="poolSize" [(ngModel)]="layer.options.poolSize.value" name="poolSize">
-          </div>
+            <div class="form-group" *ngIf="layer.type.args && layer.type.args.dimensions === 2">
+              <label class="label"><div class="question-mark" title="Size of the window to pool over, should be an integer.">?</div>Pool size</label>
+              <input type="number" class="number extra small blue" id="poolSizeX" [(ngModel)]="layer.options.poolSize.value.x" name="poolSizeX" (change)="this.updateUnits(i)">
+              <label class="label auto">x</label>
+              <input type="number" class="number extra small blue" id="poolSizeY" [(ngModel)]="layer.options.poolSize.value.y" name="poolSizeY" (change)="this.updateUnits(i)">
+            </div>
+            
+            <div class="form-group" *ngIf="layer.type.args && layer.type.args.dimensions === 3">
+              <label class="label"><div class="question-mark" title="Size of the window to pool over, should be an integer.">?</div>Pool size</label>
+              <input type="number" class="number extra small blue" id="poolSizeX" [(ngModel)]="layer.options.poolSize.value.x" name="poolSizeX" (change)="this.updateUnits(i)">
+              <label class="label auto">x</label>
+              <input type="number" class="number extra small blue" id="poolSizeY" [(ngModel)]="layer.options.poolSize.value.y" name="poolSizeY" (change)="this.updateUnits(i)">
+              <label class="label auto">x</label>
+              <input type="number" class="number extra small blue" id="poolSizeZ" [(ngModel)]="layer.options.poolSize.value.z" name="poolSizeZ" (change)="this.updateUnits(i)">
+            </div>
 
-          <div class="form-group" *ngIf="layer.type && layer.type.subgroup === 'pooling'">
-            <label class="label"><div class="question-mark" title="The data format to use for the pooling layer.">?</div>Data format</label>
-            <select class="form-control playWindow" id="dataFormat" name="dataFormat" [(ngModel)]="layer.options.dataFormat.value">
-              <option *ngFor="let item of this.dataFormatOptions" [ngValue]="item">{{ DataFormatMapping[item] }}</option>
-            </select>
+
+            <div class="form-group">
+              <label class="label"><div class="question-mark" title="The data format to use for the pooling layer.">?</div>Data format</label>
+              <select class="form-control playWindow" id="dataFormat" name="dataFormat" [(ngModel)]="layer.options.dataFormat.value">
+                <option *ngFor="let item of this.dataFormatOptions" [ngValue]="item">{{ DataFormatMapping[item] }}</option>
+              </select>
+            </div>
           </div>
 
 

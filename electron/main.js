@@ -763,8 +763,8 @@ function createWindow() {
 
   mainWindow.webContents.on('did-finish-load', () => {
     displayStatus('Ready', 'main');
-    disconnectMicrocontrollers();
-    serialPort.checkSerialPorts();
+    // disconnectMicrocontrollers();
+    // serialPort.checkSerialPorts();
   });
 }
 
@@ -1463,8 +1463,8 @@ ipcMain.on('listDevices', (event, data) => {
 
 //tensorflow communication
 
-// ipcMain.on('CreateTensors', (event, data) => {
-//   tensorflow.CreateTensors(data.d, data.options, data.epochs, data.batchSize); //32, 12
+// ipcMain.on('createTensors', (event, data) => {
+//   tensorflow.createTensors(data.d, data.options, data.epochs, data.batchSize); //32, 12
 // });
 
 // ipcMain.on('NN_classify', (event, data) => {

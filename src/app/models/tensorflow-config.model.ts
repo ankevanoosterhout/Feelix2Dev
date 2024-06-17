@@ -13,10 +13,9 @@ export class TensorFlowConfig {
 
   bounds = new Bounds();
 
-  // sidebarColumnWidth = [170, 170];
 
-  width = window.innerWidth - 320;
-  height = window.innerHeight - 100;
+  width = window.innerWidth - 385;
+  height = window.innerHeight - 70;
 
 
   margin = 50;

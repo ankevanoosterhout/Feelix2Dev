@@ -41,41 +41,48 @@ export class TensorflowModelComponent implements OnInit {
 
 
   public LayerTypes = [
-    new LayerType('dense', 'basic', 'Creates a dense (fully connected) layer.', tf.layers.dense),
+    new LayerType('dense', 'basic', tf.layers.dense),
+    new LayerType('activation', 'basic', tf.layers.activation),
+    new LayerType('dropout', 'basic', tf.layers.dropout),
+    new LayerType('embedding', 'basic', tf.layers.embedding),
+    new LayerType('flatten', 'basic', tf.layers.flatten),
+    new LayerType('permute', 'basic', tf.layers.permute),
+    new LayerType('repeatVector', 'basic', tf.layers.repeatVector),
+    new LayerType('spatialDropout1d', 'basic', tf.layers.spatialDropout1d),
 
-    new LayerType('layerNormalization', 'normalization', 'Layer-normalization layer', tf.layers.layerNormalization),
-    new LayerType('batchNormalization', 'normalization', 'Batch normalization layer', tf.layers.batchNormalization),
+    new LayerType('layerNormalization', 'normalization', tf.layers.layerNormalization),
+    new LayerType('batchNormalization', 'normalization', tf.layers.batchNormalization),
 
-    new LayerType('conv1d', 'convolutional', 'This layer creates a convolution kernel that is convolved with the layer input over a single spatial (or temporal) dimension to produce a tensor of outputs.', tf.layers.conv1d),
-    new LayerType('conv2d', 'convolutional', 'This layer creates a convolution kernel that is convolved with the layer input to produce a tensor of outputs.', tf.layers.conv2d),
-    new LayerType('conv2dTranspose', 'convolutional', 'This layer creates a convolution kernel that is convolved with the layer input to produce a tensor of outputs.', tf.layers.conv2dTranspose),
-    new LayerType('conv3d', 'convolutional', '3D convolution layer (e.g. spatial convolution over volumes).', tf.layers.conv3d),
-    new LayerType('cropping2D', 'convolutional', 'Cropping layer for 2D input', tf.layers.cropping2D),
-    new LayerType('depthwiseConv2d', 'convolutional', 'Depthwise separable 2D convolution.', tf.layers.depthwiseConv2d),
-    new LayerType('separableConv2d', 'convolutional', 'Depthwise separable 2D convolution.', tf.layers.separableConv2d),
-    new LayerType('upSampling2d', 'convolutional', 'Upsampling layer for 2D inputs.', tf.layers.upSampling2d),
+    new LayerType('conv1d', 'convolutional', tf.layers.conv1d, { dimensions: 1 }),
+    new LayerType('conv2d', 'convolutional', tf.layers.conv2d, { dimensions: 2 }),
+    new LayerType('conv2dTranspose', 'convolutional', tf.layers.conv2dTranspose, { dimensions: 2 }),
+    new LayerType('conv3d', 'convolutional', tf.layers.conv3d, { dimensions: 3}),
+    new LayerType('cropping2D', 'convolutional', tf.layers.cropping2D, { dimensions: 2 }),
+    new LayerType('depthwiseConv2d', 'convolutional', tf.layers.depthwiseConv2d, { dimensions: 2 }),
+    new LayerType('separableConv2d', 'convolutional', tf.layers.separableConv2d, { dimensions: 2 }),
+    new LayerType('upSampling2d', 'convolutional', tf.layers.upSampling2d, { dimensions: 2 }),
 
-    new LayerType('convLstm2d', 'recurrent', 'Convolutional LSTM layer.', tf.layers.convLstm2d),
-    new LayerType('convLstm2dCell', 'recurrent', 'Cell class for ConvLSTM2D.', tf.layers.convLstm2dCell),
-    new LayerType('gru', 'recurrent', 'Gated Recurrent Unit', tf.layers.gru),
-    new LayerType('gruCell', 'recurrent', 'Cell class for GRU.', tf.layers.gruCell),
-    new LayerType('lstm', 'recurrent', 'Long-Short Term Memory layer', tf.layers.lstm),
-    new LayerType('lstmCell', 'recurrent', 'Cell class for LSTM.', tf.layers.lstmCell),
-    new LayerType('rnn', 'recurrent', 'Base class for recurrent layers.', tf.layers.rnn),
-    new LayerType('simpleRNN', 'recurrent', 'Fully-connected RNN where the output is to be fed back to input.', tf.layers.simpleRNN),
-    new LayerType('simpleRNNCell', 'recurrent', 'Cell class for SimpleRNN.', tf.layers.simpleRNNCell),
-    new LayerType('stackedRNNCells', 'recurrent', 'Wrapper allowing a stack of RNN cells to behave as a single cell. For efficient stacked RNNs.', tf.layers.stackedRNNCells),
+    new LayerType('convLstm2d', 'recurrent', tf.layers.convLstm2d, { dimensions: 2 }),
+    new LayerType('convLstm2dCell', 'recurrent', tf.layers.convLstm2dCell, { dimensions: 2 }),
+    new LayerType('gru', 'recurrent', tf.layers.gru),
+    new LayerType('gruCell', 'recurrent', tf.layers.gruCell),
+    new LayerType('lstm', 'recurrent', tf.layers.lstm),
+    new LayerType('lstmCell', 'recurrent', tf.layers.lstmCell),
+    new LayerType('rnn', 'recurrent', tf.layers.rnn),
+    new LayerType('simpleRNN', 'recurrent', tf.layers.simpleRNN),
+    new LayerType('simpleRNNCell', 'recurrent', tf.layers.simpleRNNCell),
+    new LayerType('stackedRNNCells', 'recurrent', tf.layers.stackedRNNCells),
 
-    new LayerType('averagePooling1d', 'pooling', 'Average pooling operation for spatial data.', tf.layers.averagePooling1d),
-    new LayerType('averagePooling2d', 'pooling', 'Average pooling operation for spatial data.', tf.layers.averagePooling2d),
-    new LayerType('averagePooling3d', 'pooling', 'Average pooling operation for 3D data.', tf.layers.averagePooling3d),
-    new LayerType('globalAveragePooling1d', 'pooling', 'Global average pooling operation for temporal data.', tf.layers.globalAveragePooling1d),
-    new LayerType('globalAveragePooling2d', 'pooling', 'Global average pooling operation for spatial data.', tf.layers.globalAveragePooling2d),
-    new LayerType('globalMaxPooling1d', 'pooling', 'Global max pooling operation for temporal data.', tf.layers.globalMaxPooling1d),
-    new LayerType('globalMaxPooling2d', 'pooling', 'Global max pooling operation for spatial data.', tf.layers.globalMaxPooling2d),
-    new LayerType('maxPooling1d', 'pooling', 'Max pooling operation for temporal data.', tf.layers.maxPooling1d),
-    new LayerType('maxPooling2d', 'pooling', 'Max pooling operation for spatial data.', tf.layers.maxPooling2d),
-    new LayerType('maxPooling3d', 'pooling',  'Max pooling operation for 3D data.', tf.layers.maxPooling3d)
+    new LayerType('averagePooling1d', 'pooling', tf.layers.averagePooling1d, { dimensions: 1 }),
+    new LayerType('averagePooling2d', 'pooling', tf.layers.averagePooling2d, { dimensions: 2 }),
+    new LayerType('averagePooling3d', 'pooling', tf.layers.averagePooling3d, { dimensions: 3 }),
+    new LayerType('globalAveragePooling1d', 'pooling', tf.layers.globalAveragePooling1d, { dimensions: 1 }),
+    new LayerType('globalAveragePooling2d', 'pooling', tf.layers.globalAveragePooling2d, { dimensions: 2 }),
+    new LayerType('globalMaxPooling1d', 'pooling', tf.layers.globalMaxPooling1d, { dimensions: 1 }),
+    new LayerType('globalMaxPooling2d', 'pooling', tf.layers.globalMaxPooling2d, { dimensions: 2 }),
+    new LayerType('maxPooling1d', 'pooling', tf.layers.maxPooling1d, { dimensions: 1 }),
+    new LayerType('maxPooling2d', 'pooling', tf.layers.maxPooling2d, { dimensions: 2 }),
+    new LayerType('maxPooling3d', 'pooling', tf.layers.maxPooling3d, { dimensions: 3 })
 
 
   ];
@@ -107,10 +114,8 @@ export class TensorflowModelComponent implements OnInit {
 
 
       this.electronService.ipcRenderer.on('comports', (event: Event, comports: any) => {
-        console.log(comports);
         if (this.d.selectedMicrocontrollers.filter(m => m.serialPort.path === comports[0].serialPort).length === 0) {
           const mcu = this.hardwareService.microcontrollers.filter(m => m.serialPort.path === comports[0].serialPort)[0];
-          console.log(mcu);
           if (mcu) {
             this.d.selectOptionMicrocontroller = mcu;
             this.tensorflowService.addMicrocontroller(mcu, false);
@@ -119,7 +124,6 @@ export class TensorflowModelComponent implements OnInit {
       });
 
       this.hardwareService.connectWithMicrocontroller.subscribe(res => {
-        console.log(res);
         this.tensorflowService.addMicrocontroller(res, true);
       });
 
@@ -130,9 +134,11 @@ export class TensorflowModelComponent implements OnInit {
 
 
   ngOnInit(): void {
-    this.d.selectedModel.outputs.push(new Classifier(uuid(), 'Classifier-' + (this.d.selectedModel.outputs.length + 1)));
-    this.d.selectedModel.outputs[0].active = true;
-    this.tensorflowService.addLabelToClassifier(0);
+    if (this.d.selectedModel.outputs.length === 0) {
+      this.d.selectedModel.outputs.push(new Classifier(uuid(), 'Classifier-' + (this.d.selectedModel.outputs.length + 1)));
+      this.d.selectedModel.outputs[0].active = true;
+      this.tensorflowService.addLabelToClassifier(0);
+    }
 
     // this.electronService.ipcRenderer.send('listSerialPorts', false);
 
@@ -218,6 +224,11 @@ export class TensorflowModelComponent implements OnInit {
     this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
   }
 
+  deleteMicrocontroller(port: string) {
+    this.tensorflowService.deleteMicrocontroller(port);
+    this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
+  }
+
   toggleRecordMotor(serialPath: string, motor: Motor) {
     for (const set of this.d.dataSets) {
       for (const m of set.m) {
@@ -244,6 +255,7 @@ export class TensorflowModelComponent implements OnInit {
       }
     }
   }
+
 
 
   updateCommunicationSpeed(serialPath: string) {
@@ -314,9 +326,15 @@ export class TensorflowModelComponent implements OnInit {
 
   }
 
+
   initializeModel() {
-      //next step
+    if (this.d.selectedModel) {
       this.tensorflowService.createModel.next(1);
+    }
   }
+
+
+
+
 
 }

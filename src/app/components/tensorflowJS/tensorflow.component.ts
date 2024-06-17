@@ -6,7 +6,7 @@ import { v4 as uuid } from 'uuid';
 import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
 import { TensorFlowConfig } from 'src/app/models/tensorflow-config.model';
 import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
-import { Model, ModelType } from 'src/app/models/tensorflow.model';
+import { Classifier, DataSet, InputColor, Label, Model, ModelType } from 'src/app/models/tensorflow.model';
 import { TensorFlowModelDrawService } from 'src/app/services/tensorflow-model-draw.service';
 
 @Component({
@@ -35,6 +35,11 @@ export class TensorflowComponent {
       this.document.getElementById('progress').style.width = width + 'px';
     });
 
+    this.electronService.ipcRenderer.on('load-ml-model-from-files', (event: Event, data: any) => {
+      this.tensorflowService.importModel(data);
+    });
+
+
 
     this.electronService.ipcRenderer.on('deploy-model', (event: Event) => {
       this.document.getElementById('deploy').click();
@@ -48,6 +53,21 @@ export class TensorflowComponent {
       this.selectStep(res);
     });
 
+    this.electronService.ipcRenderer.on('load-model', (event: Event, data: any) => {
+      if (data && data[0]) {
+        this.tensorflowService.loadModel(data[0].id);
+      }
+    });
+
+    this.electronService.ipcRenderer.on('export-dataset-model', (event: Event, data: any) => {
+      this.tensorflowService.saveDataNN(data);
+    });
+
+    this.electronService.ipcRenderer.on('load-from-files', (event: Event, data: any) => {
+      this.tensorflowService.importDataSet(data);
+    });
+
+
 
   }
 
@@ -58,16 +78,13 @@ export class TensorflowComponent {
     if (step === 0) {
       if (this.d.selectedModel === undefined) {
         this.d.selectedModel = new Model(uuid(), 'custom model', ModelType.custom);
+        console.log(this.d.selectedModel);
       }
+      console.log(this.d.selectedModel);
       this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
-    } else if (step === 1) {
-      this.tensorflowDrawService.drawGraph();
-    } else if (step === 2) {
-
-    } else if (step === 3) {
-
     }
   }
+
 
 
 

@@ -56,9 +56,6 @@ export class TensorFlowJSComponent implements OnInit {
         }
       });
 
-      this.electronService.ipcRenderer.on('export-dataset-model', (event: Event, data: any) => {
-        this.tensorflowService.saveDataNN(data);
-      });
 
       this.electronService.ipcRenderer.on('load-from-files', (event: Event, data: any) => {
         this.tensorflowService.importDataSet(data);

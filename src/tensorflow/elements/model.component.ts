@@ -77,7 +77,7 @@ export class ModelComponent {
       this.d.selectedModel.inputs = inputLabels;
       this.d.selectedModel.layers[this.d.selectedModel.layers.length - 1].options.outputs = outputLabels;
 
-      this.tensorflowTrainService.CreateTensors(data, this.d.selectedModel);
+      this.tensorflowTrainService.createTensors(data, this.d.selectedModel);
 
       (this.document.getElementById('deploy') as HTMLButtonElement).disabled = true;
 
