@@ -258,13 +258,14 @@ export class TensorFlowModelDrawService {
     }
 
 
-    if (layerIndex > 0 && !layer.hidden && layer.options.activation && layer.options.activation.value) {
+    if (layerIndex > 0 && !layer.hidden && ((layer.options.activation && layer.options.activation.value) || (layer.type && layer.type.subgroup === 'normalization'))) {
+      const icon = layer.options.activation ? layer.options.activation.value : layer.type.subgroup;
       const imageWidth = distance / 2;
       this.modelSVG.selectAll('img.layer_' + layerIndex).data([0])
         .data(coords.filter(c => c.index === 0))
         .enter()
         .append('svg:image')
-        .attr('xlink:xlink:href', './assets/icons/functions/' + layer.options.activation.value + '.svg')
+        .attr('xlink:xlink:href', './assets/icons/functions/' + icon + '.svg')
         .attr('width', imageWidth)
         .attr('height', imageWidth * 0.76142)
         .attr('x', (d: { x: number }) => d.x - (imageWidth/2))

@@ -2,7 +2,7 @@ import { DOCUMENT } from '@angular/common';
 import { Injectable, Inject } from '@angular/core';
 import { v4 as uuid } from 'uuid';
 import { ActuatorType, MicroController } from '../models/hardware.model';
-import { Model, DataSet, Classifier, Convolutional_options, Label, MotorEl, ModelVariable, ModelType, Regression_options, OutputItem, InputColor, InputLayerOptions } from '../models/tensorflow.model';
+import { Model, DataSet, Classifier, Label, MotorEl, ModelVariable, ModelType, Regression_options, OutputItem, InputColor, InputLayerOptions } from '../models/tensorflow.model';
 import { HardwareService } from './hardware.service';
 import { DataSetService } from './dataset.service';
 import { Subject } from 'rxjs';
@@ -40,20 +40,28 @@ export class TensorFlowMainService {
                 }
 
 
-    deleteDataSet(id: string = null, ML = false) {
-      let dataset = !ML ? this.d.dataSets : this.d.mlOutputData;
-      let set = dataset.filter(s => id ? s.id === id : s.open)[0];
-      if (set) {
-        const index = dataset.indexOf(set);
-        dataset.splice(index, 1);
-        if (index < dataset.length) {
-          this.selectDataSet(dataset[index].id);
-        } else if (dataset.length > 0) {
-          this.selectDataSet(dataset[0].id);
-        } else if (!ML) {
-          this.addDataSet();
-          // this.updateGraph.next(true);
-          // this.d.selectedDataset = null;
+    deleteDataSet(dataset: Array<any>, set: any, ML = false) {
+      const index = dataset.indexOf(set);
+      dataset.splice(index, 1);
+      if (index < dataset.length) {
+        this.selectDataSet(dataset[index].id);
+      } else if (dataset.length > 0) {
+        this.selectDataSet(dataset[0].id);
+      } else if (!ML) {
+        this.addDataSet();
+        // this.updateGraph.next(true);
+        // this.d.selectedDataset = null;
+      }
+    }
+
+    deleteDataSets(id: string = null, ML = false) {
+      const dataset = !ML ? this.d.dataSets : this.d.mlOutputData;
+      const set = dataset.filter(s => id ? s.id === id : s.open)[0];
+      if (set && !this.d.multipleSelect.active) {
+        this.deleteDataSet(dataset, set, ML);
+      } else {
+        for (let i = this.d.multipleSelect.min; i < this.d.multipleSelect.max; i++) {
+          this.deleteDataSet(dataset, dataset[i], ML);
         }
       }
     }
@@ -268,11 +276,12 @@ export class TensorFlowMainService {
     }
 
 
-    saveDataNN(data: any) {
+    saveDataNN(data: any = null) {
       // if (this.d.selectedModel.model) {
       //   this.d.selectedModel.model.saveData('training-data-' + this.d.selectedModel.name, this.itemsSaved);
       // }
       console.log(data);
+      
       const dataSets: Array<any> = this.d.multipleSelect.active ? this.d.dataSets.slice(this.d.multipleSelect.min, this.d.multipleSelect.max + 1) : [ this.d.selectedDataset ];
 
 
@@ -740,5 +749,79 @@ export class TensorFlowMainService {
 
 
 
+    loadDataSets(data: Array<DataSet>) {
+      if (data) {
+        for (const dataset of data) {
+          if (this.d.dataSets.filter(d => d.id === dataset.id).length === 0) {
+            if (dataset.m && dataset.m.length > 0) {
+              for (const motor of dataset.m) {
+                if (this.d.selectedMicrocontrollers.filter(m => m.serialPort.path === motor.mcu.serialPath).length === 0) {
+                  const mcu = this.hardwareService.microcontrollers.filter(m => m.serialPort.path === motor.mcu.serialPath)[0];
+                  if (mcu) {
+                    // this.d.selectOptionMicrocontroller = mcu;
+                    this.addMicrocontroller(mcu, false);
+                  }
+                }
+                if (motor.d.length > 0) {
+                  for (const input of motor.d[0].inputs) {
+                    const inputModels = this.d.selectedModel.inputs.filter(i => i.name === input.name);
+                    if (inputModels.length === 1) {
+                      if (!inputModels[0].active) { inputModels[0].active = true; }
+                    } else if (inputModels.length === 0) {
+                      //console.log('add input');
+                      this.addInputItem(input.name);
+                      this.d.colorList.push(new InputColor(input.name, '#999'));
+                    }
+                  }
+                }
+                if (!motor.colors || motor.colors.length === 0) {
+                  motor.colors = JSON.parse(JSON.stringify(this.d.colorList));
+                }
+              }
+
+              if (dataset.outputs && dataset.outputs.filter(o => o.classifier_id).length > 0) {
+                this.addClassifierFromDataSet(dataset);
+              }
+
+              this.d.dataSets.push(dataset);
+            }
+          }
+          if (this.d.dataSets.length > 0) {
+            // this.config.transform = null;
+            this.d.dataSets.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0));
+            this.selectDataSet(this.d.dataSets[0].id);
+          }
+        }
+      }
+
+    }
+
+
+    addClassifierFromDataSet(dataset: any) {
+      for (const output of dataset.outputs) {
+        const outputClassifierInModel = this.d.selectedModel.outputs.filter(o => o.id === output.classifier_id)[0];
+
+        if (!outputClassifierInModel) {
+          const newClassifier = new Classifier(output.classifier_id, output.classifier_name);
+          this.d.selectedModel.outputs.push(newClassifier);
+          this.checkIfHasLabel(newClassifier, output.label);
+          this.selectClassifier(newClassifier.id);
+        } else {
+          this.checkIfHasLabel(outputClassifierInModel, output.label);
+          this.selectClassifier(outputClassifierInModel.id);
+        }
+      }
+    }
+
+
+    checkIfHasLabel(classifier: Classifier, label: Label) {
+      if (label && label.id && classifier && classifier.labels) {
+        const l = classifier.labels.filter(l => l.id === label.id)[0];
+        if (!l) {
+          const newLabel = new Label(label.id, label.name);
+          classifier.labels.push(newLabel);
+        }
+      }
+    }
 
 }

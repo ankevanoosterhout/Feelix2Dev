@@ -1,12 +1,12 @@
 import { DOCUMENT } from '@angular/common';
-import { Component, OnInit, Inject, HostListener } from '@angular/core';
+import { Component, Inject, ChangeDetectorRef } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 import { v4 as uuid } from 'uuid';
 import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
 import { TensorFlowConfig } from 'src/app/models/tensorflow-config.model';
 import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
-import { Classifier, DataSet, InputColor, Label, Model, ModelType } from 'src/app/models/tensorflow.model';
+import { DataSet, Model, ModelType } from 'src/app/models/tensorflow.model';
 import { TensorFlowModelDrawService } from 'src/app/services/tensorflow-model-draw.service';
 
 @Component({
@@ -21,7 +21,7 @@ export class TensorflowComponent {
 
 
 
-  constructor(@Inject(DOCUMENT) private document: Document, public tensorflowService: TensorFlowMainService,
+  constructor(@Inject(DOCUMENT) private document: Document, public tensorflowService: TensorFlowMainService, private changeDetection: ChangeDetectorRef,
       private tensorflowDrawService: TensorFlowDrawService, private tensorflowModelDrawService: TensorFlowModelDrawService, private electronService: ElectronService) {
 
     this.config = this.tensorflowDrawService.config;
@@ -39,15 +39,6 @@ export class TensorflowComponent {
       this.tensorflowService.importModel(data);
     });
 
-
-
-    this.electronService.ipcRenderer.on('deploy-model', (event: Event) => {
-      this.document.getElementById('deploy').click();
-    });
-
-    this.electronService.ipcRenderer.on('train-model', (event: Event) => {
-      this.document.getElementById('train').click();
-    });
 
     this.tensorflowService.createModel.subscribe(res => {
       this.selectStep(res);
@@ -67,6 +58,15 @@ export class TensorflowComponent {
       this.tensorflowService.importDataSet(data);
     });
 
+    this.electronService.ipcRenderer.on('load-datasets', (event: Event, data: Array<DataSet>) => {
+      this.tensorflowService.loadDataSets(data);
+      this.changeDetection.detectChanges();
+    });
+
+    this.tensorflowService.loadData.subscribe((res) => {
+      this.tensorflowService.loadDataSets(res);
+      this.changeDetection.detectChanges();
+    });
 
 
   }

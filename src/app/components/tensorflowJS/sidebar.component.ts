@@ -1,7 +1,6 @@
-import { Component, Input, HostListener, ChangeDetectorRef } from '@angular/core';
-import { ElectronService } from 'ngx-electron';
+import { Component, Input, HostListener } from '@angular/core';
 import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
-import { Classifier, DataSet, InputColor, Label, MotorEl } from 'src/app/models/tensorflow.model';
+import { MotorEl } from 'src/app/models/tensorflow.model';
 import { HardwareService } from 'src/app/services/hardware.service';
 import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
@@ -112,7 +111,7 @@ import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service'
               <li *ngFor="let set of this.d.dataSets; let i = index;" id="dataset-item-{{ set.id }}" (click)="this.tensorflowService.selectDataSet(set.id, $event)"
                   [ngClass]="{ active: set.open, selected: this.d.multipleSelect.active && i >= this.d.multipleSelect.min && i <= this.d.multipleSelect.max }">
                 <div class="row name" [ngClass]="{ small: this._page === 'train' }">{{ set.name }}</div>
-                <div class="close close-button" (click)="this.tensorflowService.deleteDataSet(set.id)" *ngIf="this._page !== 'train'"><div></div></div>
+                <div class="close close-button" (click)="this.tensorflowService.deleteDataSets(set.id)" *ngIf="this._page !== 'train'"><div></div></div>
                 <ul class="training-type-options" *ngIf="this._page === 'train'">
                   <li class="train" [ngClass]="{ active: set.trainingType === 0 }">T</li>
                   <li class="validate" [ngClass]="{ active: set.trainingType === 1 }">V</li>
@@ -125,7 +124,7 @@ import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service'
               <li *ngFor="let mlset of this.d.mlOutputData; let i = index;" id="dataset-item-{{ mlset.id }}" (click)="this.tensorflowService.selectDataSet(mlset.id, $event)"
                   [ngClass]="{ active: mlset.open, selected: this.d.multipleSelect.active && i >= this.d.multipleSelect.min && i <= this.d.multipleSelect.max }">
                 <div class="row name" >{{ mlset.name }}</div>
-                <div class="close close-button" (click)="this.tensorflowService.deleteDataSet(mlset.id, true)"><div></div></div>
+                <div class="close close-button" (click)="this.tensorflowService.deleteDataSets(mlset.id, true)"><div></div></div>
               </li>
             </ul>
           </div>
@@ -143,17 +142,9 @@ export class SidebarComponent {
   public _page: string;
 
 
-  constructor(private tensorflowService: TensorFlowMainService, private tensorflowDrawService: TensorFlowDrawService, private hardwareService: HardwareService,
-              private electronService: ElectronService, private changeDetection: ChangeDetectorRef) {
+  constructor(private tensorflowService: TensorFlowMainService, private tensorflowDrawService: TensorFlowDrawService, private hardwareService: HardwareService) {
     this.d = this.tensorflowService.d;
 
-    this.tensorflowService.loadData.subscribe((res) => {
-      this.loadDataSets(res);
-    });
-
-    this.electronService.ipcRenderer.on('load-datasets', (event: Event, data: Array<DataSet>) => {
-      this.loadDataSets(data);
-    });
   }
 
   @Input()
@@ -256,80 +247,6 @@ export class SidebarComponent {
 
     }
 
-    loadDataSets(data: Array<DataSet>) {
-      if (data) {
-        for (const dataset of data) {
-          if (this.d.dataSets.filter(d => d.id === dataset.id).length === 0) {
-            if (dataset.m && dataset.m.length > 0) {
-              for (const motor of dataset.m) {
-                if (this.d.selectedMicrocontrollers.filter(m => m.serialPort.path === motor.mcu.serialPath).length === 0) {
-                  const mcu = this.hardwareService.microcontrollers.filter(m => m.serialPort.path === motor.mcu.serialPath)[0];
-                  if (mcu) {
-                    // this.d.selectOptionMicrocontroller = mcu;
-                    this.tensorflowService.addMicrocontroller(mcu, false);
-                  }
-                }
-                if (motor.d.length > 0) {
-                  for (const input of motor.d[0].inputs) {
-                    const inputModels = this.d.selectedModel.inputs.filter(i => i.name === input.name);
-                    if (inputModels.length === 1) {
-                      if (!inputModels[0].active) { inputModels[0].active = true; }
-                    } else if (inputModels.length === 0) {
-                      //console.log('add input');
-                      this.tensorflowService.addInputItem(input.name);
-                      this.d.colorList.push(new InputColor(input.name, '#999'));
-                    }
-                  }
-                }
-                if (!motor.colors || motor.colors.length === 0) {
-                  motor.colors = JSON.parse(JSON.stringify(this.d.colorList));
-                }
-              }
-
-              if (dataset.outputs && dataset.outputs.filter(o => o.classifier_id).length > 0) {
-                this.addClassifierFromDataSet(dataset);
-              }
-
-              this.d.dataSets.push(dataset);
-            }
-          }
-          if (this.d.dataSets.length > 0) {
-            // this.config.transform = null;
-            this.d.dataSets.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0));
-            this.tensorflowService.selectDataSet(this.d.dataSets[0].id);
-          }
-        }
-      }
-      this.changeDetection.detectChanges();
-    }
-
-
-    addClassifierFromDataSet(dataset: any) {
-      for (const output of dataset.outputs) {
-        const outputClassifierInModel = this.d.selectedModel.outputs.filter(o => o.id === output.classifier_id)[0];
-
-        if (!outputClassifierInModel) {
-          const newClassifier = new Classifier(output.classifier_id, output.classifier_name);
-          this.d.selectedModel.outputs.push(newClassifier);
-          this.checkIfHasLabel(newClassifier, output.label);
-          this.tensorflowService.selectClassifier(newClassifier.id);
-        } else {
-          this.checkIfHasLabel(outputClassifierInModel, output.label);
-          this.tensorflowService.selectClassifier(outputClassifierInModel.id);
-        }
-      }
-    }
-
-
-    checkIfHasLabel(classifier: Classifier, label: Label) {
-      if (label && label.id && classifier && classifier.labels) {
-        const l = classifier.labels.filter(l => l.id === label.id)[0];
-        if (!l) {
-          const newLabel = new Label(label.id, label.name);
-          classifier.labels.push(newLabel);
-        }
-      }
-    }
 
 
 

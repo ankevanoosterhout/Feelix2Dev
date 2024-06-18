@@ -94,21 +94,12 @@ export class TensorflowModelComponent implements OnInit {
 
       this.d = this.tensorflowService.d;
 
-      this.electronService.ipcRenderer.on('save-model', (event: Event, copy: boolean) => {
-        this.tensorflowService.saveModel(copy);
-      });
-
       this.electronService.ipcRenderer.on('export-model', (event: Event) => {
         this.tensorflowService.exportModel();
       });
 
-      this.electronService.ipcRenderer.on('new-model', (event: Event) => {
-        this.d.selectedModel = new Model(uuid(), 'model', ModelType.custom);
-        this.tensorflowService.updateModelSettings(this.d.selectedModel);
-      });
 
       this.electronService.ipcRenderer.on('checkPorts',  (event: Event, portlist: any) => {
-        console.log(portlist);
         this.hardwareService.checkPorts(portlist);
       });
 
@@ -155,6 +146,18 @@ export class TensorflowModelComponent implements OnInit {
     this.updateNetworkVisualization();
   }
 
+  newModel() {
+    this.d.selectedModel = new Model(uuid(), 'model', ModelType.custom);
+    this.tensorflowService.updateModelSettings(this.d.selectedModel);
+  }
+
+  loadModel() {
+    this.electronService.ipcRenderer.send('loadMLModel');
+  }
+
+  saveModel(copy: boolean) {
+    this.tensorflowService.saveModel(copy);
+  }
 
   updateNetworkVisualization() {
     this.tensorflowModelDrawService.drawModel(this.d.selectedModel);

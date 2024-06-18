@@ -352,45 +352,40 @@ const mainMenuTemplate = [
 
 
 const ml_control_menu_template = [
-  {
-    label: 'Model',
-    submenu: [
-      {
-        label: 'New',
-        click() {
-          tensorflowWindow.webContents.send('new-model');
-        }
-      },
-      {
-        label: 'Load',
-        click() {
-          createLoadDataSetWindow("load-model");
-        }
-      },
-      {
-        label: 'Save',
-        click() {
-          tensorflowWindow.webContents.send('save-model', false);
-        }
-      },
-      {
-        label: 'Save As',
-        click() {
-          tensorflowWindow.webContents.send('save-model', true);
-        }
-      },
-      {
-        label: 'Train',
-        click() {
-          tensorflowWindow.webContents.send('train-model');
-        }
-      },
-      {
-        label: 'Deploy',
-        click() {
-          tensorflowWindow.webContents.send('deploy-model');
-        }
-      }
+  // {
+    // label: 'Model',
+    // submenu: [
+      // {
+      //   label: 'New',
+      //   click() {
+      //     tensorflowWindow.webContents.send('new-model');
+      //   }
+      // },
+      // {
+      //   label: 'Load',
+      //   click() {
+      //     createLoadDataSetWindow('load-model');
+      //   }
+      // },
+      // {
+      //   label: 'Save',
+      //   click() {
+      //     tensorflowWindow.webContents.send('save-model', false);
+      //   }
+      // },
+      // {
+      //   label: 'Save As',
+      //   click() {
+      //     tensorflowWindow.webContents.send('save-model', true);
+      //   }
+      // },
+
+      // {
+      //   label: 'Deploy',
+      //   click() {
+      //     tensorflowWindow.webContents.send('deploy-model');
+      //   }
+      // }
       // {
       //   label: 'Import',
       //   click() {
@@ -403,25 +398,25 @@ const ml_control_menu_template = [
       //     tensorflowWindow.webContents.send('export-model');
       //   }
       // }
-    ]
-  },
-  {
-    label: 'Data',
-    submenu: [
-      {
-        label: 'Load from file',
-        click() {
-          openFileDialog('json', 'loadData', 'loadDataLocation');
-        }
-      },
-      {
-        label: 'Export as file',
-        click() {
-          tensorflowWindow.webContents.send('export-dataset-model');
-        }
-      }
-    ]
-  },
+  //   ]
+  // },
+  // {
+  //   label: 'Data',
+  //   submenu: [
+  //     {
+  //       label: 'Load from file',
+  //       click() {
+  //         openFileDialog('json', 'loadData', 'loadDataLocation');
+  //       }
+  //     },
+  //     {
+  //       label: 'Export as file',
+  //       click() {
+  //         tensorflowWindow.webContents.send('export-dataset-model');
+  //       }
+  //     }
+  //   ]
+  // },
   {
     label: 'Help',
     submenu: [
@@ -1135,9 +1130,6 @@ ipcMain.on('updateButtonState', (e, data) => {
   mainWindow.webContents.send('updateButtonState', data);
 });
 
-ipcMain.on('load-dataset', () => {
-  createLoadDataSetWindow('load-dataset');
-});
 
 
 ipcMain.on('addCollection', () => {
@@ -1228,6 +1220,10 @@ ipcMain.on('deleteMicrocontrollerCollections', (e, data) => {
 
 ipcMain.on('connectToSerialPort', (e, data) => {
   serialPort.connectToSerialPort(data.COM);
+});
+
+ipcMain.on('loadDataFromFile', (e) => {
+  openFileDialog('json', 'loadData', 'loadDataLocation');
 });
 
 // ipcMain.on('connectToSerialPort', (e, data) => {
@@ -1372,9 +1368,13 @@ ipcMain.on('requestData', (event, data) => {
   serialPort.requestData(data);
 });
 
+ipcMain.on('load-dataset', () => {
+  createLoadDataSetWindow('load-dataset');
+});
 
-ipcMain.on('loadDataSet', (event, data) => {
-  createLoadDataSetWindow("load-dataset");
+
+ipcMain.on('loadMLModel', (event, data) => {
+  createLoadDataSetWindow('load-model');
 });
 
 // ipcMain.on('moveToPos', (event, data) => {

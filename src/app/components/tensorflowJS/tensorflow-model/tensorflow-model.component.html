@@ -16,18 +16,18 @@
 
       <div>
         <ul class="buttons-list">
-          <li id="newOutput"><img src="./assets/icons/tools/collections.svg" title="Create new model"></li>
-          <li id="load"><img src="./assets/icons/buttons/open.svg" title="Open data set"></li>
-          <li id="save"><img src="./assets/icons/buttons/save.svg" title="Save trained model"></li>
+          <li id="newModel" (click)="this.newModel()"><img src="./assets/icons/tools/collections.svg" title="Create new model"></li>
+          <li id="load" (click)="this.loadModel()"><img src="./assets/icons/buttons/open.svg" title="load model"></li>
+          <li id="save" (click)="this.saveModel(false)"><img src="./assets/icons/buttons/save.svg" title="Save model"></li>
+          <li id="savecopy" (click)="this.saveModel(true)"><img src="./assets/icons/buttons/save-copy.svg" title="Save copy of model"></li>
           <!-- <li id="delete"><img src="./assets/icons/buttons/bin.svg" title="Delete output files"></li> -->
-
           <!-- <li id="merge" (click)="this.tensorflowService.mergeDataSets()" disabled="!this.multipleSelect.active"><img src="./assets/icons/buttons/merge2.svg" title="Merge data sets"></li> -->
         </ul>
       </div>
 
 
       <div class="text-buttons-toolbar">
-        <button class="add" id="train" (click)="this.initializeModel()" title="initialize model">build model</button>
+        <button class="add" id="train" (click)="this.initializeModel()" title="initialize model and collect data">build model</button>
       </div>
 
     </div>
@@ -307,7 +307,7 @@
               <label class="label auto">x</label>
               <input type="number" class="number extra small blue" id="poolSizeY" [(ngModel)]="layer.options.poolSize.value.y" name="poolSizeY" (change)="this.updateUnits(i)">
             </div>
-            
+
             <div class="form-group" *ngIf="layer.type.args && layer.type.args.dimensions === 3">
               <label class="label"><div class="question-mark" title="Size of the window to pool over, should be an integer.">?</div>Pool size</label>
               <input type="number" class="number extra small blue" id="poolSizeX" [(ngModel)]="layer.options.poolSize.value.x" name="poolSizeX" (change)="this.updateUnits(i)">

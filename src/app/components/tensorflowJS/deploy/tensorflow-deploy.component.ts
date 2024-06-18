@@ -42,4 +42,9 @@ export class TensorflowDeployComponent {
     }
   }
 
+
+  loadDataFromFile() {
+    this.electronService.ipcRenderer.send('loadDataFromFile');
+  }
+
 }
