@@ -1,11 +1,3 @@
-<!-- <div class="select-modeltype">
-  <div class="form-group">
-    <select class="form-control playWindow" id="model_type" name="model_type" [(ngModel)]="this.d.selectedModel.type" (change)="this.updateModelType()">
-      <option *ngFor="let item of this.modelTypeOptions" [ngValue]="item">{{ ModelTypeMapping[item] }}</option>
-    </select>
-  </div>
-</div> -->
-
 <div id="neuralnetwork"></div>
 
 <div id="model-settings">
@@ -52,23 +44,31 @@
         <div class="layer-content scrollDiv">
 
           <ul class="column-list-items">
-            <li *ngFor="let input of this.d.selectedModel.inputs; let i = index" [attr.data-index]="i">
+            <li *ngFor="let input of this.d.selectedModel.inputs; let i = index" [attr.data-index]="i" [ngClass]="{ spaceBetween: i >= 5 }">
+              <label class="radio-container">
+                <span *ngIf="i < 5" id="label-{{ input.slug }}">{{ input.name }} ({{ input.slug }})</span>
 
-                <label class="radio-container">
-                  <span *ngIf="i < 5" id="label-{{ input.slug }}">{{ input.name }} ({{input.slug}})</span>
-                  <input type="checkbox" class="type" id="{{ input.id }}" name="{{ input.id }}" [(ngModel)]="input.active" [checked]="input.active" (change)="this.updateInputUnits()">
-                  <span class="checkmark radio tensorflow"></span>
-                </label>
-                <div class="row flexbox-row-even input" *ngIf="i >= 5" id="label-{{ input.slug }}">
-                  <input type="text" class="list-item inputList" id="input-{{ i }}" value="{{ input.name }}" name="input-{{ i }}" (change)="this.updateInput(i)">
-                  <div class="buttonPlayWindow dataSetList delete" (click)="this.deleteInputItem(i)" title="delete input item"><img src="./assets/icons/buttons/bin.svg"></div>
-                </div>
+                <input type="checkbox" class="type" id="{{ input.id }}" name="{{ input.id }}" [(ngModel)]="input.active" [checked]="input.active" (change)="this.updateInputUnits()">
+                <span class="checkmark radio tensorflow"></span>
+              </label>
+
+              <span *ngIf="i >= 5" id="label-{{ input.slug }}">
+                <input type="text" class="list-item inputList" id="input-{{ i }}" value="{{ input.name }}" name="input-{{ i }}" (change)="this.updateInput(i)">
+                <div class="buttonPlayWindow dataSetList delete" (click)="this.deleteInputItem(i)" title="delete input item"><img src="./assets/icons/buttons/bin.svg"></div>
+              </span>
+
+
+              <div class="variableType" (click)="this.updateInputType(i, $event)">{{ VariableTypeMapping[input.type] }}</div>
             </li>
           </ul>
 
+
+
           <button class="add left noMarginTop" id="addInputItem" (click)="this.addInputItem()" title="add input variable">add variable</button>
 
-          <div class="form-group" *ngIf="this.d.selectedModel.type === 1 && layer.options.inputLength && layer.options.inputLength.description">
+
+
+          <div class="form-group" *ngIf="layer.options.inputLength">
             <label class="label"><div class="question-mark" title="When the length of the input sequences is constant, it must be given. If you want to link Flatten and Dense layers upstream, you’ll need this parameter">?</div>Input length</label>
             <input type="number" class="number small blue" id="inputLength" [(ngModel)]="layer.options.inputLength.value" name="inputLength">
           </div>
@@ -78,12 +78,23 @@
             <input type="number" class="number small blue" id="batchsize" [(ngModel)]="layer.options.batchSize.value" name="batchsize">
           </div>
 
+          <div class="form-group" *ngIf="layer.options.inputDimension && this.d.selectedMicrocontrollers.length > 1">
+            <label class="label"><div class="question-mark" title="Dimension of input variables">?</div>Input dimension</label>
+            <select class="form-control playWindow small" id="inputDimension" name="inputDimension" [(ngModel)]="layer.options.inputDimension" (change)="this.updateNetworkVisualization()">
+              <option [ngValue]="1">1D</option>
+              <option *ngIf="this.d.selectedMicrocontrollers.length > 1" [ngValue]="2">2D</option>
+              <option *ngIf="this.d.selectedMicrocontrollers.length > 1" [ngValue]="3">3D</option>
+            </select>
+          </div>
+
           <div class="horizontalSeparator"></div>
+
+
 
           <label class="labelRow">Actuators</label>
 
           <div class="form-group microcontroller">
-            <select class="form-control playWindow microcontroller" id="microcontroller" name="microcontroller" [(ngModel)]="this.d.selectOptionMicrocontroller">
+            <select class="form-control playWindow" id="microcontroller" name="microcontroller" [(ngModel)]="this.d.selectOptionMicrocontroller">
               <option class="placeholder" [ngValue]="undefined" selected="selected">-- select microcontroller --</option>
               <option *ngFor="let item of this.hardwareService.microcontrollers" [ngValue]="item">{{ item.name }}</option>
             </select>
@@ -122,11 +133,11 @@
               </div>
             </li>
           </ul>
-
-
-
         </div>
       </div>
+
+
+
 
 
 
@@ -145,7 +156,7 @@
             <img src="./assets/icons/layers/visible-icon-black.svg" *ngIf="!layer.hidden">
           </div>
           <div class="button-round" id="deleteLayer" (click)="this.deleteLayer(i)" *ngIf="!layer.hidden">-</div>
-          <div class="button-round" id="addLayer" (click)="this.addLayer(i)" *ngIf="!layer.hidden">+</div>
+          <div class="button-round" id="addLayer" (click)="this.addLayer(i)">+</div>
         </div>
 
 
@@ -159,68 +170,53 @@
           </div>
 
 
-          <div class="form-group" *ngIf="layer.options.units">
+          <div class="form-group" *ngIf="layer.options.units && layer.type && layer.type.subgroup !== 'normalization'">
             <label class="label"><div class="question-mark" title="Positive integer, dimensionality of the output space.">?</div>Units</label>
             <input type="number" class="number small blue" id="layerUnits" [(ngModel)]="layer.options.units.value" name="layerUnits" (change)="this.updateUnits(i)">
           </div>
 
-          <div *ngIf="layer.options.kernelSize">
-            <div class="form-group" *ngIf="layer.type.args && layer.type.args.dimensions === 1">
-              <label class="label"><div class="question-mark" title="Positive integer, dimensionality of the output space.">?</div>Kernel size</label>
-              <input type="number" class="number extra small blue" id="kernelSizeX" [(ngModel)]="layer.options.kernelSize.value.x" name="kernelSizeX" (change)="this.updateUnits(i)">
-            </div>
 
-            <div class="form-group" *ngIf="layer.type.args && layer.type.args.dimensions === 2">
-              <label class="label"><div class="question-mark" title="Positive integer, dimensionality of the output space.">?</div>Kernel size</label>
-              <input type="number" class="number extra small blue" id="kernelSizeX" [(ngModel)]="layer.options.kernelSize.value.x" name="kernelSizeX" (change)="this.updateUnits(i)">
-              <label class="label auto">x</label>
-              <input type="number" class="number extra small blue" id="kernelSizeY" [(ngModel)]="layer.options.kernelSize.value.y" name="kernelSizeY" (change)="this.updateUnits(i)">
-            </div>
 
-            <div class="form-group" *ngIf="layer.type.args && layer.type.args.dimensions === 3">
-              <label class="label"><div class="question-mark" title="Size of the window to pool over, should be an integer.">?</div>Pool size</label>
-              <input type="number" class="number extra small blue" id="kernelSizeX" [(ngModel)]="layer.options.kernelSize.value.x" name="kernelSizeX" (change)="this.updateUnits(i)">
-              <label class="label auto">x</label>
-              <input type="number" class="number extra small blue" id="kernelSizeY" [(ngModel)]="layer.options.kernelSize.value.y" name="kernelSizeY" (change)="this.updateUnits(i)">
-              <label class="label auto">x</label>
-              <input type="number" class="number extra small blue" id="kernelSizeZ" [(ngModel)]="layer.options.kernelSize.value.z" name="kernelSizeZ" (change)="this.updateUnits(i)">
+          <div class="form-group" *ngIf="layer.options.kernelSize && layer.type.args">
+            <label class="label"><div class="question-mark" title="Size of the window to pool over, should be an integer.">?</div>Kernel size</label>
+            <div class="inline" *ngFor="let value of layer.options.kernelSize.value; let n=index">
+              <input type="number" class="number extra small blue" id="kernelSize{{ n }}" [(ngModel)]="layer.options.kernelSize.value[n]" name="kernelSize{{ n }}" (change)="this.updateUnits(i)">
+              <label *ngIf="n < layer.options.kernelSize.value.length - 1" class="label auto">x</label>
             </div>
-
           </div>
 
-          <div class="horizontalSeparator"></div>
 
-          <div class="opencloseArrow layer" id="advanced_layer_{{ i }}" [ngClass]="{ open: layer.settingsVisible }" (click)="layer.settingsVisible = !layer.settingsVisible"><div></div></div>
-          <label class="labelRow nextToArrow">Advanced</label>
+             <!-- pooling layers -->
+          <div class="form-group" *ngIf="layer.type && layer.type.subgroup === 'pooling' && layer.type.args">
+            <label class="label"><div class="question-mark" title="Size of the window to pool over, should be an integer.">?</div>Pool size</label>
+
+            <div class="inline" *ngFor="let value of layer.options.poolSize.value; let n=index">
+              <input type="number" class="number extra small blue" id="poolSize{{ n }}" [(ngModel)]="layer.options.poolSize.value[n]" name="poolSize{{ n }}" (change)="this.updateUnits(i)">
+              <label *ngIf="n < layer.options.poolSize.value.length - 1" class="label auto">x</label>
+            </div>
+          </div>
 
 
-          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.filters && layer.options.filters.value !== undefined">
+          <div class="form-group" *ngIf="layer.options.filters && layer.options.filters.value !== undefined">
             <label class="label"><div class="question-mark" title="The dimensionality of the output space (i.e. the number of filters in the convolution).">?</div>Filters</label>
             <input type="number" class="number small blue" id="layerFilters" [(ngModel)]="layer.options.filters.value" name="layerFilters">
           </div>
 
 
-          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.padding && layer.options.padding.value !== undefined">
-            <label class="label"><div class="question-mark" title="Padding mode.">?</div>Padding</label>
-            <select class="form-control playWindow" id="padding" name="padding" [(ngModel)]="layer.options.padding.value">
-              <option *ngFor="let option of this.paddingOptions" [ngValue]="option">{{ option }}</option>
-            </select>
+          <div class="form-group" *ngIf="layer.options.targetShape">
+            <label class="label"><div class="question-mark" title="The target shape. Does not include the batch axis.">?</div>Target shape</label>
+            <div class="inline" *ngFor="let value of layer.options.targetShape.value; let n=index">
+              <input type="number" class="number extra small blue" id="targetShape{{ n }}" [(ngModel)]="layer.options.targetShape.value[n]" name="targetShape{{ n }}">
+              <label *ngIf="n < layer.options.targetShape.value.length - 1" class="label auto">x</label>
+            </div>
           </div>
 
 
-          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.activation">
-            <label class="label"><div class="question-mark" title="Activation function of the layer.">?</div>Activation</label>
-            <select class="form-control playWindow" id="activation" name="activation" [(ngModel)]="layer.options.activation.value" (change)="this.updateNetworkVisualization()">
-              <option *ngFor="let item of this.activationOptions" [ngValue]="item">{{ ActivationLabelMapping[item] }}</option>
-            </select>
-          </div>
 
-          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.activityRegularizer">
-            <label class="label"><div class="question-mark" title="Regularizer function applied to the activation.">?</div>Activity regularizer</label>
-            <select class="form-control playWindow" id="activationReg" name="activationReg" [(ngModel)]="layer.options.activityRegularizer.value">
-              <option *ngFor="let item of this.regularizerOptions" [ngValue]="item">{{ RegularizerLabelMapping[item] }}</option>
-            </select>
-          </div>
+          <div class="horizontalSeparator"></div>
+
+          <div class="opencloseArrow layer" id="advanced_layer_{{ i }}" [ngClass]="{ open: layer.settingsVisible }" (click)="layer.settingsVisible = !layer.settingsVisible"><div></div></div>
+          <label class="labelRow nextToArrow">Advanced</label>
 
 
           <div class="form-group" *ngIf="layer.settingsVisible && layer.options.trainable && layer.options.trainable.value !== undefined">
@@ -230,48 +226,82 @@
             </label>
           </div>
 
-          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.useBias && layer.options.useBias.value !== undefined">
-            <label class="radio-container">Use bias <div class="question-mark" title="Whether to apply a bias.">?</div>
-              <input type="checkbox" class="type" id="useBias" name="useBias" [(ngModel)]="layer.options.useBias.value" [checked]="layer.options.useBias.value" (change)="this.updateNetworkVisualization()">
-              <span class="checkmark radio tensorflow"></span>
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.axis">
+            <label class="label"><div class="question-mark" title="The integer axis that should be normalized (typically the features axis).">?</div>Axis</label>
+            <input type="number" class="number small blue" id="axis" [(ngModel)]="layer.options.axis.value" name="axis">
+          </div>
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.strides">
+            <label class="label">
+              <div class="question-mark" title="The size of the stride in each dimension of the pooling window. Expects an integer or an array of 2 integers. Integer, tuple of 2 integers, or None.">?</div>Strides
             </label>
+
+            <div class="inline" *ngFor="let value of layer.options.strides.value; let n=index">
+              <input type="number" class="number extra small blue" id="strides{{ n }}" [(ngModel)]="layer.options.strides.value[n]" name="strides{{ n }}" (change)="this.updateUnits(i)">
+              <label *ngIf="n < layer.options.strides.value.length - 1" class="label auto">x</label>
+            </div>
           </div>
 
-          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.biasConstraint && layer.options.biasConstraint.value !== undefined">
-            <label class="label"><div class="question-mark" title="Constraint for the bias vector.">?</div>Bias constraint</label>
-            <select class="form-control playWindow" id="biasConstraint" name="biasConstraint" [(ngModel)]="layer.options.biasConstraint.value">
-              <option *ngFor="let item of this.constraintOptions" [ngValue]="item">{{ ConstraintLabelMapping[item] }}</option>
-            </select>
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.type && layer.type.args && layer.options.dilationRate">
+            <label class="label">
+              <div class="question-mark" title="The dilation rate to use for the dilated convolution in each dimension. Should be an integer or array of two or three integers.">?</div>Dilation rate
+            </label>
+
+            <div class="inline" *ngFor="let value of layer.options.dilationRate.value; let n=index">
+              <input type="number" class="number extra small blue" id="dilationRate{{ n }}" [(ngModel)]="layer.options.dilationRate.value[n]" name="dilationRate{{ n }}" (change)="this.updateUnits(i)">
+              <label *ngIf="n < layer.options.dilationRate.value.length - 1" class="label auto">x</label>
+            </div>
           </div>
 
-          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.kernelConstraint">
-            <label class="label"><div class="question-mark" title="The constraint for the convolutional kernel weights">?</div>Kernel constraint</label>
-            <select class="form-control playWindow" id="kernelConstraint" name="kernelConstraint" [(ngModel)]="layer.options.kernelConstraint.value">
-              <option *ngFor="let item of this.constraintOptions" [ngValue]="item">{{ ConstraintLabelMapping[item] }}</option>
-            </select>
-          </div>
 
-          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.biasRegularizer">
-            <label class="label"><div class="question-mark" title="Regularizer function applied to the bias vector.">?</div>Bias regularizer</label>
-            <select class="form-control playWindow" id="biasRegularizer" name="biasRegularizer" [(ngModel)]="layer.options.biasRegularizer.value">
-              <option *ngFor="let item of this.regularizerOptions" [ngValue]="item">{{ RegularizerLabelMapping[item] }}</option>
-            </select>
-          </div>
 
-          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.kernelRegularizer">
-            <label class="label"><div class="question-mark" title="Regularizer function applied to the dense kernel weights matrix.">?</div>Kernel regularizer</label>
-            <select class="form-control playWindow" id="kernelRegularizer" name="kernelRegularizer" [(ngModel)]="layer.options.kernelRegularizer.value">
-              <option *ngFor="let item of this.regularizerOptions" [ngValue]="item">{{ RegularizerLabelMapping[item] }}</option>
-            </select>
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.epsilon && layer.options.epsilon.value !== undefined">
+            <label class="label"><div class="question-mark" title="A small positive float added to variance to avoid divison by zero. Defaults to 1e-3.">?</div>Epsilon</label>
+            <input type="number" class="number small blue" id="epsilon" [(ngModel)]="layer.options.epsilon.value" name="epsilon">
           </div>
 
 
           <div class="form-group" *ngIf="layer.settingsVisible && layer.options.dropout">
             <label class="label"><div class="question-mark" title="Number between 0 and 1. Fraction of the units to drop for the linear transformation of the inputs.">?</div>Dropout</label>
-            <input type="number" class="number small blue" id="dropout" [(ngModel)]="layer.options.dropout.value" name="dropout" [disabled]="layer.type && layer.type.subgroup !== 'normalization'"/>
+            <input type="number" class="number small blue" id="dropout" [(ngModel)]="layer.options.dropout.value" name="dropout"/> <!-- [disabled]="layer.type && layer.type.subgroup !== 'normalization'" -->
           </div>
 
 
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.seed">
+            <label class="label"><div class="question-mark" title="An integer to use as random seed.">?</div>Seed</label>
+            <input type="number" class="number small blue" id="seed" [(ngModel)]="layer.options.seed.value" name="seed"/> <!-- [disabled]="layer.type && layer.type.subgroup !== 'normalization'" -->
+          </div>
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.rate">
+            <label class="label"><div class="question-mark" title="Float between 0 and 1. Fraction of the input units to drop.">?</div>Rate</label>
+            <input type="number" class="number small blue" id="rate" [(ngModel)]="layer.options.rate.value" name="rate"/> <!-- [disabled]="layer.type && layer.type.subgroup !== 'normalization'" -->
+          </div>
+
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.momentum">
+            <label class="label"><div class="question-mark" title="Momentum of the moving average. Defaults to 0.99.">?</div>Momentum</label>
+            <input type="number" class="number small blue" id="momentum" [(ngModel)]="layer.options.momentum.value" name="momentum"/> <!-- [disabled]="layer.type && layer.type.subgroup !== 'normalization'" -->
+          </div>
+
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.n">
+            <label class="label"><div class="question-mark" title="The integer number of times to repeat the input.">?</div>N</label>
+            <input type="number" class="number small blue" id="n" [(ngModel)]="layer.options.n.value" name="n"/> <!-- [disabled]="layer.type && layer.type.subgroup !== 'normalization'" -->
+          </div>
+
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.implementation">
+            <label class="label"><div class="question-mark" title="Implementation mode, either 1 or 2. Mode 1 will structure its operations as a larger number of smaller dot products and additions, whereas mode 2 will batch them into fewer, larger operations. These modes will have different performance profiles on different hardware and for different applications.">?</div>Implementation</label>
+            <input type="number" class="number small blue" id="implementation" [(ngModel)]="layer.options.implementation.value" name="implementation"/> <!-- [disabled]="layer.type && layer.type.subgroup !== 'normalization'" -->
+          </div>
+
+          <div class="row" *ngIf="layer.settingsVisible && layer.options.scale && layer.options.scale.value !== undefined">
+            <label class="radio-container">Scale <div class="question-mark" title="">?</div>
+              <input type="checkbox" class="type" id="scale" name="scale" [(ngModel)]="layer.options.scale.value" [checked]="layer.options.scale.value">
+              <span class="checkmark radio tensorflow"></span>
+            </label>
+          </div>
 
           <div class="row" *ngIf="layer.settingsVisible && layer.options.returnSequences && layer.options.returnSequences.value !== undefined">
             <label class="radio-container">Return sequences <div class="question-mark" title="Whether to return the last output in the output sequence, or the full sequence.">?</div>
@@ -294,46 +324,373 @@
             </label>
           </div>
 
-          <!-- pooling layers -->
-          <div *ngIf="layer.type && layer.type.subgroup === 'pooling'">
-            <div class="form-group" *ngIf="layer.type.args && layer.type.args.dimensions === 1">
-              <label class="label"><div class="question-mark" title="Size of the window to pool over, should be an integer.">?</div>Pool size</label>
-              <input type="number" class="number small blue" id="poolSize" [(ngModel)]="layer.options.poolSize.value.x" name="poolSize">
+          <div class="row" *ngIf="layer.settingsVisible && layer.options.stateful && layer.options.stateful.value !== undefined">
+            <label class="radio-container">Stateful <div class="question-mark" title="If true, the last state for each sample at index i in a batch will be used as initial state of the sample of index i in the following batch (default: false).">?</div>
+              <input type="checkbox" class="type" id="stateful" name="stateful" [(ngModel)]="layer.options.stateful.value" [checked]="layer.options.stateful.value">
+              <span class="checkmark radio tensorflow"></span>
+            </label>
+          </div>
+
+
+          <div class="row" *ngIf="layer.settingsVisible && layer.options.resetAfter && layer.options.resetAfter.value !== undefined">
+            <label class="radio-container">resetAfter <div class="question-mark" title="GRU convention (whether to apply reset gate after or before matrix multiplication).">?</div>
+              <input type="checkbox" class="type" id="resetAfter" name="resetAfter" [(ngModel)]="layer.options.resetAfter.value" [checked]="layer.options.resetAfter.value">
+              <span class="checkmark radio tensorflow"></span>
+            </label>
+          </div>
+
+          <div class="row" *ngIf="layer.settingsVisible && layer.options.unitForgetBias && layer.options.unitForgetBias.value !== undefined">
+            <label class="radio-container">unitForgetBias <div class="question-mark" title="If true, add 1 to the bias of the forget gate at initialization. Setting it to true will also force biasInitializer = 'zeros'.">?</div>
+              <input type="checkbox" class="type" id="unitForgetBias" name="unitForgetBias" [(ngModel)]="layer.options.unitForgetBias.value" [checked]="layer.options.unitForgetBias.value">
+              <span class="checkmark radio tensorflow"></span>
+            </label>
+          </div>
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.padding">
+            <label class="label"><div class="question-mark" title=" The padding mode">?</div>Padding</label>
+            <select class="form-control playWindow" id="padding" name="padding" [(ngModel)]="layer.options.padding.value">
+              <option *ngFor="let item of this.paddingOptions" [ngValue]="item">{{ item }}</option>
+            </select>
+          </div>
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.dataFormat">
+            <label class="label"><div class="question-mark" title="The data format to use for the pooling layer.">?</div>Data format</label>
+            <select class="form-control playWindow" id="dataFormat" name="dataFormat" [(ngModel)]="layer.options.dataFormat.value">
+              <option *ngFor="let item of this.dataFormatOptions" [ngValue]="item">{{ DataFormatMapping[item] }}</option>
+            </select>
+          </div>
+
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.activation">
+            <label class="label"><div class="question-mark" title="Activation function of the layer.">?</div>Activation</label>
+            <select class="form-control playWindow" id="activation" name="activation" [(ngModel)]="layer.options.activation.value" (change)="this.updateNetworkVisualization()">
+              <option *ngFor="let item of this.activationOptions" [ngValue]="item">{{ ActivationLabelMapping[item] }}</option>
+            </select>
+          </div>
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.activityRegularizer">
+            <label class="label"><div class="question-mark" title="Regularizer function applied to the activation.">?</div>Activity regularizer</label>
+            <select class="form-control playWindow" id="activationReg" name="activationReg" [(ngModel)]="layer.options.activityRegularizer.value" [compareWith]="compareFunction">
+              <option *ngFor="let item of this.d.regularizerOptions" [ngValue]="item">{{ item.name }}</option>
+            </select>
+          </div>
+
+
+          <div class="horizontalSeparator" *ngIf="layer.settingsVisible && layer.options.center && layer.options.center.value !== undefined"></div>
+
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.center && layer.options.center.value !== undefined">
+            <label class="radio-container">Center <div class="question-mark" title="If true, add offset of beta to normalized tensor. If false, beta is ignored. Default: true.">?</div>
+              <input type="checkbox" class="type" id="center" name="center" [(ngModel)]="layer.options.center.value" [checked]="layer.options.center.value">
+              <span class="checkmark radio tensorflow"></span>
+            </label>
+          </div>
+
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.betaInitializer && layer.options.center && layer.options.center.value !== false">
+            <label class="label"><div class="question-mark" title="Initializer for the beta weight. Default: 'zeros'.">?</div>Beta initializer</label>
+            <select class="form-control playWindow" id="betaInitializer" name="betaInitializer" [(ngModel)]="layer.options.betaInitializer.value" [compareWith]="compareFunction">
+              <option *ngFor="let item of this.d.initializerOptions" [ngValue]="item">{{ item.name }}</option>
+            </select>
+          </div>
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.betaRegularizer && layer.options.center && layer.options.center.value !== false">
+            <label class="label"><div class="question-mark" title="Regularizer for the beta weight.">?</div>Beta regularizer</label>
+            <select class="form-control playWindow" id="betaRegularizer" name="betaRegularizer" [(ngModel)]="layer.options.betaRegularizer.value" [compareWith]="compareFunction">
+              <option *ngFor="let item of this.d.regularizerOptions" [ngValue]="item">{{ item.name }}</option>
+            </select>
+          </div>
+
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.gammaInitializer">
+            <label class="label"><div class="question-mark" title="Initializer for the beta weight. Default: 'ones'.">?</div>Gamma initializer</label>
+            <select class="form-control playWindow" id="gammaInitializer" name="gammaInitializer" [(ngModel)]="layer.options.gammaInitializer.value" [compareWith]="compareFunction">
+              <option *ngFor="let item of this.d.initializerOptions" [ngValue]="item">{{ item.name }}</option>
+            </select>
+          </div>
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.gammaRegularizer">
+            <label class="label"><div class="question-mark" title="Regularizer for the beta weight.">?</div>Gamma regularizer</label>
+            <select class="form-control playWindow" id="gammaRegularizer" name="gammaRegularizer" [(ngModel)]="layer.options.gammaRegularizer.value" [compareWith]="compareFunction">
+              <option *ngFor="let item of this.d.regularizerOptions" [ngValue]="item">{{ item.name }}</option>
+            </select>
+          </div>
+
+
+
+
+          <div class="horizontalSeparator" *ngIf="layer.settingsVisible && layer.options.useBias"></div>
+
+
+          <div *ngIf="layer.settingsVisible && layer.options.useBias">
+            <div class="form-group" *ngIf="layer.options.useBias.value !== undefined">
+              <label class="radio-container">Use bias <div class="question-mark" title="Whether to apply a bias.">?</div>
+                <input type="checkbox" class="type" id="useBias" name="useBias" [(ngModel)]="layer.options.useBias.value" [checked]="layer.options.useBias.value" (change)="this.updateNetworkVisualization()">
+                <span class="checkmark radio tensorflow"></span>
+              </label>
             </div>
 
-            <div class="form-group" *ngIf="layer.type.args && layer.type.args.dimensions === 2">
-              <label class="label"><div class="question-mark" title="Size of the window to pool over, should be an integer.">?</div>Pool size</label>
-              <input type="number" class="number extra small blue" id="poolSizeX" [(ngModel)]="layer.options.poolSize.value.x" name="poolSizeX" (change)="this.updateUnits(i)">
-              <label class="label auto">x</label>
-              <input type="number" class="number extra small blue" id="poolSizeY" [(ngModel)]="layer.options.poolSize.value.y" name="poolSizeY" (change)="this.updateUnits(i)">
+
+            <div class="form-group" *ngIf="layer.options.useBias.value && layer.options.biasInitializer">
+              <label class="label"><div class="question-mark" title="Initializer for the kernel weights matrix, used for the linear transformation of the inputs.">?</div>Bias initializer</label>
+              <select class="form-control playWindow" id="biasInitializer" name="biasInitializer" [(ngModel)]="layer.options.biasInitializer.value" [compareWith]="compareFunction">
+                <option *ngFor="let item of this.d.initializerOptions" [ngValue]="item">{{ item.name }}</option>
+              </select>
             </div>
 
-            <div class="form-group" *ngIf="layer.type.args && layer.type.args.dimensions === 3">
-              <label class="label"><div class="question-mark" title="Size of the window to pool over, should be an integer.">?</div>Pool size</label>
-              <input type="number" class="number extra small blue" id="poolSizeX" [(ngModel)]="layer.options.poolSize.value.x" name="poolSizeX" (change)="this.updateUnits(i)">
-              <label class="label auto">x</label>
-              <input type="number" class="number extra small blue" id="poolSizeY" [(ngModel)]="layer.options.poolSize.value.y" name="poolSizeY" (change)="this.updateUnits(i)">
-              <label class="label auto">x</label>
-              <input type="number" class="number extra small blue" id="poolSizeZ" [(ngModel)]="layer.options.poolSize.value.z" name="poolSizeZ" (change)="this.updateUnits(i)">
+            <div class="form-group" *ngIf="layer.options.useBias.value && layer.options.biasRegularizer">
+              <label class="label"><div class="question-mark" title="Regularizer function applied to the bias vector.">?</div>Bias regularizer</label>
+              <select class="form-control playWindow" id="biasRegularizer" name="biasRegularizer" [(ngModel)]="layer.options.biasRegularizer.value" [compareWith]="compareFunction">
+                <option *ngFor="let item of this.d.regularizerOptions" [ngValue]="item">{{ item.name }}</option>
+              </select>
             </div>
 
-
-            <div class="form-group">
-              <label class="label"><div class="question-mark" title="The data format to use for the pooling layer.">?</div>Data format</label>
-              <select class="form-control playWindow" id="dataFormat" name="dataFormat" [(ngModel)]="layer.options.dataFormat.value">
-                <option *ngFor="let item of this.dataFormatOptions" [ngValue]="item">{{ DataFormatMapping[item] }}</option>
+            <div class="form-group" *ngIf="layer.options.useBias.value && layer.options.biasConstraint && layer.options.biasConstraint.value !== undefined">
+              <label class="label"><div class="question-mark" title="Constraint for the bias vector.">?</div>Bias constraint</label>
+              <select class="form-control playWindow" id="biasConstraint" name="biasConstraint" [(ngModel)]="layer.options.biasConstraint.value">
+                <option *ngFor="let item of this.constraintOptions" [ngValue]="item">{{ ConstraintLabelMapping[item] }}</option>
               </select>
             </div>
           </div>
 
 
-          <!-- normalization layers -->
 
-          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.axis">
-            <label class="label"><div class="question-mark" title="The integer axis that should be normalized (typically the features axis).">?</div>Axis</label>
-            <input type="number" class="number small blue" id="axis" [(ngModel)]="layer.options.axis.value" name="axis">
+
+          <div class="horizontalSeparator" *ngIf="layer.settingsVisible && layer.options.kernelRegularizer"></div>
+
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.kernelInitializer">
+            <label class="label"><div class="question-mark" title="Initializer for the kernel weights matrix, used for the linear transformation of the inputs.">?</div>Kernel initializer</label>
+            <select class="form-control playWindow" id="kernelInitializer" name="kernelInitializer" [(ngModel)]="layer.options.kernelInitializer.value" [compareWith]="compareFunction">
+              <option *ngFor="let item of this.d.initializerOptions" [ngValue]="item">{{ item.name }}</option>
+            </select>
           </div>
 
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.kernelRegularizer">
+            <label class="label"><div class="question-mark" title="Regularizer function applied to the dense kernel weights matrix.">?</div>Kernel regularizer</label>
+            <select class="form-control playWindow" id="kernelRegularizer" name="kernelRegularizer" [(ngModel)]="layer.options.kernelRegularizer.value" [compareWith]="compareFunction">
+              <option *ngFor="let item of this.d.regularizerOptions" [ngValue]="item">{{ item.name }}</option>
+            </select>
+          </div>
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.kernelConstraint">
+            <label class="label"><div class="question-mark" title="The constraint for the convolutional kernel weights">?</div>Kernel constraint</label>
+            <select class="form-control playWindow" id="kernelConstraint" name="kernelConstraint" [(ngModel)]="layer.options.kernelConstraint.value">
+              <option *ngFor="let item of this.constraintOptions" [ngValue]="item">{{ ConstraintLabelMapping[item] }}</option>
+            </select>
+          </div>
+
+
+
+          <div class="horizontalSeparator" *ngIf="layer.settingsVisible && layer.options.embeddingsInitializer"></div>
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.inputDim">
+            <label class="label"><div class="question-mark" title="Integer > 0. Size of the vocabulary, i.e. maximum integer index + 1.">?</div>Input dimension</label>
+            <input type="number" class="number small blue" id="inputDim" [(ngModel)]="layer.options.inputDim.value" name="inputDim">
+          </div>
+
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.outputDim">
+            <label class="label"><div class="question-mark" title="Integer >= 0. Dimension of the dense embedding.">?</div>Output dimension</label>
+            <input type="number" class="number small blue" id="outputDim" [(ngModel)]="layer.options.outputDim.value" name="outputDim">
+          </div>
+
+
+          <div class="row" *ngIf="layer.settingsVisible && layer.options.maskZero">
+            <label class="radio-container">Mask zero <div class="question-mark" title=" Whether the input value 0 is a special 'padding' value that should be masked out. This is useful when using recurrent layers which may take variable length input.
+              If this is True then all subsequent layers in the model need to support masking or an exception will be raised. If maskZero is set to True, as a consequence, index 0 cannot be used in the vocabulary (inputDim should equal size of vocabulary + 1).">?</div>
+              <input type="checkbox" class="type" id="maskZero" name="maskZero" [(ngModel)]="layer.options.maskZero.value" [checked]="layer.options.maskZero.value">
+              <span class="checkmark radio tensorflow"></span>
+            </label>
+          </div>
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.embeddingsInitializer">
+            <label class="label"><div class="question-mark" title="Initializer for the embeddings matrix.">?</div>Embeddings initializer</label>
+            <select class="form-control playWindow" id="embeddingsInitializer" name="embeddingsInitializer" [(ngModel)]="layer.options.embeddingsInitializer.value" [compareWith]="compareFunction">
+              <option *ngFor="let item of this.d.initializerOptions" [ngValue]="item">{{ item.name }}</option>
+            </select>
+          </div>
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.embeddingsRegularizer">
+            <label class="label"><div class="question-mark" title="Regularizer function applied to the dense kernel weights matrix.">?</div>Embeddings regularizer</label>
+            <select class="form-control playWindow" id="embeddingsRegularizer" name="embeddingsRegularizer" [(ngModel)]="layer.options.embeddingsRegularizer.value" [compareWith]="compareFunction">
+              <option *ngFor="let item of this.d.regularizerOptions" [ngValue]="item">{{ item.name }}</option>
+            </select>
+          </div>
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.embeddingsConstraint">
+            <label class="label"><div class="question-mark" title="Constraint function applied to the embeddings matrix.">?</div>Embeddings constraint</label>
+            <select class="form-control playWindow" id="embeddingsConstraint" name="embeddingsConstraint" [(ngModel)]="layer.options.embeddingsConstraint.value">
+              <option *ngFor="let item of this.constraintOptions" [ngValue]="item">{{ ConstraintLabelMapping[item] }}</option>
+            </select>
+          </div>
+
+
+
+          <div class="horizontalSeparator" *ngIf="layer.settingsVisible && layer.options.depthMultiplier"></div>
+
+          <div *ngIf="layer.settingsVisible && layer.options.depthMultiplier">
+
+            <div class="form-group" *ngIf="layer.settingsVisible && layer.options.depthMultiplier">
+              <label class="label"><div class="question-mark" title="The number of depthwise convolution output channels for each input channel. The total number of depthwise convolution output channels will be equal to filtersIn * depthMultiplier. Default: 1.">?</div>Depth multiplier</label>
+              <input type="number" class="number small blue" id="depthMultiplier" [(ngModel)]="layer.options.depthMultiplier.value" name="depthMultiplier">
+            </div>
+
+            <div class="form-group" *ngIf="layer.options.depthwiseInitializer">
+              <label class="label"><div class="question-mark" title="Initializer for the depthwise kernel matrix. Default: GlorotNormal.">?</div>Depthwise initializer</label>
+              <select class="form-control playWindow" id="depthwiseInitializer" name="depthwiseInitializer" [(ngModel)]="layer.options.depthwiseInitializer.value" [compareWith]="compareFunction">
+                <option *ngFor="let item of this.d.initializerOptions" [ngValue]="item">{{ item.name }}</option>
+              </select>
+            </div>
+
+            <div class="form-group" *ngIf="layer.options.depthwiseConstraint && layer.options.depthwiseConstraint.value !== undefined">
+              <label class="label"><div class="question-mark" title="Constraint for the depthwise kernel matrix.">?</div>Depthwise constraint</label>
+              <select class="form-control playWindow" id="depthwiseConstraint" name="depthwiseConstraint" [(ngModel)]="layer.options.depthwiseConstraint.value">
+                <option *ngFor="let item of this.constraintOptions" [ngValue]="item">{{ ConstraintLabelMapping[item] }}</option>
+              </select>
+            </div>
+
+            <div class="form-group" *ngIf="layer.options.depthwiseRegularizer">
+              <label class="label"><div class="question-mark" title="Regularizer function for the depthwise kernel matrix.">?</div>Depthwise regularizer</label>
+              <select class="form-control playWindow" id="depthwiseRegularizer" name="depthwiseRegularizer" [(ngModel)]="layer.options.depthwiseRegularizer.value" [compareWith]="compareFunction">
+                <option *ngFor="let item of this.d.regularizerOptions" [ngValue]="item">{{ item.name }}</option>
+              </select>
+            </div>
+          </div>
+
+
+
+          <div class="horizontalSeparator" *ngIf="layer.settingsVisible && layer.options.pointwiseInitializer"></div>
+
+
+
+          <div *ngIf="layer.settingsVisible && layer.options.pointwiseInitializer">
+
+            <div class="form-group" *ngIf="layer.options.pointwiseInitializer">
+              <label class="label"><div class="question-mark" title="Initializer for the pointwise kernel matrix. Default: none (Initializers are used in Layers to establish the starting the values of weights, biases, kernels, etc.)">?</div>Pointwise initializer</label>
+              <select class="form-control playWindow" id="pointwiseInitializer" name="pointwiseInitializer" [(ngModel)]="layer.options.pointwiseInitializer.value" [compareWith]="compareFunction">
+                <option *ngFor="let item of this.d.initializerOptions" [ngValue]="item">{{ item.name }}</option>
+              </select>
+            </div>
+
+            <div class="form-group" *ngIf="layer.options.pointwiseConstraint && layer.options.pointwiseConstraint.value !== undefined">
+              <label class="label"><div class="question-mark" title="Constraint function applied to the pointwise kernel matrix.">?</div>Pointwise constraint</label>
+              <select class="form-control playWindow" id="pointwiseConstraint" name="pointwiseConstraint" [(ngModel)]="layer.options.pointwiseConstraint.value">
+                <option *ngFor="let item of this.constraintOptions" [ngValue]="item">{{ ConstraintLabelMapping[item] }}</option>
+              </select>
+            </div>
+
+            <div class="form-group" *ngIf="layer.options.pointwiseRegularizer">
+              <label class="label"><div class="question-mark" title="Regularizer function applied to the pointwise kernel matrix.">?</div>Pointwise regularizer</label>
+              <select class="form-control playWindow" id="pointwiseRegularizer" name="pointwiseRegularizer" [(ngModel)]="layer.options.depthwiseRegularizer.value" [compareWith]="compareFunction">
+                <option *ngFor="let item of this.d.regularizerOptions" [ngValue]="item">{{ item.name }}</option>
+              </select>
+            </div>
+
+          </div>
+
+
+          <div class="horizontalSeparator" *ngIf="layer.settingsVisible && layer.options.recurrentRegularizer"></div>
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.recurrentDropout">
+            <label class="label"><div class="question-mark" title="Number between 0 and 1. Fraction of the units to drop for the linear transformation of the recurrent state.">?</div>Recurrent dropout</label>
+            <input type="number" class="number small blue" id="recurrentDropout" [(ngModel)]="layer.options.recurrentDropout.value" name="recurrentDropout"/> <!-- [disabled]="layer.type && layer.type.subgroup !== 'normalization'" -->
+          </div>
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.recurrentInitializer">
+            <label class="label"><div class="question-mark" title="Initializer for the kernel weights matrix, used for the linear transformation of the inputs (Initializers are used in Layers to establish the starting the values of weights, biases, kernels, etc.)">?</div>Recurrent initializer</label>
+            <select class="form-control playWindow" id="recurrentInitializer" name="recurrentInitializer" [(ngModel)]="layer.options.recurrentInitializer.value" [compareWith]="compareFunction">
+              <option *ngFor="let item of this.d.initializerOptions" [ngValue]="item">{{ item.name }}</option>
+            </select>
+          </div>
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.recurrentActivation">
+            <label class="label"><div class="question-mark" title="Activation function to use for the recurrent step.">?</div>Recurrent activation</label>
+            <select class="form-control playWindow" id="recurrentActivation" name="recurrentActivation" [(ngModel)]="layer.options.recurrentActivation.value">
+              <option *ngFor="let item of this.activationOptions" [ngValue]="item">{{ ActivationLabelMapping[item] }}</option>
+            </select>
+          </div>
+
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.recurrentConstraint">
+            <label class="label"><div class="question-mark" title="The constraint for the convolutional kernel weights">?</div>Recurrent constraint</label>
+            <select class="form-control playWindow" id="recurrentConstraint" name="recurrentConstraint" [(ngModel)]="layer.options.recurrentConstraint.value">
+              <option *ngFor="let item of this.constraintOptions" [ngValue]="item">{{ ConstraintLabelMapping[item] }}</option>
+            </select>
+          </div>
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.recurrentRegularizer">
+            <label class="label"><div class="question-mark" title="Regularizer function applied to the dense kernel weights matrix.">?</div>Recurrent regularizer</label>
+            <select class="form-control playWindow" id="recurrentRegularizer" name="recurrentRegularizer" [(ngModel)]="layer.options.recurrentRegularizer.value" [compareWith]="compareFunction">
+              <option *ngFor="let item of this.d.regularizerOptions" [ngValue]="item">{{ item.name }}</option>
+            </select>
+          </div>
+
+
+
+
+          <div class="horizontalSeparator" *ngIf="layer.settingsVisible && layer.options.betaInitializer"></div>
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.betaInitializer">
+            <label class="label"><div class="question-mark" title="">?</div>Beta initializer</label>
+            <select class="form-control playWindow" id="betaInitializer" name="betaInitializer" [(ngModel)]="layer.options.betaInitializer.value" [compareWith]="compareFunction">
+              <option *ngFor="let item of this.d.initializerOptions" [ngValue]="item">{{ item.name }}</option>
+            </select>
+          </div>
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.betaConstraint">
+            <label class="label"><div class="question-mark" title="">?</div>Beta constraint</label>
+            <select class="form-control playWindow" id="betaConstraint" name="betaConstraint" [(ngModel)]="layer.options.betaConstraint.value">
+              <option *ngFor="let item of this.constraintOptions" [ngValue]="item">{{ ConstraintLabelMapping[item] }}</option>
+            </select>
+          </div>
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.betaRegularizer">
+            <label class="label"><div class="question-mark" title="">?</div>Beta regularizer</label>
+            <select class="form-control playWindow" id="betaRegularizer" name="v" [(ngModel)]="layer.options.betaRegularizer.value" [compareWith]="compareFunction">
+              <option *ngFor="let item of this.d.regularizerOptions" [ngValue]="item">{{ item.name }}</option>
+            </select>
+          </div>
+
+
+          <div class="horizontalSeparator" *ngIf="layer.settingsVisible && layer.options.gammaInitializer"></div>
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.gammaInitializer">
+            <label class="label"><div class="question-mark" title="">?</div>Gamma initializer</label>
+            <select class="form-control playWindow" id="gammaInitializer" name="gammaInitializer" [(ngModel)]="layer.options.gammaInitializer.value" [compareWith]="compareFunction">
+              <option *ngFor="let item of this.d.initializerOptions" [ngValue]="item">{{ item.name }}</option>
+            </select>
+          </div>
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.gammaConstraint">
+            <label class="label"><div class="question-mark" title="">?</div>Gamma constraint</label>
+            <select class="form-control playWindow" id="gammaConstraint" name="gammaConstraint" [(ngModel)]="layer.options.gammaConstraint.value">
+              <option *ngFor="let item of this.constraintOptions" [ngValue]="item">{{ ConstraintLabelMapping[item] }}</option>
+            </select>
+          </div>
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.gammaRegularizer">
+            <label class="label"><div class="question-mark" title="">?</div>Gamma regularizer</label>
+            <select class="form-control playWindow" id="gammaRegularizer" name="gammaRegularizer" [(ngModel)]="layer.options.gammaRegularizer.value" [compareWith]="compareFunction">
+              <option *ngFor="let item of this.d.regularizerOptions" [ngValue]="item">{{ item.name }}</option>
+            </select>
+          </div>
+
+          <div class="horizontalSeparator" *ngIf="layer.settingsVisible && layer.options.movingMeanInitializer"></div>
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.movingMeanInitializer">
+            <label class="label"><div class="question-mark" title="">?</div>Moving mean initializer</label>
+            <select class="form-control playWindow" id="movingMeanInitializer" name="movingMeanInitializer" [(ngModel)]="layer.options.movingMeanInitializer.value" [compareWith]="compareFunction">
+              <option *ngFor="let item of this.d.initializerOptions" [ngValue]="item">{{ item.name }}</option>
+            </select>
+          </div>
+
+          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.movingVarianceInitializer">
+            <label class="label"><div class="question-mark" title="">?</div>Moving variance initializer</label>
+            <select class="form-control playWindow" id="movingVarianceInitializer" name="movingVarianceInitializer" [(ngModel)]="layer.options.movingVarianceInitializer.value" [compareWith]="compareFunction">
+              <option *ngFor="let item of this.d.initializerOptions" [ngValue]="item">{{ item.name }}</option>
+            </select>
+          </div>
 
           <!-- <button class="add" id="deleteLayer" (click)="this.deleteLayer(i)" title="delete layer">delete layer</button> -->
         </div>
@@ -361,7 +718,7 @@
               <div class="flexbox-row-even">
                 <label class="radio-container">
                   <input type="checkbox" class="type" id="{{ output.name }}" name="{{ output.name }}" [(ngModel)]="output.active" [checked]="output.active" (change)="this.updateOutputUnits()">
-                  <span class="checkmark radio tensorflow"></span>
+                  <span class="checkmark radio tensorflow" [ngStyle]="{ 'background-color': this.tensorflowService.d.colorOptions[i%6] }"></span>
                 </label>
 
                 <div class="flexbox-row-even autoWidth" id="label-{{ output.id }}">
@@ -376,20 +733,19 @@
                     <div class="flexbox-row-even">
                       <input type="text" class="list-item padding-left" id="{{ output.name }}-label-{{ i }}" value="{{ label.name }}" name="{{ output.name }}-label-{{ i }}"
                         (change)="this.tensorflowService.updateClassifierLabel(output.name, i)">
-                      <div class="buttonPlayWindow dataSetList delete" (click)="this.tensorflowService.deleteLabel(output.name, i)" title="delete label"><img src="./assets/icons/buttons/bin.svg"></div>
+                      <div class="buttonPlayWindow dataSetList delete" (click)="this.deleteLabel(output.name, i)" title="delete label"><img src="./assets/icons/buttons/bin.svg"></div>
                     </div>
                   </li>
                   <li>
-                    <button class="add left noMarginTop" (click)="this.tensorflowService.addLabelToClassifier(i)" title="add label">add label</button>
+                    <button class="add left noMarginTop" (click)="this.addLabel(i)" title="add label">add label</button>
                   </li>
                 </ul>
               </div>
-
             </li>
           </ul>
 
 
-          <button class="add left noMarginTop" id="addOutputItem" (click)="this.addClassifier()" title="add classifier">add classifier</button>
+          <button class="add left noMarginTop" id="addOutputItem" (click)="this.addOutput()" title="add classifier">add output</button>
 
           <div class="horizontalSeparator"></div>
 

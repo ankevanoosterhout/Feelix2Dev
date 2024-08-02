@@ -1,15 +1,11 @@
-import { DOCUMENT } from '@angular/common';
-import { Injectable, Inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import * as d3 from 'd3';
-import { Subject } from 'rxjs/internal/Subject';
-import { Layer, LayerType, Model, ModelType, ModelVariable } from '../models/tensorflow.model';
-import { TensorFlowData } from '../models/tensorflow-data.model';
-import { any } from '@tensorflow/tfjs';
+import { Layer, Model, ModelVariable } from '../models/tensorflow.model';
+import { TensorFlowMainService } from './tensorflow-main.service';
+
 
 @Injectable()
 export class TensorFlowModelDrawService {
-
-  public d: TensorFlowData;
 
   modelSVG: any;
   height = (window.innerHeight - 70) * 0.6;
@@ -17,7 +13,7 @@ export class TensorFlowModelDrawService {
   smallColumnWidth = 40;
 
 
-  constructor(@Inject(DOCUMENT) private document: Document) {}
+  constructor(private tensorflowService: TensorFlowMainService) {}
 
 
 
@@ -45,63 +41,79 @@ export class TensorFlowModelDrawService {
     for (const layer of model.layers) {
       const coords = [];
       const lines = [];
-      const xUnits = layer.options.units ? layer.options.units.value : layer.options.kernelSize ? layer.options.kernelSize.value.x : layer.options.poolSize ? layer.options.poolSize.value.x : 1;
+      let xUnits = (i === 0 && layer.options.actuators && layer.options.inputDimension === 1) ? layer.options.units.value * layer.options.actuators.value :
+                     layer.options.units ? layer.options.units.value : layer.options.kernelSize ? layer.options.kernelSize.value[0] : layer.options.poolSize ? layer.options.poolSize.value[0] : 1;
       const last = i < model.layers.length - 1 ? false : true;
-      const duplicates = layer.options.kernelSize && layer.type.args.dimensions > 1 ? layer.options.kernelSize.value.y : layer.options.actuators ? layer.options.actuators.value :
-                         layer.options.poolSize && layer.type.args.dimensions > 1 ? layer.options.poolSize.value.y : 1;
+      const duplicates = layer.options.kernelSize && layer.type.args.dimensions > 1 ? layer.options.kernelSize.value[1] : layer.options.actuators && layer.options.inputDimension > 1 ? layer.options.actuators.value :
+                         layer.options.poolSize && layer.type.args.dimensions > 1 ? layer.options.poolSize.value[1] : 1;
 
-
+      let overflow = false;
+      let nextUnitsOverflow = false;
       const xPos = layer.hidden ? layerOffset + 15 : layerOffset + (columnWidth / 2);
+      if (xUnits > 10) { xUnits = 10; overflow = true; }
 
-      for (let j = 0; j < xUnits; j++) {
+      const layerMargin = (this.height - (this.margin * 2) - (distance * (xUnits - 1))) / 2;
 
-        const layerMargin = (this.height - (this.margin * 2) - (distance * (xUnits - 1))) / 2;
 
-        for (let n = duplicates - 1; n >= 0; n--) {
+      for (let n = duplicates - 1; n >= 0; n--) {
+        for (let x = 0; x < xUnits; x++) {
 
           const coordObject = { x: xPos - (n * 4),
-                                y: distance * j + layerMargin + this.margin,
-                                unit: 'unit-' + j + '-' + 'layer-' + i + '-' + n,
-                                index: n
+                                y: distance * x + layerMargin + this.margin,
+                                unit: 'unit-' + x + '-' + 'layer-' + i + '-' + n,
+                                index: n,
+                                row: duplicates - 1 - n
                               };
 
           coords.push(coordObject);
-        }
 
+          // console.log(coords);
+        }
+      }
+
+      for (let j = 0; j < xUnits; j++) {
 
         if (!last) {
-          const nextUnits = model.layers[i + 1].options.units ? model.layers[i + 1].options.units.value :
-                            model.layers[i + 1].options.kernelSize ? model.layers[i + 1].options.kernelSize.value.x :
-                            model.layers[i + 1].options.poolSize ? model.layers[i + 1].options.poolSize.value.x : 1;
+          let nextUnits = model.layers[i + 1].options.units ? model.layers[i + 1].options.units.value :
+                          model.layers[i + 1].options.kernelSize ? model.layers[i + 1].options.kernelSize.value[0] :
+                          model.layers[i + 1].options.poolSize ? model.layers[i + 1].options.poolSize.value[0] : 1;
+
+          if (nextUnits > 10) { nextUnits = 10; nextUnitsOverflow = true; }
 
           const nextLayerMargin = (this.height - (this.margin * 2) - (distance * (nextUnits - 1))) / 2;
           const nextLayerOffset = model.layers[i + 1].hidden ? (this.smallColumnWidth / 2) : (columnWidth / 2);
 
           if (model.layers[i + 1].type && model.layers[i + 1].type.subgroup === 'normalization') {
-            const lineObject = {
-              x1: xPos,
-              y1: distance * j + layerMargin + this.margin,
-              x2: xPos + nextLayerOffset + (layer.hidden ? (this.smallColumnWidth / 2) : (columnWidth / 2)),
-              y2: distance * j + layerMargin + this.margin
-            }
 
-            lines.push(lineObject);
-          } else {
-            for (let n = 0; n < nextUnits; n++) {
+            if (!nextUnitsOverflow || (j % (xUnits - 2)) !== 0 || j === 0) {
               const lineObject = {
                 x1: xPos,
                 y1: distance * j + layerMargin + this.margin,
                 x2: xPos + nextLayerOffset + (layer.hidden ? (this.smallColumnWidth / 2) : (columnWidth / 2)),
-                y2: distance * n + nextLayerMargin + this.margin
+                y2: distance * j + layerMargin + this.margin
               }
 
               lines.push(lineObject);
+            }
+          } else {
+            for (let m = 0; m < nextUnits; m++) { //overflow && (i % (max - 2)) === 0 && i !== 0
+              if ((!nextUnitsOverflow || (m % (nextUnits - 2)) !== 0 || m === 0) &&
+                  (!overflow || (j % (xUnits - 2)) !== 0 || j === 0)) {
+                const lineObject = {
+                  x1: xPos,
+                  y1: distance * j + layerMargin + this.margin,
+                  x2: xPos + nextLayerOffset + (layer.hidden ? (this.smallColumnWidth / 2) : (columnWidth / 2)),
+                  y2: distance * m + nextLayerMargin + this.margin
+                }
+
+                lines.push(lineObject);
+              }
             }
           }
         }
       }
 
-      this.drawLayer(layer, coords, lines, i, layer.hidden ? this.smallColumnWidth : columnWidth, layerOffset, distance, model.inputs);
+      this.drawLayer(layer, coords, lines, i, layer.hidden ? this.smallColumnWidth : columnWidth, layerOffset, distance, model.inputs, last, maxUnits, overflow);
 
       layerOffset += (layer.hidden ? this.smallColumnWidth : columnWidth);
 
@@ -111,20 +123,23 @@ export class TensorFlowModelDrawService {
 
 
   getMaxNrOfUnits(layers: Array<Layer>) {
-    let max: number = layers[0].options.units ? layers[0].options.units.value :
-                      layers[0].options.kernelSize ? layers[0].options.kernelSize.value.x : 1;
+    const nrOfActiveInputs = this.tensorflowService.d.selectedModel.inputs.filter(i => i.active).length;
+    // console.log(nrOfActiveInputs);
+    let max: number = layers[0].options.inputDimension > 1 ? nrOfActiveInputs : nrOfActiveInputs * layers[0].options.actuators.value;
     for (let layer of layers) {
       if (layer.options.units && layer.options.units.value > max) {
         max = layer.options.units.value;
-      } else if (layer.options.kernelSize && layer.options.kernelSize.value.x > max) {
-        max = layer.options.kernelSize.value.x;
+      } else if (layer.options.kernelSize && layer.options.kernelSize.value[0] > max) {
+        max = layer.options.kernelSize.value[0];
+      } else if (layer.options.poolSize && layer.options.poolSize.value[0] > max) {
+        max = layer.options.poolSize.value[0];
       }
     }
-    return max < 12 ? max : 12;
+    return max < 10 ? max : 10;
   }
 
 
-  drawLayer(layer: Layer, coords: Array<any>, lines: Array<any>, layerIndex: number, width: number, xpos: number, distance: number, inputs: Array<ModelVariable>) {
+  drawLayer(layer: Layer, coords: Array<any>, lines: Array<any>, layerIndex: number, width: number, xpos: number, distance: number, inputs: Array<ModelVariable>, last: boolean, max: number, overflow: boolean) {
 
     this.modelSVG.append('rect')
       .attr('x', xpos)
@@ -145,7 +160,7 @@ export class TensorFlowModelDrawService {
       .attr('y1', (d: { y1: number }) => d.y1)
       .attr('y2', (d: { y2: number }) => d.y2)
       .style('stroke', '#666')
-      .style('stroke-width', 1)
+      .style('stroke-width', 0.5)
       .style('shapeRendering', 'geometricPrecision');
 
 
@@ -162,7 +177,7 @@ export class TensorFlowModelDrawService {
         .attr('y1', (d: { y: number }) => d.y)
         .attr('y2', (d: { y: number }) => d.y - distance/2.5)
         .style('stroke', '#666')
-        .style('stroke-width', 1)
+        .style('stroke-width', 0.5)
         .style('shapeRendering', 'geometricPrecision');
 
       this.modelSVG.selectAll('circle.layerBias_' + layerIndex)
@@ -205,10 +220,10 @@ export class TensorFlowModelDrawService {
         .attr('id', (d: { x: number, y: number, unit: string }) => 'recurrentLayer_' + layerIndex)
         .attr('class', 'recurrentLayer_' + layerIndex)
         .attr('r', layer.hidden ? distance/10 : distance/5)
-        .attr('cx', (d: { x: number }) => layer.hidden ? d.x + (distance/10) : d.x + (distance/5))
-        .attr('cy', (d: { y: number }) => layer.hidden ? d.y - distance/7 : d.y - distance/3.5)
+        .attr('cx', (d: { x: number }) => layer.hidden ? d.x + (distance/7.5) : d.x + (distance/5))
+        .attr('cy', (d: { y: number }) => layer.hidden ? d.y - distance/6 : d.y - distance/3.5)
         .style('stroke', '#666')
-        .style('stroke-width', 1)
+        .style('stroke-width', (d, i) => overflow && (i % (max - 2)) === 0 && i !== 0 ? 0 : 1)
         .style('fill', 'transparent');
 
         for (let arrowLine = 0; arrowLine < 2; arrowLine++) {
@@ -224,24 +239,39 @@ export class TensorFlowModelDrawService {
             .attr('y2', (d: { y: number }) => d.y - (layer.hidden ? distance/8 : distance/4) - 1)
             .attr('y1', (d: { y: number }) => d.y - (layer.hidden ? distance/8 : distance/4) - (distance/16) - 1)
             .style('stroke', '#666')
-            .style('stroke-width', 1)
+            .style('stroke-width', (d, i) => overflow && (i % (max - 2)) === 0 && i !== 0 ? 0 : 1)
             .style('shapeRendering', 'geometricPrecision')
         }
     }
 
 
+    let n = 0;
+    let total = 0;
+
+    // console.log(overflow, max, total);
     this.modelSVG.selectAll('circle#layer_' + layerIndex)
       .data(coords)
       .enter()
       .append('circle')
       .attr('id', (d: { x: number, y: number, unit: string }) => 'layer_' + layerIndex)
       .attr('class', 'layer_' + layerIndex)
-      .attr('r', layer.hidden ? distance/8 : distance/4)
+      .attr('r', (d, i) => overflow && (i % ((d.row + 1) * max - 2)) === 0 && i !== 0 ? distance/20 : layer.hidden ? distance/8 : distance/4 )
       .attr('cx', (d: { x: number }) => layer.hidden ? d.x + (distance/16) : d.x)
       .attr('cy', (d: { y: number }) => d.y)
-      .style('stroke', '#000')
-      .style('stroke-width', 1)
-      .style('fill', '#ccc');
+      .style('stroke', (d: { index: number, row: number }, i: number)=> {
+        if (last && this.tensorflowService.d.labels.length > 0) {
+          if (this.tensorflowService.d.labels[n].size <= i - total) {
+            total += this.tensorflowService.d.labels[n].size;
+            n++;
+          }
+          return this.tensorflowService.d.colorOptions[n];
+        } else {
+          return overflow && (i % ((d.row + 1) * max - 2)) === 0 && i !== 0 && d.index > 0 ? 'transparent' : '#000';
+        }
+      })
+      .style('stroke-width', 1.5)
+      .style('fill', (d, i:number) => overflow && (i % ((d.row + 1) * max - 2)) === 0 && i !== 0 ? (d.index > 0 ? 'transparent' : '#000') : '#ccc');
+
 
     if (layerIndex === 0) {
       this.modelSVG.selectAll('text.layer_' + layerIndex)
@@ -250,7 +280,13 @@ export class TensorFlowModelDrawService {
         .append('text')
         .attr('x', (d: { x: number }) => d.x)
         .attr('y', (d: { y: number }) => d.y + Math.round(distance/8))
-        .text((d, i) => inputs.filter(input => input.active)[i].slug)
+        .text((d, i) => {
+          const inputList = inputs.filter(input => input.active);
+          if (overflow && i === max - 2) {
+            return '';
+          }
+          return inputList[(i % inputList.length)] ? inputList[(i % inputList.length)].slug : '';
+        })
         .style('text-anchor', 'middle')
         .style('font-family', 'Open Sans, Arial, sans-serif')
         .style('font-weight', 600)
@@ -265,7 +301,7 @@ export class TensorFlowModelDrawService {
         .data(coords.filter(c => c.index === 0))
         .enter()
         .append('svg:image')
-        .attr('xlink:xlink:href', './assets/icons/functions/' + icon + '.svg')
+        .attr('xlink:xlink:href', (d, i) => overflow && (i % (max - 2)) === 0 && i !== 0  ? '' : './assets/icons/functions/' + icon + '.svg')
         .attr('width', imageWidth)
         .attr('height', imageWidth * 0.76142)
         .attr('x', (d: { x: number }) => d.x - (imageWidth/2))

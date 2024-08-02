@@ -39,7 +39,7 @@ import { SidebarComponent } from "./sidebar.component";
     TensorflowTrainComponent,
     LoadDataSetsComponent,
     GraphComponent,
-    SidebarComponent
+    SidebarComponent,
   ],
   providers: [
     TensorFlowModelDrawService,

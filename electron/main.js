@@ -418,14 +418,14 @@ const ml_control_menu_template = [
   //   ]
   // },
   {
+    label: 'Info',
+    submenu: [
+      
+    ]
+  },
+  {
     label: 'Help',
     submenu: [
-      {
-        label: 'Info',
-        click() {
-
-        }
-      },
       {
         label: 'Open development tools',
         click() {  tensorflowWindow.webContents.openDevTools(); }

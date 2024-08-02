@@ -149,9 +149,11 @@ export class TensorFlowJSComponent implements OnInit {
     this.d.dataSets.push(new DataSet(uuid(), 'Data set ' + (this.d.dataSets.length + 1), this.d.selectedMicrocontrollers));
     this.d.dataSets[0].open = true;
     this.d.selectedDataset = this.d.dataSets[0];
-    this.d.selectedModel.outputs.push(new Classifier(uuid(), 'Classifier-' + (this.d.selectedModel.outputs.length + 1)));
-    this.d.selectedModel.outputs[0].active = true;
-    this.tensorflowService.addLabelToClassifier(0);
+    if (this.d.selectedModel.outputs.length === 0) {
+      this.d.selectedModel.outputs.push(new Classifier(uuid(), 'Output-' + (this.d.selectedModel.outputs.length + 1)));
+      this.d.selectedModel.outputs[0].active = true;
+      this.tensorflowService.addLabelToClassifier(0);
+    }
   }
 
 
@@ -286,8 +288,8 @@ export class TensorFlowJSComponent implements OnInit {
               }
             }
 
-            if (dataset.output.classifier_id) {
-              this.addClassifierFromDataSet(dataset);
+            if (dataset.outputs[0].classifier_id) {
+              this.addOutputFromDataSet(dataset);
             }
 
             this.d.dataSets.push(dataset);
@@ -305,7 +307,7 @@ export class TensorFlowJSComponent implements OnInit {
 
 
 
-  addClassifierFromDataSet(dataset: any) {
+  addOutputFromDataSet(dataset: any) {
     const outputClassifierInModel = this.d.selectedModel.outputs.filter(o => o.id === dataset.output.classifier_id)[0];
     if (!outputClassifierInModel) {
       const newClassifier = new Classifier(dataset.output.classifier_id, dataset.output.classifier_name);
@@ -319,7 +321,7 @@ export class TensorFlowJSComponent implements OnInit {
   }
 
 
-  addClassifier(classifier: Classifier) {
+  addOutput(classifier: Classifier) {
     const outputClassifierInModel = this.d.selectedModel.outputs.filter(o => o.id === classifier.id)[0];
     if (!outputClassifierInModel) {
       this.d.selectedModel.outputs.push(classifier);

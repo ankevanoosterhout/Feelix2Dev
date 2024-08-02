@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@angular/core';
 import * as tf from '@tensorflow/tfjs';
 import { TensorFlowData } from '../models/tensorflow-data.model';
-import { DataSet, Model, ModelType, TrainingType } from '../models/tensorflow.model';
+import { DataSet, Layer, Model, ModelType, TrainingType } from '../models/tensorflow.model';
 import { TensorFlowMainService } from './tensorflow-main.service';
 import { Subject } from 'rxjs';
 import { DOCUMENT } from '@angular/common';
@@ -13,6 +13,7 @@ export class TensorFlowTrainService {
   public d: TensorFlowData;
 
   createPredictionModel: Subject<any> = new Subject<void>();
+  updateTrainingGraph: Subject<any> = new Subject<void>();
 
   constructor(@Inject(DOCUMENT) private document: Document, private tensorflowService: TensorFlowMainService) {
     this.d = this.tensorflowService.d;
@@ -22,7 +23,7 @@ export class TensorFlowTrainService {
     // });
   }
 
-  predictOutput() {
+  async predictOutput() {
     let collectData = true;
     let i = 0;
     if (this.d.predictionDataset) {
@@ -34,7 +35,7 @@ export class TensorFlowTrainService {
 
         if (i >= this.d.predictionDataset.m.length && collectData) {
 
-          const data = this.createJSONfromDataSet([this.d.predictionDataset], false);
+          const data = await this.createJSONfromDataSet([this.d.predictionDataset]);
           this.NN_Deploy(data.xs, this.d.selectedModel);
           this.clearCollectedData();
         }
@@ -85,15 +86,15 @@ export class TensorFlowTrainService {
 
   processingModel() {
 
-    if (!this.d.processing && this.d.dataSets.length > 0) {
-      this.tensorflowService.updateProgess('training', 0);
+    this.d.trainingData = [];
+
+    if (!this.d.processing) {
 
       this.document.body.style.cursor = 'wait';
 
+      this.d.selectedModel.model = null;
       this.d.processing = true;
-      this.tensorflowService.updateProgess('initializing model', 10);
-
-      const data = this.createJSONfromDataSet(this.d.dataSets, true);
+      this.tensorflowService.updateProgess('initializing model', 0);
 
       const inputLabels = [];
       const outputLabels = [];
@@ -110,19 +111,33 @@ export class TensorFlowTrainService {
         }
       }
 
-      this.d.selectedModel.inputs = inputLabels;
+      this.d.selectedModel.layers[0].options.inputs = inputLabels;
       this.d.selectedModel.layers[this.d.selectedModel.layers.length - 1].options.outputs = outputLabels;
 
-      this.createTensors(data, this.d.selectedModel);
 
-      (this.document.getElementById('deploy') as HTMLButtonElement).disabled = true;
+      this.createTensors().then(() => {
+        if (this.d.selectedModel.model) {
+          this.tensorflowService.updateProgess('model created', 10);
+          this.d.processing = false;
+          this.tensorflowService.createModel.next(1);
+        }
+      });
 
+      // const data = this.createJSONfromDataSet(this.d.dataSets, true);
+
+      // (this.document.getElementById('deploy') as HTMLButtonElement).disabled = true;
+      console.log(this.d.selectedModel.model);
     }
+
   }
 
 
 
-  createJSONfromDataSet(dataSets: Array<DataSet>, train = true) {
+
+
+  async createJSONfromDataSet(dataSets: Array<DataSet>) {
+
+    console.log(dataSets);
 
     this.tensorflowService.updateProgess('collecting data', 15);
 
@@ -131,9 +146,10 @@ export class TensorFlowTrainService {
 
     dataSets.forEach(set => {
 
+
       let outputs = [];
       for (const output of set.outputs) {
-        const outputEl = [];
+        let outputEl = [];
         if (output.label.id) {
 
           for (const classifier of this.d.selectedModel.outputs) {
@@ -142,20 +158,18 @@ export class TensorFlowTrainService {
                 classifier.labels[i].id === output.label.id ? outputEl.push(1) : outputEl.push(0);
               }
             }
+            outputs.push(outputEl);
           }
 
-          outputs.push(outputEl);
 
           if (outputs.length === 0) {
             this.d.processing = false;
             this.tensorflowService.updateProgess('cannot find outputs', 0);
+            this.document.body.style.cursor = 'default';
             return false;
           }
-          console.log(outputs);
         }
       }
-
-      // console.log(set.m);
 
       let m = 0;
 
@@ -175,17 +189,18 @@ export class TensorFlowTrainService {
               }
             }
 
+
             if (m !== 0 && data.xs[n]) {
               if (data.xs[n][i]) {
                 data.xs[n][i].push(inputs);
               }
             } else {
-              inputArray.push([inputs]);
+              inputArray.push(inputs); // [inputs]
             }
 
             i++;
 
-            if (i >= this.d.selectedModel.layers[0].options.batchSize) {
+            if (i >= motor.d.length - 1 || i >= this.d.selectedModel.layers[0].options.inputLength.value) { //inputLength //this.d.selectedModel.layers[0].options.batchSize.value
               if (m === 0) {
                 data.xs.push(inputArray);
                 data.ys.push(outputs);
@@ -207,12 +222,360 @@ export class TensorFlowTrainService {
   }
 
 
-  Regression_createModel(data: any, modelObj: Model) {
+  getInputShapeModel(model: Model) {
+    let motors = this.tensorflowService.getNrOfActiveMotors();
+    const inputs = this.tensorflowService.getNrOfActiveInputs();
+    const channels = 1;
+
+    if (motors === 0) { motors++; }
+
+    if (model.layers[1].type.subgroup === 'convolutional') {
+      return model.layers[0].options.inputDimension === 1 ? [channels, motors * inputs] : [channels, inputs, motors];
+    }
+    return  model.layers[0].options.inputDimension === 1 ? [model.layers[0].options.inputLength.value, motors * inputs] : [model.layers[0].options.inputLength.value, motors, inputs];
+    // return [motors, inputs]; //model.layers[0].options.inputLength.value,
+  }
+
+
+  getOutputShapeModel(model: Model) {
+    const outputLayer = model.layers[model.layers.length - 1];
+    console.log(outputLayer);
+    return [ outputLayer.options.outputs.length ];
+  }
+
+
+  async createTensors() {
+
+    this.d.selectedModel.model = tf.sequential();
+    this.d.selectedModel.model.name = this.d.selectedModel.name;
+
+    // const inputShape = this.getInputShapeModel(this.d.selectedModel);
+    const inputShape = [58, 10, 4];
+    // const outputShape = this.getOutputShapeModel(this.d.selectedModel);
+    const outputShape = [58, 2];
+
+    console.log(inputShape, outputShape);
+    let index = 0;
+
+    for (const layer of this.d.selectedModel.layers) {
+      let hiddenLayer = null;
+
+      console.log(index, layer);
+
+      if (index === this.d.selectedModel.layers.length - 1) {
+
+        hiddenLayer = tf.layers.dense({
+          name: 'output',
+          units: outputShape[1],
+          activation: layer.options.activation.value,
+        });
+
+      } else if (index > 0 && layer.type) {
+
+        console.log(layer.type);
+
+          hiddenLayer = layer.type.tf({
+            name: layer.name + '-' + index,
+            trainable: layer.options.trainable,
+            units: layer.options.units ? layer.options.units.value : undefined,
+            inputShape: index === 1 ? inputShape : undefined,
+            batchSize: index === 1 && this.d.selectedModel.layers[0].options.batchSize ? this.d.selectedModel.layers[0].options.batchSize.value : undefined,
+            inputLength: index === 1 && this.d.selectedModel.layers[0].options.inputLength && this.d.selectedModel.layers[0].options.inputLength.value ? this.d.selectedModel.layers[0].options.inputLength.value : undefined,
+
+            filters: layer.options.filters ? layer.options.filters.value : undefined,
+            padding: layer.options.padding && layer.options.padding.value !== 'none' ? layer.options.padding.value : undefined,
+            useBias: layer.options.useBias ? layer.options.useBias.value : undefined,
+
+            dataFormat: layer.options.dataFormat ? layer.options.dataFormat.value : undefined,
+            inputDim: layer.options.inputDim ? layer.options.inputDim.value : undefined,
+            outputDim: layer.options.outputDim ? layer.options.outputDim.value : undefined,
+            rate: layer.options.rate ? layer.options.rate.value : undefined,
+            seed: layer.options.seed ? layer.options.seed.value : undefined,
+            targetShape: layer.options.targetShape ? layer.options.targetShape.value : undefined,
+
+            //weights:,
+
+            kernelSize: layer.options.kernelSize ? layer.options.kernelSize.value.length > 1 ? layer.options.kernelSize.value : layer.options.kernelSize.value[0] : undefined,
+            poolSize:   layer.type.subgroup === 'pooling' ? layer.options.poolSize && layer.options.poolSize.value.length > 1 ? layer.options.poolSize.value : layer.options.poolSize.value[0] : undefined,
+
+            strides:      layer.options.strides ? layer.options.strides.value.length > 1 ? layer.options.strides.value : layer.options.strides.value[0] : undefined,
+            dilationRate: layer.options.dilationRate ? layer.options.dilationRate.value.length > 1 ? layer.options.dilationRate.value : layer.options.dilationRate.value[0] : undefined,
+
+            biasInitializer: layer.options.biasInitializer && layer.options.biasInitializer.value.name !== 'none' ?
+                             layer.options.biasInitializer.value.initializer(layer.options.biasInitializer.value.args) : undefined,
+            biasConstraint:  layer.options.biasConstraint && layer.options.biasConstraint.value !== 'none' ? layer.options.biasConstraint.value : undefined,
+            biasRegularizer: layer.options.biasRegularizer && layer.options.biasRegularizer.value.name !== 'none' ?
+                             layer.options.biasRegularizer.value.regularizer(layer.options.biasRegularizer.value.config) : undefined,
+
+            kernelInitializer: layer.options.kernelInitializer && layer.options.kernelInitializer.value.name !== 'none' ?
+                               layer.options.kernelInitializer.value.initializer(layer.options.kernelInitializer.value.args) : undefined,
+            kernelConstraint:  layer.options.kernelConstraint && layer.options.kernelConstraint.value !== 'none' ? layer.options.kernelConstraint.value : undefined,
+            kernelRegularizer: layer.options.kernelRegularizer && layer.options.kernelRegularizer.value.name !== 'none' ?
+                               layer.options.kernelRegularizer.value.regularizer(layer.options.kernelRegularizer.value.config) : undefined,
+
+            depthwiseInitializer: layer.options.depthwiseInitializer && layer.options.depthwiseInitializer.value.name !== 'none' ?
+                                  layer.options.depthwiseInitializer.value.initializer(layer.options.depthwiseInitializer.value.args) : undefined,
+            depthwiseConstraint:  layer.options.depthwiseConstraint && layer.options.depthwiseConstraint.value !== 'none' ? layer.options.depthwiseConstraint.value : undefined,
+            depthwiseRegularizer: layer.options.depthwiseRegularizer && layer.options.depthwiseRegularizer.value.name !== 'none' ?
+                                  layer.options.depthwiseRegularizer.value.regularizer(layer.options.depthwiseRegularizer.value.config) : undefined,
+
+            pointwiseInitializer: layer.options.pointwiseInitializer && layer.options.pointwiseInitializer.value.name !== 'none' ?
+                                  layer.options.pointwiseInitializer.value.initializer(layer.options.pointwiseInitializer.value.args) : undefined,
+            pointwiseConstraint:  layer.options.pointwiseConstraint && layer.options.pointwiseConstraint.value !== 'none' ? layer.options.pointwiseConstraint.value : undefined,
+            pointwiseRegularizer: layer.options.pointwiseRegularizer && layer.options.pointwiseRegularizer.value.name !== 'none' ?
+                                  layer.options.pointwiseRegularizer.value.regularizer(layer.options.pointwiseRegularizer.value.config) : undefined,
+
+            activation: layer.options.activation ? layer.options.activation.value : undefined,
+            activityRegularizer:  layer.options.activityRegularizer && layer.options.activityRegularizer.value.name !== 'none' ?
+                                  layer.options.activityRegularizer.value.regularizer(layer.options.activityRegularizer.value.config) : undefined,
+
+            recurrentActivation: layer.options.recurrentActivation ? layer.options.recurrentActivation.value : undefined,
+
+            unitForgetBias: layer.options.unitForgetBias ? layer.options.unitForgetBias.value : undefined,
+
+            returnSequences: layer.options.returnSequences ? layer.options.returnSequences.value : undefined,
+            returnState: layer.options.returnState ? layer.options.returnState.value : undefined,
+            goBackwards: layer.options.goBackwards ? layer.options.goBackwards.value : undefined,
+            stateful: layer.options.stateful ? layer.options.stateful.value : undefined,
+            dropout: layer.options.dropout ? layer.options.dropout.value : undefined,
+            recurrentDropout: layer.options.recurrentDropout ? layer.options.recurrentDropout.value : undefined,
+            unroll: layer.options.unroll ? layer.options.unroll.value : undefined,
+            n: layer.options.n? layer.options.n.value : undefined,
+            implementation: layer.options.implementation ? layer.options.implementation.value : undefined,
+
+            //dropoutFunc
+
+            recurrentInitializer: layer.options.recurrentInitializer && layer.options.recurrentInitializer.value.name !== 'none' ?
+                                  layer.options.recurrentInitializer.value.initializer(layer.options.recurrentInitializer.value.args) : undefined,
+            recurrentConstraint:  layer.options.recurrentConstraint && layer.options.recurrentConstraint.value !== 'none' ? layer.options.recurrentConstraint.value : undefined,
+            recurrentRegularizer: layer.options.recurrentRegularizer && layer.options.recurrentRegularizer.value.name !== 'none' ?
+                                  layer.options.recurrentRegularizer.value.regularizer(layer.options.recurrentRegularizer.value.config) : undefined
+          });
+
+
+          console.log(hiddenLayer);
+
+      }
+
+      if (hiddenLayer) {
+        const success = this.addLayer(hiddenLayer);
+
+        if (!success) {
+          this.document.body.style.cursor = 'default';
+          this.d.selectedModel.model = null;
+          this.d.processing = false;
+          return false;
+        }
+      }
+
+      index++;
+    }
+
+
+    this.document.body.style.cursor = 'default';
 
   }
 
 
-  createTensors(data: any, modelObj: Model) {
+  addLayer(layer: Layer):boolean {
+    try {
+
+      this.d.selectedModel.model.add(layer);
+      return true;
+    }
+    catch(e: any) {
+      const error = (e as Error).message;
+      console.log(e, error);
+      this.tensorflowService.updateProgess(error, 0);
+
+      return false;
+    }
+
+  }
+
+
+
+
+  async processData() {
+
+    // const inputShape = this.d.selectedModel.model.layers[0].batchInputShape;
+    // const outputShape = this.getOutputShapeModel(this.d.selectedModel);
+
+    const data = await this.createJSONfromDataSet(this.d.dataSets);
+    console.log(data);
+
+    const inputShape = [58, 10, 4];
+    const outputShape = [58, 2];
+
+    console.log(this.d.selectedModel.model);
+
+    this.createPredictionModel.next(true);
+
+    // console.log(inputShape);
+    // console.log(outputShape);
+    // const x =
+    // console.log(xs);
+    // const iTensor = tf.tensor(xs);
+
+    // console.log(iTensor);
+
+    // let inputTensor = tf.reshape(iTensor, inputShape);
+
+    // console.log(inputTensor);
+    // const y = tf.data.array(data.ys).batch(this.d.selectedModel.layers[0].options.batchSize.value);
+
+
+
+
+
+
+    // await dataset.forEachAsync(e => console.log(e));
+
+
+    // console.log(dataset);
+    // const oTensor = tf.tensor(data.ys, outputShape);
+
+    // console.log(oTensor);
+
+
+    const [trainingSet,validationSet] = this.createDatasets(data.xs, data.ys, this.d.selectedModel.training.distribution, this.d.selectedModel.layers[0].options.batchSize.value);
+    console.log(trainingSet, validationSet);
+
+    const model = await this.trainModel(trainingSet, validationSet);
+    model.summary();
+
+  }
+
+  async trainModel(trainDs: any, validationDs: any) {
+
+    const optimizerFunction = this.d.selectedModel.training.optimizer.name === 'momentum' ?
+    this.d.selectedModel.training.optimizer.value(this.d.selectedModel.training.learningRate, this.d.selectedModel.training.momentum) :
+    this.d.selectedModel.training.optimizer.value(this.d.selectedModel.training.learningRate);
+
+    this.d.selectedModel.model.compile({
+      optimizer: optimizerFunction,
+      loss: this.d.selectedModel.training.losses.value,
+      metrics: [ this.d.selectedModel.training.metrics.value ]
+    });
+    // console.log(this.d.selectedModel.training);
+    // console.log(this.d.selectedModel.model);
+
+    const trainLogs = [];
+    const loss = [];
+
+    await this.d.selectedModel.model.fitDataset(trainDs, {
+      epochs: this.d.selectedModel.training.epochs,
+      validationData: validationDs,
+      callbacks: {
+        onEpochEnd: async(epoch: any, logs: any) => {
+          console.log(epoch, logs);
+          const metric = this.getMetric(logs);
+          this.tensorflowService.updateProgess('training: loss = ' + logs.loss + '' + (metric ? metric : ''), ((75/this.d.selectedModel.training.epochs) * epoch) + 25, { e: epoch, metric: metric, loss: logs.loss });
+          // this.updateTrainingGraph.next({ loss: response.history.loss, epoch: epochs, metrics: metric });
+        }
+      }
+    });
+
+    return this.d.selectedModel.model;
+
+  }
+
+
+  createDatasets(xs: Array<any>, ys: Array<any>, distribution: number, batchSize: number) {
+    const dataset = tf.data.zip({
+      xs: tf.data.array(xs),
+      ys: tf.data.array(ys)
+    })
+    .shuffle(xs.length);
+
+    const splitIndex = Math.round((1 - distribution) * xs.length);
+
+    return [dataset.take(splitIndex).batch(batchSize),
+            dataset.skip(splitIndex + 1).batch(batchSize)];
+
+  }
+
+
+
+
+
+  trainModelOnData(inputTensor: any, outputTensor: any) {
+    const optimizerFunction = this.d.selectedModel.training.optimizer.name === 'momentum' ?
+        this.d.selectedModel.training.optimizer.value(this.d.selectedModel.training.learningRate, this.d.selectedModel.training.momentum) :
+        this.d.selectedModel.training.optimizer.value(this.d.selectedModel.training.learningRate);
+
+    this.d.selectedModel.model.compile({
+      optimizer: optimizerFunction,
+      loss: this.d.selectedModel.training.losses.value,
+      metrics: [ this.d.selectedModel.training.metrics.value ]
+    });
+    console.log(this.d.selectedModel.training);
+    console.log(this.d.selectedModel.model);
+
+
+    this.tensorflowService.updateProgess('start training', 25);
+
+
+    this.train(inputTensor, outputTensor, this.d.selectedModel.training.epochs, this.d.selectedModel.layers[0].options.batchSize.value).then(() => {
+      console.log('training is complete');
+
+      (this.document.getElementById('deploy') as HTMLButtonElement).disabled = false;
+
+      this.document.body.style.cursor = 'default';
+
+      this.d.processing = false;
+
+      inputTensor.dispose();
+      outputTensor.dispose();
+
+      console.log("memory " + tf.memory().numTensors);
+
+    });
+  }
+
+
+  async train(iTensor: any, oTensor: any, epochs: any, batchSize: number) {
+    console.log(iTensor, oTensor);
+
+    for (let i = 0; i < epochs; i++) {
+      const response = await this.d.selectedModel.model.fit(iTensor, oTensor, {
+        verbose: true,
+        shuffle: true,
+        batchSize: batchSize,
+        epochs: 1
+      });
+      if (i < epochs - 1) {
+        if (i % 10 === 0) {
+          console.log(response.history);
+          const metric = this.getMetric(response.history);
+          this.tensorflowService.updateProgess('training: loss = ' + response.history.loss[0] + '' + (metric ? metric : ''), ((75/epochs) * i) + 25, { e: epochs, metric: metric[0], loss: response.history.loss[0] });
+          this.updateTrainingGraph.next({ loss: response.history.loss, epoch: epochs, metrics: metric });
+        }
+      } else {
+        const metric = this.getMetric(response.history);
+        this.tensorflowService.updateProgess('finished training: ' + response.history.loss[0] + '' + metric, 100,  { e: epochs, metric: metric[0], loss: response.history.loss[0] });
+      }
+    }
+  }
+
+
+ getMetric(history: any) {
+    return history.categoricalAccuracy ? ', categorical accuracy: ' + history.categoricalAccuracy :
+           history.precision ? ', precision: ' +  history.precision :
+           history.meanAbsoluteError ? ', mean absolute error: ' + history.meanAbsoluteError :
+           history.meanAbsolutePercentageError ? ', mean absolute percentage error: ' + history.meanAbsolutePercentageError :
+           history.recall ? ', recall: ' +  history.recall :
+           history.cosineProximity ? ', cosine proximity: ' + history.cosineProximity :
+           history.binaryCrossentropy ? ', binary crossentropy: ' + history.binaryCrossentropy :
+           history.categoricalCrossentropy ? ', categorical crossentropy: ' + history.categoricalCrossentropy :
+           history.meanSquaredError ? ', mean squared error: ' +  history.meanSquaredError :
+           '';
+ }
+
+
+
+
+  createTensorsOld(modelObj: Model) {
 
     this.d.selectedModel.model = tf.sequential();
 
@@ -220,27 +583,29 @@ export class TensorFlowTrainService {
 
     this.d.selectedModel.model.name = modelObj.name;
 
-    this.tensorflowService.updateProgess('model created', 20);
+    this.tensorflowService.updateProgess('model created', 10);
 
-    if (data.xs && data.ys) {
-      console.log(data);
 
-      const inputShape =  [null, data.xs[0][0][0].length, (data.xs[0][0].length * data.xs[0].length) ];
-      const outputShape = [null, data.ys[0].length]
+    // if (data.xs && data.ys) {
+      // console.log(data);
 
-      console.log(inputShape);
+      // const inputShape =  [null, data.xs[0][0][0].length, (data.xs[0][0].length * data.xs[0].length) ];
+      const inputShape = this.getInputShapeModel(this.d.selectedModel);
 
-      const numSamples = data.xs.length;
-      const iTensor = tf.tensor(data.xs, [numSamples, data.xs[0].length, data.xs[0][0].length, data.xs[0][0][0].length]);
-      const outputTensor = tf.tensor(data.ys, [numSamples, data.ys[0].length]);
-      let inputTensor = tf.reshape(iTensor, [numSamples, data.xs[0][0][0].length, (data.xs[0][0].length * data.xs[0].length) ]);
+      // const outputShape = [null, data.ys[0].length];
 
-      console.log(inputTensor);
+      // console.log(inputShape);
 
-      for (let layer = 0; layer < this.d.selectedModel.layers.length - 1; layer++) {
-        let hiddenLayer = null;
+      // const numSamples = data.xs.length;
+      // const iTensor = tf.tensor(data.xs, [numSamples, data.xs[0].length, data.xs[0][0].length, data.xs[0][0][0].length]);
+      // const outputTensor = tf.tensor(data.ys, [numSamples, data.ys[0].length]);
+      // let inputTensor = tf.reshape(iTensor, [numSamples, data.xs[0][0][0].length, (data.xs[0][0].length * data.xs[0].length) ]);
 
-        if (modelObj.type === ModelType.CNN) {
+      // console.log(inputTensor);
+
+
+
+        // if (modelObj.type === ModelType.CNN) {
 
           // hiddenLayer = tf.layers.dense({
           //   name: layer.name
@@ -249,18 +614,18 @@ export class TensorFlowTrainService {
             // activation: this.d.selectedModel.options.activation, // make activation function adjustable in model settings
             // kernelRegularizer: this.d.selectedModel.options.kernelRegularizer.regularizer,
           // });
-        } else if (modelObj.type === ModelType.RNN) {
+        // } else if (modelObj.type === ModelType.RNN) {
 
-          hiddenLayer = tf.layers.simpleRNN({
-            units: (data.xs[0][0].length * data.xs[0].length), //data.xs[0][0][0].length
-            inputShape: inputShape.slice(1), // [ batchsize, timesteps ]
+          // hiddenLayer = tf.layers.simpleRNN({
+          //   units: (data.xs[0][0].length * data.xs[0].length), //data.xs[0][0][0].length
+          //   inputShape: inputShape.slice(1), // [ batchsize, timesteps ]
             // activation: this.d.selectedModel.options.activation, // make activation function adjustable in model settings
             // returnSequences: layer < this.d.selectedModel.options.hiddenLayers - 1 ? this.d.selectedModel.options.returnSequences : false,
             // kernelRegularizer: this.d.selectedModel.options.kernelRegularizer.regularizer,
             // inputLength: this.d.selectedModel.options.trainingOptions.batchSize
-          });
+          // });
 
-        }
+        // }
         //  else if (modelObj.type === ModelType.LSTM) {
 
         //   hiddenLayer = tf.layers.lstm({
@@ -288,14 +653,14 @@ export class TensorFlowTrainService {
         //   });
         // }
 
-        this.d.selectedModel.model.add(hiddenLayer);
+        // this.d.selectedModel.model.add(hiddenLayer);
 
         // if (this.d.selectedModel.options.batchNormalization) {
         //   const batchNormalizationLayer = tf.layers.batchNormalization();
         //   this.d.selectedModel.model.add(batchNormalizationLayer);
         // }
         // this.selectedModel.model.add(tf.layers.maxPooling2d({ poolSize: 2 }));
-      }
+      // }
 
 
 
@@ -337,67 +702,35 @@ export class TensorFlowTrainService {
 
 
 
-      this.train(inputTensor, outputTensor, this.d.selectedModel.training.epochs, this.d.selectedModel.layers[0].options.batchSize).then(() => {
-        console.log('training is complete');
+      // this.train(inputTensor, outputTensor, this.d.selectedModel.training.epochs, this.d.selectedModel.layers[0].options.batchSize).then(() => {
+      //   console.log('training is complete');
 
-        (this.document.getElementById('deploy') as HTMLButtonElement).disabled = false;
+      //   (this.document.getElementById('deploy') as HTMLButtonElement).disabled = false;
 
-        this.document.body.style.cursor = 'default';
+      //   this.document.body.style.cursor = 'default';
 
-        this.d.processing = false;
+      //   this.d.processing = false;
 
-        inputTensor.dispose();
-        outputTensor.dispose();
+      //   inputTensor.dispose();
+      //   outputTensor.dispose();
 
-        console.log("memory " + tf.memory().numTensors);
+      //   console.log("memory " + tf.memory().numTensors);
 
-      });
+      // });
 
-    } else {
-      this.tensorflowService.updateProgess('no data found, training canceled', 0);
-      this.d.processing = false;
+    // } else {
+    //   this.tensorflowService.updateProgess('no data found, training canceled', 0);
+    //   this.d.processing = false;
 
-      this.document.body.style.cursor = 'default';
+    //   this.document.body.style.cursor = 'default';
 
-      return false;
-    }
+    //   return false;
+    // }
   }
 
 
-  async train(iTensor: any, oTensor: any, epochs: any, batchSize: number) {
-    // console.log(iTensor, oTensor);
-    for (let i = 0; i < epochs; i++) {
-      const response = await this.d.selectedModel.model.fit(iTensor, oTensor, {
-        verbose: true,
-        shuffle: true,
-        batchSize: batchSize,
-        epochs: 1
-      });
-      if (i < epochs - 1) {
-        if (i % 10 === 0) {
-          console.log(response.history);
-          const metric = this.getMetric(response.history);
-          this.tensorflowService.updateProgess('training: loss = ' + response.history.loss[0] + '' + (metric ? metric : ''), ((75/epochs) * i) + 25);
-        }
-      } else {
-        this.tensorflowService.updateProgess('finished training: ' + response.history.loss[0] + '' + this.getMetric(response.history), 100);
-      }
-    }
-  }
 
 
- getMetric(history: any) {
-    return history.categoricalAccuracy ? ', categorical accuracy: ' + history.categoricalAccuracy[0] :
-           history.precision ? ', precision: ' +  history.precision[0] :
-           history.meanAbsoluteError ? ', mean absolute error: ' + history.meanAbsoluteError[0] :
-           history.meanAbsolutePercentageError ? ', mean absolute percentage error: ' + history.meanAbsolutePercentageError[0] :
-           history.recall ? ', recall: ' +  history.recall[0] :
-           history.cosineProximity ? ', cosine proximity: ' + history.cosineProximity[0] :
-           history.binaryCrossentropy ? ', binary crossentropy: ' + history.binaryCrossentropy[0] :
-           history.categoricalCrossentropy ? ', categorical crossentropy: ' + history.categoricalCrossentropy[0] :
-           history.meanSquaredError ? ', mean squared error: ' +  history.meanSquaredError[0] :
-           '';
- }
 
   NN_Deploy(input: any, selectedModel: any) {
 

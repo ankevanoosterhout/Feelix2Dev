@@ -1,5 +1,4 @@
-import { DOCUMENT } from '@angular/common';
-import { Injectable, Inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import * as d3 from 'd3';
 import { Subject } from 'rxjs/internal/Subject';
 import { TensorFlowConfig } from '../models/tensorflow-config.model';
@@ -13,11 +12,9 @@ export class TensorFlowDrawService {
   redraw: Subject<any> = new Subject<void>();
   updateTrimSize: Subject<any> = new Subject<void>();
 
-  constructor(@Inject(DOCUMENT) private document: Document) {
+  constructor() {
     this.config = new TensorFlowConfig();
   }
-
-
 
 
   drawGraph(id="svg_graph", size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
@@ -72,7 +69,7 @@ export class TensorFlowDrawService {
 
     if (this.config.zoomable) {
 
-      this.setZoom();
+      this.setZoom(size);
 
       if (!this.config.transform || isNaN(this.config.transform.k) || isNaN(this.config.transform.x)) {
         this.config.transform = d3.zoomIdentity.translate(0, 0).scale(1);
@@ -94,23 +91,24 @@ export class TensorFlowDrawService {
     this.config.zoom = d3
       .zoom()
       .scaleExtent([0.01, Infinity])
-      .translateExtent([[0,0], [size.width, size.height]]) // 1.2
+      .translateExtent([[0,0], [size.width - size.margin, size.height]]) // 1.2
       .on('zoom', (event: any) => {
         if (this.config.zoomable) {
           this.config.transform = event.transform;
-          this.scaleContent(this.config.transform);
+          this.scaleContent(this.config.transform, size);
         }
       });
   }
 
 
-  scaleContent(transform: any) {
+  scaleContent(transform: any, size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
+
     this.config.scaleX = transform.rescaleX(this.config.baseScaleX);
     const rescale = this.config.xAxisBottom.scale(this.config.scaleX);
     this.config.dataSVG.selectAll('.axisBottom').call(rescale);
 
     this.config.dataSVG.selectAll('.axisBottom text')
-        .attr('y', this.config.height - (2 * this.config.margin) + 10)
+        .attr('y', size.height - (2 * size.margin) + 10)
         .attr('x', 0);
 
     this.redraw.next(true);
@@ -177,6 +175,92 @@ export class TensorFlowDrawService {
           .attr('y', size.height - (2 * size.margin) + 10)
           .attr('x', 0);
   }
+
+
+  drawTensorflowTrainingProgress(history: any, size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
+    console.log(history);
+
+    if (history) {
+
+      d3.selectAll('#dataGroup').remove();
+
+      const dataGroup = this.config.dataSVG.append('g')
+        .attr('id', 'dataGroup')
+        .attr('clip-path', 'url(#clipPathGraph)');
+
+
+      // const loss = d3.line()
+      //   .x((d: { epoch: number; }) => isNaN(this.config.scaleX(d.epoch)) ? d.epoch : this.config.scaleX(d.epoch))
+      //   .y((d: { loss: number[]; }) => { return isNaN(this.config.scaleY(loss)) ? 0 : this.config.scaleY(loss);  });
+
+      // const metric = d3.line()
+      //   .x((d: { epoch: number; }) => isNaN(this.config.scaleX(d.epoch)) ? d.epoch : this.config.scaleX(d.epoch))
+      //   .y((d: { metric: number[]; }) => { return isNaN(this.config.scaleY(metric)) ? 0 : this.config.scaleY(metric);  });
+
+
+      // console.log(loss);
+      // console.log(metric);
+
+      // if (loss) {
+      //   dataGroup.append('path')
+      //     // .datum(m.d)
+      //     .attr('fill', 'none')
+      //     .attr('stroke', '#000')
+      //     .attr('stroke-width', 1)
+      //     .attr('d', loss(history));
+
+
+      //   dataGroup.selectAll('circle.metric')
+      //     .data(loss(history))
+      //     .enter()
+      //     .append('circle')
+      //     .attr('r', 1.5)
+      //     .attr('cx', (d: { x: number; }) => isNaN(this.config.scaleX(d.x)) ? d.x : this.config.scaleX(d.x))
+      //     .attr('cy', (d: { y: number; }) => {
+      //                     return isNaN(this.config.scaleY(d.y)) ? 0 : this.config.scaleY(d.y)})
+      //     .attr('class', 'metric')
+      //     .attr('fill', '#4a4a4a')
+      //     .attr('stroke', '#ff0000')
+      //     .attr('stroke-width', 1)
+      //       .append('svg:title')
+      //         .text((d: any) => {
+      //           return 'x ' + d.x + ' y ' + d.y
+      //         });
+
+      // }
+
+    //   if (metric) {
+    //     dataGroup.append('path')
+    //       // .datum(m.d)
+    //       .attr('fill', 'none')
+    //       .attr('stroke', '#000')
+    //       .attr('stroke-width', 1)
+    //       .attr('d', metric(history));
+
+
+    //       dataGroup.selectAll('circle.metric')
+    //         .data(metric(history))
+    //         .enter()
+    //         .append('circle')
+    //         .attr('r', 1.5)
+    //         .attr('cx', (d: { x: number; }) => isNaN(this.config.scaleX(d.x)) ? d.x : this.config.scaleX(d.x))
+    //         .attr('cy', (d: { y: number; }) => {
+    //                         return isNaN(this.config.scaleY(d.y)) ? 0 : this.config.scaleY(d.y)})
+    //         .attr('class', 'metric')
+    //         .attr('fill', '#4a4a4a')
+    //         .attr('stroke', '#ff0000')
+    //         .attr('stroke-width', 1)
+    //           .append('svg:title')
+    //             .text((d: any) => {
+    //               return 'x ' + d.x + ' y ' + d.y
+    //             });
+
+    //   }
+    }
+  }
+
+
+
 
 
   drawTensorFlowGraphData(data: DataSet, trimLines: any, size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
@@ -267,21 +351,22 @@ export class TensorFlowDrawService {
         .attr('transform', 'translate(0,'+ size.margin +')');
 
       const dragLine = d3
-            .drag()
-            .on('drag', (event: any, d: { id: number; value: number }) => {
-              d.value = this.config.scaleX.invert(event.x);
+          .drag()
+          .on('drag', (event: any, d: { id: number; value: number }) => {
 
-              this.updateTrimSize.next(true);
+            d.value = this.config.scaleX.invert(event.x);
 
-              d3.select('#trimLine_' + d.id).attr('x', event.x);
-              d3.select('#trimLine_' + d.id).attr('x', event.x);
+            this.updateTrimSize.next(true);
 
-              if (lines[0].id === d.id) {
-                d3.select('#trimLineRect_' + d.id).attr('width', event.x);
-              } else {
-                d3.select('#trimLineRect_' + d.id).attr('x', event.x).attr('width', size.width - event.x);
-              }
-            });
+            d3.select('#trimLine_' + d.id).attr('x', event.x);
+            // d3.select('#trimLine_' + d.id).attr('x', event.x);
+
+            if (lines[0].id === d.id) {
+              d3.select('#trimLineRect_' + d.id).attr('width', event.x);
+            } else {
+              d3.select('#trimLineRect_' + d.id).attr('x', event.x).attr('width', size.width - event.x);
+            }
+          });
 
 
       trimLinesGroup.selectAll('rect.trim')

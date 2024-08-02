@@ -34,7 +34,9 @@ export class TensorflowDataComponent implements OnInit, AfterViewInit {
                 });
 
 
-
+                this.tensorflowDrawService.redraw.subscribe(res => {
+                  this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.trimLinesVisible ? this.d.trimLines : null);
+                });
 
 
                 this.electronService.ipcRenderer.on('motorData', (event: Event, data: any) => {
@@ -159,7 +161,7 @@ export class TensorflowDataComponent implements OnInit, AfterViewInit {
           this.tensorflowService.addDataSet();
         }
       }
-    }
+    } 
 
     for (const microcontroller of this.d.selectedMicrocontrollers) {
       microcontroller.record = this.d.recording.active;
@@ -178,10 +180,6 @@ export class TensorflowDataComponent implements OnInit, AfterViewInit {
   }
 
 
-  // selectDataSet(id:string, event: any) {
-  //   this.tensorflowDrawService.enableZoom(true);
-  //   this.tensorflowService.selectDataSet(id, event);
-  // }
 
 
 

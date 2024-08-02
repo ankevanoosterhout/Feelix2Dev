@@ -1,6 +1,4 @@
-import { DOCUMENT } from '@angular/common';
-import { Component, Input, OnInit, Inject, HostListener, AfterViewInit } from '@angular/core';
-import { DataSet } from 'src/app/models/tensorflow.model';
+import { Component, Input, AfterViewInit } from '@angular/core';
 import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
 
 
@@ -31,7 +29,7 @@ export class GraphComponent implements AfterViewInit {
 
   constructor(private tensorflowDrawService: TensorFlowDrawService) { }
 
-  
+
   ngAfterViewInit(): void {
     this.tensorflowDrawService.drawGraph(this._id, this._size);
   }

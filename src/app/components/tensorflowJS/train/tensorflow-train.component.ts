@@ -21,9 +21,12 @@ export class TensorflowTrainComponent implements OnInit {
   public graphID = 'svg_graph_training';
   public size: { width: number, height: number, margin: number };
 
-  constructor(public tensorflowService: TensorFlowMainService, private tensorflowDrawService: TensorFlowDrawService,
-              private tensorflowTrainingService: TensorFlowTrainService) {
+  constructor(public tensorflowService: TensorFlowMainService, private tensorflowDrawService: TensorFlowDrawService, private tensorflowTrainingService: TensorFlowTrainService) {
     this.size = { width: innerWidth - (this.tensorflowService.d.sidebarWidth + 300), height: innerHeight - 190, margin: 70 };
+
+    this.tensorflowTrainingService.updateTrainingGraph.subscribe((res) => {
+      this.tensorflowDrawService.drawTensorflowTrainingProgress(res, this.size);
+    });
   }
 
 
@@ -37,8 +40,9 @@ export class TensorflowTrainComponent implements OnInit {
 
 
   train() {
-    this.tensorflowTrainingService.processingModel();
+    this.tensorflowTrainingService.processData();
   }
+
 
   validate() {
 

@@ -1,20 +1,37 @@
 
+<!-- <ul class="select-model">
+
+  <li *ngFor="let step of this.modelSelectionProcess; let i = index;">
+
+    <div *ngIf="step.active">
+      <div class="question">{{ step.question }}</div>
+
+      <ul class="option-list">
+        <li *ngFor="let option of step.options" (click)="this.selectStep(step.id + 1)">
+          <div class="icon-ml"><img src="{{ option.icon }}"/></div>
+          <p class="text">{{ option.text }}</p>
+          <p class="description">{{ step.description }}</p>
+        </li>
+      </ul>
+
+    </div>
+    <div class="dot" id="Q{{ i }}" [ngClass]="{ active: step.active }" (click)="selectStep(step.id)"></div>
+  </li>
+</ul> -->
+
+
+<!-- <div class="custom-model" (click)="this.createCustomModel()">custom model</div> -->
+
 <ul class="default-models">
   <li *ngFor="let model of this.defaultModelOptions" (click)="this.createDefaultModel(model.slug)">
+
     <div class="model-tile" [ngStyle]="{ backgroundColor: model.color }">
-      <div class="name">{{ model.name }}</div>
-      <div class="description">{{ model.description }}</div>
+      <div class="default-model-icon"><img src="./assets/icons/ml/{{ model.icon }}"/></div>
+
+      <div class="tile-content">
+        <div class="name">{{ model.name }}</div>
+        <div class="description">{{ model.description }}</div>
+      </div>
     </div>
   </li>
-</ul>
-<ul class="steps">
-  <li class="step"><div class="middle">select default model</div></li>
-  <li class="arrow"><div class="arrow"></div></li>
-  <li class="step"><div class="middle">design model</div></li>
-  <li class="arrow"><div class="arrow"></div></li>
-  <li class="step"><div class="middle">collect data</div></li>
-  <li class="arrow"><div class="arrow"></div></li>
-  <li class="step"><div class="middle">train model</div></li>
-  <li class="arrow"><div class="arrow"></div></li>
-  <li class="step"><div class="middle">test model</div></li>
 </ul>

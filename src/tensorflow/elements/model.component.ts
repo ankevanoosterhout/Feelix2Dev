@@ -77,7 +77,7 @@ export class ModelComponent {
       this.d.selectedModel.inputs = inputLabels;
       this.d.selectedModel.layers[this.d.selectedModel.layers.length - 1].options.outputs = outputLabels;
 
-      this.tensorflowTrainService.createTensors(data, this.d.selectedModel);
+      this.tensorflowTrainService.createTensors();
 
       (this.document.getElementById('deploy') as HTMLButtonElement).disabled = true;
 
@@ -130,8 +130,8 @@ export class ModelComponent {
     this.tensorflowService.deleteInputItem(index);
   }
 
-  addClassifier() {
-    this.tensorflowService.addClassifier();
+  addOutput() {
+    this.tensorflowService.addOutput();
   }
 
   deleteClassifier(index: number) {

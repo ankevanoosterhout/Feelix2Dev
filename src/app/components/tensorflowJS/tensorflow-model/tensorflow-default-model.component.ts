@@ -15,41 +15,49 @@ export class TensorflowDefaultModelComponent {
   public d: TensorFlowData;
   public config: TensorFlowConfig;
 
+
+
   defaultModelOptions = [
     {
       slug: 'CNN',
-      name: 'Convolutional Neural Network (CNN)',
-      description: 'Classification involving spatial data',
+      icon: 'classification.svg',
+      name: 'Convolutional Neural Network',
+      description: 'Identifies features and patterns. Useful for tasks such as analyzing trends.',
       color: '#ED1A75'
     },
     {
       slug: 'RNN',
-      name: 'Recurrent Neural Network (RNN)',
-      description: 'Prediction problems based on sequential data',
+      icon: 'memory.svg',
+      name: 'Recurrent Neural Network',
+      description: 'Remembers information over time. Useful for tasks where the sequence of data matters.',
       color: '#F2662D'
     },
     {
-      slug: 'LSTM',
-      name: 'Long Short-Term Memory Network (LSTM)',
-      description: 'Learning long-term dependencies in sequence data',
-      color: '#EBAE52'
-    },
-    {
-      slug: 'DFNN',
-      name: 'Deep Feedforward Neural Network (DFNN)',
-      description: 'Quintessential deep learning models',
+      slug: 'FNN',
+      icon: 'prediction.svg',
+      name: 'Feedforward Neural Network',
+      description: 'Makes predictions based on past data. Suitable for straightforward tasks like classifying data or predicting outcomes.',
       color: '#F0747A'
     },
     {
-      slug: 'regression',
-      name: 'Regression',
-      description: 'Predict a dependent variable based on one or more independent variables',
+      slug: 'GAN',
+      icon: 'generative.svg',
+      name: 'Generative Adversarial Network',
+      description: 'Creates diverse and realistic content by learning from existing data. Ideal for generating different ways to perform tasks with distinct expressions or movements.',
       color: '#C05BEB'
     },
     {
+      slug: 'DQN',
+      icon: 'reinforcement_learning.svg',
+      name: 'Deep Q-Network',
+      description: 'Learns to make decisions through trial and error. Ideal for tasks where the best action needs to be learned over time.',
+      color: '#EBAE52'
+    },
+    {
       slug: 'Custom',
+      icon: 'custom.svg',
       name: 'Custom Neural Network',
-      description: 'Design your model from scratch',
+      description: 'Design your model from scratch.',
       color: '#7065EB'
     }
   ]
@@ -64,23 +72,23 @@ export class TensorflowDefaultModelComponent {
 
     switch(modelType) {
       case 'CNN': {
-          this.d.selectedModel = new Model(uuid(), 'CNN model', ModelType.CNN);
+          this.d.selectedModel = new Model(uuid(), 'Convolutional Neural Network', ModelType.CNN);
         }
         break;
       case 'RNN': {
-          this.d.selectedModel = new Model(uuid(), 'RNN model', ModelType.RNN);
+          this.d.selectedModel = new Model(uuid(), 'Recurrent Neural Network', ModelType.RNN);
         }
         break;
-      case 'DFNN': {
-          this.d.selectedModel = new Model(uuid(), 'Deep learning model', ModelType.DFNN);
+      case 'FNN': {
+          this.d.selectedModel = new Model(uuid(), 'Feedforward Neural Network', ModelType.FNN);
         }
         break;
-      case 'LSTM': {
-          this.d.selectedModel = new Model(uuid(), 'RNN model', ModelType.LSTM);
+      case 'GAN': {
+          this.d.selectedModel = new Model(uuid(), 'Generative Adversarial Network', ModelType.GAN);
         }
         break;
-      case 'regression': {
-          this.d.selectedModel = new Model(uuid(), 'Regression model', ModelType.regression);
+      case 'DQN': {
+          this.d.selectedModel = new Model(uuid(), 'Deep Q-Network', ModelType.DQN);
         }
         break;
       default: {
@@ -89,7 +97,10 @@ export class TensorflowDefaultModelComponent {
     }
 
     this.tensorflowService.createModel.next(0);
-
   }
+
+
+
+
 
 }

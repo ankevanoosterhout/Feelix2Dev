@@ -150,7 +150,7 @@
     </ul>
   </div>
   <div id="inputs" class="column-20 fixed-height">
-    <label class="labelRow">Output <div class="buttonPlayWindow dataSetList" (click)="this.addClassifier()" title="add output item">+</div></label>
+    <label class="labelRow">Output <div class="buttonPlayWindow dataSetList" (click)="this.addOutput()" title="add output item">+</div></label>
 
     <ul>
       <li *ngFor="let output of this.d.selectedModel.outputs; let i = index" [attr.data-index]="i">

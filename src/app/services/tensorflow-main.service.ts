@@ -2,7 +2,7 @@ import { DOCUMENT } from '@angular/common';
 import { Injectable, Inject } from '@angular/core';
 import { v4 as uuid } from 'uuid';
 import { ActuatorType, MicroController } from '../models/hardware.model';
-import { Model, DataSet, Classifier, Label, MotorEl, ModelVariable, ModelType, Regression_options, OutputItem, InputColor, InputLayerOptions } from '../models/tensorflow.model';
+import { Model, DataSet, Classifier, Label, MotorEl, ModelVariable, ModelType, OutputItem, InputColor, VariableType } from '../models/tensorflow.model';
 import { HardwareService } from './hardware.service';
 import { DataSetService } from './dataset.service';
 import { Subject } from 'rxjs';
@@ -17,8 +17,6 @@ import { TensorFlowData } from '../models/tensorflow-data.model';
 @Injectable()
 export class TensorFlowMainService {
 
-    public learningType = ['supervised learning', 'unsupervised learning', 'reinforcement learning' ];
-
     public d: TensorFlowData;
 
     updateTensorflowProgress: Subject<any> = new Subject<void>();
@@ -32,6 +30,7 @@ export class TensorFlowMainService {
     loadMLData: Subject<any> = new Subject<void>();
     redrawNN: Subject<any> = new Subject<void>();
     createModel: Subject<any> = new Subject<void>();
+    getColorListItem: Subject<any> = new Subject<void>();
 
     constructor(@Inject(DOCUMENT) private document: Document, public hardwareService: HardwareService, private dataSetService: DataSetService,
                 private tensorflowModelService: TensorFlowModelService, private electronService: ElectronService, private _FileSaverService: FileSaverService) {
@@ -44,9 +43,9 @@ export class TensorFlowMainService {
       const index = dataset.indexOf(set);
       dataset.splice(index, 1);
       if (index < dataset.length) {
-        this.selectDataSet(dataset[index].id);
+        this.selectDataSet(dataset[index].id, ML);
       } else if (dataset.length > 0) {
-        this.selectDataSet(dataset[0].id);
+        this.selectDataSet(dataset[0].id, ML);
       } else if (!ML) {
         this.addDataSet();
         // this.updateGraph.next(true);
@@ -69,7 +68,7 @@ export class TensorFlowMainService {
     addDataSet() {
       const newID = uuid();
       this.d.dataSets.push(new DataSet(newID, 'Data set ' + (this.d.dataSets.length + 1), this.d.selectedMicrocontrollers, this.d.selectedModel.outputs));
-      this.selectDataSet(newID);
+      this.selectDataSet(newID, false);
       console.log(this.d.dataSets);
     }
 
@@ -94,7 +93,7 @@ export class TensorFlowMainService {
           this.d.dataSets.push(copy);
           this.saveDataSet(copy);
           if (index >= dataSets.length - 1) {
-            this.selectDataSet(copy.id);
+            this.selectDataSet(copy.id, false);
           }
         }
         index++;
@@ -142,7 +141,7 @@ export class TensorFlowMainService {
 
       for (const set of dataSets) {
         for (const classifier of this.d.selectedModel.outputs) {
-          this.addClassifierToDataSet(set, classifier);
+          this.addOutputToDataSet(set, classifier);
         }
       }
     }
@@ -157,13 +156,13 @@ export class TensorFlowMainService {
           this.loadData.next(dataObj);
 
           if (this.d.dataSets.length > 0) {
-            this.selectDataSet(this.d.dataSets[this.d.dataSets.length - 1].id);
+            this.selectDataSet(this.d.dataSets[this.d.dataSets.length - 1].id, false);
           }
         } else {
           this.loadMLData.next(dataObj);
 
           if (!this.d.predictionDataset && this.d.ML_OutputData.length > 0) {
-            this.selectDataSet(this.d.ML_OutputData[0].id);
+            this.selectDataSet(this.d.ML_OutputData[0].id, true);
           }
         }
       }
@@ -218,7 +217,7 @@ export class TensorFlowMainService {
       this.d.trimLinesVisible = false;
 
       this.d.dataSets.push(dataSetCopy);
-      this.selectDataSet(dataSetCopy.id);
+      this.selectDataSet(dataSetCopy.id, false);
     }
 
     trimmedDataSize(dataSet: DataSet = this.dataSetService.copyDataSet(this.d.selectedDataset)) {
@@ -281,7 +280,7 @@ export class TensorFlowMainService {
       //   this.d.selectedModel.model.saveData('training-data-' + this.d.selectedModel.name, this.itemsSaved);
       // }
       console.log(data);
-      
+
       const dataSets: Array<any> = this.d.multipleSelect.active ? this.d.dataSets.slice(this.d.multipleSelect.min, this.d.multipleSelect.max + 1) : [ this.d.selectedDataset ];
 
 
@@ -314,8 +313,8 @@ export class TensorFlowMainService {
 
 
 
-  selectDataSet(id: String = this.d.selectedDataset.id, event = null) {
-    let ML = this.d.dataSets.filter(d => d.id === id)[0] === undefined ? true : false;
+  selectDataSet(id: String = this.d.selectedDataset.id, ML: boolean = false, event = null) {
+    // let ML = this.d.dataSets.filter(d => d.id === id)[0] === undefined ? true : false;
 
     this.d.trimLinesVisible = false;
     this.d.classify = ML;
@@ -340,6 +339,8 @@ export class TensorFlowMainService {
     }
 
     const dataSet = !ML ? this.d.dataSets : this.d.mlOutputData;
+
+
 
     for (const set of dataSet) {
       set.open = set.id === id ? true : false;
@@ -368,6 +369,7 @@ export class TensorFlowMainService {
         }
       }
     }
+    console.log(ML, dataSet);
   }
 
 
@@ -398,7 +400,28 @@ export class TensorFlowMainService {
     }
 
 
-    addClassifierToDataSet(set: DataSet = this.d.selectedDataset, classifier: Classifier, label: any = null) {
+    updateOutputLabel(classifierID:string, labelID: string) {
+      
+      const dataItem = this.d.selectedDataset.outputs.filter(o => o.classifier_id === classifierID)[0];
+      const classifier = this.d.selectedModel.outputs.filter(o => o.id === classifierID)[0];
+
+      console.log(this.d.selectedDataset.outputs, this.d.selectedModel.outputs);
+      console.log(dataItem, classifier);
+
+      if (classifier) {
+        const label = classifier.labels.filter(l => l.id === labelID)[0];
+        console.log(label);
+        if (label) {
+          dataItem.label = label;
+        }
+      }
+    }
+
+
+
+
+
+    addOutputToDataSet(set: DataSet = this.d.selectedDataset, classifier: Classifier, label: any = null) {
       if (set.outputs.filter(o => o.classifier_id === classifier.id).length === 0) {
         set.outputs.push(new OutputItem(classifier.id, classifier.name));
         if (label) {
@@ -436,13 +459,9 @@ export class TensorFlowMainService {
       }
     }
 
-    updateModelType() {
-      // this.d.selectedModel.options = this.d.selectedModel.type !== ModelType.regression ? new Convolutional_options() : new Regression_options();
-    }
-
     addInputItem(name = 'untitled') {
       const nrOfInputs = this.d.selectedModel.inputs.length;
-      this.d.selectedModel.inputs.push(new ModelVariable(name + '-' + (nrOfInputs - 5), false, false, '#999', 'C' + (nrOfInputs - 5)));
+      this.d.selectedModel.inputs.push(new ModelVariable(name + '-' + (nrOfInputs - 5), false, false, '#999', 'C' + (nrOfInputs - 5), VariableType.continuous));
     }
 
     deleteInputItem(i: number) {
@@ -455,11 +474,11 @@ export class TensorFlowMainService {
 
     resetInputList() {
       this.d.selectedModel.inputs = [
-        new ModelVariable('angle', true, true, '#43E6D5', 'A'),
-        new ModelVariable('velocity', true, true, '#00AEEF', 'V'),
-        new ModelVariable('direction', true, true, '#E18257', 'D'),
-        new ModelVariable('pressure', false, false, '#4390E6', 'P'),
-        new ModelVariable('target', false, false, '#7778E0', 'G')
+        new ModelVariable('angle', true, true, '#43E6D5', 'A', VariableType.continuous),
+        new ModelVariable('velocity', true, true, '#00AEEF', 'V', VariableType.continuous),
+        new ModelVariable('direction', true, true, '#E18257', 'D', VariableType.discrete),
+        new ModelVariable('pressure', false, false, '#4390E6', 'P', VariableType.continuous),
+        new ModelVariable('target', false, false, '#7778E0', 'G', VariableType.continuous)
       ]
     }
 
@@ -473,17 +492,35 @@ export class TensorFlowMainService {
       this.d.selectedModel.outputs.splice(i, 1);
 
       if (this.d.selectedModel.outputs.length === 0) {
-        this.addClassifier();
+        this.addOutput();
       } else if (this.d.selectedModel.outputs.filter(o => o.active).length === 0) {
         this.d.selectedModel.outputs[0].active = true;
       }
     }
 
-    addClassifier() {
-      this.d.selectedModel.outputs.push(new Classifier(uuid(), 'Classifier-' + (this.d.selectedModel.outputs.length + 1)));
+    addOutput() {
+      this.d.selectedModel.outputs.push(new Classifier(uuid(), 'Output-' + (this.d.selectedModel.outputs.length + 1)));
+      if (this.d.selectedModel.outputs.filter(o => o.active).length === 0) {
+        this.d.selectedModel.outputs[0].active = true;
+      }
     }
 
-    getNrOfActiveClassifiers() { return this.d.selectedModel.outputs.filter(o => o.active).length };
+    getNrOfActiveClassifiers(): any {
+      const outputs = this.d.selectedModel.outputs.filter(o => o.active);
+      let total = 0;
+
+      if (outputs.length > 0) {
+        const labelsPerItem = [];
+        let index = 0;
+        for (const output of outputs) {
+          total += output.labels.length;
+          labelsPerItem.push({ i: index, size: output.labels.length, color: this.d.colorOptions[index] });
+          index++;
+        }
+        return { total: total, labels: labelsPerItem };
+      }
+      return { total: 1, labels: 1 };
+    };
 
     updateClassifier(i: number, pos: number) {
       const value = (this.document.getElementById('classifier-' + pos + '-' + i) as HTMLInputElement).value;
@@ -493,7 +530,7 @@ export class TensorFlowMainService {
 
     addLabelToClassifier(i: number) {
       this.d.selectedModel.outputs[i].open = true;
-      this.d.selectedModel.outputs[i].labels.push(new Label(uuid(), 'label-' + (this.d.selectedModel.outputs[i].labels.length + 1)));
+      this.d.selectedModel.outputs[i].labels.push(new Label(uuid(), 'item-' + (this.d.selectedModel.outputs[i].labels.length + 1)));
     }
 
     deleteLabel(classifier_name: String, i:number) {
@@ -572,7 +609,7 @@ export class TensorFlowMainService {
                 for (let i = 1; i < motor.config.nrOfSensors; i++) {
                   const input = this.d.selectedModel.inputs.filter(i => i.name === 'pressure-' + i);
                   if (input.length === 0) {
-                    const inputModel = new ModelVariable('pressure-' + i, true, true, '#4390E6', 'P-' + i);
+                    const inputModel = new ModelVariable('pressure-' + i, true, true, '#4390E6', 'P-' + i, VariableType.continuous);
                     this.d.selectedModel.inputs.push(inputModel);
                     this.d.colorList.push(new InputColor(inputModel.name, inputModel.color));
                   }
@@ -628,8 +665,8 @@ export class TensorFlowMainService {
       }
     }
 
-    updateProgess(_status: String, _progress: number) {
-      this.updateTensorflowProgress.next({ status: _status, progress: _progress });
+    updateProgess(_status: String, _progress: number, _data = null) {
+      this.updateTensorflowProgress.next({ status: _status, progress: _progress, d: _data });
     }
 
 
@@ -709,22 +746,21 @@ export class TensorFlowMainService {
 
     updateModelSettings(model: Model) {
 
-      if (model.type !== ModelType.regression) {
-        (this.document.getElementById('model_type') as HTMLSelectElement).selectedIndex = model.type;
+      (this.document.getElementById('model_type') as HTMLSelectElement).selectedIndex = model.type;
 
-        // (this.document.getElementById('learningRate') as HTMLInputElement).value = model.options.learningRate;
-        // (this.document.getElementById('hiddenLayers') as HTMLInputElement).value = model.options.hiddenLayers;
+      // (this.document.getElementById('learningRate') as HTMLInputElement).value = model.options.learningRate;
+      // (this.document.getElementById('hiddenLayers') as HTMLInputElement).value = model.options.hiddenLayers;
 
-        // (this.document.getElementById('epochs') as HTMLInputElement).value = model.options.trainingOptions.epochs;
-        // (this.document.getElementById('batchsize') as HTMLInputElement).value = model.options.trainingOptions.batchSize;
+      // (this.document.getElementById('epochs') as HTMLInputElement).value = model.options.trainingOptions.epochs;
+      // (this.document.getElementById('batchsize') as HTMLInputElement).value = model.options.trainingOptions.batchSize;
 
-        // (this.document.getElementById('activation') as HTMLSelectElement).selectedIndex = model.options.activation;
-        // (this.document.getElementById('activation_output') as HTMLSelectElement).selectedIndex = model.options.activationOutputLayer;
+      // (this.document.getElementById('activation') as HTMLSelectElement).selectedIndex = model.options.activation;
+      // (this.document.getElementById('activation_output') as HTMLSelectElement).selectedIndex = model.options.activationOutputLayer;
 
-        // (this.document.getElementById('losses') as HTMLSelectElement).selectedIndex = model.options.losses;
-        // (this.document.getElementById('metrics') as HTMLSelectElement).selectedIndex = model.options.metrics;
-        // (this.document.getElementById('optimizer') as HTMLSelectElement).selectedIndex = model.options.optimizer;
-      }
+      // (this.document.getElementById('losses') as HTMLSelectElement).selectedIndex = model.options.losses;
+      // (this.document.getElementById('metrics') as HTMLSelectElement).selectedIndex = model.options.metrics;
+      // (this.document.getElementById('optimizer') as HTMLSelectElement).selectedIndex = model.options.optimizer;
+
 
       (this.document.getElementById('modelName') as HTMLInputElement).value = model.name;
 
@@ -780,7 +816,7 @@ export class TensorFlowMainService {
               }
 
               if (dataset.outputs && dataset.outputs.filter(o => o.classifier_id).length > 0) {
-                this.addClassifierFromDataSet(dataset);
+                this.addOutputFromDataSet(dataset);
               }
 
               this.d.dataSets.push(dataset);
@@ -789,7 +825,7 @@ export class TensorFlowMainService {
           if (this.d.dataSets.length > 0) {
             // this.config.transform = null;
             this.d.dataSets.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0));
-            this.selectDataSet(this.d.dataSets[0].id);
+            this.selectDataSet(this.d.dataSets[0].id, false);
           }
         }
       }
@@ -797,7 +833,8 @@ export class TensorFlowMainService {
     }
 
 
-    addClassifierFromDataSet(dataset: any) {
+    addOutputFromDataSet(dataset: any) {
+      console.log('add output dataset')
       for (const output of dataset.outputs) {
         const outputClassifierInModel = this.d.selectedModel.outputs.filter(o => o.id === output.classifier_id)[0];
 

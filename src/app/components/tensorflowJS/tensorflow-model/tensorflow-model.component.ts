@@ -1,6 +1,8 @@
 
 import { Component, HostListener, Inject, OnInit } from '@angular/core';
-import { Activation, ActivationLabelMapping, Basic_options, Classifier, Constraint, ConstraintLabelMapping, Convolutional_options, DataFormat, DataFormatMapping, Layer, LayerType, Model, ModelType, ModelTypeMapping, Normalization_options, Options, Padding, PaddingMapping, Pooling_options, Recurrent_options, Regularizer, RegularizerLabelMapping } from 'src/app/models/tensorflow.model';
+import { Activation, ActivationLabelMapping, Basic_options, Classifier, Constraint, ConstraintLabelMapping, Convolutional_options,
+         DataFormat, DataFormatMapping, Layer, LayerType, Model, ModelType, ModelTypeMapping, Normalization_options, Options, Padding,
+         PaddingMapping, Pooling_options, Recurrent_options, VariableType, VariableTypeMapping } from 'src/app/models/tensorflow.model';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
 import { v4 as uuid } from 'uuid';
@@ -11,6 +13,7 @@ import { ActuatorType, Motor } from 'src/app/models/hardware.model';
 import { UploadService } from 'src/app/services/upload.service';
 import * as tf from '@tensorflow/tfjs';
 import { DOCUMENT } from '@angular/common';
+import { TensorFlowTrainService } from 'src/app/services/tensorflow-train.service';
 
 @Component({
   selector: 'app-tensorflow-model',
@@ -24,11 +27,11 @@ export class TensorflowModelComponent implements OnInit {
   public ActivationLabelMapping = ActivationLabelMapping;
   public activationOptions = Object.values(Activation);
 
-  public RegularizerLabelMapping = RegularizerLabelMapping;
-  public regularizerOptions = Object.values(Regularizer);
-
   public ModelTypeMapping = ModelTypeMapping;
   public modelTypeOptions = Object.values(ModelType).filter(value => typeof value === 'number');
+
+  public VariableTypeMapping = VariableTypeMapping;
+  public variableTypeOptions = Object.values(VariableType).filter(value => typeof value === 'number');
 
   public ConstraintLabelMapping = ConstraintLabelMapping;
   public constraintOptions = Object.values(Constraint);
@@ -40,6 +43,9 @@ export class TensorflowModelComponent implements OnInit {
   public paddingOptions = Object.values(Padding);
 
 
+
+
+
   public LayerTypes = [
     new LayerType('dense', 'basic', tf.layers.dense),
     new LayerType('activation', 'basic', tf.layers.activation),
@@ -48,6 +54,7 @@ export class TensorflowModelComponent implements OnInit {
     new LayerType('flatten', 'basic', tf.layers.flatten),
     new LayerType('permute', 'basic', tf.layers.permute),
     new LayerType('repeatVector', 'basic', tf.layers.repeatVector),
+    new LayerType('reshape', 'basic', tf.layers.reshape),
     new LayerType('spatialDropout1d', 'basic', tf.layers.spatialDropout1d),
 
     new LayerType('layerNormalization', 'normalization', tf.layers.layerNormalization),
@@ -84,13 +91,12 @@ export class TensorflowModelComponent implements OnInit {
     new LayerType('maxPooling2d', 'pooling', tf.layers.maxPooling2d, { dimensions: 2 }),
     new LayerType('maxPooling3d', 'pooling', tf.layers.maxPooling3d, { dimensions: 3 })
 
-
   ];
 
 
 
-  constructor(@Inject(DOCUMENT) private document: Document, private tensorflowService: TensorFlowMainService, private tensorflowModelDrawService: TensorFlowModelDrawService, private electronService: ElectronService,
-    public hardwareService: HardwareService, private uploadService: UploadService) {
+  constructor(@Inject(DOCUMENT) private document: Document, private tensorflowService: TensorFlowMainService, private tensorflowModelDrawService: TensorFlowModelDrawService,
+    private electronService: ElectronService, public hardwareService: HardwareService, private uploadService: UploadService, private tensorflowTrainService: TensorFlowTrainService) {
 
       this.d = this.tensorflowService.d;
 
@@ -119,17 +125,15 @@ export class TensorflowModelComponent implements OnInit {
       });
 
 
-
   }
 
 
 
   ngOnInit(): void {
     if (this.d.selectedModel.outputs.length === 0) {
-      this.d.selectedModel.outputs.push(new Classifier(uuid(), 'Classifier-' + (this.d.selectedModel.outputs.length + 1)));
-      this.d.selectedModel.outputs[0].active = true;
-      this.tensorflowService.addLabelToClassifier(0);
+      this.tensorflowService.addOutput();
     }
+    this.updateOutputUnits();
 
     // this.electronService.ipcRenderer.send('listSerialPorts', false);
 
@@ -171,30 +175,51 @@ export class TensorflowModelComponent implements OnInit {
     this.updateNetworkVisualization();
   }
 
-  updateModelType() {
-    this.tensorflowService.updateModelType();
-  }
-
   addInputItem() {
     this.tensorflowService.addInputItem();
     this.updateInputUnits();
   }
 
+  updateInputType(index: number, event: Event) {
+    if (index >= 5) {
+      this.d.selectedModel.inputs[index].type += 1;
+      if (this.d.selectedModel.inputs[index].type >= 3) {
+        this.d.selectedModel.inputs[index].type = 0;
+      }
+      event.stopPropagation();
+    }
+  }
+
   updateInput(index: number) {
     this.tensorflowService.updateInput(index);
+
   }
 
   deleteInputItem(index: number) {
     this.tensorflowService.deleteInputItem(index);
   }
 
-  addClassifier() {
-    this.tensorflowService.addClassifier();
+  addLabel(i: number) {
+    this.tensorflowService.addLabelToClassifier(i);
+    this.updateOutputUnits();
+  }
+
+
+  deleteLabel(name: string, i: number) {
+    this.tensorflowService.deleteLabel(name, i);
+    this.updateOutputUnits();
+  }
+
+
+
+  addOutput() {
+    this.tensorflowService.addOutput();
     this.updateOutputUnits();
   }
 
   deleteClassifier(index: number) {
     this.tensorflowService.deleteClassifier(index);
+    this.updateOutputUnits();
   }
 
   selectClassifier(id: string) {
@@ -204,8 +229,11 @@ export class TensorflowModelComponent implements OnInit {
 
   updateOutputUnits() {
     const nrOfActiveClassifiers = this.tensorflowService.getNrOfActiveClassifiers();
-    this.d.selectedModel.layers[this.d.selectedModel.layers.length - 1].options.units.value = nrOfActiveClassifiers > 1 ? nrOfActiveClassifiers : 1;
-    this.updateNetworkVisualization();
+    if (nrOfActiveClassifiers) {
+      this.d.selectedModel.layers[this.d.selectedModel.layers.length - 1].options.units.value = nrOfActiveClassifiers.total;
+      this.d.labels = nrOfActiveClassifiers.labels;
+      this.updateNetworkVisualization();
+    }
   }
 
   updateInputUnits() {
@@ -279,8 +307,10 @@ export class TensorflowModelComponent implements OnInit {
 
 
   addLayer(index: number) {
-    const newLayer = new Layer('hidden layer ' + (index + 1));
+    const newLayer = new Layer('HL-'+ uuid());
+    newLayer.type = this.LayerTypes[0];
     this.d.selectedModel.layers.splice((index + 1), 0, newLayer);
+    this.updateLayerOptions(index + 1);
     this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
   }
 
@@ -296,7 +326,8 @@ export class TensorflowModelComponent implements OnInit {
 
   getUnits(index: number) {
     return this.d.selectedModel.layers[index].options.units !== undefined ? this.d.selectedModel.layers[index].options.units.value :
-      this.d.selectedModel.layers[index].options.kernelSize.value.x;
+    this.d.selectedModel.layers[index].options.kernelSize ? this.d.selectedModel.layers[index].options.kernelSize.value[0] :
+    this.d.selectedModel.layers[index].options.poolSize ? this.d.selectedModel.layers[index].options.poolSize.value[0] : 1;
   }
 
   updateLayerOptions(index: number) {
@@ -305,19 +336,19 @@ export class TensorflowModelComponent implements OnInit {
 
     switch(layer.type.subgroup) {
       case 'convolutional':
-        layer.options = new Convolutional_options();
+        layer.options = new Convolutional_options(layer.type);
         break;
       case 'recurrent':
-        layer.options = new Recurrent_options();
+        layer.options = new Recurrent_options(layer.type);
         break;
       case 'pooling':
-        layer.options = new Pooling_options();
+        layer.options = new Pooling_options(layer.type);
         break;
       case 'basic':
-        layer.options = new Basic_options();
+        layer.options = new Basic_options(layer.type);
         break;
       case 'normalization': {
-          layer.options = new Normalization_options();
+          layer.options = new Normalization_options(layer.type);
           layer.options.units.value = this.getUnits(index - 1);
         }
         break;
@@ -332,7 +363,7 @@ export class TensorflowModelComponent implements OnInit {
 
   initializeModel() {
     if (this.d.selectedModel) {
-      this.tensorflowService.createModel.next(1);
+      this.tensorflowTrainService.processingModel();
     }
   }
 

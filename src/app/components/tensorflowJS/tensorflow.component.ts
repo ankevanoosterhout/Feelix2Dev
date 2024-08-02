@@ -33,6 +33,7 @@ export class TensorflowComponent {
       this.document.getElementById('msg').innerHTML = this.config.status;
       const width = 244 * (this.config.progress / 100);
       this.document.getElementById('progress').style.width = width + 'px';
+      this.d.trainingData.push(data.d);
     });
 
     this.electronService.ipcRenderer.on('load-ml-model-from-files', (event: Event, data: any) => {
@@ -89,18 +90,6 @@ export class TensorflowComponent {
 
 
 
-
-
-
-  // @HostListener('window:keydown', ['$event'])
-  // onKeyDown(e: KeyboardEvent) {
-
-  // }
-
-  // @HostListener('window:keyup', ['$event'])
-  // onKeyDown(e: KeyboardEvent) {
-
-  // }
 
 
 
