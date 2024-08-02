@@ -390,6 +390,7 @@ export class TensorFlowMainService {
       }
     }
 
+
     updateOutputDataSet(set = this.d.selectedDataset, index: number) {
       // console.log(this.d.selectedDataset.output);
       if (set && set.outputs.filter(o => o.classifier_id === this.d.selectedModel.outputs[index].id).length === 0) {
@@ -401,7 +402,7 @@ export class TensorFlowMainService {
 
 
     updateOutputLabel(classifierID:string, labelID: string) {
-      
+
       const dataItem = this.d.selectedDataset.outputs.filter(o => o.classifier_id === classifierID)[0];
       const classifier = this.d.selectedModel.outputs.filter(o => o.id === classifierID)[0];
 

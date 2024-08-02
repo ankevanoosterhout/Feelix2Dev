@@ -460,18 +460,19 @@ export class TensorFlowTrainService {
     // console.log(this.d.selectedModel.training);
     // console.log(this.d.selectedModel.model);
 
-    const trainLogs = [];
-    const loss = [];
+    this.d.selectedModel.training.logs = [];
 
     await this.d.selectedModel.model.fitDataset(trainDs, {
       epochs: this.d.selectedModel.training.epochs,
       validationData: validationDs,
       callbacks: {
         onEpochEnd: async(epoch: any, logs: any) => {
-          console.log(epoch, logs);
+          // console.log(epoch, logs);
           const metric = this.getMetric(logs);
-          this.tensorflowService.updateProgess('training: loss = ' + logs.loss + '' + (metric ? metric : ''), ((75/this.d.selectedModel.training.epochs) * epoch) + 25, { e: epoch, metric: metric, loss: logs.loss });
-          // this.updateTrainingGraph.next({ loss: response.history.loss, epoch: epochs, metrics: metric });
+          this.d.selectedModel.training.logs.push({ log: { loss: logs.loss, val_loss: logs.val_loss, metric: metric.training, val_metric: metric.validation, text_metric: metric.text }, epoch: epoch});
+          this.tensorflowService.updateProgess('training: loss = ' + logs.val_loss + '' + (metric ? metric.text + metric.validation : ''), ((75/this.d.selectedModel.training.epochs) * epoch) + 25,
+            { e: epoch, metric: metric, loss: logs.loss });
+          this.updateTrainingGraph.next(true);
         }
       }
     });
@@ -479,6 +480,21 @@ export class TensorFlowTrainService {
     return this.d.selectedModel.model;
 
   }
+
+
+  getMetric(logs: any) {
+    return logs.categoricalAccuracy ? { text: ', categorical accuracy: ', training: logs.categoricalAccuracy, validation: logs.val_categoricalAccuracy } :
+           logs.precision ? { text: ', precision: ', training: logs.precision, validation: logs.val_precision } :
+           logs.meanAbsoluteError ? { text: ', mean absolute error: ', training: logs.meanAbsoluteError, validation: logs.val_meanAbsoluteError } :
+           logs.meanAbsolutePercentageError ? { text: ', mean absolute percentage error: ', tranining: logs.meanAbsolutePercentageError, validation: logs.val_meanAbsolutePercentageError } :
+           logs.recall ? { text: ', recall: ',  training: logs.recall, validation: logs.val_recall } :
+           logs.cosineProximity ? { text: ', cosine proximity: ', training: logs.cosineProximity, validation: logs.cosineProximity } :
+           logs.binaryCrossentropy ? { text: ', binary crossentropy: ', training: logs.binaryCrossentropy, validation: logs.val_binaryCrossentropy } :
+           logs.categoricalCrossentropy ? { text: ', categorical crossentropy: ', training: logs.categoricalCrossentropy, validation: logs.val_categoricalCrossentropy } :
+           logs.meanSquaredError ? { text: ', mean squared error: ', training: logs.meanSquaredError, validation: logs.val_meansSquaredError } :
+           { text: '', training: null, validation: null };
+ }
+
 
 
   createDatasets(xs: Array<any>, ys: Array<any>, distribution: number, batchSize: number) {
@@ -559,18 +575,6 @@ export class TensorFlowTrainService {
   }
 
 
- getMetric(history: any) {
-    return history.categoricalAccuracy ? ', categorical accuracy: ' + history.categoricalAccuracy :
-           history.precision ? ', precision: ' +  history.precision :
-           history.meanAbsoluteError ? ', mean absolute error: ' + history.meanAbsoluteError :
-           history.meanAbsolutePercentageError ? ', mean absolute percentage error: ' + history.meanAbsolutePercentageError :
-           history.recall ? ', recall: ' +  history.recall :
-           history.cosineProximity ? ', cosine proximity: ' + history.cosineProximity :
-           history.binaryCrossentropy ? ', binary crossentropy: ' + history.binaryCrossentropy :
-           history.categoricalCrossentropy ? ', categorical crossentropy: ' + history.categoricalCrossentropy :
-           history.meanSquaredError ? ', mean squared error: ' +  history.meanSquaredError :
-           '';
- }
 
 
 

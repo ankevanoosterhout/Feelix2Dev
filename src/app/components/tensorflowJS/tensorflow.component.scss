@@ -1350,6 +1350,13 @@ ul.training-sample-distr-list {
   width: 100%;
 }
 
+.graphs {
+  display: inline-flex;
+  flex-direction: column;
+  height: calc(100vh - 216px);
+  padding-top: 25px;
+  box-sizing: border-box;
+}
 
 
 

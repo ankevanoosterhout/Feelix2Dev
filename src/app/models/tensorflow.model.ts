@@ -309,6 +309,7 @@ export class TrainingOptions {
   losses: any = { name:'categoricalCrossentropy', value: tf.metrics.categoricalCrossentropy };
   momentum = 10;
   distribution: number = 0.7;
+  logs: Array<any> = [];
 };
 
 export class Options {
@@ -822,6 +823,13 @@ export class Bounds {
   xMax = 1000;
   yMin = 0;
   yMax = 1;
+
+  constructor(xMin = null, xMax = null, yMin = null, yMax = null) {
+    if (xMin) { this.xMin = xMin; }
+    if (xMax) { this.xMax = xMax; }
+    if (yMin) { this.yMin = yMin; }
+    if (yMax) { this.xMin = yMax; }
+  }
 }
 
 export class InputItem {

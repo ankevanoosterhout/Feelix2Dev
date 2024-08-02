@@ -7,11 +7,22 @@ import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service'
   template: `<div id="{{ this._id }}" [ngStyle]="{ 'width': this._size.width, 'height': this._size.height }"></div>`,
   styles: [ `
 
-      #svg_graph_training, #svg_graph_deploy {
+      #svg_graph_deploy {
         display: inline-flex;
-        height: calc(100vh - 210px);
         position: relative;
+        height: calc(100vh - 210px);
         width: calc(100vw - 470px);
+      }
+
+      #svg_graph_training_A,  #svg_graph_training_B {
+        display: inline-flex;
+        position: relative;
+        height: calc(50vh - 85px);
+        width: calc(100vw - 470px);
+      }
+
+      #svg_graph_training_B {
+        margin-top: -75px;
       }
 
       #svg_graph_deploy {

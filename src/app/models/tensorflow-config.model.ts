@@ -4,6 +4,8 @@ import { Bounds } from "./tensorflow.model";
 export class TensorFlowConfig {
 
   dataSVG: any = null;
+  trainingA_SVG: any = null;
+  trainingB_SVG: any = null;
   scaleY: any;
   baseScaleX: any;
   scaleX: any;

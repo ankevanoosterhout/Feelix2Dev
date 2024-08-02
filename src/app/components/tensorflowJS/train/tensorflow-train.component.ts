@@ -1,5 +1,6 @@
 
 import { Component, HostListener, OnInit } from '@angular/core';
+import { Bounds } from 'src/app/models/tensorflow.model';
 import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 import { TensorFlowTrainService } from 'src/app/services/tensorflow-train.service';
@@ -18,20 +19,23 @@ import { TensorFlowTrainService } from 'src/app/services/tensorflow-train.servic
 })
 export class TensorflowTrainComponent implements OnInit {
 
-  public graphID = 'svg_graph_training';
+  public graphID_A = 'svg_graph_training_A';
+  public graphID_B = 'svg_graph_training_B';
   public size: { width: number, height: number, margin: number };
 
   constructor(public tensorflowService: TensorFlowMainService, private tensorflowDrawService: TensorFlowDrawService, private tensorflowTrainingService: TensorFlowTrainService) {
-    this.size = { width: innerWidth - (this.tensorflowService.d.sidebarWidth + 300), height: innerHeight - 190, margin: 70 };
+    this.size = { width: innerWidth - (this.tensorflowService.d.sidebarWidth + 300), height: (innerHeight - 160) / 2, margin: 70 };
 
-    this.tensorflowTrainingService.updateTrainingGraph.subscribe((res) => {
-      this.tensorflowDrawService.drawTensorflowTrainingProgress(res, this.size);
+    this.tensorflowTrainingService.updateTrainingGraph.subscribe(() => {
+      this.drawData();
     });
   }
 
 
   ngOnInit(): void {
     this.split(true);
+    this.tensorflowDrawService.trainingPage = true;
+    this.resize();
   }
 
   split(first: boolean = false) {
@@ -65,10 +69,27 @@ export class TensorflowTrainComponent implements OnInit {
 
   @HostListener('window:resize', ['$event'])
   onResize(event: Event) {
-    this.size = { width: innerWidth - (this.tensorflowService.d.sidebarWidth + 300), height: innerHeight - 190, margin: 70 };
-    this.tensorflowDrawService.drawGraph(this.graphID, this.size);
+    this.resize();
   }
 
+  resize()  {
+    this.size = { width: innerWidth - (this.tensorflowService.d.sidebarWidth + 300), height: (innerHeight - 160) / 2, margin: 70 };
+    this.tensorflowDrawService.updateBounds(new Bounds(0, this.tensorflowService.d.selectedModel.training.epochs, 0, 1.0), this.size);
+    this.redrawGraph();
+  }
+
+  redrawGraph() {
+    this.tensorflowDrawService.drawGraph(this.graphID_A, this.size);
+    this.tensorflowDrawService.drawGraph2(this.graphID_B, this.size);
+    if (this.tensorflowService.d.selectedModel.training.logs.length > 0) {
+      this.drawData();
+    }
+  }
+
+  drawData() {
+    this.tensorflowDrawService.drawTensorflowTrainingProgress(this.tensorflowService.d.selectedModel.training.logs);
+    this.tensorflowDrawService.drawTensorflowTrainingProgress2(this.tensorflowService.d.selectedModel.training.logs);
+  }
 
 
 
