@@ -1,6 +1,7 @@
 
 import { Component, HostListener, OnInit } from '@angular/core';
-import { Bounds } from 'src/app/models/tensorflow.model';
+import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
+import { Bounds, TrainingSet } from 'src/app/models/tensorflow.model';
 import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 import { TensorFlowTrainService } from 'src/app/services/tensorflow-train.service';
@@ -15,41 +16,78 @@ import { TensorFlowTrainService } from 'src/app/services/tensorflow-train.servic
 @Component({
   selector: 'app-tensorflow-train',
   templateUrl: 'tensorflow-train.component.html',
-  styleUrls: ['../../windows/effects/effects.component.css','./../tensorflow.component.scss'],
+  styleUrls: ['../../windows/effects/effects.component.css','./../sidebar.component.scss', './../tensorflow.component.scss'],
 })
 export class TensorflowTrainComponent implements OnInit {
 
   public graphID_A = 'svg_graph_training_A';
   public graphID_B = 'svg_graph_training_B';
   public size: { width: number, height: number, margin: number };
+  public d: TensorFlowData;
 
-  constructor(public tensorflowService: TensorFlowMainService, private tensorflowDrawService: TensorFlowDrawService, private tensorflowTrainingService: TensorFlowTrainService) {
-    this.size = { width: innerWidth - (this.tensorflowService.d.sidebarWidth + 300), height: (innerHeight - 160) / 2, margin: 70 };
+  constructor(public tensorflowService: TensorFlowMainService, private tensorflowDrawService: TensorFlowDrawService, private tensorflowTrainService: TensorFlowTrainService) {
+    this.d = this.tensorflowService.d;
+    this.resize();
 
-    this.tensorflowTrainingService.updateTrainingGraph.subscribe(() => {
-      this.drawData();
+    this.tensorflowTrainService.updateTrainingGraph.subscribe((epoch) => {
+      const max = epoch * 1.2 > this.d.selectedModel.training.epochs ? this.d.selectedModel.training.epochs : epoch * 1.2;
+      this.tensorflowDrawService.updateBounds({xMin: 0, xMax:max, yMin: 0, yMax: 2}, this.size);
+      this.redrawGraph();
+    });
+
+    this.tensorflowTrainService.selectLogFile.subscribe((id) => {
+      this.selectLogFile(id);
+    });
+
+    this.tensorflowDrawService.redrawGraphTraining.subscribe((res) => {
+      this.resize();
     });
   }
 
 
   ngOnInit(): void {
     this.split(true);
-    this.tensorflowDrawService.trainingPage = true;
-    this.resize();
   }
 
   split(first: boolean = false) {
-    this.tensorflowTrainingService.splitData(this.tensorflowService.d.selectedModel.training.distribution, first);
+    this.tensorflowTrainService.splitData(this.d.selectedModel.training.distribution, first);
   }
 
 
-  train() {
-    this.tensorflowTrainingService.processData();
+  async train() {
+    this.d.selectedModel.model = undefined;
+    this.tensorflowService.updateProgess('Compiling the model', 5);
+    const success = await this.compileModel();
+    if (!success) { return; }
+
+    this.tensorflowService.updateProgess('Processing data', 10);
+    this.processData();
+  }
+
+  
+  async processData() {
+    try {
+      this.tensorflowTrainService.processData();
+      return true;
+    }
+    catch(e: any) {
+      const error = (e as Error).message;
+      this.tensorflowService.updateProgess(error, 0);
+      return false;
+    }
   }
 
 
-  validate() {
-
+  async compileModel() {
+    try {
+      this.tensorflowTrainService.processingModel(false);
+      return true;
+    }
+    catch(e: any) {
+      const error = (e as Error).message;
+      this.tensorflowService.updateProgess(error, 0);
+      return false;
+    }
   }
 
   deploy() {
@@ -62,9 +100,6 @@ export class TensorflowTrainComponent implements OnInit {
   }
 
 
-  updateSidebarColumn(open: number) {
-
-  }
 
 
   @HostListener('window:resize', ['$event'])
@@ -72,24 +107,37 @@ export class TensorflowTrainComponent implements OnInit {
     this.resize();
   }
 
+  updateSize() {
+    this.size = { width: innerWidth - (this.d.sidebarWidth + 450), height: (innerHeight - 240) / 2, margin: innerWidth * 0.035 };
+  }
+
   resize()  {
-    this.size = { width: innerWidth - (this.tensorflowService.d.sidebarWidth + 300), height: (innerHeight - 160) / 2, margin: 70 };
-    this.tensorflowDrawService.updateBounds(new Bounds(0, this.tensorflowService.d.selectedModel.training.epochs, 0, 1.0), this.size);
+    this.updateSize();
+    const newBounds = new Bounds(0,this.d.selectedModel.training.epochs, 0, 2);
+    this.tensorflowDrawService.updateBounds(newBounds, this.size);
     this.redrawGraph();
   }
 
   redrawGraph() {
     this.tensorflowDrawService.drawGraph(this.graphID_A, this.size);
     this.tensorflowDrawService.drawGraph2(this.graphID_B, this.size);
-    if (this.tensorflowService.d.selectedModel.training.logs.length > 0) {
-      this.drawData();
+    const dataFile = this.d.trainingData.filter(t => t.open)[0];
+    if (dataFile) {
+      this.drawData(dataFile);
     }
   }
 
-  drawData() {
-    this.tensorflowDrawService.drawTensorflowTrainingProgress(this.tensorflowService.d.selectedModel.training.logs);
-    this.tensorflowDrawService.drawTensorflowTrainingProgress2(this.tensorflowService.d.selectedModel.training.logs);
+  drawData(logs: TrainingSet) {
+    if (logs) {
+      this.tensorflowDrawService.drawTensorflowTrainingProgress(logs.data, this.size);
+    }
   }
+
+  selectLogFile(id: string) {
+    this.tensorflowService.selectLogFile(id);
+    this.resize();
+  }
+
 
 
 

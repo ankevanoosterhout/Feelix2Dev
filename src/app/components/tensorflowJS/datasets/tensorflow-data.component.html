@@ -16,7 +16,9 @@
         <li id="load" (click)="this.tensorflowService.loadDataSet()"><img src="./assets/icons/buttons/open.svg" title="Open data set"></li>
         <li id="save" (click)="this.tensorflowService.saveDataSet()"><img src="./assets/icons/buttons/save.svg" title="Save data set"></li>
         <li id="savecopy" (click)="this.tensorflowService.saveCopyDataSet()"><img src="./assets/icons/buttons/save-copy.svg" title="Save copy of data set"></li>
-        <li id="trim" (click)="this.d.trimLinesVisible ? this.cancelTrim() : this.tensorflowService.trimDataSet()"><img src="./assets/icons/buttons/trim.svg" title="Trim data"></li>
+        <li class="padding" id="import" (click)="this.loadDataSetFromFile()"><img src="./assets/icons/buttons/import.svg" title="Import data from file"/></li>
+        <li class="padding" id="export" (click)="this.tensorflowService.saveDataNN()"><img src="./assets/icons/buttons/export.svg" title="Export data to file"/></li>
+        <li id="trim" (click)="this.d.trimLinesVisible ? this.cancelTrim() : this.tensorflowService.trimDataSet()" [ngClass]="{'active': this.d.trimLinesVisible}"><img src="./assets/icons/buttons/trim.svg" title="Trim data"></li>
         <li class="padding" id="delete" (click)="this.tensorflowService.deleteDataSets()"><img src="./assets/icons/buttons/bin.svg" title="Delete dataset(s)"></li>
         <!-- <li id="merge" (click)="this.tensorflowService.mergeDataSets()" disabled="!this.multipleSelect.active"><img src="./assets/icons/buttons/merge2.svg" title="Merge data sets"></li> -->
       </ul>

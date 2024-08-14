@@ -1,9 +1,8 @@
 <div id="create_classifiers" class="row" *ngIf="!this.tensorflowService.d.classify">
   <div class="row">
     <div class="row">
-      <label class="labelRow auto_width" *ngIf="this.tensorflowService.d.selectedModel.type === 1">Output variables</label>
-      <label class="labelRow auto_width" *ngIf="this.tensorflowService.d.selectedModel.type !== 1">Classifiers</label>
-      <!-- <button class="add labelRowItem" (click)="this.tensorflowService.addOutput()" title="add new classifier">Add</button> -->
+      <label class="labelRow auto_width" *ngIf="this.tensorflowService.d.selectedModel.type === 1">Output</label>
+      <!-- <button class="add labelRowItem" (click)="this.tensorflowService.addOutput(true)" title="add new classifier">Add</button> -->
     </div>
 
 

@@ -34,8 +34,12 @@ export class TensorflowDataComponent implements OnInit, AfterViewInit {
                 });
 
 
+
                 this.tensorflowDrawService.redraw.subscribe(res => {
-                  this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.trimLinesVisible ? this.d.trimLines : null);
+                  if (this.d.selectedDataset) {
+                    this.tensorflowDrawService.updateBounds(this.d.selectedDataset.bounds, this.size);
+                  }
+                  this.redraw();
                 });
 
 
@@ -161,7 +165,7 @@ export class TensorflowDataComponent implements OnInit, AfterViewInit {
           this.tensorflowService.addDataSet();
         }
       }
-    } 
+    }
 
     for (const microcontroller of this.d.selectedMicrocontrollers) {
       microcontroller.record = this.d.recording.active;
@@ -177,6 +181,11 @@ export class TensorflowDataComponent implements OnInit, AfterViewInit {
         this.d.classify = false;
       }
     }
+  }
+
+
+  loadDataSetFromFile() {
+    this.electronService.ipcRenderer.send('loadDataFromFile');
   }
 
 
@@ -377,7 +386,7 @@ export class TensorflowDataComponent implements OnInit, AfterViewInit {
       }
     }
     if (!this.d.selectedModel.outputs.filter(c => c.id === tmpID)[0]) {
-      const newClassifier = new Classifier(tmpID, 'Classifier');
+      const newClassifier = new Classifier(tmpID, 'Classifier', false);
 
       for (let c = 0; c < dataSets[0].classifier.length; c++) {
         newClassifier.labels.push(this.d.mlOutputData[0].confidencesLevels[c]);

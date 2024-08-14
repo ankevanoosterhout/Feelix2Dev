@@ -68,33 +68,46 @@ export class TensorflowDefaultModelComponent {
 
 
   createDefaultModel(modelType: string) {
-
+    const overwrite = this.d.selectedModel ? true : false;
+    let newModel: Model;
 
     switch(modelType) {
       case 'CNN': {
-          this.d.selectedModel = new Model(uuid(), 'Convolutional Neural Network', ModelType.CNN);
+          newModel = new Model(uuid(), 'Convolutional Neural Network', ModelType.CNN);
         }
         break;
       case 'RNN': {
-          this.d.selectedModel = new Model(uuid(), 'Recurrent Neural Network', ModelType.RNN);
+          newModel = new Model(uuid(), 'Recurrent Neural Network', ModelType.RNN);
         }
         break;
       case 'FNN': {
-          this.d.selectedModel = new Model(uuid(), 'Feedforward Neural Network', ModelType.FNN);
+          newModel = new Model(uuid(), 'Feedforward Neural Network', ModelType.FNN);
         }
         break;
       case 'GAN': {
-          this.d.selectedModel = new Model(uuid(), 'Generative Adversarial Network', ModelType.GAN);
+          newModel = new Model(uuid(), 'Generative Adversarial Network', ModelType.GAN);
         }
         break;
       case 'DQN': {
-          this.d.selectedModel = new Model(uuid(), 'Deep Q-Network', ModelType.DQN);
+          newModel = new Model(uuid(), 'Deep Q-Network', ModelType.DQN);
         }
         break;
       default: {
-          this.d.selectedModel = new Model(uuid(), 'custom model', ModelType.custom);
+          newModel = new Model(uuid(), 'custom model', ModelType.custom);
         }
     }
+
+    if (overwrite) {
+      const firstLayer = this.d.selectedModel.layers[0];
+      const inputs = this.d.selectedModel.inputs;
+      const outputs = this.d.selectedModel.outputs;
+
+      newModel.layers[0] = firstLayer;
+      newModel.inputs = inputs;
+      newModel.outputs = outputs;
+    }
+
+    this.d.selectedModel = newModel;
 
     this.tensorflowService.createModel.next(0);
   }

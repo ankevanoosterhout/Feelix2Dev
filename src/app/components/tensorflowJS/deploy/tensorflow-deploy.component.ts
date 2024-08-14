@@ -44,7 +44,7 @@ export class TensorflowDeployComponent {
 
 
   loadDataFromFile() {
-    this.electronService.ipcRenderer.send('loadDataFromFile');
+    this.electronService.ipcRenderer.send('loadDataFromFile', 'loadMLData');
   }
 
 }

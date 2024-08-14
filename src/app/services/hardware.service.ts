@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { MicroController, Motor, ConnectedDevice, OtherDevices } from '../models/hardware.model';
+import { MicroController, Motor, ConnectedDevice, OtherDevices, ActuatorType } from '../models/hardware.model';
 import { LocalStorageService } from 'ngx-webstorage';
 import { v4 as uuid } from 'uuid';
 import { Subject } from 'rxjs';
@@ -70,20 +70,22 @@ export class HardwareService {
 
   }
 
-  addMicroController(COM: any, vendor: string) {
+  addMicroController(COM: any, vendor: string, id = null) {
     if (COM && COM.serialPort) {
       if (this.microcontrollers.length > 0) {
         let controller = this.microcontrollers.filter(m => m.serialPort.path === COM.serialPort.path)[0];
         if (!controller) {
-          this.microcontrollers.push(new MicroController(uuid(), COM.serialPort, vendor));
+          this.microcontrollers.push(new MicroController((id ? id : uuid()), COM.serialPort, vendor));
         } else {
           controller = new MicroController(controller.id, COM.serialPort, vendor);
           controller.connected;
         }
       } else {
-        this.microcontrollers.push(new MicroController(uuid(), COM.serialPort, vendor));
+        this.microcontrollers.push(new MicroController((id ? id : uuid()), COM.serialPort, vendor));
       }
       this.store();
+
+      return this.microcontrollers[this.microcontrollers.length - 1];
       // console.log(this.microcontrollers);
     }
   }
@@ -131,6 +133,27 @@ export class HardwareService {
 
   getRegisteredDevices() {
     return this.registeredDevices;
+  }
+
+
+  addActuators(microcontroller: MicroController, nrOfActuators: number) {
+    const controller = this.microcontrollers.filter(m => m.serialPort.path === microcontroller.serialPort.path)[0];
+    const numberOfMotors = controller.motors.length;
+
+    const diff = nrOfActuators - numberOfMotors;
+    if (diff > 0) {
+      for (let n = 0; n < diff; n++) {
+        const newMotor = new Motor((numberOfMotors + n), (numberOfMotors > 0 ? controller.motors[0].type : ActuatorType.bldc),
+        (controller.motors[0].I2C_communication === 1 ? 2 : 0));
+
+        controller.motors.push(newMotor);
+      }
+    } else if (diff < 0) {
+      for (let n = diff; n < 0; n++) {
+        controller.motors.pop();
+      }
+    }
+    this.store();
   }
 
 

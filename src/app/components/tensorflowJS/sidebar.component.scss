@@ -10,11 +10,12 @@ ul {
   position: relative;
   display: inline-block;
   width: $sidebarWidth;
-  height: calc(100vh - 19px);
+  height: 100vh;
   overflow: hidden;
   top:0;
   padding-top: 19px;
   border-left: 1px solid #222;
+  box-sizing: border-box;
 
   &.left {
     background: #2b2b2b;
@@ -23,6 +24,21 @@ ul {
 
   &.small {
     width: 50px;
+  }
+
+  &.large {
+    width: 245px;
+  }
+
+  &.right {
+    height: calc(100vh - 207px);
+    padding-top: 28px;
+  }
+
+  &.padding {
+    padding-top: 35px;
+    padding-left: 10px;
+    padding-right: 10px;
   }
 }
 
@@ -122,6 +138,10 @@ ul.file-list-sidebar {
     &:active, &.active {
       background-color: #5b5b5b;
       color: #ccc;
+    }
+
+    &.noPointer {
+      pointer-events: none;
     }
 
     .name {
@@ -275,16 +295,27 @@ ul.training-type-options {
     justify-content: center;
     border: 1px solid #ccc;
 
-    &:hover {
-      pointer-events: none;
+
+
+    &.train {
+      pointer-events:all;
+      &:hover {
+        background: rgba(113, 102, 235, 0.6);
+      }
+      &.active-type {
+        background: #7166eb;
+      }
     }
 
-    &.train.active {
-      background: #F0747A;
-    }
+    &.validate {
+      pointer-events:all;
+      &:hover {
+        background: rgba(242, 100, 44, 0.7);
+      }
 
-    &.validate.active {
-      background: #ED1A75;
+      &.active-type {
+        background: #F2662D;
+      }
     }
 
   }

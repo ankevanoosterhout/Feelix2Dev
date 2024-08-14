@@ -38,11 +38,6 @@ export class ModelComponent {
     this.electronService.ipcRenderer.on('export-model', (event: Event) => {
       this.tensorflowService.exportModel();
     });
-
-    this.electronService.ipcRenderer.on('new-model', (event: Event) => {
-      this.d.selectedModel = new Model(uuid(), 'model', ModelType.custom);
-      this.tensorflowService.updateModelSettings(this.d.selectedModel);
-    });
   }
 
 

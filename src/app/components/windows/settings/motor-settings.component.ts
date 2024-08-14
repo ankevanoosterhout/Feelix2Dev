@@ -312,7 +312,6 @@ export class MotorSettingsComponent implements OnInit {
 
 
   getComports() {
-    console.log('get comports');
     this.electronService.ipcRenderer.send('listSerialPorts', false);
   }
 
@@ -358,22 +357,7 @@ export class MotorSettingsComponent implements OnInit {
   updateNrOfMotors() {
     const nr = (this.document.getElementById('numberOfMotors-' + this.selectedMicrocontroller.id) as HTMLInputElement).value;
     if (parseInt(nr) > 0) {
-      const numberOfMotors = this.selectedMicrocontroller.motors.length;
-
-      const diff = parseInt(nr) - numberOfMotors;
-      if (diff > 0) {
-        for (let n = 0; n < diff; n++) {
-          const newMotor = new Motor((numberOfMotors + n), (numberOfMotors > 0 ? this.selectedMicrocontroller.motors[0].type : ActuatorType.bldc),
-          (this.selectedMicrocontroller.motors[0].I2C_communication === 1 ? 2 : 0));
-
-          this.selectedMicrocontroller.motors.push(newMotor);
-        }
-      } else if (diff < 0) {
-        for (let n = diff; n < 0; n++) {
-          this.selectedMicrocontroller.motors.pop();
-        }
-      }
-      this.hardwareService.updateMicroController(this.selectedMicrocontroller);
+      this.hardwareService.addActuators(this.selectedMicrocontroller, parseInt(nr));
     } else {
       (this.document.getElementById('numberOfMotors-' + this.selectedMicrocontroller.id) as HTMLInputElement).value = this.selectedMicrocontroller.motors.length.toString();
     }

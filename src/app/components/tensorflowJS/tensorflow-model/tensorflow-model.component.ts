@@ -131,7 +131,7 @@ export class TensorflowModelComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.d.selectedModel.outputs.length === 0) {
-      this.tensorflowService.addOutput();
+      this.tensorflowService.addOutput(true);
     }
     this.updateOutputUnits();
 
@@ -213,7 +213,7 @@ export class TensorflowModelComponent implements OnInit {
 
 
   addOutput() {
-    this.tensorflowService.addOutput();
+    this.tensorflowService.addOutput(true);
     this.updateOutputUnits();
   }
 
@@ -261,6 +261,7 @@ export class TensorflowModelComponent implements OnInit {
   }
 
   toggleRecordMotor(serialPath: string, motor: Motor) {
+    this.d.selectedModel.layers[0].options.actuators.value = 0;
     for (const set of this.d.dataSets) {
       for (const m of set.m) {
         if (m.mcu.serialPath === serialPath && m.id === motor.id) {
@@ -362,9 +363,11 @@ export class TensorflowModelComponent implements OnInit {
 
 
   initializeModel() {
-    if (this.d.selectedModel) {
-      this.tensorflowTrainService.processingModel();
-    }
+    this.tensorflowTrainService.processingModel();
+  }
+
+  multipleActuators() {
+    return (this.d.selectedMicrocontrollers.length > 1 || this.d.selectedMicrocontrollers.filter(mcu => mcu.motors.length > 1).length > 0) ? true : false;
   }
 
 

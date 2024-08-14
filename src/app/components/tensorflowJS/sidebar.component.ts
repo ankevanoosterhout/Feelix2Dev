@@ -1,6 +1,6 @@
 import { Component, Input, HostListener, ChangeDetectorRef } from '@angular/core';
 import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
-import { MotorEl } from 'src/app/models/tensorflow.model';
+import { MotorEl, TrainingType } from 'src/app/models/tensorflow.model';
 import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 
@@ -108,12 +108,12 @@ import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service'
           <div class="sidebar-column-content">
             <ul class="file-list-sidebar" *ngIf="this._page !== 'deploy'">
               <li *ngFor="let set of this.d.dataSets; let i = index;" id="dataset-item-{{ set.id }}" (click)="this.selectDataSet(set.id, false, $event)"
-                  [ngClass]="{ active: set.open, selected: this.d.multipleSelect.active && i >= this.d.multipleSelect.min && i <= this.d.multipleSelect.max }">
-                <div class="row name" [ngClass]="{ small: this._page === 'train' }">{{ set.name }}</div>
+                  [ngClass]="{ noPointer: this._page === 'train', active: this._page !== 'train' && set.open, selected: this._page !== 'train' && this.d.multipleSelect.active && i >= this.d.multipleSelect.min && i <= this.d.multipleSelect.max }">
+                <div class="row name" [ngClass]="{'small': this._page === 'train' }">{{ set.name }}</div>
                 <div class="close close-button" (click)="this.tensorflowService.deleteDataSets(set.id)" *ngIf="this._page !== 'train'"><div></div></div>
                 <ul class="training-type-options" *ngIf="this._page === 'train'">
-                  <li class="train" [ngClass]="{ active: set.trainingType === 0 }">T</li>
-                  <li class="validate" [ngClass]="{ active: set.trainingType === 1 }">V</li>
+                  <li class="train" [ngClass]="{'active-type': set.trainingType === 0 }" (click)="this.updateTrainingType(set.id)">T</li>
+                  <li class="validate" [ngClass]="{'active-type': set.trainingType === 1 }" (click)="this.updateTrainingType(set.id)">V</li>
                 </ul>
               </li>
             </ul>
@@ -210,6 +210,21 @@ export class SidebarComponent {
     this.tensorflowDrawService.enableZoom(true);
     this.tensorflowService.selectDataSet(id, ml, event);
     this.changeDetection.detectChanges();
+  }
+
+  updateTrainingType(id: string) {
+    const set = this.d.dataSets.filter(d => d.id === id)[0];
+    if (set) {
+      set.trainingType = set.trainingType === TrainingType.training ? TrainingType.validation : TrainingType.training;
+      this.d.selectedModel.training.distribution = this.updateDistribution();
+    }
+  }
+
+  updateDistribution() {
+    const trainingSets = this.d.dataSets.filter(d => d.trainingType === TrainingType.training);
+    const validationSets = this.d.dataSets.filter(d => d.trainingType === TrainingType.validation);
+
+    return (1 / (trainingSets.length + validationSets.length)) * trainingSets.length;
   }
 
 

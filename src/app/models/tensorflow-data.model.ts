@@ -1,6 +1,5 @@
 import { MicroController } from "./hardware.model";
-import { DataSet, InputColor, MLDataSet, Model, ModelType, Layer } from "./tensorflow.model";
-import { v4 as uuid } from 'uuid';
+import { DataSet, InputColor, MLDataSet, Model, TrainingSet, tf_function } from "./tensorflow.model";
 import * as tf from '@tensorflow/tfjs';
 
 export class ML_Data {
@@ -29,7 +28,7 @@ export class TensorFlowData {
   selectedDataset: DataSet = null;
   predictionDataset: DataSet = null;
   mlOutputData: Array<MLDataSet> = [];
-  trainingData: Array<any> = [];
+  trainingData: Array<TrainingSet> = [];
 
   multipleSelect = { min: 0, max: 0, active: false };
 
@@ -60,40 +59,41 @@ export class TensorFlowData {
 
 
   lossOptions = [
-    { name: 'absoluteDifference', value: tf.losses.absoluteDifference },
-    { name: 'computeWeightedLoss', value: tf.losses.computeWeightedLoss },
-    { name: 'cosineDistance', value: tf.losses.cosineDistance },
-    { name: 'hingeLoss', value: tf.losses.hingeLoss },
-    { name: 'huberLoss', value: tf.losses.huberLoss },
-    { name: 'logLoss', value: tf.losses.logLoss },
-    { name: 'meanSquaredError', value: tf.losses.meanSquaredError },
-    // { name: 'KLDivergence', value: tf.losses. },
-    { name: 'sigmoidCrossEntropy', value: tf.losses.sigmoidCrossEntropy },
-    { name: 'softmaxCrossEntropy', value: tf.losses.softmaxCrossEntropy },
-    { name: 'categoricalCrossentropy', value: tf.metrics.categoricalCrossentropy }
+    new tf_function('absoluteDifference', tf.losses.absoluteDifference),
+    new tf_function('computeWeightedLoss', tf.losses.computeWeightedLoss),
+    new tf_function('cosineDistance', tf.losses.cosineDistance),
+    new tf_function('hingeLoss', tf.losses.hingeLoss),
+    new tf_function('huberLoss', tf.losses.huberLoss),
+    new tf_function('logLoss', tf.losses.logLoss),
+    new tf_function('meanSquaredError', tf.losses.meanSquaredError),
+    new tf_function('sigmoidCrossEntropy', tf.losses.sigmoidCrossEntropy),
+    new tf_function('softmaxCrossEntropy', tf.losses.softmaxCrossEntropy),
+    new tf_function('categoricalCrossentropy', tf.metrics.categoricalCrossentropy)
   ];
 
   metricsOptions = [
-    { name: 'binaryAccuracy', value: tf.metrics.binaryAccuracy },
-    { name: 'binaryCrossentropy', value: tf.metrics.binaryCrossentropy },
-    { name: 'categoricalAccuracy', value: tf.metrics.categoricalAccuracy },
-    { name: 'categoricalCrossentropy', value: tf.metrics.categoricalCrossentropy },
-    { name: 'cosineProximity', value: tf.metrics.cosineProximity },
-    { name: 'meanAbsoluteError', value: tf.metrics.meanAbsoluteError },
-    { name: 'meanAbsolutePercentageError', value: tf.metrics.meanAbsolutePercentageError },
-    { name: 'meanSquaredError', value: tf.metrics.meanSquaredError },
-    { name: 'precision', value: tf.metrics.precision },
-    { name: 'recall', value: tf.metrics.recall },
-    { name: 'sparseCategoricalAccuracy', value: tf.metrics.sparseCategoricalAccuracy }
+    new tf_function('accuracy', 'accuracy'),
+    new tf_function('binaryAccuracy', tf.metrics.binaryAccuracy),
+    new tf_function('binaryCrossentropy', tf.metrics.binaryCrossentropy),
+    new tf_function('categoricalAccuracy', tf.metrics.categoricalAccuracy),
+    new tf_function('categoricalCrossentropy', tf.metrics.categoricalCrossentropy),
+    new tf_function('cosineProximity', tf.metrics.cosineProximity),
+    new tf_function('meanAbsoluteError', tf.metrics.meanAbsoluteError),
+    new tf_function('meanAbsolutePercentageError', tf.metrics.meanAbsolutePercentageError),
+    new tf_function('meanSquaredError', tf.metrics.meanSquaredError),
+    new tf_function('precision', tf.metrics.precision),
+    new tf_function('recall', tf.metrics.recall),
+    new tf_function('sparseCategoricalAccuracy', tf.metrics.sparseCategoricalAccuracy),
+    new tf_function('none', undefined)
   ];
 
   optimizerOptions = [
-    { name: 'sgd', optimizer: tf.train.sgd },
-    { name: 'momentum', optimizer: tf.train.momentum },
-    { name: 'adagrad', optimizer: tf.train.adagrad },
-    { name: 'adadelta', optimizer: tf.train.adadelta },
-    { name: 'adam', optimizer: tf.train.adam },
-    { name: 'rmsprop', optimizer: tf.train.rmsprop },
+    new tf_function('sgd', tf.train.sgd),
+    new tf_function('momentum', tf.train.momentum),
+    new tf_function('adagrad', tf.train.adagrad),
+    new tf_function('adadelta', tf.train.adadelta),
+    new tf_function('adam', tf.train.adam),
+    new tf_function('rmsprop', tf.train.rmsprop),
   ];
 
   regularizerOptions = [

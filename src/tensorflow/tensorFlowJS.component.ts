@@ -88,7 +88,7 @@ export class TensorFlowJSComponent implements OnInit {
         }
       });
 
-      this.tensorflowService.updateTensorflowProgress.subscribe(data => {
+      this.tensorflowService.updateTrainingProgress.subscribe(data => {
         this.progress = data.progress;
         this.status = data.status;
         this.document.getElementById('msg').innerHTML = this.status;
@@ -150,7 +150,7 @@ export class TensorFlowJSComponent implements OnInit {
     this.d.dataSets[0].open = true;
     this.d.selectedDataset = this.d.dataSets[0];
     if (this.d.selectedModel.outputs.length === 0) {
-      this.d.selectedModel.outputs.push(new Classifier(uuid(), 'Output-' + (this.d.selectedModel.outputs.length + 1)));
+      this.d.selectedModel.outputs.push(new Classifier(uuid(), 'Output-' + (this.d.selectedModel.outputs.length + 1), true));
       this.d.selectedModel.outputs[0].active = true;
       this.tensorflowService.addLabelToClassifier(0);
     }

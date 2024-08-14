@@ -220,14 +220,15 @@ export class TensorFlowModelDrawService {
         .attr('id', (d: { x: number, y: number, unit: string }) => 'recurrentLayer_' + layerIndex)
         .attr('class', 'recurrentLayer_' + layerIndex)
         .attr('r', layer.hidden ? distance/10 : distance/5)
-        .attr('cx', (d: { x: number }) => layer.hidden ? d.x + (distance/7.5) : d.x + (distance/5))
-        .attr('cy', (d: { y: number }) => layer.hidden ? d.y - distance/6 : d.y - distance/3.5)
+        .attr('cx', (d: { x: number }) => layer.hidden ? d.x + (distance/6.4) : d.x + (distance/5))
+        .attr('cy', (d: { y: number }) => layer.hidden ? d.y - distance/5.2 : d.y - distance/3.5)
         .style('stroke', '#666')
         .style('stroke-width', (d, i) => overflow && (i % (max - 2)) === 0 && i !== 0 ? 0 : 1)
         .style('fill', 'transparent');
 
         for (let arrowLine = 0; arrowLine < 2; arrowLine++) {
-          const xOffset = arrowLine === 0 ? (distance/16) * -1 : (distance/16);
+          let xOffset = arrowLine === 0 ? (distance/16) * -1 : (distance/16);
+          if (layer.hidden) { xOffset /= 2; }
           this.modelSVG.selectAll('line.recurrentArrow_' + layerIndex + '_' + arrowLine)
             .data(coords.filter(c => c.index === 0))
             .enter()
@@ -236,8 +237,8 @@ export class TensorFlowModelDrawService {
             .attr('class', 'recurrentArrow_' + layerIndex + '_' + arrowLine)
             .attr('x1', (d: { x: number }) => layer.hidden ? d.x + (distance/16) + xOffset : d.x + xOffset)
             .attr('x2', (d: { x: number }) => layer.hidden ? d.x + (distance/16) : d.x)
-            .attr('y2', (d: { y: number }) => d.y - (layer.hidden ? distance/8 : distance/4) - 1)
-            .attr('y1', (d: { y: number }) => d.y - (layer.hidden ? distance/8 : distance/4) - (distance/16) - 1)
+            .attr('y2', (d: { y: number }) => d.y - (layer.hidden ? distance/8 - 1: distance/4) - 1)
+            .attr('y1', (d: { y: number }) => d.y - (layer.hidden ? distance/8 - 1: distance/4) - (distance/16) - 1)
             .style('stroke', '#666')
             .style('stroke-width', (d, i) => overflow && (i % (max - 2)) === 0 && i !== 0 ? 0 : 1)
             .style('shapeRendering', 'geometricPrecision')

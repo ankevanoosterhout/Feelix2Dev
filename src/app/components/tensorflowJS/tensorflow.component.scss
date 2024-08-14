@@ -346,6 +346,16 @@ ul.column-list-items {
   }
 }
 
+p#training {
+  color: #7065EB;
+  font-weight: 500;
+}
+
+p#validation {
+  font-weight: 500;
+  color: #F2662D;
+}
+
 .layer-content {
   position: relative;
   margin-top: 26px;
@@ -357,10 +367,10 @@ ul.column-list-items {
   box-sizing: border-box;
 
   &.sidebar {
-    width: 300px;
-    border-left: 1px solid #1c1c1c;
-    margin-top: 0;
-    padding-top: 75px;
+    width: 415px;
+    margin-top: 45px;
+    overflow: hidden;
+    padding: 0;
     background: #2b2b2b;
   }
 }
@@ -1217,8 +1227,7 @@ ul.motor-list li.header > span {
 
   }
   &.train {
-    width: calc(100% - $sidebarWidth);
-    min-width: 300px;
+    min-width: 260px;
   }
 }
 
@@ -1347,14 +1356,15 @@ ul.training-sample-distr-list {
   flex-direction: row;
   height: calc(100vh - 162px);
   position: relative;
-  width: 100%;
+  width: calc(100vw - 170px);
+  justify-content: space-between;
 }
 
 .graphs {
   display: inline-flex;
   flex-direction: column;
   height: calc(100vh - 216px);
-  padding-top: 25px;
+  padding-top: 45px;
   box-sizing: border-box;
 }
 

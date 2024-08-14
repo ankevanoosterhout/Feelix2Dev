@@ -11,10 +11,10 @@ export class TensorFlowDrawService {
 
   redraw: Subject<any> = new Subject<void>();
   updateTrimSize: Subject<any> = new Subject<void>();
+  redrawGraphTraining: Subject<any> = new Subject<void>();
 
   svgObject = null;
   svgObject_B = null;
-  public trainingPage = false;
 
   constructor() {
     this.config = new TensorFlowConfig();
@@ -22,6 +22,8 @@ export class TensorFlowDrawService {
 
 
   drawGraph(id="svg_graph", size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
+
+    this.config.zoomable = id === 'svg_graph_training_A' || id === 'svg_graph_training_B' ? false : true;
 
     d3.selectAll('#svg_' + id).remove();
 
@@ -58,8 +60,6 @@ export class TensorFlowDrawService {
 
     d3.selectAll('#svg_' + id).remove();
 
-    console.log(id);
-
     this.svgObject_B = d3.select('#' + id)
         .append('svg')
         .attr('id', 'svg_' + id)
@@ -88,7 +88,6 @@ export class TensorFlowDrawService {
     this.setScale(size);
     this.drawTicks(size, this.svgObject_B);
 
-    console.log(this.svgObject_B);
   }
 
 
@@ -108,7 +107,7 @@ export class TensorFlowDrawService {
       .domain([this.config.bounds.xMin, this.config.bounds.xMax])
       .range([size.margin, size.width - size.margin]);
 
-    if (this.config.zoomable && !this.trainingPage) {
+    if (this.config.zoomable) {
 
       this.setZoom(size);
 
@@ -132,7 +131,7 @@ export class TensorFlowDrawService {
     this.config.zoom = d3
       .zoom()
       .scaleExtent([0.01, Infinity])
-      .translateExtent([[0,0], [size.width - size.margin, size.height]]) // 1.2
+      .translateExtent([[0,0], [size.width - size.margin, size.height - size.margin]]) // 1.2
       .on('zoom', (event: any) => {
         if (this.config.zoomable) {
           this.config.transform = event.transform;
@@ -156,10 +155,10 @@ export class TensorFlowDrawService {
   }
 
   updateBounds(bounds: Bounds, size: any = null) {
-    this.config.bounds.xMax = bounds.xMax;
     this.config.bounds.xMin = bounds.xMin;
-    this.config.bounds.yMax = bounds.yMax;
+    this.config.bounds.xMax = bounds.xMax;
     this.config.bounds.yMin = bounds.yMin;
+    this.config.bounds.yMax = bounds.yMax;
 
     this.config.transform = null;
 
@@ -218,36 +217,25 @@ export class TensorFlowDrawService {
   }
 
 
-  drawTensorflowTrainingProgress(logs: Array<any>) {
-    // console.log(logs);
+  drawTensorflowTrainingProgress(logs: Array<any>, size: any) {
 
     if (logs) {
 
-      d3.selectAll('#dataGroup-0').remove();
+      d3.selectAll('#dataGroup-0, #dataGroup-1').remove();
 
-      const dataGroup = this.svgObject.append('g')
-                .attr('id', 'dataGroup-0');
-                // .attr('clip-path', 'url(#clipPathGraph)');
+      const dataGroup1 = this.svgObject.append('g')
+        .attr('id', 'dataGroup-0')
+        .attr('clip-path', 'url(#clipPathGraph)');
 
-      this.drawTrainingData(dataGroup, logs, 0);
+      const dataGroup2 = this.svgObject_B.append('g')
+        .attr('id', 'dataGroup-1')
+        .attr('clip-path', 'url(#clipPathGraph)');
+
+      this.drawTrainingData(dataGroup1, logs, 0);
+      this.drawTrainingData(dataGroup2, logs, 1);
     }
   }
 
-
-  drawTensorflowTrainingProgress2(logs: Array<any>) {
-    // console.log(logs);
-
-    if (logs) {
-
-      d3.selectAll('#dataGroup-1').remove();
-
-      const dataGroup = this.svgObject_B.append('g')
-                .attr('id', 'dataGroup-1');
-                // .attr('clip-path', 'url(#clipPathGraph)');
-
-      this.drawTrainingData(dataGroup, logs, 1);
-    }
-  }
 
 
   drawTrainingData(dataGroup: any, logs: Array<any>, index: number) {
@@ -264,28 +252,23 @@ export class TensorFlowDrawService {
 
     if (training) {
       dataGroup.append('path')
-        // .datum(m.d)
         .attr('fill', 'none')
         .attr('stroke', '#7065EB')
-        .attr('stroke-width', 1)
-        .attr('d', training(logs));
-          // .append('svg:title')
-          //   .text((d: any) => {
-              // return 'epoch ' + d.epoch + (index === 0 ? ', loss: ' + d.log.loss : d.text_metric + ' ' + d.log.metric)
-            // });
+        .attr('stroke-width', 1.5)
+        .attr('d', training(logs))
+          .append('svg:title')
+            .text(() => 'results training data');
     }
 
     if (validation) {
       dataGroup.append('path')
-        // .datum(m.d)
         .attr('fill', 'none')
         .attr('stroke', '#F2662D')
-        .attr('stroke-width', 1)
-        .attr('d', validation(logs));
-          // .append('svg:title')
-          //     .text((d: any) => {
-          //       return 'epoch ' + d.epoch + ( index === 0 ?  ', loss validation: ' + d.log.val_loss : d.text_metric + ' validation ' + d.log.val_metric)
-          //     });
+        .attr('stroke-width', 1.5)
+        .attr('d', validation(logs))
+          .append('svg:title')
+            .text(() => 'results validation data');
+
     }
   }
 
@@ -383,17 +366,19 @@ export class TensorFlowDrawService {
           .drag()
           .on('drag', (event: any, d: { id: number; value: number }) => {
 
-            d.value = this.config.scaleX.invert(event.x);
+            if (event.x > size.margin && event.x < size.width - size.margin) {
 
-            this.updateTrimSize.next(true);
+              d.value = this.config.scaleX.invert(event.x);
 
-            d3.select('#trimLine_' + d.id).attr('x', event.x);
-            // d3.select('#trimLine_' + d.id).attr('x', event.x);
+              this.updateTrimSize.next(true);
 
-            if (lines[0].id === d.id) {
-              d3.select('#trimLineRect_' + d.id).attr('width', event.x);
-            } else {
-              d3.select('#trimLineRect_' + d.id).attr('x', event.x).attr('width', size.width - event.x);
+              d3.select('#trimLine_' + d.id).attr('x', event.x);
+              // d3.select('#trimLine_' + d.id).attr('x', event.x);
+              if (lines[0].id === d.id) {
+                d3.select('#trimLineRect_' + d.id).attr('width', event.x);
+              } else {
+                d3.select('#trimLineRect_' + d.id).attr('x', event.x).attr('width', size.width - event.x);
+              }
             }
           });
 

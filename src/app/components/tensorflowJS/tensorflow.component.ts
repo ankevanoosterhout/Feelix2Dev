@@ -27,13 +27,13 @@ export class TensorflowComponent {
     this.config = this.tensorflowDrawService.config;
     this.d = this.tensorflowService.d;
 
-    this.tensorflowService.updateTensorflowProgress.subscribe(data => {
+    this.tensorflowService.updateTrainingProgress.subscribe(data => {
       this.config.progress = data.progress;
       this.config.status = data.status;
       this.document.getElementById('msg').innerHTML = this.config.status;
       const width = 244 * (this.config.progress / 100);
       this.document.getElementById('progress').style.width = width + 'px';
-      this.d.trainingData.push(data.d);
+
     });
 
     this.electronService.ipcRenderer.on('load-ml-model-from-files', (event: Event, data: any) => {
@@ -69,6 +69,9 @@ export class TensorflowComponent {
       this.changeDetection.detectChanges();
     });
 
+    this.tensorflowService.redrawNN.subscribe(() => {
+      this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
+    })
 
   }
 
@@ -76,13 +79,30 @@ export class TensorflowComponent {
   selectStep(step: number) {
     this.config.activeStep = step;
 
-    if (step === 0) {
-      if (this.d.selectedModel === undefined) {
-        this.d.selectedModel = new Model(uuid(), 'custom model', ModelType.custom);
-        console.log(this.d.selectedModel);
+    switch (step) {
+      case(0): {
+        if (this.d.selectedModel === undefined) {
+          this.d.selectedModel = new Model(uuid(), 'custom model', ModelType.custom);
+        }
+        this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
       }
-      console.log(this.d.selectedModel);
-      this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
+      break;
+      case(1): {
+        this.tensorflowDrawService.redraw.next(true);
+      }
+      break;
+      case(2): {
+        this.tensorflowDrawService.redrawGraphTraining.next(true);
+      }
+      break;
+      case(3): {
+        if (this.d.mlOutputData.length > 0) {
+          console.log('print output data');
+        }
+      }
+      break;
+      default: { console.log('step not listed'); }
+      break;
     }
   }
 

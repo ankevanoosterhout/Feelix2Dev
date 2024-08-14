@@ -236,13 +236,17 @@ export class Label {
 export class Classifier  {
   id: string;
   name: string;
-  labels: Array<Label> = [ new Label(uuid(), 'item-1'), new Label(uuid(), 'item-2') ];
+  labels: Array<Label> = [];
   open = false;
   active = false;
 
-  constructor(id: string, name: string) {
+  constructor(id: string, name: string, dummy = false) {
     this.id = id;
     this.name = name;
+
+    if (dummy) {
+      this.labels = [new Label(uuid(), 'item-1'), new Label(uuid(), 'item-2')];
+    }
   }
 };
 
@@ -297,23 +301,32 @@ export class Option {
   constructor(value = null, min = null, max = null) {
     this.value = value;
     this.min = min;
-    this.max = max
+    this.max = max;
   }
 };
+
+export class tf_function {
+  name: string;
+  value: Function | string;
+
+  constructor(name: string, value: Function | string) {
+    this.name = name;
+    this.value = value;
+  }
+}
 
 export class TrainingOptions {
   epochs: number = 100;
   learningRate: number = 0.1;
-  optimizer: any = { name:'sgd', value: tf.train.sgd };
-  metrics: any = { name:'categoricalAccuracy', value: tf.metrics.categoricalAccuracy };
-  losses: any = { name:'categoricalCrossentropy', value: tf.metrics.categoricalCrossentropy };
+  optimizer: tf_function = new tf_function('sgd', tf.train.sgd);
+  metrics: tf_function = new tf_function('categoricalAccuracy', tf.metrics.categoricalAccuracy);
+  losses: tf_function = new tf_function('categoricalCrossentropy', tf.metrics.categoricalCrossentropy);
   momentum = 10;
   distribution: number = 0.7;
-  logs: Array<any> = [];
 };
 
 export class Options {
-  batchNormalization: boolean = true;
+  // batchNormalization: boolean = true;
   weights = new Option([]); //'Initial weight values of the layer.'
   trainable = new Option(true);
   // units = new Option(4, 'Positive integer, dimensionality of the output space.');
@@ -324,16 +337,17 @@ export class InputLayerOptions extends Options {
   inputDim: Array<any>; // Defines input shape as [inputDim].
   units = new Option(3);
   actuators = new Option(1);
-  batchSize = new Option(32);
+  batchSize = new Option(2);
   batchInputShape: any;
   inputLength = new Option(10);
   inputDimension = 1;
+  sparse = new Option(false);
 };
 
 export class OutputLayerOptions extends Options {
   outputs: Array<any> = [];
   units = new Option(2);
-  activation = new Option(Activation.relu);
+  activation = new Option(Activation.softmax);
   activityRegularizer = new Option({ name: 'none', regularizer: undefined});
 };
 
@@ -363,7 +377,7 @@ export class Basic_options extends Options {
   noiseShape: Array<number> = [];
   seed = new Option(0);
   inputLength = new Option(undefined);
-  targetShape = new Option(null);
+  targetShape = new Option([1,1]);
 
   constructor(layerType: LayerType) {
     super();
@@ -371,7 +385,9 @@ export class Basic_options extends Options {
     if (layerType) {
 
       const name = layerType.name;
-
+      if (name === 'dropout') {
+        this.units = undefined;
+      }
       if (name === 'dense' || name === 'dropout' || name === 'embedding' || name === 'reshape') {
         this.dataFormat = undefined;
         this.n = undefined;
@@ -662,6 +678,8 @@ export class Normalization_options extends Options {
         this.gammaConstraint = undefined;
       }
 
+
+
     }
   }
 };
@@ -753,14 +771,20 @@ export class Model {
     } else if (this.type === ModelType.FNN) {
       const layerDense1 = new Layer('dense', new LayerType('dense', 'basic', tf.layers.dense));
       layerDense1.hidden = true;
+      layerDense1.options.units.value = 20;
       const layerDense2 = new Layer('dense', new LayerType('dense', 'basic', tf.layers.dense));
       layerDense2.hidden = true;
+      layerDense2.options.units.value = 20;
       const layerDense3 = new Layer('dense', new LayerType('dense', 'basic', tf.layers.dense));
       layerDense3.hidden = true;
+      layerDense3.options.units.value = 16;
       const layerDense4 = new Layer('dense', new LayerType('dense', 'basic', tf.layers.dense));
       layerDense4.hidden = true;
+      layerDense4.options.units.value = 8;
 
       this.layers.splice(1, 0, layerDense1, layerDense2, layerDense3, layerDense4);
+
+      this.layers.filter(l => l.name === 'output')[0].options.activation = new Option(Activation.softmax);
 
 
     } else if (this.type === ModelType.GAN) {
@@ -825,10 +849,10 @@ export class Bounds {
   yMax = 1;
 
   constructor(xMin = null, xMax = null, yMin = null, yMax = null) {
-    if (xMin) { this.xMin = xMin; }
-    if (xMax) { this.xMax = xMax; }
-    if (yMin) { this.yMin = yMin; }
-    if (yMax) { this.xMin = yMax; }
+    if (xMin !== null) { this.xMin = xMin; }
+    if (xMax !== null) { this.xMax = xMax; }
+    if (yMin !== null) { this.yMin = yMin; }
+    if (yMax !== null) { this.xMin = yMax; }
   }
 }
 
@@ -949,6 +973,21 @@ export class MLDataSet extends DataSet {
   classifierID: string;
   confidencesLevels: Array<Label> = [];
 
+}
+
+
+export class TrainingSet {
+  id: string;
+  name: string;
+  data: Array<any> = [];
+  open = true;
+  selected = false;
+  date = new Dates();
+
+  constructor(id: string, name: string) {
+    this.id = id;
+    this.name = name;
+  }
 }
 
 
