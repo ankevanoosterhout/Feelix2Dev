@@ -7,14 +7,13 @@
     <div>
       <ul class="buttons-list">
         <li class="padding" id="import" (click)="this.loadDataFromFile()"><img src="./assets/icons/buttons/import.svg" title="Import output data from file"/></li>
-        <li class="padding" id="export" (click)="this.tensorflowService.saveDataNN()"><img src="./assets/icons/buttons/export.svg" title="Export output data to file"/></li>
+        <li class="padding" id="export" (click)="this.tensorflowService.saveDataNN('deploy')"><img src="./assets/icons/buttons/export.svg" title="Export output data to file"/></li>
         <li id="load" (click)="this.tensorflowService.loadDataSet()"><img src="./assets/icons/buttons/open.svg" title="Open output files"/></li>
         <li id="save" (click)="this.tensorflowService.saveMLoutput()"><img src="./assets/icons/buttons/save.svg" title="Save output model"/></li>
         <li class="padding" id="delete"><img src="./assets/icons/buttons/bin.svg" title="Delete output files"></li>
       </ul>
 
-      <div id="record-button" class="record-button" [ngClass]="{ red: this.d.recording.active }">
-          <!-- (click)="this.record()" -->
+      <div id="record-button" class="record-button" [ngClass]="{ red: this.d.recording.active }" (click)="this.tensorflowRecordService.record('deploy')">
         <div class="circle"></div>
         <div class="rec-text">rec</div>
       </div>
@@ -28,27 +27,25 @@
 
     <div class="data_content">
 
-      <div class="form-group absolute" id="graph-header" *ngIf="this.d.selectedDataset">
+      <div class="form-group absolute" id="graph-header" *ngIf="this.d.selectedMLDataset">
         <!-- <label class="label">Dataset</label> -->
         <div class="row">
-          <span *ngIf="this.d.selectedDataset">
-            <input type="text" id="dataSetName" [(ngModel)]="this.d.selectedDataset.name" name="dataSetName">
+          <span *ngIf="this.d.selectedMLDataset">
+            <input type="text" id="dataSetName" [(ngModel)]="this.d.selectedMLDataset.name" name="dataSetName">
           </span>
 
-          <span *ngIf="!this.d.selectedDataset && this.d.predictionDataset">
+          <span *ngIf="!this.d.selectedMLDataset && this.d.predictionDataset">
             <input type="text" id="dataSetName" [(ngModel)]="this.d.predictionDataset.name" name="dataSetName" disabled>
           </span>
 
-          <p class="date" *ngIf="this.d.selectedDataset && this.d.selectedDataset.date.created">{{ this.d.selectedDataset.date.created | date:'dd-MM-yyyy hh:mm' }}</p>
+          <p class="date" *ngIf="this.d.selectedMLDataset && this.d.selectedMLDataset.date.created">{{ this.d.selectedMLDataset.date.created | date:'dd-MM-yyyy hh:mm' }}</p>
 
-          <div class="data-size" *ngIf="this.d.selectedDataset && this.d.selectedDataset.m && this.d.selectedDataset.m.length > 0">
-            size: {{ this.d.size }}
-          </div>
+          <div class="data-size" *ngIf="this.d.selectedMLDataset && this.d.selectedMLDataset.m && this.d.selectedMLDataset.m.length > 0">size: {{ this.d.size }}</div>
         </div>
 
       </div>
 
-      <app-graph [id]="this.graphID" [size]="this.size"></app-graph>
+      <app-graph [id]="this.graphID" [size]="this.tensorflowRecordService.size"></app-graph>
 
       <div class="sidebar-graph">
         <app-sidebar [page]="'deploy'" [inputDataVisible]="false" [outputDataVisible]="true"></app-sidebar>

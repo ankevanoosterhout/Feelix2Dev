@@ -323,6 +323,8 @@ export class TrainingOptions {
   losses: tf_function = new tf_function('categoricalCrossentropy', tf.metrics.categoricalCrossentropy);
   momentum = 10;
   distribution: number = 0.7;
+  validationBatchSize: number = 2;
+  batchSize = 2;
 };
 
 export class Options {
@@ -337,7 +339,6 @@ export class InputLayerOptions extends Options {
   inputDim: Array<any>; // Defines input shape as [inputDim].
   units = new Option(3);
   actuators = new Option(1);
-  batchSize = new Option(2);
   batchInputShape: any;
   inputLength = new Option(10);
   inputDimension = 1;
@@ -701,7 +702,6 @@ export class Model {
   model: any;
   selected: boolean = false;
   filters: Array<Filter> = [];
-  multiple = true;
   layers: Array<Layer> = [new Layer('input'), new Layer('output')];
   training = new TrainingOptions();
 
@@ -769,20 +769,21 @@ export class Model {
 
 
     } else if (this.type === ModelType.FNN) {
-      const layerDense1 = new Layer('dense', new LayerType('dense', 'basic', tf.layers.dense));
-      layerDense1.hidden = true;
-      layerDense1.options.units.value = 20;
-      const layerDense2 = new Layer('dense', new LayerType('dense', 'basic', tf.layers.dense));
-      layerDense2.hidden = true;
-      layerDense2.options.units.value = 20;
-      const layerDense3 = new Layer('dense', new LayerType('dense', 'basic', tf.layers.dense));
-      layerDense3.hidden = true;
-      layerDense3.options.units.value = 16;
-      const layerDense4 = new Layer('dense', new LayerType('dense', 'basic', tf.layers.dense));
-      layerDense4.hidden = true;
-      layerDense4.options.units.value = 8;
 
-      this.layers.splice(1, 0, layerDense1, layerDense2, layerDense3, layerDense4);
+      let units = [128,64,64,32];
+      for (let l = 0; l < 4; l++) {
+        const layerDense = new Layer('dense', new LayerType('dense', 'basic', tf.layers.dense));
+        layerDense.hidden = true;
+        layerDense.options.units.value = units[l];
+        const layerNormalize = new Layer('batchNormalization', new LayerType('batchNormalization', 'normalization', tf.layers.batchNormalization));
+        layerNormalize.options.units.value = units[l];
+        layerNormalize.hidden = true;
+        const dropout = new Layer('dropout', new LayerType('dropout', 'basic', tf.layers.dropout));
+        dropout.hidden = true;
+        dropout.options.rate.value = 0.5;
+
+        this.layers.splice(1 + (l * 3), 0, layerDense, layerNormalize, dropout);
+      }
 
       this.layers.filter(l => l.name === 'output')[0].options.activation = new Option(Activation.softmax);
 
@@ -852,7 +853,7 @@ export class Bounds {
     if (xMin !== null) { this.xMin = xMin; }
     if (xMax !== null) { this.xMax = xMax; }
     if (yMin !== null) { this.yMin = yMin; }
-    if (yMax !== null) { this.xMin = yMax; }
+    if (yMax !== null) { this.yMax = yMax; }
   }
 }
 
@@ -972,7 +973,6 @@ export class DataSet {
 export class MLDataSet extends DataSet {
   classifierID: string;
   confidencesLevels: Array<Label> = [];
-
 }
 
 
@@ -983,10 +983,14 @@ export class TrainingSet {
   open = true;
   selected = false;
   date = new Dates();
+  bounds_loss = new Bounds(0, 100, 0, 1);
+  bounds_metric = new Bounds(0, 100, 0, 1);
+  training: TrainingOptions;
 
-  constructor(id: string, name: string) {
+  constructor(id: string, name: string, training: TrainingOptions) {
     this.id = id;
     this.name = name;
+    this.training = training;
   }
 }
 

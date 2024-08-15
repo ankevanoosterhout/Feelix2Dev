@@ -1,5 +1,5 @@
 
-import { Component, HostListener, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/core';
 import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
 import { Bounds, TrainingSet } from 'src/app/models/tensorflow.model';
 import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
@@ -24,15 +24,27 @@ export class TensorflowTrainComponent implements OnInit {
   public graphID_B = 'svg_graph_training_B';
   public size: { width: number, height: number, margin: number };
   public d: TensorFlowData;
+  training = false;
 
-  constructor(public tensorflowService: TensorFlowMainService, private tensorflowDrawService: TensorFlowDrawService, private tensorflowTrainService: TensorFlowTrainService) {
+  constructor(public tensorflowService: TensorFlowMainService, private tensorflowDrawService: TensorFlowDrawService, private tensorflowTrainService: TensorFlowTrainService,
+              private changeDetection: ChangeDetectorRef) {
+
     this.d = this.tensorflowService.d;
-    this.resize();
 
-    this.tensorflowTrainService.updateTrainingGraph.subscribe((epoch) => {
-      const max = epoch * 1.2 > this.d.selectedModel.training.epochs ? this.d.selectedModel.training.epochs : epoch * 1.2;
-      this.tensorflowDrawService.updateBounds({xMin: 0, xMax:max, yMin: 0, yMax: 2}, this.size);
-      this.redrawGraph();
+    this.tensorflowTrainService.updateTrainingGraph.subscribe((data) => {
+      const max = data.e * 1.2 > this.d.selectedModel.training.epochs ? this.d.selectedModel.training.epochs : data.e * 1.2;
+      const file = this.d.trainingData.filter(t => t.open)[0];
+
+      if (file) {
+        file.bounds_loss.xMax = max;
+        file.bounds_metric.xMax = max;
+        file.bounds_loss.yMax = data.loss * 1.2 > file.bounds_loss.yMax ? data.loss * 1.2 : file.bounds_loss.yMax;
+        file.bounds_metric.yMax = data.metric * 1.2 > file.bounds_metric.yMax ? data.metric * 1.2 : file.bounds_metric.yMax;
+
+        this.tensorflowDrawService.updateBounds(file.bounds_loss, this.graphID_A, this.size);
+        this.tensorflowDrawService.updateBounds(file.bounds_metric, this.graphID_B, this.size);
+        this.redrawGraph(file);
+      }
     });
 
     this.tensorflowTrainService.selectLogFile.subscribe((id) => {
@@ -40,12 +52,17 @@ export class TensorflowTrainComponent implements OnInit {
     });
 
     this.tensorflowDrawService.redrawGraphTraining.subscribe((res) => {
-      this.resize();
+      const file = this.d.trainingData.filter(t => t.open)[0];
+      if (file) {
+        this.resize();
+      }
+
     });
   }
 
 
   ngOnInit(): void {
+    this.resize();
     this.split(true);
   }
 
@@ -64,15 +81,14 @@ export class TensorflowTrainComponent implements OnInit {
     this.processData();
   }
 
-  
+
   async processData() {
     try {
       this.tensorflowTrainService.processData();
       return true;
     }
     catch(e: any) {
-      const error = (e as Error).message;
-      this.tensorflowService.updateProgess(error, 0);
+      this.tensorflowTrainService.handleError(e);
       return false;
     }
   }
@@ -84,14 +100,16 @@ export class TensorflowTrainComponent implements OnInit {
       return true;
     }
     catch(e: any) {
-      const error = (e as Error).message;
-      this.tensorflowService.updateProgess(error, 0);
+      this.tensorflowTrainService.handleError(e);
       return false;
     }
   }
 
   deploy() {
-
+    if (!this.d.selectedModel.model.isTraining) {
+      this.d.classify = true;
+      this.tensorflowService.createModel.next(3);
+    }
   }
 
 
@@ -113,34 +131,37 @@ export class TensorflowTrainComponent implements OnInit {
 
   resize()  {
     this.updateSize();
-    const newBounds = new Bounds(0,this.d.selectedModel.training.epochs, 0, 2);
-    this.tensorflowDrawService.updateBounds(newBounds, this.size);
-    this.redrawGraph();
+    this.redrawGraph(this.d.trainingData.length ? this.d.trainingData.filter(t => t.open)[0] : null);
+
   }
 
-  redrawGraph() {
-    this.tensorflowDrawService.drawGraph(this.graphID_A, this.size);
-    this.tensorflowDrawService.drawGraph2(this.graphID_B, this.size);
-    const dataFile = this.d.trainingData.filter(t => t.open)[0];
-    if (dataFile) {
-      this.drawData(dataFile);
+  redrawGraph(file: TrainingSet) {
+    const bounds_loss = file ? file.bounds_loss : new Bounds(0, 100, 0, 1);
+    const bounds_metric = file ? file.bounds_loss : new Bounds(0, 100, 0, 1);
+
+    this.tensorflowDrawService.updateBounds(bounds_loss, this.graphID_A, this.size);
+    this.tensorflowDrawService.updateBounds(bounds_metric, this.graphID_B, this.size);
+    this.tensorflowDrawService.drawGraph(this.graphID_A, bounds_loss, this.size);
+    this.tensorflowDrawService.drawGraph(this.graphID_B, bounds_metric, this.size);
+
+    if (file) {
+      this.drawData(file);
     }
+
   }
 
   drawData(logs: TrainingSet) {
-    if (logs) {
-      this.tensorflowDrawService.drawTensorflowTrainingProgress(logs.data, this.size);
+    if (logs && logs.data && logs.data.length > 0 ) {
+      this.training = this.d.selectedModel.training.epochs - 1 == logs.data[logs.data.length - 1].epoch ? false : true;
+      this.tensorflowDrawService.drawTensorflowTrainingProgress(logs.data);
     }
   }
 
   selectLogFile(id: string) {
-    this.tensorflowService.selectLogFile(id);
-    this.resize();
+    if (!this.training) {
+      this.tensorflowService.selectLogFile(id);
+      this.changeDetection.detectChanges();
+      this.resize();
+    }
   }
-
-
-
-
-
-
 }

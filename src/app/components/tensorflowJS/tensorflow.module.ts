@@ -20,6 +20,7 @@ import { MatDialogModule } from "@angular/material/dialog";
 import { StatusbarModule } from "../interface-elements/statusbar.module";
 import { GraphComponent } from "./graph.component";
 import { SidebarComponent } from "./sidebar.component";
+import { TensorFlowRecordService } from "src/app/services/tensorflow-record.service";
 
 @NgModule({
   imports: [
@@ -47,6 +48,7 @@ import { SidebarComponent } from "./sidebar.component";
     TensorFlowDrawService,
     TensorFlowTrainService,
     TensorFlowMainService,
+    TensorFlowRecordService,
     DataSetService
   ]
 

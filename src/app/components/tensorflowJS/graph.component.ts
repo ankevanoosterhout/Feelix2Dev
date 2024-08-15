@@ -1,4 +1,5 @@
 import { Component, Input, AfterViewInit } from '@angular/core';
+import { Bounds } from 'src/app/models/tensorflow.model';
 import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
 
 
@@ -51,12 +52,22 @@ export class GraphComponent implements AfterViewInit {
   public _size = { width: innerWidth, height: innerHeight, margin: 100 };
   public _title = null;
 
+  public _bounds: Bounds;
 
-  constructor(private tensorflowDrawService: TensorFlowDrawService) { }
+
+  constructor(private tensorflowDrawService: TensorFlowDrawService) {
+
+    this.tensorflowDrawService.updateBoundsGraph.subscribe(res => {
+      this._bounds.xMin = res.xMin;
+      this._bounds.xMax = res.xMax;
+      this._bounds.yMin = res.yMin;
+      this._bounds.yMax = res.yMax;
+    });
+  }
 
 
   ngAfterViewInit(): void {
-    this.tensorflowDrawService.drawGraph(this._id, this._size);
+    this.tensorflowDrawService.drawGraph(this._id, this._bounds, this._size);
   }
 
 
@@ -74,6 +85,11 @@ export class GraphComponent implements AfterViewInit {
   @Input()
   set title(title: string) {
     this._title = (title && title.trim()) || '';
+  }
+
+  @Input()
+  set bounds(bounds: Bounds) {
+    this._bounds = bounds;
   }
 
 }

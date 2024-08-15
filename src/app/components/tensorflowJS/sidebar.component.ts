@@ -14,14 +14,14 @@ import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service'
             <div class="labelRow marginLeft">Input</div>
           </div>
 
-          <div class="sidebar-column-content" *ngIf="this.d.selectedDataset && this.d.selectedDataset.m.length > 0">
+          <div class="sidebar-column-content" *ngIf="this.getActiveDataset()">
 
             <div class="row" id="section_motors">
               <ul class="motor-list-buttons">
-                <li class="motor-list-button-item" *ngFor="let m of this.d.selectedDataset.m; let n = index;">
-                  <div class="list-text-item" [ngClass]="{ active: m.visible }" *ngIf="m.record" (click)="toggleVisibilityMotor(m)">{{ m.id }}</div>
+                <li class="motor-list-button-item" *ngFor="let m of this.getActiveDataset().m">
+                  <div class="list-text-item" [ngClass]="{ active: m.visible }" *ngIf="m.record" (click)="toggleVisibilityMotor(m)">{{ (m.id ? m.id : getIDFromIndex(m.index)) }}</div>
 
-                  <div class="row" *ngIf="(m.d === undefined || m.d.length === 0) && this.d.selectedModel && m.visible && m.record">
+                  <!-- <div class="row" *ngIf="(!m.d || m.d.length === 0) && this.d.selectedModel && m.visible && m.record">
                     <ul class="input-list-buttons">
                       <li class="input-list-button-item" *ngFor="let input of this.d.selectedModel.inputs; let i = index;">
 
@@ -35,20 +35,19 @@ import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service'
                         <div class="list-text-item input-list-button-item-content" *ngIf="input.active && m.colors[i] && !m.colors[i].visible" (click)="toggleVisibilityInput(m, i)"><div>{{ input.slug }}</div></div>
                       </li>
                     </ul>
-                  </div>
+                  </div> -->
 
-                  <div class="row" *ngIf="m.d !== undefined && m.d.length > 0 && m.visible && m.record">
+                  <div class="row" *ngIf="(m.d && m.d.length > 0) && m.visible && m.record">
                     <ul class="input-list-buttons">
-                      <li class="input-list-button-item" *ngFor="let input of m.d[0].inputs; let i = index;">
+                      <li class="input-list-button-item" *ngFor="let input of m.d[0].inputs">
+                        <div class="list-text-item input-list-button-item-content" *ngIf="getInputVisibility(m, input.name)">
+                          <div [ngStyle]="{'background': getInputHash(m, input.name) }" class="active" (click)="toggleVisibilityInput(m, input.name)">{{ getCharAtZero(input.name) }}</div>
 
-                        <div class="list-text-item input-list-button-item-content" *ngIf="m.colors[i] && m.colors[i].visible">
-                          <div [ngStyle]="{'background': m.colors[i].hash }" class="active" (click)="toggleVisibilityInput(m, i)">{{ getCharAtZero(input.name) }}</div>
-
-                          <div [ngStyle]="{'background': m.colors[i].hash }" class="color-editor" id="color-editor-{{ m.id }}-{{ i }}" (click)="changeColorInputItem(m, i)">
+                          <div [ngStyle]="{'background': getInputHash(m, input.name) }" class="color-editor" id="color-editor-{{ m.id }}-{{ i }}" (click)="changeColorInputItem(m, input.name)">
                             <img src="./assets/icons/buttons/brush.svg"/>
                           </div>
                         </div>
-                        <div class="list-text-item input-list-button-item-content" *ngIf="!m.colors[i].visible" (click)="toggleVisibilityInput(m, i)"><div>{{ getCharAtZero(input.name) }}</div></div>
+                        <div class="list-text-item input-list-button-item-content" *ngIf="!getInputVisibility(m, input.name)" (click)="toggleVisibilityInput(m, input.name)"><div>{{ getCharAtZero(input.name) }}</div></div>
                       </li>
                     </ul>
                   </div>
@@ -83,7 +82,7 @@ import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service'
           <div class="sidebar-column-content" *ngIf="this._page === 'deploy'">
             <ul id="data_output_list" class="results">
               <li *ngFor="let classifier of this.d.selectedModel.outputs">
-                <label class="label bold" [ngClass]="{ inactive: !classifier.active }">{{ classifier.name }}</label>
+                <label class="label bold" *ngIf="classifier.active">{{ classifier.name }}</label>
 
                 <ul id="data_output_list_items" *ngIf="classifier.active">
                   <li *ngFor="let label of classifier.labels; let i=index;">
@@ -140,6 +139,8 @@ export class SidebarComponent {
 
   public _page: string;
 
+  idList = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'];
+
 
   constructor(private tensorflowService: TensorFlowMainService, private tensorflowDrawService: TensorFlowDrawService, private changeDetection: ChangeDetectorRef) {
     this.d = this.tensorflowService.d;
@@ -168,26 +169,79 @@ export class SidebarComponent {
     this.tensorflowService.updateResize((!this.d.dataVisible ? window.innerHeight - 60 : window.innerHeight * 0.45));
   }
 
-  toggleVisibilityInput(m: MotorEl, inputIndex: number) {
-    // console.log(m, inputIndex);
-    // console.log(this.d.selectedDataset);
-    m.colors[inputIndex].visible = !m.colors[inputIndex].visible;
-    if (this.d.selectedDataset) {
-      this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.trimLinesVisible ? this.d.trimLines : null);
+  toggleVisibilityInput(m: MotorEl, name: string) {
+    const color = m.colors.filter(c => c.input_name == name)[0];
+    if (color) {
+      color.visible = !color.visible;
+      for (const set of (this._page === 'data' ? this.d.dataSets : this.d.mlOutputData)) {
+        if (set.m) {
+          const motor = set.m.filter(motor => motor.index === m.index)[0];
+          if (motor) {
+            const inputColor = motor.colors.filter(c => c.input_name == name)[0];
+            if (inputColor) { inputColor.visible = color.visible };
+          }
+        }
+      }
+
+      const set = this.getActiveDataset();
+      if (set) {
+        this.tensorflowDrawService.drawTensorFlowGraphData(set, this.d.trimLinesVisible ? this.d.trimLines : null, 'svg_graph_' + this._page);
+      }
     }
+    this.changeDetection.detectChanges();
   }
 
   toggleVisibilityMotor(m: MotorEl) {
     if (m) {
       m.visible = !m.visible;
-      this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.trimLinesVisible ? this.d.trimLines : null);
+      for (const set of (this._page === 'data' ? this.d.dataSets : this.d.mlOutputData)) {
+        if (set.m) {
+          const motor = set.m.filter(motor => motor.index === m.index)[0];
+          motor.visible = m.visible;
+        }
+      }
+      const set = this.getActiveDataset();
+      if (set) {
+        this.tensorflowDrawService.drawTensorFlowGraphData(set, this.d.trimLinesVisible ? this.d.trimLines : null, 'svg_graph_' + this._page);
+      }
     }
+    this.changeDetection.detectChanges();
+  }
+
+  getInputHash(m: MotorEl, name: string) {
+    const color = m.colors.filter(c => c.input_name == name)[0];
+    return color ? color.hash : '#00AEEF';
+  }
+
+  getInputVisibility(m: MotorEl, name: string) {
+    const color = m.colors.filter(c => c.input_name == name)[0];
+    return color ? color.visible : false;
+  }
+
+  getActiveDataset() {
+    return this._page === 'data' ? this.d.selectedDataset : this.d.selectedMLDataset;
   }
 
 
-  changeColorInputItem(m: MotorEl, inputIndex: number) {
-    m.colors[inputIndex].hash = this.getNextColor(m.colors[inputIndex].hash);
-    this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.trimLinesVisible ? this.d.trimLines : null);
+  changeColorInputItem(m: MotorEl, name: string) {
+    const color = m.colors.filter(c => c.input_name == name)[0];
+    if (color) {
+      color.hash = this.getNextColor(color.hash);
+      for (const set of (this._page === 'data' ? this.d.dataSets : this.d.mlOutputData)) {
+        if (set.m) {
+          const motor = set.m.filter(motor => motor.index === m.index)[0];
+          if (motor) {
+            const inputColor = motor.colors.filter(c => c.input_name == name)[0];
+            if (inputColor) { inputColor.hash = color.hash };
+          }
+        }
+      }
+      const set = this.getActiveDataset();
+      if (set) {
+        this.tensorflowDrawService.drawTensorFlowGraphData(set, this.d.trimLinesVisible ? this.d.trimLines : null, 'svg_graph_' + this._page);
+      }
+    }
+    this.changeDetection.detectChanges();
   }
 
   getNextColor(color: string) {
@@ -203,6 +257,10 @@ export class SidebarComponent {
 
   getCharAtZero(text: string) {
     return text.charAt(0);
+  }
+
+  getIDFromIndex(index: number) {
+    return this.idList[index];
   }
 
 
@@ -229,11 +287,13 @@ export class SidebarComponent {
 
 
   selectNextFile(next: boolean) {
-    if (this.d.selectedDataset) {
-      const index = this.d.dataSets.indexOf(this.d.selectedDataset);
+    const MLdata = this._page === 'deploy' ? true : false;
+
+    if (this.getActiveDataset()) {
+      const index = MLdata ? this.d.mlOutputData.indexOf(this.d.selectedMLDataset) : this.d.dataSets.indexOf(this.d.selectedDataset);
+
       if (index > -1) {
         const newIndex = index + (next ? 1 : -1);
-        const MLdata = this._page === 'deploy' ? true : false;
         this.selectDataSet(MLdata ? this.d.mlOutputData[newIndex].id : this.d.dataSets[newIndex].id, MLdata);
         // this.tensorflowService.selectDataSet(MLdata ? this.d.mlOutputData[newIndex].id : this.d.dataSets[newIndex].id, MLdata);
       }
@@ -254,17 +314,12 @@ export class SidebarComponent {
   @HostListener('window:keydown', ['$event'])
     onKeyDown(e: KeyboardEvent) {
 
-      if (e.key === 'ArrowDown') { //down
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
         this.selectNextFile(true);
-      } else if (e.key === 'ArrowUp') { //up
+      } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
         this.selectNextFile(false);
       }
 
     }
-
-
-
-
-
 
 }

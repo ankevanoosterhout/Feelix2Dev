@@ -65,7 +65,7 @@ export class DataComponent implements AfterViewInit {
         // this.electronService.ipcRenderer.send('requestData', model);
 
       // } else {
-        this.tensorflowService.updateBoundsActiveDataset();
+        this.tensorflowService.updateBoundsDataset();
         this.d.classify = false;
       }
     }

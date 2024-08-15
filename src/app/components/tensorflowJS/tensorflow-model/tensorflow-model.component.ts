@@ -124,7 +124,9 @@ export class TensorflowModelComponent implements OnInit {
         this.tensorflowService.addMicrocontroller(res, true);
       });
 
-
+      this.tensorflowService.redrawNN.subscribe(() => {
+        this.updateNetworkVisualization();
+      });
   }
 
 

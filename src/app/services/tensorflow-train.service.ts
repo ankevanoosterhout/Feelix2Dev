@@ -6,17 +6,18 @@ import { TensorFlowMainService } from './tensorflow-main.service';
 import { Subject } from 'rxjs';
 import { DOCUMENT } from '@angular/common';
 import { v4 as uuid } from 'uuid';
+import { CloneService } from './clone.service';
 
 @Injectable()
 export class TensorFlowTrainService {
 
   public d: TensorFlowData;
 
-  createPredictionModel: Subject<any> = new Subject<void>();
+
   updateTrainingGraph: Subject<any> = new Subject<void>();
   selectLogFile: Subject<any> = new Subject<void>();
 
-  constructor(@Inject(DOCUMENT) private document: Document, private tensorflowService: TensorFlowMainService) {
+  constructor(@Inject(DOCUMENT) private document: Document, private tensorflowService: TensorFlowMainService, private cloneService: CloneService) {
     this.d = this.tensorflowService.d;
 
   }
@@ -26,7 +27,7 @@ export class TensorFlowTrainService {
     let i = 0;
     if (this.d.predictionDataset) {
       for (const motor of this.d.predictionDataset.m) {
-        if (motor.d.length <= this.d.selectedModel.layers[0].options.batchSize.value && motor.d.length !== 0) { //20
+        if (motor.d.length <= this.d.selectedModel.training.batchSize && motor.d.length !== 0) { //20
           collectData = false;
         }
         i++;
@@ -34,7 +35,9 @@ export class TensorFlowTrainService {
         if (i >= this.d.predictionDataset.m.length && collectData) {
 
           const data = await this.createJSONfromDataSet([this.d.predictionDataset]);
-          this.NN_Deploy(data.xs, this.d.selectedModel);
+          console.log(data);
+
+          this.NN_Deploy(data.xs);
           this.clearCollectedData();
         }
       }
@@ -115,11 +118,12 @@ export class TensorFlowTrainService {
       this.createTensors().then(() => {
         if (this.d.selectedModel.model) {
           this.tensorflowService.updateProgess('model created', 10);
-          this.d.processing = false;
 
           if (forwardOnSucces) {
+            this.abortProcess();
             this.tensorflowService.createModel.next(1);
           }
+
           console.log(this.d.selectedModel.model);
         }
       }).catch(e => {
@@ -151,23 +155,21 @@ export class TensorFlowTrainService {
 
       let outputs = [];
       for (const output of set.outputs) {
-        // let outputEl = [];
+        let outputEl = [];
         if (output.label.id) {
 
           for (const classifier of this.d.selectedModel.outputs) {
             if (classifier.active && classifier.id === output.classifier_id) {
               for (let i = 0; i < classifier.labels.length; i++) {
-                classifier.labels[i].id === output.label.id ? outputs.push(1) : outputs.push(0);
+                classifier.labels[i].id === output.label.id ? outputEl.push(1) : outputEl.push(0);
               }
+              outputs.push(outputEl);
             }
-            // outputs.push(outputEl);
           }
 
 
           if (outputs.length === 0) {
-            this.d.processing = false;
-            this.tensorflowService.updateProgess('cannot find outputs', 0);
-            this.document.body.style.cursor = 'default';
+            this.abortProcess('cannot find output data');
             return false;
           }
         }
@@ -200,7 +202,7 @@ export class TensorFlowTrainService {
 
             i++;
 
-            if (i > motor.d.length - 1 || i > this.d.selectedModel.layers[0].options.inputLength.value) { //inputLength //this.d.selectedModel.layers[0].options.batchSize.value
+            if (i > motor.d.length - 1 || i > this.d.selectedModel.layers[0].options.inputLength.value) { //inputLength //this.d.selectedModel.training.batchSize
               if (m === 0) {
                 data.xs.push(inputArray);
                 data.ys.push(outputs);
@@ -237,14 +239,12 @@ export class TensorFlowTrainService {
     if (this.d.selectedModel.layers[1].type.subgroup === 'convolutional') {
       shape = this.d.selectedModel.layers[0].options.inputDimension === 1 ? [channels, motors * inputs] : [channels, inputs, motors];
     } else {
-      shape = this.d.selectedModel.layers[0].options.inputDimension === 1 || motors === 1 ?
-            [inputs, this.d.selectedModel.layers[0].options.inputLength.value * motors] : [this.d.selectedModel.layers[0].options.inputLength.value, motors, inputs];
+      shape = this.d.selectedModel.layers[0].options.inputDimension === 1 && motors === 1 ? [this.d.selectedModel.layers[0].options.inputLength.value, inputs] :
+              this.d.selectedModel.layers[0].options.inputDimension === 1 || motors === 1 ? [this.d.selectedModel.layers[0].options.inputLength.value, inputs * motors] :
+              [this.d.selectedModel.layers[0].options.inputLength.value, motors, inputs];
     }
 
-    console.log(shape);
-
     return shape;
-    // return [motors, inputs]; //model.layers[0].options.inputLength.value,
   }
 
 
@@ -276,9 +276,9 @@ export class TensorFlowTrainService {
       if (index === 0) {
 
         layerItem = tf.layers.inputLayer({
-          batchSize: layer.options.batchSize && layer.options.batchSize.value !== null ? layer.options.batchSize.value : null,
+          batchSize: this.d.selectedModel.training.batchSize,
           inputShape: this.getInputShapeModel(),
-          sparse: layer.options.sparse.value
+          sparse: layer.options.sparse.value,
         });
 
       } else if (index === this.d.selectedModel.layers.length - 1) {
@@ -299,8 +299,8 @@ export class TensorFlowTrainService {
             trainable: layer.options.trainable,
             units: layer.options.units && layer.type.subgroup !== 'normalization' ? layer.options.units.value : undefined,
            // inputShape: index === 1 ? inputShape : undefined,
-           // batchSize: index === 1 && this.d.selectedModel.layers[0].options.batchSize && this.d.selectedModel.layers[0].options.batchSize.value !== null ? this.d.selectedModel.layers[0].options.batchSize.value : undefined,
-            //inputLength: index === 1 && this.d.selectedModel.layers[0].options.inputLength && this.d.selectedModel.layers[0].options.inputLength.value ? this.d.selectedModel.layers[0].options.inputLength.value : undefined,
+           // batchSize: index === 1 && this.d.selectedModel.layers[0].options.batchSize && this.d.selectedModel.training.batchSize !== null ? this.d.selectedModel.training.batchSize : undefined,
+            inputLength: index === 1 && this.d.selectedModel.layers[0].options.inputLength && this.d.selectedModel.layers[0].options.inputLength.value ? this.d.selectedModel.layers[0].options.inputLength.value : undefined,
 
             filters: layer.options.filters ? layer.options.filters.value : undefined,
             padding: layer.options.padding && layer.options.padding.value !== 'none' ? layer.options.padding.value : undefined,
@@ -380,9 +380,8 @@ export class TensorFlowTrainService {
         const success = this.addLayer(layerItem);
 
         if (!success) {
-          this.document.body.style.cursor = 'default';
           this.d.selectedModel.model = null;
-          this.d.processing = false;
+          this.abortProcess();
           return false;
         }
       }
@@ -408,49 +407,130 @@ export class TensorFlowTrainService {
 
 
 
+  abortProcess(error: string = null) {
+    if (error) {
+      this.tensorflowService.updateProgess(error, 0);
+    }
+    this.d.processing = false;
+    this.document.body.style.cursor = 'default';
+  }
+
 
   async processData() {
+
+    this.d.processing = true;
 
     this.document.body.style.cursor = 'wait';
 
     const data = await this.createJSONfromDataSet(this.d.dataSets);
+    const validation = this.d.dataSets.filter(d => d.trainingType === TrainingType.validation).length > 0 ? true : false;
 
-    const reshapedxArray = await this.transformArray(data.xs, this.getInputShapeModel());
+    if (this.d.selectedModel.model) {
 
-    console.log(reshapedxArray);
+      const [xReshaped, yReshaped] = await this.transformArray(data.xs, data.ys, this.getInputShapeModel(), validation);
 
-    this.createPredictionModel.next(true);
-    this.tensorflowService.updateProgess('Create training and validation sets', 20);
-
-    const [trainingSet,validationSet] = await this.splitTrainingData({ xs: reshapedxArray, ys: data.ys, trainingType: data.trainingType }, this.d.selectedModel.layers[0].options.batchSize.value);
+      // this.createPredictionModel.next(true);
 
 
-    const model = await this.trainModel(trainingSet, validationSet);
+      if (this.d.dataSets.length === 0 || this.d.dataSets.filter(d => d.trainingType === TrainingType.training).length === 0) {
 
-    if (model) {
-      model.summary();
+        this.abortProcess('Error: no training data detected');
+
+        return;
+
+      } else if (!validation) {
+
+        await this.trainModel(xReshaped, yReshaped);
+
+      } else if (validation) {
+
+        this.tensorflowService.updateProgess('Creating training and validation sets', 20);
+        const [trainingSet,validationSet] = await this.splitTrainingData({ xs: xReshaped, ys: yReshaped, trainingType: data.trainingType }, this.d.selectedModel.training.batchSize);
+
+        await this.trainAndValidateModel(trainingSet, validationSet);
+      }
+
+    } else {
+      this.abortProcess('Error compiling model');
     }
 
   }
 
 
-  async transformArray(inputArray: Array<any>, shape: Array<number>) {
-    // Convert the input array to a tensor
-    const inputTensor = tf.tensor(inputArray); // Shape: [n, 6, 3, 2]
+  async transformArray(inputArray: Array<any>, outputArray: Array<any>, shape: Array<number>, returnDataset: boolean) {
 
-    // Reshape the tensor from [n, 6, 3, 2] to [n, 18, 2]
-    const reshapedTensor = inputTensor.reshape([-1, ...shape]);
+    let reshapedInputTensor: any;
+    let reshapedOutputTensor: any;
 
-    // Convert the reshaped tensor back to a JavaScript array
-    const outputArray = reshapedTensor.arraySync();
+    console.log(outputArray);
+    
+    const inputTensor = tf.tensor(inputArray);
+    const outputTensor = tf.tensor(outputArray);
+    console.log(outputTensor);
 
-    return outputArray;
+    if (!this.d.selectedModel.layers[0].options.sparse.value) {
+
+      reshapedInputTensor = inputTensor.reshape([-1, ...shape]);
+    } else {
+      const spd = this.getSparseRepresentation(inputArray);
+
+      const sparseTensor = tf.sparseToDense(spd.sparseIndices, spd.sparseValues, spd.denseShape);
+      // sparseTensor.print();
+      reshapedInputTensor = sparseTensor.reshape([-1, ...shape]);
+    }
+    console.log(this.d.selectedModel.model.layers[this.d.selectedModel.model.layers.length - 2]);
+
+    if (reshapedInputTensor.rank < outputTensor.rank || this.d.selectedModel.model.layers[this.d.selectedModel.model.layers.length - 2].outboundNodes[0].outputTensors[0].rank < outputTensor.rank) {
+      reshapedOutputTensor = outputTensor.squeeze();
+
+      return returnDataset ? [ reshapedInputTensor.arraySync(), reshapedOutputTensor.arraySync() ] : [ reshapedInputTensor, reshapedOutputTensor ];
+    }
+
+
+    return returnDataset ? [ reshapedInputTensor.arraySync(), outputArray ] : [ reshapedInputTensor, outputTensor ];
   }
 
 
 
 
-  async trainModel(trainDs: any, validationDs: any) {
+
+  getSparseRepresentation(denseArray: Array<any>) {
+    const denseShape = [];
+    const sparseIndices = [];
+    const sparseValues = [];
+
+    function findSparseIndices(arr: Array<any>, currentIndex = []) {
+
+      if (Array.isArray(arr)) {
+
+        for (let i = 0; i < arr.length; i++) {
+          findSparseIndices(arr[i], currentIndex.concat(i));
+        }
+      } else {
+        if (arr !== 0) {
+          sparseIndices.push(currentIndex);
+          sparseValues.push(arr);
+        }
+      }
+    }
+
+    findSparseIndices(denseArray);
+
+    let currentLevel = denseArray;
+    while (Array.isArray(currentLevel)) {
+      denseShape.push(currentLevel.length);
+      currentLevel = currentLevel[0];
+    }
+
+    return {
+      sparseIndices: sparseIndices,
+      sparseValues: sparseValues,
+      denseShape: denseShape
+    };
+  }
+
+
+  async trainModel(iTensor: any, oTensor: any) {
 
     const optimizer = await this.createOptimizer();
 
@@ -458,14 +538,28 @@ export class TensorFlowTrainService {
 
     this.tensorflowService.updateProgess('start training', 25);
 
-    // const reshapedTrainingDataset = this.reshapeDataset(trainDs);
-    // const reshapedValidationDataset = this.reshapeDataset(validationDs);
+    await this.fitModel(iTensor, oTensor, this.d.selectedModel.training.batchSize);
+
+    this.abortProcess();
+
+    this.d.selectedModel.model.summary();
+
+  }
+
+
+  async trainAndValidateModel(trainDs: any, validationDs: any) {
+
+    const optimizer = await this.createOptimizer();
+
+    await this.compileModel(optimizer);
+
+    this.tensorflowService.updateProgess('start training', 25);
 
     await this.fitDatasetToModel(trainDs, validationDs);
 
-    // await this.fitModel(trainDs, validationDs, batchSize);
+    this.abortProcess();
 
-    return this.d.selectedModel.model;
+    this.d.selectedModel.model.summary();
 
   }
 
@@ -474,7 +568,6 @@ export class TensorFlowTrainService {
   async createTensor(data: Array<any>) {
     try {
       const tensor = tf.tensor(data);
-      console.log(tensor);
       return tensor;
     }
     catch(e: any) {
@@ -487,7 +580,6 @@ export class TensorFlowTrainService {
   async reshapeTensor(_tensor: tf.Tensor, shape: any) {
     try {
       const tensor = tf.reshape(_tensor, shape);
-      console.log(tensor);
       return tensor;
     }
     catch(e: any) {
@@ -496,94 +588,91 @@ export class TensorFlowTrainService {
     }
   }
 
-  async fitModel(trainDs: any, validationDs: any, batchSize: number) {
 
-    console.log(trainDs.xs.length, trainDs.xs[0].length, trainDs.xs[0][0].length)
-
-    // const iTensor = await this.createTensor(trainDs.xs);
-    // const reshapediTensor = iTensor.reshape([trainDs.xs.length, ...this.getInputShapeModel()]);
-    // console.log(reshapediTensor);
-    // const oTensor = await this.createTensor(trainDs.ys);
-
-    const numSamples = trainDs.xs.length;
-    const iTensor = tf.tensor(trainDs.xs, [numSamples, trainDs.xs[0].length, trainDs.xs[0][0].length, trainDs.xs[0][0][0].length]);
-    const oTensor = tf.tensor(trainDs.ys, [numSamples, trainDs.ys[0].length]);
-    let inputTensor = tf.reshape(iTensor, [numSamples, trainDs.xs[0][0][0].length, (trainDs.xs[0][0].length * trainDs.xs[0].length) ]);
-    // const reshapedoTensor = oTensor.reshape([trainDs.ys.length, (trainDs.ys[0].length * trainDs.ys[0][0].length)]);
-    let outputTensor = tf.expandDims(oTensor);
-    // const reshapediTensor =  await this.reshapeTensor(iTensor, [trainDs.xs[0].length, trainDs.xs[0][0].length]);
-    // console.log(reshapediTensor);
-    // const reshapedoTensor =  await this.reshapeTensor(oTensor, [trainDs.xs[0].length, trainDs.xs[0][0].length]);
-    // console.log(reshapedoTensor);
-
-
-
-    this.train(inputTensor, outputTensor, validationDs, this.d.selectedModel.training.epochs, batchSize).then(() => {
-      console.log('training is complete');
-
-      (this.document.getElementById('deploy') as HTMLButtonElement).disabled = false;
-
-      this.document.body.style.cursor = 'default';
-
-      this.d.processing = false;
-
-      inputTensor.dispose();
-      outputTensor.dispose();
-
-      console.log("memory " + tf.memory().numTensors);
-
-    }).catch(e => {
-      this.handleError(e);
-    });
-  }
 
   handleError(e: any) {
     const error = (e as Error).message;
     console.log(error);
-    this.document.body.style.cursor = 'default';
-    this.d.processing = false;
-    this.tensorflowService.updateProgess(error, 0);
+    this.abortProcess(error);
+    this.d.selectedModel.model = null;
+  }
+
+
+
+  async fitModel(iTensor: any, oTensor: any, batchSize: number) {
+
+
+    let logFile: any;
+
+    await this.d.selectedModel.model.fit(iTensor, oTensor, {
+      verbose: true,
+      shuffle: true,
+      batchSize: batchSize,
+      epochs: this.d.selectedModel.training.epochs,
+      callbacks: {
+        onTrainBegin: async() => {
+          logFile = this.createLogFile();
+        },
+        onEpochEnd: async(epoch: any, logs: any) => {
+          const metric = this.getMetric(logs);
+          logFile.data.push({ log: { loss: logs.loss, metric: metric.training, text_metric: metric.text }, epoch: epoch});
+          this.tensorflowService.updateProgess('Training: loss = ' + logs.loss + '' + (metric ? metric.text + metric.training : ' '), ((75/this.d.selectedModel.training.epochs) * epoch) + 25,
+            { e: epoch, metric: metric, loss: logs.loss });
+          this.updateTrainingGraph.next({ e: epoch, metric: metric, loss: logs.loss });
+        },
+        onTrainEnd: async(logs: any) => {
+          console.log(logs);
+          this.tensorflowService.updateProgess('Training complete.', 100);
+
+          iTensor.dispose();
+          oTensor.dispose();
+
+          console.log("memory " + tf.memory().numTensors);
+        }
+        // ,earlyStopping: async() => ({monitor: 'val_loss', patience: 5})
+      }
+    });
   }
 
 
   async fitDatasetToModel(trainDs: any, validationDs: any) {
-
-    const logFile = this.createLogFile();
+    let logFile: any;
 
     try {
       this.d.selectedModel.model.fitDataset(trainDs, {
         epochs: this.d.selectedModel.training.epochs,
         validationData: validationDs,
-        validationBatchSize: 1,
+        validationBatchSize: this.d.selectedModel.training.validationBatchSize,
         callbacks: {
+          onTrainBegin: async() => {
+            logFile = this.createLogFile();
+          },
           onEpochEnd: async(epoch: any, logs: any) => {
 
-            console.log(logs);
             const metric = this.getMetric(logs);
             logFile.data.push({ log: { loss: logs.loss, val_loss: logs.val_loss, metric: metric.training, val_metric: metric.validation, text_metric: metric.text }, epoch: epoch});
             this.tensorflowService.updateProgess('Training: loss = ' + logs.loss + '' + (metric ? metric.text + metric.training : ' '), ((75/this.d.selectedModel.training.epochs) * epoch) + 25,
               { e: epoch, metric: metric, loss: logs.loss });
-            this.updateTrainingGraph.next(epoch);
+            this.updateTrainingGraph.next({ e: epoch, metric: metric, loss: logs.loss });
           },
-          onTrainEnd: async(logs: any) => {
+          onTrainEnd: async() => {
             this.tensorflowService.updateProgess('Training complete.', 100);
             this.document.body.style.cursor = 'default';
-          }
 
+            console.log("memory " + tf.memory().numTensors);
+          }
         }
       });
     }
     catch(e: any) {
       console.log('error fitting dataset');
       this.handleError(e);
-      this.d.trainingData.slice(-1);
-      this.selectLogFile.next(this.d.trainingData[this.d.trainingData.length - 1].id);
     }
   }
 
 
   createLogFile() {
-    const logFile = new TrainingSet(uuid(), 'Training logs ' + (this.d.trainingData.length + 1))
+    const logFile = new TrainingSet(uuid(), 'Training logs ' + (this.d.trainingData.length + 1), this.cloneService.deepClone(this.d.selectedModel.training));
     this.d.trainingData.push(logFile);
     this.selectLogFile.next(logFile.id);
 
@@ -644,14 +733,12 @@ export class TensorFlowTrainService {
     const trainingDataset = tf.data.zip({
       xs: tf.data.array(trainingData.xs),
       ys: tf.data.array(trainingData.ys)
-    });
-    // .shuffle(trainingData.xs.length);
+    }).shuffle(trainingData.xs.length);
 
     const validationDataset = tf.data.zip({
       xs: tf.data.array(validationData.xs),
       ys: tf.data.array(validationData.ys)
-    });
-    //.shuffle(validationData.xs.length);
+    }).shuffle(validationData.xs.length);
 
     return [trainingDataset.batch(batchSize), validationDataset.batch(batchSize)];
 
@@ -680,31 +767,55 @@ export class TensorFlowTrainService {
   // }
 
 
-
-  NN_Deploy(input: any, selectedModel: any) {
+  NN_Deploy(input: any) {
 
     // this.serialPath = path;
     // console.log('predict');
     // console.log(input);
 
-    if (selectedModel.type !== 'Regression') {
-      const iTensor = tf.tensor(input);
-      const inputTensor = tf.reshape(iTensor, [input.length, input[0][0][0].length, (input[0][0].length * input[0].length) ]);
-     // console.log(iTensor, inputTensor);
-      const outputs = this.d.selectedModel.multiple ? this.d.selectedModel.model.predictOnBatch(inputTensor) : this.d.selectedModel.model.predict(inputTensor);
-      // console.log(outputs);
-      const prediction = Array.from((outputs as any).dataSync());
-      // console.log(prediction);
-      this.updatePredictionClassifiers(prediction);
+    const iTensor = tf.tensor(input);
+    const inputTensor = tf.reshape(iTensor, [-1, ...this.getInputShapeModel()]);
+    // console.log(iTensor, inputTensor);
+    const outputs = this.d.selectedModel.training.batchSize > 1 ? this.d.selectedModel.model.predictOnBatch(inputTensor) : this.d.selectedModel.model.predict(inputTensor);
+    // console.log(outputs);
+    const prediction = Array.from((outputs as any).dataSync());
+    // console.log(prediction);
+    this.updatePredictionClassifiers(prediction);
 
-      if (this.d.ML_OutputData.length > 0) {
-        this.d.ML_OutputData[this.d.ML_OutputData.length - 1].data.push({ p: prediction, i: input });
-        this.d.ML_OutputData[this.d.ML_OutputData.length - 1].classifier = this.d.selectedModel.outputs.filter(o => o.active)[0].labels;
-      }
-
-      iTensor.dispose();
+    if (this.d.ML_OutputData.length > 0) {
+      this.d.ML_OutputData[this.d.ML_OutputData.length - 1].data.push({ p: prediction, i: input });
+      this.d.ML_OutputData[this.d.ML_OutputData.length - 1].classifier = this.d.selectedModel.outputs.filter(o => o.active)[0].labels;
     }
+
+    iTensor.dispose();
+
   }
+
+
+  // NN_Deploy(input: any, selectedModel: any) {
+
+  //   // this.serialPath = path;
+  //   // console.log('predict');
+  //   // console.log(input);
+
+  //   if (selectedModel.type !== 'Regression') {
+  //     const iTensor = tf.tensor(input);
+  //     const inputTensor = tf.reshape(iTensor, [input.length, input[0][0][0].length, (input[0][0].length * input[0].length) ]);
+  //    // console.log(iTensor, inputTensor);
+  //     const outputs = this.d.selectedModel.training.batchSize > 1 ? this.d.selectedModel.model.predictOnBatch(inputTensor) : this.d.selectedModel.model.predict(inputTensor);
+  //     // console.log(outputs);
+  //     const prediction = Array.from((outputs as any).dataSync());
+  //     // console.log(prediction);
+  //     this.updatePredictionClassifiers(prediction);
+
+  //     if (this.d.ML_OutputData.length > 0) {
+  //       this.d.ML_OutputData[this.d.ML_OutputData.length - 1].data.push({ p: prediction, i: input });
+  //       this.d.ML_OutputData[this.d.ML_OutputData.length - 1].classifier = this.d.selectedModel.outputs.filter(o => o.active)[0].labels;
+  //     }
+
+  //     iTensor.dispose();
+  //   }
+  // }
 
 
   updatePredictionClassifiers(results: Array<any>) {
@@ -750,8 +861,8 @@ export class TensorFlowTrainService {
 
         this.d.selectedModel.model.compile({
           optimizer: optimizer,
-          loss: this.d.selectedModel.training.losses.name,
-          metrics: [ this.d.selectedModel.training.metrics.value ]
+          loss: this.d.selectedModel.training.losses.value,
+          metrics: this.d.selectedModel.training.metrics.value !== undefined ? [ this.d.selectedModel.training.metrics.value ] : []
         });
 
         this.tensorflowService.updateProgess('compiled successfully', 22);
@@ -784,7 +895,7 @@ export class TensorFlowTrainService {
   //   this.tensorflowService.updateProgess('start training', 25);
 
 
-  //   this.train(inputTensor, outputTensor, this.d.selectedModel.training.epochs, this.d.selectedModel.layers[0].options.batchSize.value).then(() => {
+  //   this.train(inputTensor, outputTensor, this.d.selectedModel.training.epochs, this.d.selectedModel.training.batchSize).then(() => {
   //     console.log('training is complete');
 
   //     (this.document.getElementById('deploy') as HTMLButtonElement).disabled = false;
@@ -802,46 +913,6 @@ export class TensorFlowTrainService {
   // }
 
 
-  async train(iTensor: any, oTensor: any, validationDs: any, epochs: any, batchSize: number) {
-
-
-    const logFile = this.createLogFile();
-
-    await this.d.selectedModel.model.fit(iTensor, oTensor, {
-      verbose: true,
-      shuffle: true,
-      batchSize: batchSize,
-      epochs: epochs,
-      // validationData: [validationDs.xs, validationDs.ys],
-      callbacks: {
-        onEpochEnd: async(epoch: any, logs: any) => {
-          const metric = this.getMetric(logs);
-          logFile.data.push({ log: { loss: logs.loss, val_loss: logs.val_loss, metric: metric.training, val_metric: metric.validation, text_metric: metric.text }, epoch: epoch});
-          this.tensorflowService.updateProgess('Training: loss = ' + logs.loss + '' + (metric ? metric.text + metric.training : ' '), ((75/this.d.selectedModel.training.epochs) * epoch) + 25,
-            { e: epoch, metric: metric, loss: logs.loss });
-          this.updateTrainingGraph.next(epoch);
-        },
-        onTrainEnd: async(logs: any) => {
-          console.log(logs);
-          this.tensorflowService.updateProgess('Training complete.', 100);
-        }
-
-      }
-
-      // if (i < epochs - 1) {
-      //   if (i % 10 === 0) {
-      //     console.log(response.history);
-      //     // const metric = this.getMetric(response.history);
-      //     // this.tensorflowService.updateProgess('training: loss = ' + response.history.loss[0] + '' + (metric ? metric : ''), ((75/epochs) * i) + 25, { e: epochs, metric: metric[0], loss: response.history.loss[0] });
-      //     // this.updateTrainingGraph.next(epochs);
-      //   }
-      // } else {
-      //   const metric = this.getMetric(response.history);
-      //   this.tensorflowService.updateProgess('finished training: ' + response.history.loss[0] + '' + metric, 100,  { e: epochs, metric: metric[0], loss: response.history.loss[0] });
-      //   return this.d.selectedModel.model;
-      // }
-    });
-  }
 
 
 
@@ -884,7 +955,7 @@ export class TensorFlowTrainService {
 
     this.d.selectedModel.model = tf.sequential();
 
-    this.createPredictionModel.next(true);
+    // this.createPredictionModel.next(true);
 
     this.d.selectedModel.model.name = modelObj.name;
 
@@ -912,7 +983,7 @@ export class TensorFlowTrainService {
       let i = 0;
       for(const layer of modelObj.layers) {
 
-        let hiddenLayer;
+        let hiddenLayer: any;
 
         if (modelObj.type === ModelType.CNN) {
 

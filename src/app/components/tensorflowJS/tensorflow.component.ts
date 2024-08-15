@@ -8,6 +8,7 @@ import { TensorFlowConfig } from 'src/app/models/tensorflow-config.model';
 import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
 import { DataSet, Model, ModelType } from 'src/app/models/tensorflow.model';
 import { TensorFlowModelDrawService } from 'src/app/services/tensorflow-model-draw.service';
+import { TensorFlowRecordService } from 'src/app/services/tensorflow-record.service';
 
 @Component({
   selector: 'app-tensorflow',
@@ -22,7 +23,8 @@ export class TensorflowComponent {
 
 
   constructor(@Inject(DOCUMENT) private document: Document, public tensorflowService: TensorFlowMainService, private changeDetection: ChangeDetectorRef,
-      private tensorflowDrawService: TensorFlowDrawService, private tensorflowModelDrawService: TensorFlowModelDrawService, private electronService: ElectronService) {
+      private tensorflowDrawService: TensorFlowDrawService, private tensorflowModelDrawService: TensorFlowModelDrawService, private electronService: ElectronService,
+      private tensorFlowRecordService: TensorFlowRecordService) {
 
     this.config = this.tensorflowDrawService.config;
     this.d = this.tensorflowService.d;
@@ -69,9 +71,25 @@ export class TensorflowComponent {
       this.changeDetection.detectChanges();
     });
 
-    this.tensorflowService.redrawNN.subscribe(() => {
-      this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
-    })
+
+    this.electronService.ipcRenderer.on('motorData', (event: Event, data: any) => {
+      const velocity = data.d.filter((d: { name: string; }) => d.name === 'velocity')[0];
+      if (velocity) {
+        this.tensorFlowRecordService.handleIncomingData(velocity.val, data.serialPath, data.motorID, data.d);
+      }
+    });
+
+    this.electronService.ipcRenderer.on('pneumaticDataPressure', (event: Event, data: any) => {
+      // console.log(data);
+
+      for (const item of data.list) {
+        // console.log(item);
+        const pressure = item.d.filter((i: { name: string; }) => i.name === 'pressure')[0];
+        if (pressure) {
+          this.tensorFlowRecordService.handleIncomingData(pressure.val, data.serialPath, item.motorID, item.d);
+        }
+      }
+    });
 
   }
 
@@ -88,7 +106,7 @@ export class TensorflowComponent {
       }
       break;
       case(1): {
-        this.tensorflowDrawService.redraw.next(true);
+        this.tensorFlowRecordService.redraw(this.d.selectedDataset, this.d.trimLines, 'svg_graph_data');
       }
       break;
       case(2): {
@@ -96,9 +114,7 @@ export class TensorflowComponent {
       }
       break;
       case(3): {
-        if (this.d.mlOutputData.length > 0) {
-          console.log('print output data');
-        }
+        this.tensorFlowRecordService.redraw(this.d.selectedMLDataset, null, 'svg_graph_deploy');
       }
       break;
       default: { console.log('step not listed'); }

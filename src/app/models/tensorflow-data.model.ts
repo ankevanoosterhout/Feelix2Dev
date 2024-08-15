@@ -26,6 +26,7 @@ export class TensorFlowData {
 
   dataSets: Array<DataSet> = [];
   selectedDataset: DataSet = null;
+  selectedMLDataset: MLDataSet = null;
   predictionDataset: DataSet = null;
   mlOutputData: Array<MLDataSet> = [];
   trainingData: Array<TrainingSet> = [];
@@ -65,10 +66,10 @@ export class TensorFlowData {
     new tf_function('hingeLoss', tf.losses.hingeLoss),
     new tf_function('huberLoss', tf.losses.huberLoss),
     new tf_function('logLoss', tf.losses.logLoss),
-    new tf_function('meanSquaredError', tf.losses.meanSquaredError),
-    new tf_function('sigmoidCrossEntropy', tf.losses.sigmoidCrossEntropy),
-    new tf_function('softmaxCrossEntropy', tf.losses.softmaxCrossEntropy),
-    new tf_function('categoricalCrossentropy', tf.metrics.categoricalCrossentropy)
+    new tf_function('meanSquaredError', 'meanSquaredError'),
+    new tf_function('sigmoidCrossEntropy', 'sigmoidCrossEntropy'),
+    new tf_function('softmaxCrossEntropy', 'softmaxCrossEntropy'),
+    new tf_function('categoricalCrossentropy', 'categoricalCrossentropy'),
   ];
 
   metricsOptions = [

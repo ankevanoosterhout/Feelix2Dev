@@ -1,8 +1,11 @@
-import { Component, HostListener } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, HostListener } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
 import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
-import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
+import { Classifier, InputColor, InputItem, Label, MLDataSet, MotorEl } from 'src/app/models/tensorflow.model';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
+import { TensorFlowRecordService } from 'src/app/services/tensorflow-record.service';
+import { TensorFlowTrainService } from 'src/app/services/tensorflow-train.service';
+import { v4 as uuid } from 'uuid';
 
 
 @Component({
@@ -10,41 +13,140 @@ import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service'
   templateUrl: 'tensorflow-deploy.component.html',
   styleUrls: ['../../windows/effects/effects.component.css', './../tensorflow.component.scss'],
 })
-export class TensorflowDeployComponent {
+export class TensorflowDeployComponent implements AfterViewInit {
 
   public d: TensorFlowData;
 
   public graphID = 'svg_graph_deploy';
-  public size = { width: innerWidth - 395, height: innerHeight - 70, margin: 70 };
 
-  constructor(public tensorflowService: TensorFlowMainService, private tensorflowDrawService: TensorFlowDrawService, private electronService: ElectronService) {
+
+  constructor(public tensorflowService: TensorFlowMainService, private electronService: ElectronService,
+              public tensorflowRecordService: TensorFlowRecordService, private changeDetection: ChangeDetectorRef, private tensorflowTrainService: TensorFlowTrainService) {
+
+
     this.d = this.tensorflowService.d;
 
-    this.tensorflowService.updateGraph.subscribe(data => {
+    this.tensorflowService.updateGraph.subscribe((data) => {
       if (data) {
-        this.redraw(data.set, data.trimLines);
+        this.tensorflowRecordService.redraw(data.set, data.trimLines, this.graphID);
         // this.tensorflowDrawService.drawTensorFlowGraphData(data.set, data.trimLines);
       }
     });
+
+
+    this.tensorflowService.loadMLData.subscribe((res) => {
+      this.loadMLdataSet(res);
+      this.changeDetection.detectChanges();
+    });
+
+
+    this.tensorflowRecordService.predictOutput.subscribe(() => {
+      this.tensorflowTrainService.predictOutput()
+    });
+
   }
 
+  ngAfterViewInit(): void {
+    this.tensorflowRecordService.redraw(this.d.selectedMLDataset, this.d.trimLines, this.graphID);
+  }
 
   @HostListener('window:resize', ['$event'])
   onResize(event: Event) {
-    this.redraw();
-  }
-
-  redraw(set = this.d.selectedDataset, lines = this.d.trimLines) {
-    this.size = { width: innerWidth - 395, height: innerHeight - 70, margin: 70 };
-    this.tensorflowDrawService.drawGraph(this.graphID, this.size);
-    if (set) {
-      this.tensorflowDrawService.drawTensorFlowGraphData(set, null);
-    }
+    this.tensorflowRecordService.redraw(this.d.selectedMLDataset, null, this.graphID);
   }
 
 
   loadDataFromFile() {
     this.electronService.ipcRenderer.send('loadDataFromFile', 'loadMLData');
   }
+
+
+
+  loadMLdataSet(dataSets: Array<any>) {
+    const tmpID = uuid();
+
+    if (dataSets) {
+      let i = 0;
+
+      for (const mlData of dataSets) {
+
+
+        for (const data of mlData.data) {
+
+          for (const dataSequence of data.i) {
+
+            const actuators: Array<MotorEl> = [];
+
+            let nrOfMotors = dataSequence[0].length;
+            for (let m = 0; m < nrOfMotors; m++) {
+              const motorEl = new MotorEl('actuator-' + (m + 1), 'actuator-' + (m + 1), null, null, m);
+              motorEl.record = true;
+              motorEl.visible = true;
+              motorEl.colors = [ new InputColor('pressure', this.d.colorOptions[m]) ];
+              actuators.push(motorEl);
+            }
+
+            let j = 0;
+
+            const mlDataSet = new MLDataSet(uuid(), 'ml-output-' + (i + 1));
+            mlDataSet.classifierID = tmpID;
+
+            mlDataSet.selected = false;
+            mlDataSet.open = false;
+
+            for (const item of dataSequence) {
+
+              let n = 0;
+              for (const value of item) {
+                if (mlDataSet.m[n] === undefined) {
+                  actuators[n].d = [];
+                  mlDataSet.m[n] = actuators[n];
+                }
+                const inputItem = new InputItem('pressure');
+                inputItem.value = value[0];
+
+                mlDataSet.m[n].d.push({inputs: [ inputItem ], time: j});
+
+                n++;
+              }
+
+              j++;
+            }
+
+            let c = 0;
+            for (const value of data.p) {
+              const label = new Label(mlData.classifier[c].id, mlData.classifier[c].name);
+              label.confidence = value;
+
+              mlDataSet.confidencesLevels.push(label);
+              c++;
+            }
+
+            mlDataSet.bounds = { xMin: 0, xMax: dataSequence.length - 1, yMin: 0.6, yMax: 1.4 };
+
+
+            this.d.mlOutputData.push(mlDataSet);
+
+          }
+          i++;
+        }
+      }
+    }
+    if (!this.d.selectedModel.outputs.filter(c => c.id === tmpID)[0]) {
+      const newClassifier = new Classifier(tmpID, 'Classifier', false);
+
+      for (let c = 0; c < dataSets[0].classifier.length; c++) {
+        newClassifier.labels.push(this.d.mlOutputData[0].confidencesLevels[c]);
+      }
+      newClassifier.active = true;
+
+      this.d.selectedModel.outputs.push(newClassifier);
+    }
+
+
+  }
+
+
+
 
 }

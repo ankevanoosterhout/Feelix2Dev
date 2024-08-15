@@ -260,16 +260,23 @@ ul.file-list-sidebar {
 
 
 
-.motor-list-button-item div.active {
-  /* background: #00AEEF; */
-  background: #999;
-  color: #222;
-  margin: 2px 0;
+.motor-list-button-item div {
+  margin: 2px 0 5px;
+
+  &.active {
+    /* background: #00AEEF; */
+    background: #999;
+    color: #222;
+    margin: 2px 0 2px;
+  }
 }
 
-.input-list-button-item div.active {
-  color: #222;
+.input-list-button-item div{
   margin: 2px 0;
+
+  &.active {
+    color: #222;
+  }
 }
 
 ul.training-type-options {

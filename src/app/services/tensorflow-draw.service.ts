@@ -12,36 +12,34 @@ export class TensorFlowDrawService {
   redraw: Subject<any> = new Subject<void>();
   updateTrimSize: Subject<any> = new Subject<void>();
   redrawGraphTraining: Subject<any> = new Subject<void>();
-
-  svgObject = null;
-  svgObject_B = null;
+  updateBoundsGraph: Subject<any> = new Subject<void>();
 
   constructor() {
     this.config = new TensorFlowConfig();
   }
 
 
-  drawGraph(id="svg_graph", size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
+  drawGraph(id='svg_graph_data', bounds: Bounds, size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
 
     this.config.zoomable = id === 'svg_graph_training_A' || id === 'svg_graph_training_B' ? false : true;
 
     d3.selectAll('#svg_' + id).remove();
 
-    this.svgObject = d3.select('#' + id)
+    const svg = d3.select('#' + id)
         .append('svg')
         .attr('id', 'svg_' + id)
         .attr('width', size.width)
         .attr('height', size.height);
           // .attr("viewBox", [0, 0, this.config.width, this.config.height]);
 
-    this.svgObject.append('clipPath')
+    svg.append('clipPath')
       .attr('id', 'clipPathGraph')
       .append('svg:rect')
       .attr('width', size.width - (2 * size.margin))
       .attr('height', size.height - size.margin)
       .attr('transform', 'translate(' + size.margin + ',0)');
 
-    this.svgObject.append('rect')
+    svg.append('rect')
       .attr('id', 'border')
       .attr('x', 0)
       .attr('y', 0)
@@ -52,43 +50,43 @@ export class TensorFlowDrawService {
       .style('stroke-width', 0.5)
       .style('fill', 'transparent');
 
-    this.setScale(size);
-    this.drawTicks(size, this.svgObject);
+    this.setScale(svg, bounds, size);
+    this.drawTicks(svg, size);
   }
 
-  drawGraph2(id="svg_graph", size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
+  // drawGraph2(id='svg_graph_data', size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
 
-    d3.selectAll('#svg_' + id).remove();
+  //   d3.selectAll('#svg_' + id).remove();
 
-    this.svgObject_B = d3.select('#' + id)
-        .append('svg')
-        .attr('id', 'svg_' + id)
-        .attr('width', size.width)
-        .attr('height', size.height);
-          // .attr("viewBox", [0, 0, this.config.width, this.config.height]);
+  //   this.svgObject_B = d3.select('#' + id)
+  //       .append('svg')
+  //       .attr('id', 'svg_' + id)
+  //       .attr('width', size.width)
+  //       .attr('height', size.height);
+  //         // .attr("viewBox", [0, 0, this.config.width, this.config.height]);
 
-    this.svgObject_B.append('clipPath')
-      .attr('id', 'clipPathGraph')
-      .append('svg:rect')
-      .attr('width', size.width - (2 * size.margin))
-      .attr('height', size.height - size.margin)
-      .attr('transform', 'translate(' + size.margin + ',0)');
+  //   this.svgObject_B.append('clipPath')
+  //     .attr('id', 'clipPathGraph')
+  //     .append('svg:rect')
+  //     .attr('width', size.width - (2 * size.margin))
+  //     .attr('height', size.height - size.margin)
+  //     .attr('transform', 'translate(' + size.margin + ',0)');
 
-    this.svgObject_B.append('rect')
-      .attr('id', 'border')
-      .attr('x', 0)
-      .attr('y', 0)
-      .attr('width', size.width - (2 * size.margin))
-      .attr('height', size.height - (2 * size.margin))
-      .attr('transform', 'translate(' + size.margin + ',' + size.margin + ')')
-      .style('stroke', '#999')
-      .style('stroke-width', 0.5)
-      .style('fill', 'transparent');
+  //   this.svgObject_B.append('rect')
+  //     .attr('id', 'border')
+  //     .attr('x', 0)
+  //     .attr('y', 0)
+  //     .attr('width', size.width - (2 * size.margin))
+  //     .attr('height', size.height - (2 * size.margin))
+  //     .attr('transform', 'translate(' + size.margin + ',' + size.margin + ')')
+  //     .style('stroke', '#999')
+  //     .style('stroke-width', 0.5)
+  //     .style('fill', 'transparent');
 
-    this.setScale(size);
-    this.drawTicks(size, this.svgObject_B);
+  //   this.setScale(size);
+  //   this.drawTicks(size, this.svgObject_B);
 
-  }
+  // }
 
 
   enableZoom(enable: boolean) {
@@ -97,14 +95,14 @@ export class TensorFlowDrawService {
 
 
 
-  setScale(size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
+  setScale(svg: any, bounds = new Bounds(), size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
 
     this.config.scaleY = d3.scaleLinear()
-      .domain([this.config.bounds.yMax, this.config.bounds.yMin])
+      .domain([bounds.yMax, bounds.yMin])
       .range([size.margin, size.height - size.margin]);
 
     this.config.baseScaleX = d3.scaleLinear()
-      .domain([this.config.bounds.xMin, this.config.bounds.xMax])
+      .domain([bounds.xMin, bounds.xMax])
       .range([size.margin, size.width - size.margin]);
 
     if (this.config.zoomable) {
@@ -119,7 +117,7 @@ export class TensorFlowDrawService {
         this.config.scaleX = t.rescaleX(this.config.baseScaleX);
       }
 
-      this.svgObject.call(this.config.zoom);
+      svg.call(this.config.zoom);
     } else  {
       this.config.scaleX = this.config.baseScaleX;
     }
@@ -145,36 +143,37 @@ export class TensorFlowDrawService {
 
     this.config.scaleX = transform.rescaleX(this.config.baseScaleX);
     const rescale = this.config.xAxisBottom.scale(this.config.scaleX);
-    this.svgObject.selectAll('.axisBottom').call(rescale);
+    d3.select('#svg_svg_graph_data').selectAll('.axisBottom').call(rescale);
 
-    this.svgObject.selectAll('.axisBottom text')
+    d3.select('#svg_svg_graph_data').selectAll('.axisBottom text')
         .attr('y', size.height - (2 * size.margin) + 10)
         .attr('x', 0);
 
     this.redraw.next(true);
   }
 
-  updateBounds(bounds: Bounds, size: any = null) {
-    this.config.bounds.xMin = bounds.xMin;
-    this.config.bounds.xMax = bounds.xMax;
-    this.config.bounds.yMin = bounds.yMin;
-    this.config.bounds.yMax = bounds.yMax;
+  updateBounds(bounds: Bounds, id: string, size: any = null) {
+    // this.config.bounds.xMin = bounds.xMin;
+    // this.config.bounds.xMax = bounds.xMax;
+    // this.config.bounds.yMin = bounds.yMin;
+    // this.config.bounds.yMax = bounds.yMax;
+
+    // this.updateBoundsGraph.next(bounds);
 
     this.config.transform = null;
 
-    size ? this.setScale(size) : this.setScale();
+    size ? this.setScale(d3.select('#svg_' + id), bounds, size) : this.setScale(d3.select('#svg_' + id), bounds);
   }
 
   updateScale(scale: number) {
     this.config.transform = d3.zoomIdentity.translate(0, 0).scale(scale);
     this.config.scaleX = this.config.transform.rescaleX(this.config.baseScaleX);
 
-    this.svgObject.call(this.config.zoom.transform, this.config.transform);
-
+    d3.select('#svg_svg_graph_data').call(this.config.zoom.transform, this.config.transform);
   }
 
 
-  drawTicks(size = { width: this.config.width, height: this.config.height, margin: this.config.margin }, svg: any) {
+  drawTicks(svg: any, size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
     this.config.yAxis = svg.append('g');
 
     const yAxis = d3
@@ -217,17 +216,17 @@ export class TensorFlowDrawService {
   }
 
 
-  drawTensorflowTrainingProgress(logs: Array<any>, size: any) {
+  drawTensorflowTrainingProgress(logs: Array<any>) {
 
     if (logs) {
 
       d3.selectAll('#dataGroup-0, #dataGroup-1').remove();
 
-      const dataGroup1 = this.svgObject.append('g')
+      const dataGroup1 = d3.select('#svg_svg_graph_training_A').append('g')
         .attr('id', 'dataGroup-0')
         .attr('clip-path', 'url(#clipPathGraph)');
 
-      const dataGroup2 = this.svgObject_B.append('g')
+      const dataGroup2 = d3.select('#svg_svg_graph_training_B').append('g')
         .attr('id', 'dataGroup-1')
         .attr('clip-path', 'url(#clipPathGraph)');
 
@@ -245,11 +244,6 @@ export class TensorFlowDrawService {
       .y((d: { log: any; }) => { return index === 0 ? (isNaN(this.config.scaleY(d.log.loss)) ? 0 : this.config.scaleY(d.log.loss)) :
                                                       (isNaN(this.config.scaleY(d.log.metric)) ? 0 : this.config.scaleY(d.log.metric)); });
 
-    const validation = d3.line()
-      .x((d: { epoch: number; }) => this.config.scaleX(d.epoch))
-      .y((d: { log: any }) => { return index === 0 ? (isNaN(this.config.scaleY(d.log.val_loss)) ? 0 : this.config.scaleY(d.log.val_loss)) :
-                                                 (isNaN(this.config.scaleY(d.log.val_metric)) ? 0 : this.config.scaleY(d.log.val_metric)); });
-
     if (training) {
       dataGroup.append('path')
         .attr('fill', 'none')
@@ -260,28 +254,36 @@ export class TensorFlowDrawService {
             .text(() => 'results training data');
     }
 
-    if (validation) {
-      dataGroup.append('path')
-        .attr('fill', 'none')
-        .attr('stroke', '#F2662D')
-        .attr('stroke-width', 1.5)
-        .attr('d', validation(logs))
-          .append('svg:title')
-            .text(() => 'results validation data');
+    if (logs.length > 0 && logs[0].log.val_loss !== undefined && logs[0].log.val_loss !== null) {
 
+      const validation = d3.line()
+        .x((d: { epoch: number; }) => this.config.scaleX(d.epoch))
+        .y((d: { log: any }) => { return index === 0 ? (isNaN(this.config.scaleY(d.log.val_loss)) ? 0 : this.config.scaleY(d.log.val_loss)) :
+                                                  (isNaN(this.config.scaleY(d.log.val_metric)) ? 0 : this.config.scaleY(d.log.val_metric)); })
+
+      if (validation) {
+        dataGroup.append('path')
+          .attr('fill', 'none')
+          .attr('stroke', '#F2662D')
+          .attr('stroke-width', 1.5)
+          .attr('d', validation(logs))
+            .append('svg:title')
+              .text(() => 'results validation data');
+
+      }
     }
   }
 
 
 
 
-  drawTensorFlowGraphData(data: DataSet, trimLines: any, size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
+  drawTensorFlowGraphData(data: DataSet, trimLines: any, id: string, size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
 
     if (data && data.m.length > 0) {
-      d3.selectAll('#dataGroup').remove();
+      d3.selectAll('#dataGroup-' + id).remove();
 
-      const dataGroup = this.svgObject.append('g')
-        .attr('id', 'dataGroup')
+      const dataGroup = d3.select('#svg_' + id).append('g')
+        .attr('id', 'dataGroup-' + id)
         .attr('clip-path', 'url(#clipPathGraph)');
 
 
@@ -290,7 +292,9 @@ export class TensorFlowDrawService {
         if (m.record && m.visible && m.d && m.d.length > 0) {
           for (const input of m.d[0].inputs) {
 
-            if (m.colors[i].visible) {
+            const colorData = m.colors.filter(c => c.input_name == input.name)[0];
+
+            if (colorData && colorData.visible) {
 
               const line = d3.line()
                 .x((d: { time: number; }) => isNaN(this.config.scaleX(d.time)) ? d.time : this.config.scaleX(d.time))
@@ -304,7 +308,7 @@ export class TensorFlowDrawService {
                 dataGroup.append('path')
                   // .datum(m.d)
                   .attr('fill', 'none')
-                  .attr('stroke', m.colors[i].hash)
+                  .attr('stroke', colorData.hash)
                   .attr('stroke-width', 1.4)
                   .attr('d', line(m.d))
                     .append('svg:title')
@@ -323,7 +327,7 @@ export class TensorFlowDrawService {
                                     return isNaN(this.config.scaleY(inputItem.value)) ? 0 : this.config.scaleY(inputItem.value)})
                     .attr('class', 'm-' + m.id + '-' + m.mcu.id + '-' + input.name)
                     .attr('fill', '#4a4a4a')
-                    .attr('stroke', m.colors[i].hash)
+                    .attr('stroke', colorData.hash)
                     .attr('stroke-width', 1)
                       .append('svg:title')
                         .text((d: any) => {
@@ -357,7 +361,7 @@ export class TensorFlowDrawService {
 
     if (visible) {
 
-      const trimLinesGroup = this.svgObject.append('g')
+      const trimLinesGroup =  d3.select('#svg_svg_graph_data').append('g')
         .attr('id', 'dataTrimLines')
         .attr('clip-path', 'url(#clipPathGraph)')
         .attr('transform', 'translate(0,'+ size.margin +')');
