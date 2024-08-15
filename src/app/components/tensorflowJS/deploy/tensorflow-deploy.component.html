@@ -34,10 +34,6 @@
             <input type="text" id="dataSetName" [(ngModel)]="this.d.selectedMLDataset.name" name="dataSetName">
           </span>
 
-          <span *ngIf="!this.d.selectedMLDataset && this.d.predictionDataset">
-            <input type="text" id="dataSetName" [(ngModel)]="this.d.predictionDataset.name" name="dataSetName" disabled>
-          </span>
-
           <p class="date" *ngIf="this.d.selectedMLDataset && this.d.selectedMLDataset.date.created">{{ this.d.selectedMLDataset.date.created | date:'dd-MM-yyyy hh:mm' }}</p>
 
           <div class="data-size" *ngIf="this.d.selectedMLDataset && this.d.selectedMLDataset.m && this.d.selectedMLDataset.m.length > 0">size: {{ this.d.size }}</div>

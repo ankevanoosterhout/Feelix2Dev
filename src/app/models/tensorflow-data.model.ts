@@ -27,9 +27,10 @@ export class TensorFlowData {
   dataSets: Array<DataSet> = [];
   selectedDataset: DataSet = null;
   selectedMLDataset: MLDataSet = null;
-  predictionDataset: DataSet = null;
   mlOutputData: Array<MLDataSet> = [];
   trainingData: Array<TrainingSet> = [];
+
+  // ML_OutputData: Array<ML_Data> = [];
 
   multipleSelect = { min: 0, max: 0, active: false };
 
@@ -56,7 +57,7 @@ export class TensorFlowData {
 
   size = 0;
 
-  ML_OutputData: Array<ML_Data> = [];
+
 
 
   lossOptions = [

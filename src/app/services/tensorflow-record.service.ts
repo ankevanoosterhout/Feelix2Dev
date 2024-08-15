@@ -88,7 +88,7 @@ export class TensorFlowRecordService {
 
       if (this.config.stopRecordingCounter < 10) {
 
-        const dataSetEl = !this.d.classify ? this.d.selectedDataset : this.d.predictionDataset;
+        const dataSetEl = !this.d.classify ? this.d.selectedDataset : this.d.selectedMLDataset;
 
         if (dataSetEl.m && dataSetEl.m.length > 0) {
           const motorEl = dataSetEl.m.filter(m => m.mcu.serialPath === serialPath && m.id === motorID)[0]; //data.serialPath, data.motorID

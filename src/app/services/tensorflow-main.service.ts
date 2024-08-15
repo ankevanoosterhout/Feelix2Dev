@@ -175,8 +175,8 @@ export class TensorFlowMainService {
         } else {
           this.loadMLData.next(dataObj);
 
-          if (this.d.ML_OutputData.length > 0) {
-            this.selectDataSet(this.d.ML_OutputData[this.d.ML_OutputData.length - 1].id, true);
+          if (this.d.mlOutputData.length > 0) {
+            this.selectDataSet(this.d.mlOutputData[this.d.mlOutputData.length - 1].id, true);
           }
         }
       }
@@ -556,14 +556,12 @@ export class TensorFlowMainService {
   }
 
   saveMLoutput() {
-    if (this.d.ML_OutputData.length > 0) {
-      this.exportDataSet(this.d.ML_OutputData);
+    const dataSets = this.getDataSets('deploy');
+    if (dataSets) {
+      this.exportDataSet(dataSets);
     }
   }
 
-  clearData() {
-    this.d.ML_OutputData = [];
-  }
 
   updateClassifierLabel(classifier_name: String, i: number) {
     const value = (this.document.getElementById(classifier_name + '-label-' + i) as HTMLInputElement).value;
@@ -967,14 +965,5 @@ export class TensorFlowMainService {
   }
 
 
-  createPredictionModel() {
-    const predictionDataset = new MLDataSet(uuid(), 'Prediction', this.d.selectedMicrocontrollers);
-    predictionDataset.bounds = {
-      xMin: 0,
-      xMax: 700,
-      yMin: 10,
-      yMax: -10
-    }
-    this.updateGraphBounds.next(this.d.predictionDataset.bounds);
-  }
+
 }
