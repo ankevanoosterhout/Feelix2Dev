@@ -369,7 +369,7 @@ export class Basic_options extends Options {
   embeddingsRegularizer = new Option({ name: 'none', regularizer: undefined});
   embeddingsConstraint  = new Option(Constraint.none);
   maskZero = new Option(false);
-  dataFormat = new Option('channelsFirst');
+  dataFormat = new Option('channelsLast');
   n = new Option(1);
   dims = new Option([]);
   inputDim = new Option(1);
@@ -386,9 +386,9 @@ export class Basic_options extends Options {
     if (layerType) {
 
       const name = layerType.name;
-      if (name === 'dropout') {
-        this.units = undefined;
-      }
+      // if (name === 'dropout') {
+      //   this.units = undefined;
+      // }
       if (name === 'dense' || name === 'dropout' || name === 'embedding' || name === 'reshape') {
         this.dataFormat = undefined;
         this.n = undefined;
@@ -780,6 +780,7 @@ export class Model {
         layerNormalize.hidden = true;
         const dropout = new Layer('dropout', new LayerType('dropout', 'basic', tf.layers.dropout));
         dropout.hidden = true;
+        dropout.options.units.value = units[l];
         dropout.options.rate.value = 0.5;
 
         this.layers.splice(1 + (l * 3), 0, layerDense, layerNormalize, dropout);
@@ -994,4 +995,23 @@ export class TrainingSet {
   }
 }
 
+
+export class MinMax {
+  min: number = 0;
+  max: number = 1;
+}
+
+
+export class TrimSection {
+  id: string;
+  values = new MinMax();
+  width: number;
+  size: number;
+
+  constructor(id: string, values: MinMax) {
+    this.id = id;
+    this.values = values;
+    this.width = this.values.max - this.values.min;
+  }
+}
 

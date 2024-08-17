@@ -1,6 +1,8 @@
 import { MicroController } from "./hardware.model";
-import { DataSet, InputColor, MLDataSet, Model, TrainingSet, tf_function } from "./tensorflow.model";
+import { DataSet, InputColor, MLDataSet, Model, TrainingSet, TrimSection, tf_function } from "./tensorflow.model";
 import * as tf from '@tensorflow/tfjs';
+import { v4 as uuid } from 'uuid';
+
 
 export class ML_Data {
   id: string;
@@ -44,7 +46,7 @@ export class TensorFlowData {
   random = true;
 
   trimLinesVisible = false;
-  trimLines = [ { id: 0, value: null }, { id: 1, value: null } ];
+  trimLines = [ new TrimSection(uuid(), { min: 10, max: 990 }) ];
 
   colorList = [ new InputColor('angle', '#43E6D5'),
                 new InputColor('velocity', '#00AEEF'),

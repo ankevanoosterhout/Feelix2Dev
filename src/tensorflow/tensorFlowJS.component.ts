@@ -58,12 +58,16 @@ export class TensorFlowJSComponent implements OnInit {
 
 
       this.electronService.ipcRenderer.on('load-from-files', (event: Event, data: any) => {
-        this.tensorflowService.importDataSet(data);
+        if (data.type === 'loadData') {
+          this.tensorflowService.importDataSet(data.d);
+        } else if (data.type === 'loadMLModel') {
+          this.tensorflowService.importModel(data.d);
+        }
       });
 
-      this.electronService.ipcRenderer.on('load-ml-model-from-files', (event: Event, data: any) => {
-        this.tensorflowService.importModel(data);
-      });
+      // this.electronService.ipcRenderer.on('load-ml-model-from-files', (event: Event, data: any) => {
+      //   this.tensorflowService.importModel(data);
+      // });
 
 
       this.electronService.ipcRenderer.on('load-datasets', (event: Event, data: Array<DataSet>) => {
@@ -149,7 +153,7 @@ export class TensorFlowJSComponent implements OnInit {
     this.d.dataSets.push(new DataSet(uuid(), 'Data set ' + (this.d.dataSets.length + 1), this.d.selectedMicrocontrollers));
     this.d.dataSets[0].open = true;
     this.d.selectedDataset = this.d.dataSets[0];
-    
+
     if (this.d.selectedModel.outputs.length === 0) {
       this.d.selectedModel.outputs.push(new Classifier(uuid(), 'Output-' + (this.d.selectedModel.outputs.length + 1), true));
       this.d.selectedModel.outputs[0].active = true;

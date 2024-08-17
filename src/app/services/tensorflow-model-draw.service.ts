@@ -37,10 +37,9 @@ export class TensorFlowModelDrawService {
     if (distance > 70) { distance = 70; }
 
     let layerOffset = 0;
+    let activeUnitsPerLayer = [];
 
     for (const layer of model.layers) {
-      const coords = [];
-      const lines = [];
       let xUnits = (i === 0 && layer.options.actuators && layer.options.inputDimension === 1) ? layer.options.units.value * layer.options.actuators.value :
                      layer.options.units ? layer.options.units.value : layer.options.kernelSize ? layer.options.kernelSize.value[0] : layer.options.poolSize ? layer.options.poolSize.value[0] : 1;
       const last = i < model.layers.length - 1 ? false : true;
@@ -51,67 +50,13 @@ export class TensorFlowModelDrawService {
       let nextUnitsOverflow = false;
       const xPos = layer.hidden ? layerOffset + 15 : layerOffset + (columnWidth / 2);
       if (xUnits > 10) { xUnits = 10; overflow = true; }
-
       const layerMargin = (this.height - (this.margin * 2) - (distance * (xUnits - 1))) / 2;
 
+      const nextLayerInactiveUnits = !last && model.layers[i + 1].options.rate && model.layers[i + 1].options.rate.value ? this.randomUnique(xUnits, Math.round(xUnits * model.layers[i + 1].options.rate.value)) : [];
+      activeUnitsPerLayer.push(nextLayerInactiveUnits);
 
-      for (let n = duplicates - 1; n >= 0; n--) {
-        for (let x = 0; x < xUnits; x++) {
-
-          const coordObject = { x: xPos - (n * 4),
-                                y: distance * x + layerMargin + this.margin,
-                                unit: 'unit-' + x + '-' + 'layer-' + i + '-' + n,
-                                index: n,
-                                row: duplicates - 1 - n
-                              };
-
-          coords.push(coordObject);
-
-          // console.log(coords);
-        }
-      }
-
-      for (let j = 0; j < xUnits; j++) {
-
-        if (!last) {
-          let nextUnits = model.layers[i + 1].options.units ? model.layers[i + 1].options.units.value :
-                          model.layers[i + 1].options.kernelSize ? model.layers[i + 1].options.kernelSize.value[0] :
-                          model.layers[i + 1].options.poolSize ? model.layers[i + 1].options.poolSize.value[0] : 1;
-
-          if (nextUnits > 10) { nextUnits = 10; nextUnitsOverflow = true; }
-
-          const nextLayerMargin = (this.height - (this.margin * 2) - (distance * (nextUnits - 1))) / 2;
-          const nextLayerOffset = model.layers[i + 1].hidden ? (this.smallColumnWidth / 2) : (columnWidth / 2);
-
-          if (model.layers[i + 1].type && model.layers[i + 1].type.subgroup === 'normalization') {
-
-            if (!nextUnitsOverflow || (j % (xUnits - 2)) !== 0 || j === 0) {
-              const lineObject = {
-                x1: xPos,
-                y1: distance * j + layerMargin + this.margin,
-                x2: xPos + nextLayerOffset + (layer.hidden ? (this.smallColumnWidth / 2) : (columnWidth / 2)),
-                y2: distance * j + layerMargin + this.margin
-              }
-
-              lines.push(lineObject);
-            }
-          } else {
-            for (let m = 0; m < nextUnits; m++) { //overflow && (i % (max - 2)) === 0 && i !== 0
-              if ((!nextUnitsOverflow || (m % (nextUnits - 2)) !== 0 || m === 0) &&
-                  (!overflow || (j % (xUnits - 2)) !== 0 || j === 0)) {
-                const lineObject = {
-                  x1: xPos,
-                  y1: distance * j + layerMargin + this.margin,
-                  x2: xPos + nextLayerOffset + (layer.hidden ? (this.smallColumnWidth / 2) : (columnWidth / 2)),
-                  y2: distance * m + nextLayerMargin + this.margin
-                }
-
-                lines.push(lineObject);
-              }
-            }
-          }
-        }
-      }
+      const coords = this.getNodeCoords(duplicates, xUnits, xPos, distance, layerMargin, i, (i > 0 ? activeUnitsPerLayer[i - 1] : []));
+      const lines = this.getLines(xUnits, model.layers[i + 1], distance, xPos, layerMargin, columnWidth, nextUnitsOverflow, overflow, layer.hidden, last, (i > 0 ? activeUnitsPerLayer[i - 1] : []), activeUnitsPerLayer[i]);
 
       this.drawLayer(layer, coords, lines, i, layer.hidden ? this.smallColumnWidth : columnWidth, layerOffset, distance, model.inputs, last, maxUnits, overflow);
 
@@ -121,6 +66,97 @@ export class TensorFlowModelDrawService {
     }
   }
 
+
+
+  getLines(units: number, nextLayer: Layer, distance: number, xPos: number, layerMargin: number, columnWidth: number, nextUnitsOverflow: boolean, overflow: boolean, hidden: boolean, last: boolean, inactiveUnits: Array<any>, inactiveNextUnits: Array<any>) {
+
+    let array = [];
+
+    for (let j = 0; j < units; j++) {
+      if (!last) {
+        let nextUnits = nextLayer.options.units ? nextLayer.options.units.value :
+                        nextLayer.options.kernelSize ? nextLayer.options.kernelSize.value[0] :
+                        nextLayer.options.poolSize ? nextLayer.options.poolSize.value[0] : 1;
+
+        if (nextUnits > 10) { nextUnits = 10; nextUnitsOverflow = true; } //hide all units above 10
+
+        const nextLayerMargin = (this.height - (this.margin * 2) - (distance * (nextUnits - 1))) / 2;
+        const nextLayerOffset = nextLayer.hidden ? (this.smallColumnWidth / 2) : (columnWidth / 2);
+
+        if (nextLayer.type && nextLayer.type.subgroup === 'normalization') {
+
+          if (!inactiveUnits.includes(j) && !inactiveNextUnits.includes(j)) {
+            if (!nextUnitsOverflow || (j % (units - 2)) !== 0 || j === 0) {
+
+              const lineObject = {
+                x1: hidden ? xPos + 5 : xPos,
+                y1: distance * j + layerMargin + this.margin,
+                x2: xPos + nextLayerOffset + (hidden ? (this.smallColumnWidth / 2) + 5 : (columnWidth / 2)),
+                y2: distance * j + layerMargin + this.margin
+              }
+
+              array.push(lineObject);
+
+            }
+          }
+        } else {
+          if (!inactiveUnits.includes(j)) {
+            for (let m = 0; m < nextUnits; m++) { //overflow && (i % (max - 2)) === 0 && i !== 0
+              if (!inactiveNextUnits.includes(m)) {
+                if ((!nextUnitsOverflow || (m % (nextUnits - 2)) !== 0 || m === 0) &&
+                    (!overflow  || (j % (units - 2)) !== 0 || j === 0)) {
+
+                  const lineObject = {
+                    x1: hidden ? xPos + 5 : xPos,
+                    y1: distance * j + layerMargin + this.margin,
+                    x2: xPos + nextLayerOffset + (hidden ? (this.smallColumnWidth / 2) + 5: (columnWidth / 2)),
+                    y2: distance * m + nextLayerMargin + this.margin
+                  }
+                  array.push(lineObject);
+                }
+              }
+            }
+
+          }
+        }
+      }
+    }
+    return array;
+  }
+
+
+
+  getNodeCoords(duplicates: number, units: number, xPos: number, distance: number, layerMargin: number, layerIndex: number, inactiveUnits: Array<any>) {
+
+    let array = [];
+
+    for (let n = duplicates - 1; n >= 0; n--) {
+
+      for (let x = 0; x < units; x++) {
+        const coordObject = { x: xPos - (n * 4),
+                              y: distance * x + layerMargin + this.margin,
+                              unit: 'unit-' + x + '-' + 'layer-' + layerIndex + '-' + n,
+                              index: n,
+                              row: duplicates - 1 - n,
+                              active: inactiveUnits.includes(x) ? false : true
+                            };
+
+        array.push(coordObject);
+      }
+    }
+    return array;
+  }
+
+
+
+
+  randomUnique = (range: number, count: number) => {
+    let nums = new Set();
+    while (nums.size < count) {
+        nums.add(Math.floor(Math.random() * (range - 1 + 1)));
+    }
+    return [...nums];
+  }
 
   getMaxNrOfUnits(layers: Array<Layer>) {
     const nrOfActiveInputs = this.tensorflowService.d.selectedModel.inputs.filter(i => i.active).length;
@@ -257,7 +293,7 @@ export class TensorFlowModelDrawService {
       .attr('id', (d: { x: number, y: number, unit: string }) => 'layer_' + layerIndex)
       .attr('class', 'layer_' + layerIndex)
       .attr('r', (d, i) => overflow && (i % ((d.row + 1) * max - 2)) === 0 && i !== 0 ? distance/20 : layer.hidden ? distance/8 : distance/4 )
-      .attr('cx', (d: { x: number }) => layer.hidden ? d.x + (distance/16) : d.x)
+      .attr('cx', (d: { x: number }) => layer.hidden ? d.x + 5 : d.x)
       .attr('cy', (d: { y: number }) => d.y)
       .style('stroke', (d: { index: number, row: number }, i: number)=> {
         if (last && this.tensorflowService.d.labels.length > 0) {
@@ -271,7 +307,7 @@ export class TensorFlowModelDrawService {
         }
       })
       .style('stroke-width', 1.5)
-      .style('fill', (d, i:number) => overflow && (i % ((d.row + 1) * max - 2)) === 0 && i !== 0 ? (d.index > 0 ? 'transparent' : '#000') : '#ccc');
+      .style('fill', (d, i:number) => overflow && (i % ((d.row + 1) * max - 2)) === 0 && i !== 0 ? (d.index > 0 ? 'transparent' : '#000') : !d.active ? '#4a4a4a' : '#ccc');
 
 
     if (layerIndex === 0) {
@@ -309,8 +345,5 @@ export class TensorFlowModelDrawService {
         .attr('y', (d: { y: number }) => d.y - ((imageWidth * 0.76142)/2));
     }
   }
-
-
-
 }
 

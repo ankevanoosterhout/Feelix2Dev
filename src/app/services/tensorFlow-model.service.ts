@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { LocalStorageService } from 'ngx-webstorage';
-import { Model } from '../models/tensorflow.model';
+import { Model, TrainingSet } from '../models/tensorflow.model';
 import { CloneService } from './clone.service';
 import { v4 as uuid } from 'uuid';
 
@@ -11,9 +11,10 @@ export class TensorFlowModelService {
   public static readonly LIBRARY_LOCATION = 'ngx-webstorage|models';
 
   models: Array<Model> = [];
+  trainingData: Array<TrainingSet> = [];
 
 
-  constructor(private localSt: LocalStorageService, private cloneService: CloneService) {
+  constructor(private localSt: LocalStorageService) {
 
     window.addEventListener('storage', event => {
       if (event.storageArea === localStorage) {
@@ -84,6 +85,17 @@ export class TensorFlowModelService {
   clear() {
     this.models = [];
     this.store();
+  }
+
+
+  getAllTrainingData() {
+    let data = [];
+
+    return data;
+  }
+
+  storeTrainingData(data: TrainingSet) {
+
   }
 
 

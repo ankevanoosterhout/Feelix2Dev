@@ -8,9 +8,8 @@
       <ul class="buttons-list">
         <li class="padding" id="import" (click)="this.loadDataFromFile()"><img src="./assets/icons/buttons/import.svg" title="Import output data from file"/></li>
         <li class="padding" id="export" (click)="this.tensorflowService.saveDataNN('deploy')"><img src="./assets/icons/buttons/export.svg" title="Export output data to file"/></li>
-        <li id="load" (click)="this.tensorflowService.loadDataSet()"><img src="./assets/icons/buttons/open.svg" title="Open output files"/></li>
-        <li id="save" (click)="this.tensorflowService.saveMLoutput()"><img src="./assets/icons/buttons/save.svg" title="Save output model"/></li>
-        <li class="padding" id="delete"><img src="./assets/icons/buttons/bin.svg" title="Delete output files"></li>
+        <li id="save" (click)="this.tensorflowService.saveMLoutput()"><img src="./assets/icons/buttons/save.svg" title="Save output data"/></li>
+        <li class="padding" id="delete" (click)="this.tensorflowService.deleteDataSets(null, true)"><img src="./assets/icons/buttons/bin.svg" title="Delete output files"></li>
       </ul>
 
       <div id="record-button" class="record-button" [ngClass]="{ red: this.d.recording.active }" (click)="this.tensorflowRecordService.record('deploy')">

@@ -158,12 +158,21 @@ export class TensorflowModelComponent implements OnInit {
   }
 
   loadModel() {
-    this.electronService.ipcRenderer.send('loadMLModel');
+    this.electronService.ipcRenderer.send('load-dataset', 'MLmodel');
   }
 
   saveModel(copy: boolean) {
     this.tensorflowService.saveModel(copy);
   }
+
+  exportModel() {
+
+  }
+
+  importModel() {
+
+  }
+  
 
   updateNetworkVisualization() {
     this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
@@ -171,7 +180,7 @@ export class TensorflowModelComponent implements OnInit {
 
   updateUnits(index: number) {
     const nextLayer = this.d.selectedModel.layers[index + 1];
-    if (nextLayer && nextLayer.type && nextLayer.type.subgroup === 'normalization') {
+    if (nextLayer && nextLayer.type && nextLayer.type.subgroup === 'normalization' || nextLayer.type.name === 'dropout') {
       nextLayer.options.units.value = this.getUnits(index);
     }
     this.updateNetworkVisualization();
@@ -349,6 +358,9 @@ export class TensorflowModelComponent implements OnInit {
         break;
       case 'basic':
         layer.options = new Basic_options(layer.type);
+        if (layer.type.name == 'dropout') {
+          layer.options.units.value = this.getUnits(index - 1);
+        }
         break;
       case 'normalization': {
           layer.options = new Normalization_options(layer.type);

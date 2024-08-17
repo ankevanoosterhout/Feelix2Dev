@@ -2,7 +2,7 @@ import { DOCUMENT } from '@angular/common';
 import { Injectable, Inject } from '@angular/core';
 import { v4 as uuid } from 'uuid';
 import { ActuatorType, MicroController } from '../models/hardware.model';
-import { Model, DataSet, Classifier, Label, MotorEl, ModelVariable, ModelType, OutputItem, InputColor, VariableType, MLDataSet, Data } from '../models/tensorflow.model';
+import { Model, DataSet, Classifier, Label, MotorEl, ModelVariable, ModelType, OutputItem, InputColor, VariableType, MLDataSet, Data, MinMax, TrimSection } from '../models/tensorflow.model';
 import { HardwareService } from './hardware.service';
 import { DataSetService } from './dataset.service';
 import { Subject } from 'rxjs';
@@ -30,6 +30,7 @@ export class TensorFlowMainService {
     drawTrimLines: Subject<any> = new Subject<void>();
     loadData: Subject<any> = new Subject<void>();
     loadMLData: Subject<any> = new Subject<void>();
+    redraw: Subject<any> = new Subject<void>();
     redrawNN: Subject<any> = new Subject<void>();
     createModel: Subject<any> = new Subject<void>();
     getColorListItem: Subject<any> = new Subject<void>();
@@ -42,28 +43,33 @@ export class TensorFlowMainService {
                 }
 
 
-    deleteDataSet(dataset: Array<any>, set: any, ML = false) {
-      const index = dataset.indexOf(set);
-      dataset.splice(index, 1);
-      if (index < dataset.length) {
-        this.selectDataSet(dataset[index].id, ML);
-      } else if (dataset.length > 0) {
-        this.selectDataSet(dataset[0].id, ML);
-      } else if (!ML) {
-        this.addDataSet();
-      }
-    }
-
     deleteDataSets(id: string = null, ML = false) {
       const dataset = !ML ? this.d.dataSets : this.d.mlOutputData;
       const set = dataset.filter(s => id ? s.id === id : s.open)[0];
+      let index = -1;
       if (set && !this.d.multipleSelect.active) {
-        this.deleteDataSet(dataset, set, ML);
+        index = dataset.indexOf(set);
+        dataset.splice(index, 1);
       } else {
-        for (let i = this.d.multipleSelect.min; i < this.d.multipleSelect.max; i++) {
-          this.deleteDataSet(dataset, dataset[i], ML);
+        for (let i = this.d.multipleSelect.max; i >= this.d.multipleSelect.min; i--) {
+          index = i;
+          dataset.splice(i, 1);
+        }
+        this.d.multipleSelect.active = false;
+      }
+      index--;
+      if (dataset.length === 0) {
+        if (!ML) {
+          this.addDataSet();
+          index = 0;
+        } else {
+          this.redraw.next({ page: ML ? 'deploy' : 'data' });
         }
       }
+      if (index > -1 && index < dataset.length) {
+        this.selectDataSet(dataset[index].id, ML);
+      }
+
     }
 
     addDataSet() {
@@ -112,15 +118,27 @@ export class TensorFlowMainService {
     // }
 
 
-    exportDataSet(dataSets: Array<any>) {
-      if (dataSets.length > 1) {
-        this.zipFiles(dataSets);
-      } else if (dataSets.length === 1) {
-        const dataBlob = this.createBlob(dataSets);
-        const filename = dataSets[0].name + '.json';
-        this._FileSaverService.save(dataBlob, filename, 'text/plain');
+    exportFileData(fileData: Array<any>) {
+      console.log(fileData);
+      if (fileData.length > 1) {
+        this.zipFiles(fileData);
+      } else if (fileData.length === 1) {
+        const dataBlob = this.createBlob(fileData);
+        const filename = fileData[0].name + '.json';
+        this.saveFile(dataBlob, filename, 'text/plain');
       } else {
         this.updateProgess('No dataset selected', 0);
+      }
+    }
+
+    saveFile(dataBlob: any, filename: string, type: string) {
+      try {
+        this._FileSaverService.save(dataBlob, filename, type);
+        this.updateProgess('File has been saved', 100);
+      }
+      catch(e) {
+        const error = (e as Error).message;
+        console.log(error);
       }
     }
 
@@ -138,7 +156,7 @@ export class TensorFlowMainService {
         zip.file(filename, fileblob);
       }
       const content = await zip.generateAsync({ type: 'blob' });
-      this._FileSaverService.save(content, 'folder.zip', 'application/zip');
+      this.saveFile(content, files[0].name + '.zip', 'application/zip');
     }
 
 
@@ -190,8 +208,12 @@ export class TensorFlowMainService {
 
         this.updateScale.next(1);
 
-        this.d.trimLines[0].value = this.d.selectedDataset.bounds.xMin + 50;
-        this.d.trimLines[1].value = this.d.selectedDataset.bounds.xMax - 50;
+        // this.d.trimLines[0].value = this.d.selectedDataset.bounds.xMin + 50;
+        // this.d.trimLines[1].value = this.d.selectedDataset.bounds.xMax - 50;
+
+        this.d.trimLines[0].values.min = this.d.selectedDataset.bounds.xMin + 50;
+        this.d.trimLines[0].values.max = this.d.selectedDataset.bounds.xMax - 50;
+        this.d.trimLines[0].width = this.d.trimLines[0].values.min - this.d.trimLines[0].values.max;
 
         this.drawTrimLines.next({ bounds: this.d.selectedDataset.bounds, visible: this.d.trimLinesVisible, lines: this.d.trimLines });
       }
@@ -199,53 +221,48 @@ export class TensorFlowMainService {
 
 
     trimSet() {
-      const dataSetCopy = this.dataSetService.copyDataSet(this.d.selectedDataset);
-      dataSetCopy.name = this.d.selectedDataset.name + '-copy';
 
-      const bounds = this.trimmedDataSize(dataSetCopy);
-      // console.log(bounds.dataSize);
-      // for (const m of dataSetCopy.m) {
-      //   if (m.d.length > 0) {
-      //     for (let i = m.d.length - 1; i >= 0; i--) {
-      //       if (m.d[i].time < this.d.trimLines[0].value || m.d[i].time > this.d.trimLines[1].value) {
-      //         m.d.splice(i, 1);
-      //       } else {
-      //         m.d[i].time -= Math.floor(this.d.trimLines[0].value);
-      //         for (const el of m.d[i].inputs) {
-      //           if (el.name !== 'direction' && this.d.selectedModel.inputs.filter(i => i.name === el.name && i.active).length > 0) {
-      //             if (Ymax === null || el.value > Ymax) { Ymax = el.value; }
-      //             if (Ymin === null || el.value < Ymin) { Ymin = el.value; }
-      //           }
-      //         }
-      //       }
-      //     }
-      //   }
-      // }
-      const span = this.d.trimLines[1].value - this.d.trimLines[0].value;
+      for (let i = this.d.trimLines.length - 1; i >= 0; i--) {
+        const dataSetCopy = this.dataSetService.copyDataSet(this.d.selectedDataset);
+        dataSetCopy.name = this.d.selectedDataset.name + '-copy-' + (i + 1);
 
-      dataSetCopy.bounds.xMin = 0;
-      dataSetCopy.bounds.xMax = span < 1000 ? Math.ceil(span / 100) * 100 : span < 3000 ? Math.ceil(span / 200) * 200 : Math.ceil(span / 500) * 500;
-      dataSetCopy.bounds.yMin = bounds.yMin < -10 || bounds.yMax > 10 ? Math.floor(bounds.yMin/5) * 5 : Math.floor(bounds.yMin*4) / 4;
-      dataSetCopy.bounds.yMax = bounds.yMin < -10 || bounds.yMax > 10 ? Math.ceil(bounds.yMax/5) * 5 : Math.ceil(bounds.yMax*4) / 4;
+        const bounds = this.trimmedDataSize(dataSetCopy, this.d.trimLines[i].values);
+
+        const span = this.d.trimLines[i].values.max - this.d.trimLines[i].values.min;
+
+        dataSetCopy.bounds.xMin = 0;
+        dataSetCopy.bounds.xMax = span < 1000 ? Math.ceil(span / 100) * 100 : span < 3000 ? Math.ceil(span / 200) * 200 : Math.ceil(span / 500) * 500;
+        dataSetCopy.bounds.yMin = bounds.yMin < -10 || bounds.yMax > 10 ? Math.floor(bounds.yMin/5) * 5 : Math.floor(bounds.yMin*4) / 4;
+        dataSetCopy.bounds.yMax = bounds.yMin < -10 || bounds.yMax > 10 ? Math.ceil(bounds.yMax/5) * 5 : Math.ceil(bounds.yMax*4) / 4;
+
+
+        this.d.dataSets.push(dataSetCopy);
+
+      }
 
       this.d.trimLinesVisible = false;
+      this.d.trimLines = [ new TrimSection(uuid(), { min: 10, max: 990 }) ];
 
-      this.d.dataSets.push(dataSetCopy);
-      this.selectDataSet(dataSetCopy.id, false);
+      this.selectDataSet(this.d.dataSets[this.d.dataSets.length - 1].id, false);
+
     }
 
-    trimmedDataSize(dataSet: DataSet = this.dataSetService.copyDataSet(this.d.selectedDataset)) {
+
+
+    trimmedDataSize(dataSet: DataSet = this.dataSetService.copyDataSet(this.d.selectedDataset), lines: MinMax) {
 
       let Ymin = null;
       let Ymax = null;
       let size = [];
       for (const m of dataSet.m) {
         if (m.d.length > 0) {
+
           for (let i = m.d.length - 1; i >= 0; i--) {
-            if (m.d[i].time < this.d.trimLines[0].value || m.d[i].time > this.d.trimLines[1].value) {
+
+            if (m.d[i].time < lines.min || m.d[i].time > lines.max) {
               m.d.splice(i, 1);
             } else {
-              m.d[i].time -= Math.floor(this.d.trimLines[0].value);
+              m.d[i].time -= Math.floor(lines.min);
               for (const el of m.d[i].inputs) {
                 if (this.d.selectedModel.inputs.filter(i => i.name === el.name && i.active).length > 0) {
                   if (Ymax === null || el.value > Ymax) { Ymax = el.value; }
@@ -281,7 +298,7 @@ export class TensorFlowMainService {
 
     loadDataSet() {
       //open
-      this.electronService.ipcRenderer.send('load-dataset');
+      this.electronService.ipcRenderer.send('load-dataset', 'dataset');
     }
 
     showOutputData() {
@@ -307,7 +324,7 @@ export class TensorFlowMainService {
         }
       }
 
-      this.exportDataSet(data ? data : dataSets);
+      this.exportFileData(data ? data : dataSets);
     }
 
     itemsSaved = ((error: any) => {
@@ -322,23 +339,16 @@ export class TensorFlowMainService {
 
 
 
-
-
-
-  selectDataSet(id: string, ML: boolean = false, event = null) {
-    // let ML = this.d.dataSets.filter(d => d.id === id)[0] === undefined ? true : false;
-
-    this.d.trimLinesVisible = false;
-    // this.d.classify = ML;
+  getItemsMultipleSelect(set: Array<any>, id: string, event = null) {
 
     const shift = event ? event.shiftKey : false;
-    const current = shift && !ML ? this.d.dataSets.filter(s => s.open)[0] : null;
-    const selected = !ML ? this.d.dataSets.filter(s => s.id === id)[0] : null;
+    const current = shift ? set.filter(s => s.open)[0] : null;
+    const selected = set.filter(s => s.id === id)[0];
 
-    if (current && selected && !ML) {
+    if (current && selected) {
       this.d.multipleSelect.active = true;
-      this.d.multipleSelect.min = this.d.dataSets.indexOf(current);
-      this.d.multipleSelect.max = this.d.dataSets.indexOf(selected);
+      this.d.multipleSelect.min = set.indexOf(current);
+      this.d.multipleSelect.max = set.indexOf(selected);
       if (this.d.multipleSelect.min > this.d.multipleSelect.max) {
         const tmp = this.d.multipleSelect.max;
         this.d.multipleSelect.max = this.d.multipleSelect.min;
@@ -349,17 +359,23 @@ export class TensorFlowMainService {
       this.d.multipleSelect.min = 0;
       this.d.multipleSelect.max = 0;
     }
+  }
 
+
+  selectDataSet(id: string, ML: boolean = false, event = null) {
+    // let ML = this.d.dataSets.filter(d => d.id === id)[0] === undefined ? true : false;
+
+    this.d.trimLinesVisible = false;
+    // this.d.classify = ML;
     const dataSet = !ML ? this.d.dataSets : this.d.mlOutputData;
 
+    this.getItemsMultipleSelect(dataSet, id, event);
 
 
     for (const set of dataSet) {
       set.open = set.id === id ? true : false;
 
       if (set.open) {
-        console.log(set);
-
         this.updateGraphBounds.next(set.bounds);
         ML && set instanceof MLDataSet ? this.d.selectedMLDataset = set : this.d.selectedDataset = set;
 
@@ -387,8 +403,6 @@ export class TensorFlowMainService {
         }
       }
     }
-
-    // console.log(ML, dataSet);
   }
 
 
@@ -557,8 +571,8 @@ export class TensorFlowMainService {
 
   saveMLoutput() {
     const dataSets = this.getDataSets('deploy');
-    if (dataSets) {
-      this.exportDataSet(dataSets);
+    if (dataSets && dataSets.length > 0) {
+      this.exportFileData([dataSets]);
     }
   }
 
@@ -701,6 +715,7 @@ export class TensorFlowMainService {
 
 
 
+
   importModel(model: any) {
     //select a folder
     if (model) {
@@ -800,54 +815,56 @@ export class TensorFlowMainService {
 
         this.d.dataSets = [];
       }
-      for (const dataset of data) {
-        if (this.d.dataSets.filter(d => d.id === dataset.id).length === 0) {
-          if (dataset.m && dataset.m.length > 0) {
+      if (data.length > 0) {
+        for (const dataset of data) {
+          if (this.d.dataSets.filter(d => d.id === dataset.id).length === 0) {
+            if (dataset.m && dataset.m.length > 0) {
 
-            for (const motor of dataset.m) {
-              if (this.d.selectedMicrocontrollers.filter(m => m.serialPort.path === motor.mcu.serialPath).length === 0) {
-                const mcu = this.hardwareService.microcontrollers.filter(m => m.serialPort.path === motor.mcu.serialPath)[0];
-                if (mcu) {
-                  // this.d.selectOptionMicrocontroller = mcu;
-                  this.addMicrocontroller(mcu, false);
-                } else {
-                  const nrOfmotors = dataset.m.filter(m => m.mcu.serialPath === motor.mcu.serialPath).length;
-                  const newMCU = this.hardwareService.addMicroController({ serialPort: { path: motor.mcu.serialPath }}, '', motor.mcu.id);
-                  this.hardwareService.addActuators(newMCU, nrOfmotors);
-                  this.addMicrocontroller(newMCU, false);
-                }
-              }
-              if (motor.d.length > 0) {
-                for (const input of motor.d[0].inputs) {
-                  const inputModels = this.d.selectedModel.inputs.filter(i => i.name === input.name);
-                  if (inputModels.length === 1) {
-                    if (!inputModels[0].active) { inputModels[0].active = true; }
-                  } else if (inputModels.length === 0) {
-                    //console.log('add input');
-                    this.addInputItem(input.name);
-                    this.d.colorList.push(new InputColor(input.name, '#999'));
+              for (const motor of dataset.m) {
+                if (this.d.selectedMicrocontrollers.filter(m => m.serialPort.path === motor.mcu.serialPath).length === 0) {
+                  const mcu = this.hardwareService.microcontrollers.filter(m => m.serialPort.path === motor.mcu.serialPath)[0];
+                  if (mcu) {
+                    // this.d.selectOptionMicrocontroller = mcu;
+                    this.addMicrocontroller(mcu, false);
+                  } else {
+                    const nrOfmotors = dataset.m.filter(m => m.mcu.serialPath === motor.mcu.serialPath).length;
+                    const newMCU = this.hardwareService.addMicroController({ serialPort: { path: motor.mcu.serialPath }}, '', motor.mcu.id);
+                    this.hardwareService.addActuators(newMCU, nrOfmotors);
+                    this.addMicrocontroller(newMCU, false);
                   }
                 }
+                if (motor.d.length > 0) {
+                  for (const input of motor.d[0].inputs) {
+                    const inputModels = this.d.selectedModel.inputs.filter(i => i.name === input.name);
+                    if (inputModels.length === 1) {
+                      if (!inputModels[0].active) { inputModels[0].active = true; }
+                    } else if (inputModels.length === 0) {
+                      //console.log('add input');
+                      this.addInputItem(input.name);
+                      this.d.colorList.push(new InputColor(input.name, '#999'));
+                    }
+                  }
+                }
+                if (!motor.colors || motor.colors.length === 0) {
+                  motor.colors = JSON.parse(JSON.stringify(this.d.colorList));
+                }
               }
-              if (!motor.colors || motor.colors.length === 0) {
-                motor.colors = JSON.parse(JSON.stringify(this.d.colorList));
+
+              if (dataset.outputs && dataset.outputs.filter(o => o.classifier_id).length > 0) {
+                this.addOutputFromDataSet(dataset);
               }
-            }
 
-            if (dataset.outputs && dataset.outputs.filter(o => o.classifier_id).length > 0) {
-              this.addOutputFromDataSet(dataset);
+              this.d.dataSets.push(dataset);
             }
-
-            this.d.dataSets.push(dataset);
           }
         }
-      }
-      if (this.d.dataSets.length > 0) {
-        // this.config.transform = null;
-        this.d.dataSets.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0));
-        this.selectDataSet(this.d.dataSets[0].id, false);
-        this.updateModelBasedOnDatasets();
-        this.redrawNN.next(true);
+        if (this.d.dataSets.length > 0) {
+          // this.config.transform = null;
+          this.d.dataSets.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0));
+          this.selectDataSet(this.d.dataSets[0].id, false);
+          this.updateModelBasedOnDatasets();
+          this.redrawNN.next(true);
+        }
       }
     }
   }
@@ -869,7 +886,6 @@ export class TensorFlowMainService {
         if (set.m[0].d.length > 0) {
           if (set.m[0].d.length !== maxLength) {
             this.d.selectedModel.layers[0].options.sparse.value = true;
-            console.log('sparse data');
           }
 
           for (const input of set.m[0].d[0].inputs) {
@@ -944,13 +960,13 @@ export class TensorFlowMainService {
     if (activeFile) { activeFile.open = false; }
 
     const file = this.d.trainingData.filter(t => t.id === id)[0];
-    file.open = true;
+    if (file) { file.open = true; }
 
     this.d.selectedModel.training = this.cloneService.deepClone(file.training);
 
     // console.log(this.d.selectedModel);
-
   }
+
 
 
   deleteLogFile(id:string = null) {
@@ -960,6 +976,24 @@ export class TensorFlowMainService {
       const index = this.d.trainingData.indexOf(file);
       if (index > -1) {
         this.d.trainingData.splice(index, 1);
+        if (this.d.trainingData.length > 0) {
+          this.selectLogFile(this.d.trainingData[(index > 0 ? index - 1 : 0)].id);
+        }
+      }
+    }
+  }
+
+
+  importLogFile(trainingData: any) {
+    if (trainingData) {
+      const data = JSON.parse(trainingData);
+      const oldTrainingData = this.d.trainingData;
+      this.d.trainingData = oldTrainingData.concat(data);
+
+      console.log(this.d.trainingData);
+
+      if (this.d.trainingData.length > 0) {
+        this.selectLogFile(this.d.trainingData[this.d.trainingData.length - 1].id);
       }
     }
   }

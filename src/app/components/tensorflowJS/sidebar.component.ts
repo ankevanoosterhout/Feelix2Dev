@@ -21,7 +21,7 @@ import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service'
                 <li class="motor-list-button-item" *ngFor="let m of this.getActiveDataset().m">
                   <div class="list-text-item" [ngClass]="{ active: m.visible }" *ngIf="m.record" (click)="toggleVisibilityMotor(m)">{{ (m.id ? m.id : getIDFromIndex(m.index)) }}</div>
 
-                  <!-- <div class="row" *ngIf="(!m.d || m.d.length === 0) && this.d.selectedModel && m.visible && m.record">
+                  <div class="row" *ngIf="(!m.d || m.d.length === 0) && this.d.selectedModel && m.visible && m.record">
                     <ul class="input-list-buttons">
                       <li class="input-list-button-item" *ngFor="let input of this.d.selectedModel.inputs; let i = index;">
 
@@ -35,7 +35,7 @@ import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service'
                         <div class="list-text-item input-list-button-item-content" *ngIf="input.active && m.colors[i] && !m.colors[i].visible" (click)="toggleVisibilityInput(m, i)"><div>{{ input.slug }}</div></div>
                       </li>
                     </ul>
-                  </div> -->
+                  </div>
 
                   <div class="row" *ngIf="(m.d && m.d.length > 0) && m.visible && m.record">
                     <ul class="input-list-buttons">
@@ -119,8 +119,8 @@ import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service'
 
 
             <ul class="file-list-sidebar last" *ngIf="this._page === 'deploy'">
-              <li *ngFor="let mlset of this.d.mlOutputData; let i = index;" id="dataset-item-{{ mlset.id }}" (click)="this.selectDataSet(mlset.id, true, $event)"
-                  [ngClass]="{ active: mlset.open, selected: this.d.multipleSelect.active && i >= this.d.multipleSelect.min && i <= this.d.multipleSelect.max }">
+              <li *ngFor="let mlset of this.d.mlOutputData; let n = index;" id="dataset-item-{{ mlset.id }}" (click)="this.selectDataSet(mlset.id, true, $event)"
+                  [ngClass]="{ active: mlset.open, selected: this.d.multipleSelect.active && n >= this.d.multipleSelect.min && n <= this.d.multipleSelect.max }">
                 <div class="row name" >{{ mlset.name }}</div>
                 <div class="close close-button" (click)="this.tensorflowService.deleteDataSets(mlset.id, true)"><div></div></div>
               </li>

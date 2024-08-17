@@ -30,9 +30,12 @@ export class LoadDataSetsComponent implements OnInit {
               if (this.router.url === '/load-model') {
                 this.mode = 'model';
                 this.data = this.tensorflowModelService.getAllModels();
-              } else {
+              } else if (this.router.url === '/load-dataset') {
                 this.mode = 'data';
                 this.data = this.dataSetService.getAllDataSets();
+              } else {
+                this.mode = 'train';
+                this.data = this.tensorflowModelService.getAllTrainingData();
               }
               if (this.data.length > 0) {
                 this.data.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0));
@@ -40,8 +43,9 @@ export class LoadDataSetsComponent implements OnInit {
             }
 
   public submit() {
-    if (this.data.filter(d => d.selected).length > 0) {
-      this.electronService.ipcRenderer.send((this.mode === 'data' ? 'load-datasets' : 'load-model'), this.data.filter(d => d.selected));
+    const selectedData = this.data.filter(d => d.selected);
+    if (selectedData && selectedData.length > 0) {
+      this.electronService.ipcRenderer.send('load-datasets', { mode: this.mode, d: selectedData });
     }
     this.close();
   }

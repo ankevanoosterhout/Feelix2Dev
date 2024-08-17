@@ -6,7 +6,7 @@ export class TensorFlowConfig {
   dataSVG: any = null;
   trainingA_SVG: any = null;
   trainingB_SVG: any = null;
-  scaleY: any;
+  scaleY: Array<any> = [undefined, undefined];
   baseScaleX: any;
   scaleX: any;
   zoom: any;

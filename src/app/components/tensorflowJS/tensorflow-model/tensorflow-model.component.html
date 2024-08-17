@@ -12,14 +12,14 @@
           <li id="load" (click)="this.loadModel()"><img src="./assets/icons/buttons/open.svg" title="load model"></li>
           <li id="save" (click)="this.saveModel(false)"><img src="./assets/icons/buttons/save.svg" title="Save model"></li>
           <li id="savecopy" (click)="this.saveModel(true)"><img src="./assets/icons/buttons/save-copy.svg" title="Save copy of model"></li>
-          <!-- <li id="delete"><img src="./assets/icons/buttons/bin.svg" title="Delete output files"></li> -->
-          <!-- <li id="merge" (click)="this.tensorflowService.mergeDataSets()" disabled="!this.multipleSelect.active"><img src="./assets/icons/buttons/merge2.svg" title="Merge data sets"></li> -->
+          <li class="padding" id="import" (click)="this.importModel()"><img src="./assets/icons/buttons/import.svg" title="Import model"/></li>
+          <li class="padding" id="export" (click)="this.exportModel()"><img src="./assets/icons/buttons/export.svg" title="Export model"/></li>
         </ul>
       </div>
 
 
       <div class="text-buttons-toolbar">
-        <button class="add" id="train" (click)="this.initializeModel()" title="compile model">compile</button>
+        <button class="add" id="train" (click)="this.initializeModel()" title="compile model">build model</button>
       </div>
 
     </div>
@@ -74,7 +74,7 @@
           </div>
 
           <div class="form-group" *ngIf="layer.options.sparse !== undefined">
-            <label class="radio-container">Sparse <div class="question-mark" title="Sparse tensors enable efficient storage and processing of tensors that contain a lot of zero values.">?</div>
+            <label class="radio-container">Sparse data <div class="question-mark" title="Sparse tensors enable efficient storage and processing of tensors that contain a lot of zero values.">?</div>
               <input type="checkbox" class="type" id="sparse" name="sparse" [(ngModel)]="layer.options.sparse.value" [checked]="layer.options.sparse.value">
               <span class="checkmark radio tensorflow"></span>
             </label>
@@ -172,7 +172,7 @@
           </div>
 
 
-          <div class="form-group" *ngIf="layer.options.units && layer.type && layer.type.subgroup !== 'normalization'">
+          <div class="form-group" *ngIf="layer.options.units && layer.type && layer.type.subgroup !== 'normalization' && layer.type.name !== 'dropout'">
             <label class="label"><div class="question-mark" title="Positive integer, dimensionality of the output space.">?</div>Units</label>
             <input type="number" class="number small blue" id="layerUnits" [(ngModel)]="layer.options.units.value" name="layerUnits" (change)="this.updateUnits(i)">
           </div>
@@ -277,7 +277,7 @@
 
           <div class="form-group" *ngIf="layer.settingsVisible && layer.options.rate">
             <label class="label"><div class="question-mark" title="Float between 0 and 1. Fraction of the input units to drop.">?</div>Rate</label>
-            <input type="number" class="number small blue" id="rate" [(ngModel)]="layer.options.rate.value" name="rate"/> <!-- [disabled]="layer.type && layer.type.subgroup !== 'normalization'" -->
+            <input type="number" class="number small blue" id="rate" [(ngModel)]="layer.options.rate.value" name="rate"  (change)="this.updateNetworkVisualization()"/> <!-- [disabled]="layer.type && layer.type.subgroup !== 'normalization'" -->
           </div>
 
 
@@ -389,12 +389,12 @@
           </div>
 
 
-          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.betaInitializer && layer.options.center && layer.options.center.value !== false">
+          <!-- <div class="form-group" *ngIf="layer.settingsVisible && layer.options.betaInitializer && layer.options.center && layer.options.center.value !== false">
             <label class="label"><div class="question-mark" title="Initializer for the beta weight. Default: 'zeros'.">?</div>Beta initializer</label>
             <select class="form-control playWindow" id="betaInitializer" name="betaInitializer" [(ngModel)]="layer.options.betaInitializer.value" [compareWith]="compareFunction">
               <option *ngFor="let item of this.d.initializerOptions" [ngValue]="item">{{ item.name }}</option>
             </select>
-          </div>
+          </div> -->
 
           <div class="form-group" *ngIf="layer.settingsVisible && layer.options.betaRegularizer && layer.options.center && layer.options.center.value !== false">
             <label class="label"><div class="question-mark" title="Regularizer for the beta weight.">?</div>Beta regularizer</label>
@@ -404,12 +404,12 @@
           </div>
 
 
-          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.gammaInitializer">
+          <!-- <div class="form-group" *ngIf="layer.settingsVisible && layer.options.gammaInitializer">
             <label class="label"><div class="question-mark" title="Initializer for the beta weight. Default: 'ones'.">?</div>Gamma initializer</label>
             <select class="form-control playWindow" id="gammaInitializer" name="gammaInitializer" [(ngModel)]="layer.options.gammaInitializer.value" [compareWith]="compareFunction">
               <option *ngFor="let item of this.d.initializerOptions" [ngValue]="item">{{ item.name }}</option>
             </select>
-          </div>
+          </div> -->
 
           <div class="form-group" *ngIf="layer.settingsVisible && layer.options.gammaRegularizer">
             <label class="label"><div class="question-mark" title="Regularizer for the beta weight.">?</div>Gamma regularizer</label>
@@ -433,12 +433,12 @@
             </div>
 
 
-            <div class="form-group" *ngIf="layer.options.useBias.value && layer.options.biasInitializer">
+            <!-- <div class="form-group" *ngIf="layer.options.useBias.value && layer.options.biasInitializer">
               <label class="label"><div class="question-mark" title="Initializer for the kernel weights matrix, used for the linear transformation of the inputs.">?</div>Bias initializer</label>
               <select class="form-control playWindow" id="biasInitializer" name="biasInitializer" [(ngModel)]="layer.options.biasInitializer.value" [compareWith]="compareFunction">
                 <option *ngFor="let item of this.d.initializerOptions" [ngValue]="item">{{ item.name }}</option>
               </select>
-            </div>
+            </div> -->
 
             <div class="form-group" *ngIf="layer.options.useBias.value && layer.options.biasRegularizer">
               <label class="label"><div class="question-mark" title="Regularizer function applied to the bias vector.">?</div>Bias regularizer</label>
@@ -461,12 +461,12 @@
           <div class="horizontalSeparator" *ngIf="layer.settingsVisible && layer.options.kernelRegularizer"></div>
 
 
-          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.kernelInitializer">
+          <!-- <div class="form-group" *ngIf="layer.settingsVisible && layer.options.kernelInitializer">
             <label class="label"><div class="question-mark" title="Initializer for the kernel weights matrix, used for the linear transformation of the inputs.">?</div>Kernel initializer</label>
             <select class="form-control playWindow" id="kernelInitializer" name="kernelInitializer" [(ngModel)]="layer.options.kernelInitializer.value" [compareWith]="compareFunction">
               <option *ngFor="let item of this.d.initializerOptions" [ngValue]="item">{{ item.name }}</option>
             </select>
-          </div>
+          </div> -->
 
           <div class="form-group" *ngIf="layer.settingsVisible && layer.options.kernelRegularizer">
             <label class="label"><div class="question-mark" title="Regularizer function applied to the dense kernel weights matrix.">?</div>Kernel regularizer</label>
@@ -506,12 +506,12 @@
             </label>
           </div>
 
-          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.embeddingsInitializer">
+          <!-- <div class="form-group" *ngIf="layer.settingsVisible && layer.options.embeddingsInitializer">
             <label class="label"><div class="question-mark" title="Initializer for the embeddings matrix.">?</div>Embeddings initializer</label>
             <select class="form-control playWindow" id="embeddingsInitializer" name="embeddingsInitializer" [(ngModel)]="layer.options.embeddingsInitializer.value" [compareWith]="compareFunction">
               <option *ngFor="let item of this.d.initializerOptions" [ngValue]="item">{{ item.name }}</option>
             </select>
-          </div>
+          </div> -->
 
           <div class="form-group" *ngIf="layer.settingsVisible && layer.options.embeddingsRegularizer">
             <label class="label"><div class="question-mark" title="Regularizer function applied to the dense kernel weights matrix.">?</div>Embeddings regularizer</label>
@@ -538,12 +538,12 @@
               <input type="number" class="number small blue" id="depthMultiplier" [(ngModel)]="layer.options.depthMultiplier.value" name="depthMultiplier">
             </div>
 
-            <div class="form-group" *ngIf="layer.options.depthwiseInitializer">
+            <!-- <div class="form-group" *ngIf="layer.options.depthwiseInitializer">
               <label class="label"><div class="question-mark" title="Initializer for the depthwise kernel matrix. Default: GlorotNormal.">?</div>Depthwise initializer</label>
               <select class="form-control playWindow" id="depthwiseInitializer" name="depthwiseInitializer" [(ngModel)]="layer.options.depthwiseInitializer.value" [compareWith]="compareFunction">
                 <option *ngFor="let item of this.d.initializerOptions" [ngValue]="item">{{ item.name }}</option>
               </select>
-            </div>
+            </div> -->
 
             <div class="form-group" *ngIf="layer.options.depthwiseConstraint && layer.options.depthwiseConstraint.value !== undefined">
               <label class="label"><div class="question-mark" title="Constraint for the depthwise kernel matrix.">?</div>Depthwise constraint</label>
@@ -568,12 +568,12 @@
 
           <div *ngIf="layer.settingsVisible && layer.options.pointwiseInitializer">
 
-            <div class="form-group" *ngIf="layer.options.pointwiseInitializer">
+            <!-- <div class="form-group" *ngIf="layer.options.pointwiseInitializer">
               <label class="label"><div class="question-mark" title="Initializer for the pointwise kernel matrix. Default: none (Initializers are used in Layers to establish the starting the values of weights, biases, kernels, etc.)">?</div>Pointwise initializer</label>
               <select class="form-control playWindow" id="pointwiseInitializer" name="pointwiseInitializer" [(ngModel)]="layer.options.pointwiseInitializer.value" [compareWith]="compareFunction">
                 <option *ngFor="let item of this.d.initializerOptions" [ngValue]="item">{{ item.name }}</option>
               </select>
-            </div>
+            </div> -->
 
             <div class="form-group" *ngIf="layer.options.pointwiseConstraint && layer.options.pointwiseConstraint.value !== undefined">
               <label class="label"><div class="question-mark" title="Constraint function applied to the pointwise kernel matrix.">?</div>Pointwise constraint</label>
@@ -599,12 +599,12 @@
             <input type="number" class="number small blue" id="recurrentDropout" [(ngModel)]="layer.options.recurrentDropout.value" name="recurrentDropout"/> <!-- [disabled]="layer.type && layer.type.subgroup !== 'normalization'" -->
           </div>
 
-          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.recurrentInitializer">
+          <!-- <div class="form-group" *ngIf="layer.settingsVisible && layer.options.recurrentInitializer">
             <label class="label"><div class="question-mark" title="Initializer for the kernel weights matrix, used for the linear transformation of the inputs (Initializers are used in Layers to establish the starting the values of weights, biases, kernels, etc.)">?</div>Recurrent initializer</label>
             <select class="form-control playWindow" id="recurrentInitializer" name="recurrentInitializer" [(ngModel)]="layer.options.recurrentInitializer.value" [compareWith]="compareFunction">
               <option *ngFor="let item of this.d.initializerOptions" [ngValue]="item">{{ item.name }}</option>
             </select>
-          </div>
+          </div> -->
 
           <div class="form-group" *ngIf="layer.settingsVisible && layer.options.recurrentActivation">
             <label class="label"><div class="question-mark" title="Activation function to use for the recurrent step.">?</div>Recurrent activation</label>
@@ -633,12 +633,12 @@
 
           <div class="horizontalSeparator" *ngIf="layer.settingsVisible && layer.options.betaInitializer"></div>
 
-          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.betaInitializer">
+          <!-- <div class="form-group" *ngIf="layer.settingsVisible && layer.options.betaInitializer">
             <label class="label"><div class="question-mark" title="">?</div>Beta initializer</label>
             <select class="form-control playWindow" id="betaInitializer" name="betaInitializer" [(ngModel)]="layer.options.betaInitializer.value" [compareWith]="compareFunction">
               <option *ngFor="let item of this.d.initializerOptions" [ngValue]="item">{{ item.name }}</option>
             </select>
-          </div>
+          </div> -->
 
           <div class="form-group" *ngIf="layer.settingsVisible && layer.options.betaConstraint">
             <label class="label"><div class="question-mark" title="">?</div>Beta constraint</label>
@@ -657,12 +657,12 @@
 
           <div class="horizontalSeparator" *ngIf="layer.settingsVisible && layer.options.gammaInitializer"></div>
 
-          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.gammaInitializer">
+          <!-- <div class="form-group" *ngIf="layer.settingsVisible && layer.options.gammaInitializer">
             <label class="label"><div class="question-mark" title="">?</div>Gamma initializer</label>
             <select class="form-control playWindow" id="gammaInitializer" name="gammaInitializer" [(ngModel)]="layer.options.gammaInitializer.value" [compareWith]="compareFunction">
               <option *ngFor="let item of this.d.initializerOptions" [ngValue]="item">{{ item.name }}</option>
             </select>
-          </div>
+          </div> -->
 
           <div class="form-group" *ngIf="layer.settingsVisible && layer.options.gammaConstraint">
             <label class="label"><div class="question-mark" title="">?</div>Gamma constraint</label>
@@ -678,21 +678,21 @@
             </select>
           </div>
 
-          <div class="horizontalSeparator" *ngIf="layer.settingsVisible && layer.options.movingMeanInitializer"></div>
+          <!-- <div class="horizontalSeparator" *ngIf="layer.settingsVisible && layer.options.movingMeanInitializer"></div> -->
 
-          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.movingMeanInitializer">
+          <!-- <div class="form-group" *ngIf="layer.settingsVisible && layer.options.movingMeanInitializer">
             <label class="label"><div class="question-mark" title="">?</div>Moving mean initializer</label>
             <select class="form-control playWindow" id="movingMeanInitializer" name="movingMeanInitializer" [(ngModel)]="layer.options.movingMeanInitializer.value" [compareWith]="compareFunction">
               <option *ngFor="let item of this.d.initializerOptions" [ngValue]="item">{{ item.name }}</option>
             </select>
-          </div>
+          </div> -->
 
-          <div class="form-group" *ngIf="layer.settingsVisible && layer.options.movingVarianceInitializer">
+          <!-- <div class="form-group" *ngIf="layer.settingsVisible && layer.options.movingVarianceInitializer">
             <label class="label"><div class="question-mark" title="">?</div>Moving variance initializer</label>
             <select class="form-control playWindow" id="movingVarianceInitializer" name="movingVarianceInitializer" [(ngModel)]="layer.options.movingVarianceInitializer.value" [compareWith]="compareFunction">
               <option *ngFor="let item of this.d.initializerOptions" [ngValue]="item">{{ item.name }}</option>
             </select>
-          </div>
+          </div> -->
 
           <!-- <button class="add" id="deleteLayer" (click)="this.deleteLayer(i)" title="delete layer">delete layer</button> -->
         </div>

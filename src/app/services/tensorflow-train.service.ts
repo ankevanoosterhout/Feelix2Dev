@@ -136,7 +136,7 @@ export class TensorFlowTrainService {
 
 
 
-  processingModel(forwardOnSucces = true) {
+  async processingModel(forwardOnSucces = true) {
 
 
     if (!this.d.processing && this.d.selectedModel) {
@@ -178,6 +178,7 @@ export class TensorFlowTrainService {
           console.log(this.d.selectedModel.model);
         }
       }).catch(e => {
+        console.log('error initiliazing model');
         this.handleError(e);
       });
 
@@ -290,9 +291,24 @@ export class TensorFlowTrainService {
     if (this.d.selectedModel.layers[1].type.subgroup === 'convolutional') {
       shape = this.d.selectedModel.layers[0].options.inputDimension === 1 ? [channels, motors * inputs] : [channels, inputs, motors];
     } else {
-      shape = this.d.selectedModel.layers[0].options.inputDimension === 1 && motors === 1 ? [this.d.selectedModel.layers[0].options.inputLength.value, inputs] :
-              this.d.selectedModel.layers[0].options.inputDimension === 1 || motors === 1 ? [this.d.selectedModel.layers[0].options.inputLength.value, inputs * motors] :
-              [this.d.selectedModel.layers[0].options.inputLength.value, motors, inputs];
+      // shape = this.d.selectedModel.layers[0].options.inputDimension === 1 && motors === 1 ? [this.d.selectedModel.layers[0].options.inputLength.value, motors, inputs] :
+      //         this.d.selectedModel.layers[0].options.inputDimension === 1 || motors === 1 ? [this.d.selectedModel.layers[0].options.inputLength.value, inputs * motors] :
+      //         [this.d.selectedModel.layers[0].options.inputLength.value, motors, inputs];
+
+      shape = this.d.selectedModel.layers[0].options.inputDimension === 1 ? [this.d.selectedModel.layers[0].options.inputLength.value, motors * inputs] :
+        [this.d.selectedModel.layers[0].options.inputLength.value, motors, inputs];
+
+      // let ones = shape.indexOf(1);
+      // while (ones > -1) {
+      //   shape.slice(ones, 1);
+      //   ones = shape.indexOf(1);
+      // }
+      // console.log(shape);
+      // this.d.selectedModel.layers[0].options.inputDimension === 1 && motors === 1 ? [this.d.selectedModel.layers[0].options.inputLength.value, motors, inputs] :
+      //         this.d.selectedModel.layers[0].options.inputDimension === 1 || inputs === 1 ? [this.d.selectedModel.layers[0].options.inputLength.value * motors * inputs] :
+      //         this.d.selectedModel.layers[0].options.inputDimension === 1 || motors === 1 ? [inputs, this.d.selectedModel.layers[0].options.inputLength.value * motors] :
+
+              // [this.d.selectedModel.layers[0].options.inputLength.value, motors, inputs];
     }
 
     return shape;
@@ -343,12 +359,12 @@ export class TensorFlowTrainService {
 
       } else if (index > 0 && layer.type) {
 
-        // console.log(layer.type);
+        console.log(layer);
 
         layerItem = layer.type.tf({
             name: layer.name + '-' + index,
-            trainable: layer.options.trainable,
-            units: layer.options.units && layer.type.subgroup !== 'normalization' ? layer.options.units.value : undefined,
+            trainable: layer.options.trainable.value,
+            units: layer.options.units && layer.type.subgroup !== 'normalization' && layer.type.name !== 'dropout' && layer.type.name !== 'flatten' ? layer.options.units.value : undefined,
            // inputShape: index === 1 ? inputShape : undefined,
            // batchSize: index === 1 && this.d.selectedModel.layers[0].options.batchSize && this.d.selectedModel.training.batchSize !== null ? this.d.selectedModel.training.batchSize : undefined,
             inputLength: index === 1 && this.d.selectedModel.layers[0].options.inputLength && this.d.selectedModel.layers[0].options.inputLength.value ? this.d.selectedModel.layers[0].options.inputLength.value : undefined,
@@ -372,26 +388,26 @@ export class TensorFlowTrainService {
             strides:      layer.options.strides ? layer.options.strides.value.length > 1 ? layer.options.strides.value : layer.options.strides.value[0] : undefined,
             dilationRate: layer.options.dilationRate ? layer.options.dilationRate.value.length > 1 ? layer.options.dilationRate.value : layer.options.dilationRate.value[0] : undefined,
 
-            biasInitializer: layer.options.biasInitializer && layer.options.biasInitializer.value.name !== 'none' ?
-                             layer.options.biasInitializer.value.initializer(layer.options.biasInitializer.value.args) : undefined,
+            // biasInitializer: layer.options.biasInitializer && layer.options.biasInitializer.value.name !== 'none' ?
+            //                  layer.options.biasInitializer.value.initializer(layer.options.biasInitializer.value.args) : undefined,
             biasConstraint:  layer.options.biasConstraint && layer.options.biasConstraint.value !== 'none' ? layer.options.biasConstraint.value : undefined,
             biasRegularizer: layer.options.biasRegularizer && layer.options.biasRegularizer.value.name !== 'none' ?
                              layer.options.biasRegularizer.value.regularizer(layer.options.biasRegularizer.value.config) : undefined,
 
-            kernelInitializer: layer.options.kernelInitializer && layer.options.kernelInitializer.value.name !== 'none' ?
-                               layer.options.kernelInitializer.value.initializer(layer.options.kernelInitializer.value.args) : undefined,
+            // kernelInitializer: layer.options.kernelInitializer && layer.options.kernelInitializer.value.name !== 'none' ?
+                              //  layer.options.kernelInitializer.value.initializer(layer.options.kernelInitializer.value.args) : undefined,
             kernelConstraint:  layer.options.kernelConstraint && layer.options.kernelConstraint.value !== 'none' ? layer.options.kernelConstraint.value : undefined,
             kernelRegularizer: layer.options.kernelRegularizer && layer.options.kernelRegularizer.value.name !== 'none' ?
                                layer.options.kernelRegularizer.value.regularizer(layer.options.kernelRegularizer.value.config) : undefined,
 
-            depthwiseInitializer: layer.options.depthwiseInitializer && layer.options.depthwiseInitializer.value.name !== 'none' ?
-                                  layer.options.depthwiseInitializer.value.initializer(layer.options.depthwiseInitializer.value.args) : undefined,
+            // depthwiseInitializer: layer.options.depthwiseInitializer && layer.options.depthwiseInitializer.value.name !== 'none' ?
+            //                       layer.options.depthwiseInitializer.value.initializer(layer.options.depthwiseInitializer.value.args) : undefined,
             depthwiseConstraint:  layer.options.depthwiseConstraint && layer.options.depthwiseConstraint.value !== 'none' ? layer.options.depthwiseConstraint.value : undefined,
             depthwiseRegularizer: layer.options.depthwiseRegularizer && layer.options.depthwiseRegularizer.value.name !== 'none' ?
                                   layer.options.depthwiseRegularizer.value.regularizer(layer.options.depthwiseRegularizer.value.config) : undefined,
 
-            pointwiseInitializer: layer.options.pointwiseInitializer && layer.options.pointwiseInitializer.value.name !== 'none' ?
-                                  layer.options.pointwiseInitializer.value.initializer(layer.options.pointwiseInitializer.value.args) : undefined,
+            // pointwiseInitializer: layer.options.pointwiseInitializer && layer.options.pointwiseInitializer.value.name !== 'none' ?
+            //                       layer.options.pointwiseInitializer.value.initializer(layer.options.pointwiseInitializer.value.args) : undefined,
             pointwiseConstraint:  layer.options.pointwiseConstraint && layer.options.pointwiseConstraint.value !== 'none' ? layer.options.pointwiseConstraint.value : undefined,
             pointwiseRegularizer: layer.options.pointwiseRegularizer && layer.options.pointwiseRegularizer.value.name !== 'none' ?
                                   layer.options.pointwiseRegularizer.value.regularizer(layer.options.pointwiseRegularizer.value.config) : undefined,
@@ -416,8 +432,8 @@ export class TensorFlowTrainService {
 
             //dropoutFunc
 
-            recurrentInitializer: layer.options.recurrentInitializer && layer.options.recurrentInitializer.value.name !== 'none' ?
-                                  layer.options.recurrentInitializer.value.initializer(layer.options.recurrentInitializer.value.args) : undefined,
+            // recurrentInitializer: layer.options.recurrentInitializer && layer.options.recurrentInitializer.value.name !== 'none' ?
+            //                       layer.options.recurrentInitializer.value.initializer(layer.options.recurrentInitializer.value.args) : undefined,
             recurrentConstraint:  layer.options.recurrentConstraint && layer.options.recurrentConstraint.value !== 'none' ? layer.options.recurrentConstraint.value : undefined,
             recurrentRegularizer: layer.options.recurrentRegularizer && layer.options.recurrentRegularizer.value.name !== 'none' ?
                                   layer.options.recurrentRegularizer.value.regularizer(layer.options.recurrentRegularizer.value.config) : undefined
@@ -476,6 +492,8 @@ export class TensorFlowTrainService {
     const data = await this.createJSONfromDataSet(this.d.dataSets);
     const validation = this.d.dataSets.filter(d => d.trainingType === TrainingType.validation).length > 0 ? true : false;
 
+    if (!this.d.selectedModel.model) { await this.processingModel(false); }
+
     if (this.d.selectedModel.model) {
 
       const [xReshaped, yReshaped] = await this.transformArray(data.xs, data.ys, this.getInputShapeModel(), validation);
@@ -508,35 +526,35 @@ export class TensorFlowTrainService {
   }
 
 
+
+
   async transformArray(inputArray: Array<any>, outputArray: Array<any>, shape: Array<number>, returnDataset: boolean) {
 
     let reshapedInputTensor: any;
     let reshapedOutputTensor: any;
 
-    console.log(outputArray);
-
-    const inputTensor = tf.tensor(inputArray);
     const outputTensor = tf.tensor(outputArray);
-    console.log(outputTensor);
 
     if (!this.d.selectedModel.layers[0].options.sparse.value) {
 
-      reshapedInputTensor = inputTensor.reshape([-1, ...shape]);
+      const inputTensor = tf.tensor(inputArray);
+      const squeezedTensor = inputTensor.shape.includes(1) ? inputTensor.squeeze() : inputTensor;
+      reshapedInputTensor = squeezedTensor.reshape([-1, ...shape]);
+
     } else {
       const spd = this.getSparseRepresentation(inputArray);
-
       const sparseTensor = tf.sparseToDense(spd.sparseIndices, spd.sparseValues, spd.denseShape);
-      // sparseTensor.print();
-      reshapedInputTensor = sparseTensor.reshape([-1, ...shape]);
+      const squeezedTensor = sparseTensor.shape.includes(1) ? sparseTensor.squeeze() : sparseTensor;
+      reshapedInputTensor = squeezedTensor.reshape([-1, ...shape]);
     }
-    console.log(this.d.selectedModel.model.layers[this.d.selectedModel.model.layers.length - 2]);
 
     if (reshapedInputTensor.rank < outputTensor.rank || this.d.selectedModel.model.layers[this.d.selectedModel.model.layers.length - 2].outboundNodes[0].outputTensors[0].rank < outputTensor.rank) {
-      reshapedOutputTensor = outputTensor.squeeze();
+      if (outputTensor.shape.includes(1)) {
+        reshapedOutputTensor = outputTensor.squeeze();
+      }
 
       return returnDataset ? [ reshapedInputTensor.arraySync(), reshapedOutputTensor.arraySync() ] : [ reshapedInputTensor, reshapedOutputTensor ];
     }
-
 
     return returnDataset ? [ reshapedInputTensor.arraySync(), outputArray ] : [ reshapedInputTensor, outputTensor ];
   }
@@ -656,20 +674,21 @@ export class TensorFlowTrainService {
     let logFile: any;
 
     await this.d.selectedModel.model.fit(iTensor, oTensor, {
-      verbose: true,
+      verbose: 1,
       shuffle: true,
       batchSize: batchSize,
       epochs: this.d.selectedModel.training.epochs,
       callbacks: {
         onTrainBegin: async() => {
-          logFile = this.createLogFile();
+          const emptyFile = this.d.trainingData.filter(d => d.data.length === 0)[0];
+          logFile = emptyFile ? emptyFile : this.createLogFile();
         },
         onEpochEnd: async(epoch: any, logs: any) => {
           const metric = this.getMetric(logs);
           logFile.data.push({ log: { loss: logs.loss, metric: metric.training, text_metric: metric.text }, epoch: epoch});
           this.tensorflowService.updateProgess('Training: loss = ' + logs.loss + '' + (metric ? metric.text + metric.training : ' '), ((75/this.d.selectedModel.training.epochs) * epoch) + 25,
             { e: epoch, metric: metric, loss: logs.loss });
-          this.updateTrainingGraph.next({ e: epoch, metric: metric, loss: logs.loss });
+          this.updateTrainingGraph.next({ e: epoch, metric: metric.training, loss: logs.loss, val_metric: metric.validation, val_loss: logs.val_loss });
         },
         onTrainEnd: async(logs: any) => {
           console.log(logs);
@@ -694,9 +713,11 @@ export class TensorFlowTrainService {
         epochs: this.d.selectedModel.training.epochs,
         validationData: validationDs,
         validationBatchSize: this.d.selectedModel.training.validationBatchSize,
+        verbose: 1,
         callbacks: {
           onTrainBegin: async() => {
-            logFile = this.createLogFile();
+            const emptyFile = this.d.trainingData.filter(d => d.data.length === 0)[0];
+            logFile = emptyFile ? emptyFile : this.createLogFile();
           },
           onEpochEnd: async(epoch: any, logs: any) => {
 
@@ -704,7 +725,7 @@ export class TensorFlowTrainService {
             logFile.data.push({ log: { loss: logs.loss, val_loss: logs.val_loss, metric: metric.training, val_metric: metric.validation, text_metric: metric.text }, epoch: epoch});
             this.tensorflowService.updateProgess('Training: loss = ' + logs.loss + '' + (metric ? metric.text + metric.training : ' '), ((75/this.d.selectedModel.training.epochs) * epoch) + 25,
               { e: epoch, metric: metric, loss: logs.loss });
-            this.updateTrainingGraph.next({ e: epoch, metric: metric, loss: logs.loss });
+            this.updateTrainingGraph.next({ e: epoch, metric: metric.training, loss: logs.loss, val_metric: metric.validation, val_loss: logs.val_loss });
           },
           onTrainEnd: async() => {
             this.tensorflowService.updateProgess('Training complete.', 100);
@@ -811,16 +832,15 @@ export class TensorFlowTrainService {
   async compileModel(optimizer: any) {
     try {
 
-      if (this.d.selectedModel.model) {
 
-        this.d.selectedModel.model.compile({
-          optimizer: optimizer,
-          loss: this.d.selectedModel.training.losses.value,
-          metrics: this.d.selectedModel.training.metrics.value !== undefined ? [ this.d.selectedModel.training.metrics.value ] : []
-        });
+      this.d.selectedModel.model.compile({
+        optimizer: optimizer,
+        loss: this.d.selectedModel.training.losses.value,
+        metrics: this.d.selectedModel.training.metrics.value !== undefined ? [ this.d.selectedModel.training.metrics.value ] : []
+      });
 
-        this.tensorflowService.updateProgess('compiled successfully', 22);
-      }
+      this.tensorflowService.updateProgess('compiled successfully', 22);
+
     }
     catch(e: any) {
       console.log('error compiling');

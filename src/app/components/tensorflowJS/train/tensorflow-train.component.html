@@ -37,9 +37,11 @@
           <div>
             <ul class="buttons-list">
 
-              <li id="shuffle" (click)="this.d.random = !this.d.random" [ngClass]="{ active: this.d.random }"><img src="./assets/icons/buttons/random.svg" title="Randomly assign training and validation sets"></li>
-              <li id="save" (click)="this.tensorflowService.saveTrainingSettings()"><img src="./assets/icons/buttons/save.svg" title="Save trained model"></li>
-              <li class="padding" id="delete" (click)="this.tensorflowService.deleteLogFile()"><img src="./assets/icons/buttons/bin.svg" title="Delete trained model"></li>
+              <li id="shuffle" (click)="this.shuffle()" [ngClass]="{ active: this.d.random }"><img src="./assets/icons/buttons/random.svg" title="Randomly assign training and validation sets"></li>
+              <!-- <li id="save" (click)="this.saveLogFiles()"><img src="./assets/icons/buttons/save.svg" title="Save training log file"></li> -->
+              <li id="newTrainingFile" (click)="this.createTrainingLogFile()"><img src="./assets/icons/tools/collections.svg" title="Create new file"></li>
+              <li class="padding" id="import" (click)="this.importLogFiles()"><img src="./assets/icons/buttons/import.svg" title="import training log files"/></li>
+              <li class="padding" id="export" (click)="this.exportLogFiles()"><img src="./assets/icons/buttons/export.svg" title="Export training log files"/></li>
             </ul>
           </div>
 
@@ -75,7 +77,7 @@
           <ul class="file-list-sidebar last">
             <li *ngFor="let log of this.d.trainingData; let i = index;" id="trainingLog-{{ log.id }}" (click)="this.selectLogFile(log.id)" [ngClass]="{ active: log.open }">
               <div class="row name" >{{ log.name }}</div>
-              <div class="close close-button" (click)="this.tensorflowService.deleteLogFile(log.id)"><div></div></div>
+              <div class="close close-button" (click)="this.deleteLogFile(log.id)"><div></div></div>
             </li>
           </ul>
         </div>

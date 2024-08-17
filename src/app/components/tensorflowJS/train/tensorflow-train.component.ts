@@ -1,5 +1,6 @@
 
 import { ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/core';
+import { ElectronService } from 'ngx-electron';
 import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
 import { Bounds, TrainingSet } from 'src/app/models/tensorflow.model';
 import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
@@ -27,7 +28,7 @@ export class TensorflowTrainComponent implements OnInit {
   training = false;
 
   constructor(public tensorflowService: TensorFlowMainService, private tensorflowDrawService: TensorFlowDrawService, private tensorflowTrainService: TensorFlowTrainService,
-              private changeDetection: ChangeDetectorRef) {
+              private changeDetection: ChangeDetectorRef, private electronService: ElectronService) {
 
     this.d = this.tensorflowService.d;
 
@@ -38,8 +39,9 @@ export class TensorflowTrainComponent implements OnInit {
       if (file) {
         file.bounds_loss.xMax = max;
         file.bounds_metric.xMax = max;
-        file.bounds_loss.yMax = data.loss * 1.2 > file.bounds_loss.yMax ? data.loss * 1.2 : file.bounds_loss.yMax;
-        file.bounds_metric.yMax = data.metric * 1.2 > file.bounds_metric.yMax ? data.metric * 1.2 : file.bounds_metric.yMax;
+        file.bounds_loss.yMax = Math.max(file.bounds_loss.yMax, data.loss * 1.2, data.val_loss * 1.2);
+        file.bounds_metric.yMax = Math.max(file.bounds_metric.yMax, data.metric * 1.2, data.val_metric * 1.2);
+
 
         this.tensorflowDrawService.updateBounds(file.bounds_loss, this.graphID_A, this.size);
         this.tensorflowDrawService.updateBounds(file.bounds_metric, this.graphID_B, this.size);
@@ -137,7 +139,7 @@ export class TensorflowTrainComponent implements OnInit {
 
   redrawGraph(file: TrainingSet) {
     const bounds_loss = file ? file.bounds_loss : new Bounds(0, 100, 0, 1);
-    const bounds_metric = file ? file.bounds_loss : new Bounds(0, 100, 0, 1);
+    const bounds_metric = file ? file.bounds_metric : new Bounds(0, 100, 0, 1);
 
     this.tensorflowDrawService.updateBounds(bounds_loss, this.graphID_A, this.size);
     this.tensorflowDrawService.updateBounds(bounds_metric, this.graphID_B, this.size);
@@ -163,5 +165,43 @@ export class TensorflowTrainComponent implements OnInit {
       this.changeDetection.detectChanges();
       this.resize();
     }
+  }
+
+  deleteLogFile(id: string) {
+    if (!this.training) {
+
+      if (this.d.trainingData.length === 1) {
+        this.d.trainingData = [];
+        this.resize();
+      } else {
+        this.tensorflowService.deleteLogFile(id);
+      }
+      this.changeDetection.detectChanges();
+    }
+  }
+
+  shuffle() {
+    this.d.random = !this.d.random;
+    this.split();
+  }
+
+  exportLogFiles() {
+    console.log(this.d.trainingData);
+    if (this.d.trainingData.length > 0) {
+
+      this.tensorflowService.exportFileData(this.d.trainingData);
+    }
+  }
+
+  saveLogFiles() {
+
+  }
+
+  importLogFiles() {
+    this.electronService.ipcRenderer.send('loadDataFromFile', { storageName: 'loadTrainingData', storageLocation: 'loadDataLocation' });
+  }
+
+  createTrainingLogFile() {
+    this.tensorflowTrainService.createLogFile();
   }
 }

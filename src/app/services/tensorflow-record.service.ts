@@ -140,16 +140,22 @@ export class TensorFlowRecordService {
     }
   }
 
+  getSize() {
+    const size = { width: innerWidth - 395, height: innerHeight - 70, margin: 70 };
+    return size;
+  }
+
 
 
   redraw(set = this.d.selectedDataset, lines = this.d.trimLines, id: string) {
-    const size = { width: innerWidth - 395, height: innerHeight - 70, margin: 70 };
+    const size = this.getSize();
     const bounds = set ? set.bounds : new Bounds();
     this.tensorflowDrawService.updateBounds(bounds, id);
     this.tensorflowDrawService.drawGraph(id, bounds, size);
     if (set) {
-      this.tensorflowDrawService.drawTensorFlowGraphData(set, this.d.trimLinesVisible ? lines : null, id);
+      this.tensorflowDrawService.drawTensorFlowGraphData(set, this.d.trimLinesVisible ? lines : null, id, size);
     }
+
   }
 
 

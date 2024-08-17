@@ -57,96 +57,106 @@ export class TensorflowDeployComponent implements AfterViewInit {
 
 
   loadDataFromFile() {
-    this.electronService.ipcRenderer.send('loadDataFromFile', 'loadMLData');
+    this.electronService.ipcRenderer.send('loadDataFromFile', { storageName: 'loadMLData', storageLocation: 'loadDataLocation' });
   }
 
 
 
   loadMLdataSet(dataSets: Array<any>) {
-    const tmpID = uuid();
 
     if (dataSets) {
+      const tmpID = uuid();
+
       let i = 0;
 
       for (const mlData of dataSets) {
 
+        if (!mlData.data && mlData.length > 0) {
 
-        for (const data of mlData.data) {
+          console.log(mlData);
 
-          for (const dataSequence of data.i) {
+          for (const data of mlData) {
 
-            const actuators: Array<MotorEl> = [];
-
-            let nrOfMotors = dataSequence[0].length;
-            for (let m = 0; m < nrOfMotors; m++) {
-              const motorEl = new MotorEl('actuator-' + (m + 1), 'actuator-' + (m + 1), null, null, m);
-              motorEl.record = true;
-              motorEl.visible = true;
-              motorEl.colors = [ new InputColor('pressure', this.d.colorOptions[m]) ];
-              actuators.push(motorEl);
+            if (data.date && data.classifierID && data.confidencesLevels) {
+              this.d.mlOutputData.push(data);
             }
+          }
 
-            let j = 0;
+        } else {
+          for (const data of mlData.data) {
 
-            const mlDataSet = new MLDataSet(uuid(), 'ml-output-' + (i + 1));
-            mlDataSet.classifierID = tmpID;
+            for (const dataSequence of data.i) {
 
-            mlDataSet.selected = false;
-            mlDataSet.open = false;
+              const actuators: Array<MotorEl> = [];
 
-            for (const item of dataSequence) {
-
-              let n = 0;
-              for (const value of item) {
-                if (mlDataSet.m[n] === undefined) {
-                  actuators[n].d = [];
-                  mlDataSet.m[n] = actuators[n];
-                }
-                const inputItem = new InputItem('pressure');
-                inputItem.value = value[0];
-
-                mlDataSet.m[n].d.push({inputs: [ inputItem ], time: j});
-
-                n++;
+              let nrOfMotors = dataSequence[0].length;
+              for (let m = 0; m < nrOfMotors; m++) {
+                const motorEl = new MotorEl('actuator-' + (m + 1), 'actuator-' + (m + 1), null, null, m);
+                motorEl.record = true;
+                motorEl.visible = true;
+                motorEl.colors = [ new InputColor('pressure', this.d.colorOptions[m]) ];
+                actuators.push(motorEl);
               }
 
-              j++;
+              let j = 0;
+
+              const mlDataSet = new MLDataSet(uuid(), 'ml-output-' + (i + 1));
+              mlDataSet.classifierID = tmpID;
+
+              mlDataSet.selected = false;
+              mlDataSet.open = false;
+
+              for (const item of dataSequence) {
+
+                let n = 0;
+                for (const value of item) {
+                  if (mlDataSet.m[n] === undefined) {
+                    actuators[n].d = [];
+                    mlDataSet.m[n] = actuators[n];
+                  }
+                  const inputItem = new InputItem('pressure');
+                  inputItem.value = value[0];
+
+                  mlDataSet.m[n].d.push({inputs: [ inputItem ], time: j});
+
+                  n++;
+                }
+
+                j++;
+              }
+
+              let c = 0;
+              for (const value of data.p) {
+                const label = new Label(mlData.classifier[c].id, mlData.classifier[c].name);
+                label.confidence = value;
+
+                mlDataSet.confidencesLevels.push(label);
+                c++;
+              }
+
+              mlDataSet.bounds = { xMin: 0, xMax: dataSequence.length - 1, yMin: 0.6, yMax: 1.4 };
+
+
+              this.d.mlOutputData.push(mlDataSet);
+
             }
-
-            let c = 0;
-            for (const value of data.p) {
-              const label = new Label(mlData.classifier[c].id, mlData.classifier[c].name);
-              label.confidence = value;
-
-              mlDataSet.confidencesLevels.push(label);
-              c++;
-            }
-
-            mlDataSet.bounds = { xMin: 0, xMax: dataSequence.length - 1, yMin: 0.6, yMax: 1.4 };
-
-
-            this.d.mlOutputData.push(mlDataSet);
-
+            i++;
           }
-          i++;
+
+
+          if (dataSets.length > 0 && !this.d.selectedModel.outputs.filter(c => c.id === tmpID)[0]) {
+
+            const newClassifier = new Classifier(tmpID, 'Output', false);
+
+            for (let c = 0; c < dataSets[0].classifier.length; c++) {
+              newClassifier.labels.push(this.d.mlOutputData[0].confidencesLevels[c]);
+            }
+            newClassifier.active = true;
+
+            this.d.selectedModel.outputs.push(newClassifier);
+          }
         }
       }
     }
-    if (!this.d.selectedModel.outputs.filter(c => c.id === tmpID)[0]) {
-      const newClassifier = new Classifier(tmpID, 'Classifier', false);
-
-      for (let c = 0; c < dataSets[0].classifier.length; c++) {
-        newClassifier.labels.push(this.d.mlOutputData[0].confidencesLevels[c]);
-      }
-      newClassifier.active = true;
-
-      this.d.selectedModel.outputs.push(newClassifier);
-    }
-
-
   }
-
-
-
-
 }

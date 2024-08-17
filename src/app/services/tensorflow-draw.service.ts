@@ -2,7 +2,9 @@ import { Injectable } from '@angular/core';
 import * as d3 from 'd3';
 import { Subject } from 'rxjs/internal/Subject';
 import { TensorFlowConfig } from '../models/tensorflow-config.model';
-import { DataSet, Bounds } from '../models/tensorflow.model';
+import { DataSet, Bounds, MinMax, TrimSection } from '../models/tensorflow.model';
+import { v4 as uuid } from 'uuid';
+
 
 @Injectable()
 export class TensorFlowDrawService {
@@ -10,9 +12,10 @@ export class TensorFlowDrawService {
   public config: TensorFlowConfig;
 
   redraw: Subject<any> = new Subject<void>();
-  updateTrimSize: Subject<any> = new Subject<void>();
+  // updateTrimSize: Subject<any> = new Subject<void>();
   redrawGraphTraining: Subject<any> = new Subject<void>();
   updateBoundsGraph: Subject<any> = new Subject<void>();
+  addOrRemoveSection: Subject<any> = new Subject<void>();
 
   constructor() {
     this.config = new TensorFlowConfig();
@@ -22,6 +25,7 @@ export class TensorFlowDrawService {
   drawGraph(id='svg_graph_data', bounds: Bounds, size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
 
     this.config.zoomable = id === 'svg_graph_training_A' || id === 'svg_graph_training_B' ? false : true;
+    const index = id === 'svg_graph_training_B' ? 1 : 0;
 
     d3.selectAll('#svg_' + id).remove();
 
@@ -50,43 +54,10 @@ export class TensorFlowDrawService {
       .style('stroke-width', 0.5)
       .style('fill', 'transparent');
 
-    this.setScale(svg, bounds, size);
-    this.drawTicks(svg, size);
+    this.setScale(svg, bounds, index, size);
+    this.drawTicks(svg, index, size);
   }
 
-  // drawGraph2(id='svg_graph_data', size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
-
-  //   d3.selectAll('#svg_' + id).remove();
-
-  //   this.svgObject_B = d3.select('#' + id)
-  //       .append('svg')
-  //       .attr('id', 'svg_' + id)
-  //       .attr('width', size.width)
-  //       .attr('height', size.height);
-  //         // .attr("viewBox", [0, 0, this.config.width, this.config.height]);
-
-  //   this.svgObject_B.append('clipPath')
-  //     .attr('id', 'clipPathGraph')
-  //     .append('svg:rect')
-  //     .attr('width', size.width - (2 * size.margin))
-  //     .attr('height', size.height - size.margin)
-  //     .attr('transform', 'translate(' + size.margin + ',0)');
-
-  //   this.svgObject_B.append('rect')
-  //     .attr('id', 'border')
-  //     .attr('x', 0)
-  //     .attr('y', 0)
-  //     .attr('width', size.width - (2 * size.margin))
-  //     .attr('height', size.height - (2 * size.margin))
-  //     .attr('transform', 'translate(' + size.margin + ',' + size.margin + ')')
-  //     .style('stroke', '#999')
-  //     .style('stroke-width', 0.5)
-  //     .style('fill', 'transparent');
-
-  //   this.setScale(size);
-  //   this.drawTicks(size, this.svgObject_B);
-
-  // }
 
 
   enableZoom(enable: boolean) {
@@ -95,9 +66,9 @@ export class TensorFlowDrawService {
 
 
 
-  setScale(svg: any, bounds = new Bounds(), size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
+  setScale(svg: any, bounds = new Bounds(), index = 0, size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
 
-    this.config.scaleY = d3.scaleLinear()
+    this.config.scaleY[index] = d3.scaleLinear()
       .domain([bounds.yMax, bounds.yMin])
       .range([size.margin, size.height - size.margin]);
 
@@ -162,7 +133,7 @@ export class TensorFlowDrawService {
 
     this.config.transform = null;
 
-    size ? this.setScale(d3.select('#svg_' + id), bounds, size) : this.setScale(d3.select('#svg_' + id), bounds);
+    size ? this.setScale(d3.select('#svg_' + id), bounds, (id === 'svg_graph_training_B' ? 1 : 0), size) : this.setScale(d3.select('#svg_' + id), bounds, (id === 'svg_graph_training_B' ? 1 : 0));
   }
 
   updateScale(scale: number) {
@@ -173,11 +144,11 @@ export class TensorFlowDrawService {
   }
 
 
-  drawTicks(svg: any, size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
+  drawTicks(svg: any, index = 0, size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
     this.config.yAxis = svg.append('g');
 
     const yAxis = d3
-        .axisLeft(this.config.scaleY)
+        .axisLeft(this.config.scaleY[index])
         .ticks(5)
         .tickSize(size.width - (2 * size.margin))
         .tickFormat((e: any) => {
@@ -241,8 +212,8 @@ export class TensorFlowDrawService {
 
     const training = d3.line()
       .x((d: { epoch: number; }) => this.config.scaleX(d.epoch))
-      .y((d: { log: any; }) => { return index === 0 ? (isNaN(this.config.scaleY(d.log.loss)) ? 0 : this.config.scaleY(d.log.loss)) :
-                                                      (isNaN(this.config.scaleY(d.log.metric)) ? 0 : this.config.scaleY(d.log.metric)); });
+      .y((d: { log: any; }) => { return index === 0 ? (isNaN(this.config.scaleY[index](d.log.loss)) ? 0 : this.config.scaleY[index](d.log.loss)) :
+                                                      (isNaN(this.config.scaleY[index](d.log.metric)) ? 0 : this.config.scaleY[index](d.log.metric)); });
 
     if (training) {
       dataGroup.append('path')
@@ -258,8 +229,8 @@ export class TensorFlowDrawService {
 
       const validation = d3.line()
         .x((d: { epoch: number; }) => this.config.scaleX(d.epoch))
-        .y((d: { log: any }) => { return index === 0 ? (isNaN(this.config.scaleY(d.log.val_loss)) ? 0 : this.config.scaleY(d.log.val_loss)) :
-                                                  (isNaN(this.config.scaleY(d.log.val_metric)) ? 0 : this.config.scaleY(d.log.val_metric)); })
+        .y((d: { log: any }) => { return index === 0 ? (isNaN(this.config.scaleY[index](d.log.val_loss)) ? 0 : this.config.scaleY[index](d.log.val_loss)) :
+                                                  (isNaN(this.config.scaleY[index](d.log.val_metric)) ? 0 : this.config.scaleY[index](d.log.val_metric)); })
 
       if (validation) {
         dataGroup.append('path')
@@ -300,7 +271,7 @@ export class TensorFlowDrawService {
                 .x((d: { time: number; }) => isNaN(this.config.scaleX(d.time)) ? d.time : this.config.scaleX(d.time))
                 .y((d: { inputs: { value: any; name: string }[]; }) => {
                   const inputItem = d.inputs.filter(n => n.name === input.name)[0];
-                  return isNaN(this.config.scaleY(inputItem.value)) ? 0 : this.config.scaleY(inputItem.value);
+                  return isNaN(this.config.scaleY[0](inputItem.value)) ? 0 : this.config.scaleY[0](inputItem.value);
                 });
 
 
@@ -324,7 +295,7 @@ export class TensorFlowDrawService {
                     .attr('cx', (d: { time: number; }) => isNaN(this.config.scaleX(d.time)) ? d.time : this.config.scaleX(d.time))
                     .attr('cy', (d: { inputs: { value: any; name: string }[]; }) => {
                                     const inputItem = d.inputs.filter(n => n.name === input.name)[0];
-                                    return isNaN(this.config.scaleY(inputItem.value)) ? 0 : this.config.scaleY(inputItem.value)})
+                                    return isNaN(this.config.scaleY[0](inputItem.value)) ? 0 : this.config.scaleY[0](inputItem.value)})
                     .attr('class', 'm-' + m.id + '-' + m.mcu.id + '-' + input.name)
                     .attr('fill', '#4a4a4a')
                     .attr('stroke', colorData.hash)
@@ -363,48 +334,113 @@ export class TensorFlowDrawService {
 
       const trimLinesGroup =  d3.select('#svg_svg_graph_data').append('g')
         .attr('id', 'dataTrimLines')
-        .attr('clip-path', 'url(#clipPathGraph)')
+        // .attr('clip-path', 'url(#clipPathGraph)')
         .attr('transform', 'translate(0,'+ size.margin +')');
 
-      const dragLine = d3
-          .drag()
-          .on('drag', (event: any, d: { id: number; value: number }) => {
 
-            if (event.x > size.margin && event.x < size.width - size.margin) {
+      const dragLineLeft = d3
+        .drag()
+        .on('drag', (event: any, d: { id: number, values: MinMax, width: number }) => {
 
-              d.value = this.config.scaleX.invert(event.x);
+          const index = lines.indexOf(d);
+          const prevItemMax = index > 0 ? this.config.scaleX(lines[index - 1].values.max) : this.config.scaleX(0);
 
-              this.updateTrimSize.next(true);
+          if (event.x > prevItemMax && event.x < this.config.scaleX(d.values.max)) {
 
-              d3.select('#trimLine_' + d.id).attr('x', event.x);
-              // d3.select('#trimLine_' + d.id).attr('x', event.x);
-              if (lines[0].id === d.id) {
-                d3.select('#trimLineRect_' + d.id).attr('width', event.x);
-              } else {
-                d3.select('#trimLineRect_' + d.id).attr('x', event.x).attr('width', size.width - event.x);
-              }
-            }
-          });
+            // const prevItemWidth = index > 0 ? this.config.scaleX(lines[index - 1].width) : this.config.scaleX(d.values.min);
+
+            d.values.min = this.config.scaleX.invert(event.x);
+            d.width = d.values.max - d.values.min;
+
+            this.drawTrimLines(visible, lines, size);
+            // d.width = d.values.max - d.values.min;
+
+            // // this.updateTrimSize.next(true);
+
+            // d3.select('#trimLeft_' + d.id).attr('x', event.x);
+            // d3.select('#trimblock-' + index).attr('width', event.x - prevItemMax);
+
+            // d3.select('#circle_add-' + index).attr('cx', index > 0 ? event.x - (prevItemWidth / 2) : this.config.scaleX(d.values.min / 2));
+            // d3.select('#circle_delete-' + index).attr('cx', this.config.scaleX(d.values.min + (d.width / 2)));
+          }
+        });
+
+      const dragLineRight = d3
+        .drag()
+        .on('drag', (event: any, d: { id: number, values: MinMax, width: number }) => {
+
+          const index = lines.indexOf(d);
+          const nextItemMax = index < lines.length - 1 ? this.config.scaleX(lines[index + 1].values.min) : size.width - size.margin;
+          // const nextItemWidth = index < lines.length - 1 ? this.config.scaleX(lines[index + 1].width) : size.width - size.margin - d.values.max;
+
+          if (event.x > this.config.scaleX(d.values.min) && event.x < nextItemMax) {
+
+            d.values.max = this.config.scaleX.invert(event.x);
+            d.width = d.values.max - d.values.min;
+
+            this.drawTrimLines(visible, lines, size);
+            // this.updateTrimSize.next(true);
+
+            // d3.select('#trimRight_' + d.id).attr('x', event.x);
+
+            // d3.select('#trimblock-' + (index + 1)).attr('x', event.x);
+            // d3.select('#trimblock-' + (index + 1)).attr('width', nextItemMax - event.x);
+
+            // d3.select('#circle_add-' + (index + 1)).attr('cx', event.x + (nextItemWidth / 2)); // next button
+            // d3.select('#circle_delete-' + index).attr('cx', this.config.scaleX(d.values.max - (d.width / 2)));
+
+          }
+        });
 
 
-      trimLinesGroup.selectAll('rect.trim')
+      trimLinesGroup.selectAll('rect.trimblock')
           .data(lines)
           .enter()
           .append('rect')
-          .attr('id', (d: { id: number }) => 'trimLineRect_' + d.id)
-          .attr('x', (d: any, i: number) => i === 0 ? 0 : this.config.scaleX(d.value))
+          .attr('class', 'trimblock')
+          .attr('id', (d: {}, i: number) => 'trimblock-' + i)
+          .attr('x', (d: {}, i: number) => i > 0 ? this.config.scaleX(lines[i - 1].values.max) : this.config.scaleX(0))
           .attr('y', 0)
-          .attr('width', (d: { value: number; }, i: number) => i === 0 ? Math.abs(this.config.scaleX(d.value)) : Math.abs(size.width - this.config.scaleX(d.value)))
+          .attr('width', (d: any, i: number) => this.config.scaleX(d.values.min) - this.config.scaleX((i > 0 ? lines[i - 1].values.max : 0)))
           .attr('height', size.height - (2 * size.margin))
-          .style('shape-rendering', 'crispEdges')
           .style('fill', 'rgba(0,0,0,0.3)');
 
-      trimLinesGroup.selectAll('rect.trim')
-        .data(lines)
+      const lastBlockEnd = lines.length > 0 ? this.config.scaleX(lines[lines.length - 1].values.max) : 0;
+
+      trimLinesGroup.append('rect')
+          .attr('id', 'trimblock-' + lines.length)
+          .attr('x', lastBlockEnd)
+          .attr('y', 0)
+          .attr('width', size.width - size.margin - lastBlockEnd)
+          .attr('height', size.height - (2 * size.margin))
+          .style('fill', 'rgba(0,0,0,0.3)');
+
+
+      if (lines.length > 1) {
+        this.drawCircleButton(trimLinesGroup, lines, 'delete', size);
+      }
+
+      const lastBlockPosition = this.config.scaleX.invert(size.width - size.margin);
+      const extraButtonList = [ new TrimSection(uuid(), { min: lastBlockPosition, max: lastBlockPosition + 1 }) ];
+
+      this.drawCircleButton(trimLinesGroup, lines.concat(extraButtonList), 'add', size);
+
+
+      this.addTrimLine(trimLinesGroup, lines, 'trimLeft', size, dragLineLeft);
+      this.addTrimLine(trimLinesGroup, lines, 'trimRight', size, dragLineRight);
+    }
+  }
+
+
+  addTrimLine(svg: any, data: Array<any>, name: string, size: any, call: Function) {
+
+    svg.selectAll('line.' + name)
+        .data(data)
         .enter()
         .append('rect')
-        .attr('id', (d: { id: number }) => 'trimLine_' + d.id)
-        .attr('x', (d: { value: number; }) => this.config.scaleX(d.value) - 0.5)
+        .attr('class', (d, i) => name)
+        .attr('id', (d: { id: number }) => name + '_' + d.id)
+        .attr('x', (d: { values: MinMax; }) => this.config.scaleX((name === 'trimLeft' ? d.values.min : d.values.max) - 0.5))
         .attr('y', 0)
         .attr('width', 1)
         .attr('height', size.height - (2 * size.margin))
@@ -413,8 +449,67 @@ export class TensorFlowDrawService {
         .style('stroke', 'transparent')
         .style('stroke-width', 4)
         .attr('cursor', 'e-resize')
-        .call(dragLine);
+        .call(call);
+  }
 
-    }
+
+
+
+  drawCircleButton(svg: any, data: Array<any>, name: string, size: any) {
+
+    svg.selectAll('circle.' + name + 'Section')
+      .data(data)
+      .enter()
+      .append('circle')
+      .attr('class', name + 'Section')
+      .attr('id', (d: { id: string }, i: number) => 'circle_' + name + '-' + i)
+      .attr('cx', (d:any, i: number) => {
+        if (name === 'add') {
+          if (i === 0) {
+            return this.config.scaleX(d.values.min / 2);
+          } else {
+            return this.config.scaleX(d.values.min) - ((this.config.scaleX(d.values.min) - (this.config.scaleX(data[i - 1].values.max))) / 2);
+          }
+        } else {
+          return this.config.scaleX(d.values.min + (d.width / 2));
+        }
+      })
+      .attr('cy', size.margin / 2)
+      .attr('r', 7)
+      .style('stroke', '#1c1c1c')
+      .style('stroke-width', 0.5)
+      .style('fill', (d, i) => name === 'add' && ((i === 0 && d.values.min < 40) ||(i > 0 && d.values.min - data[i - 1].values.max < 40)) ? 'transparent' : '#df9b08')
+      .on('mousedown', (event: any, d: any) => {
+        this.addOrRemoveSection.next({ add: (name === 'add' ? true : false), id: d.id, index: data.indexOf(d) });
+      })
+      .append('svg:title')
+        	.text((d, i) => name + '-' + i);
+
+
+      svg.selectAll('text.' + name + 'Section')
+        .data(data)
+        .enter()
+        .append('text')
+        .attr('x', (d:any, i: number) => {
+          if (name === 'add') {
+            if (i === 0) {
+              return this.config.scaleX(d.values.min / 2);
+            } else {
+              return this.config.scaleX(d.values.min) - ((this.config.scaleX(d.values.min) - this.config.scaleX(data[i - 1].values.max)) / 2);
+            }
+          } else {
+            return this.config.scaleX(d.values.min + (d.width / 2));
+          }
+        })
+        .attr('y', name === 'add' ? size.margin / 2 + 7 : size.margin / 2 + 6)
+        .attr('text-anchor', 'middle')
+        .text(name === 'add' ? '+' : '-')
+        .style('fill', (d, i) => name === 'add' && ((i === 0 && d.values.min < 40) ||( i > 0 && d.values.min - data[i - 1].values.max < 40)) ? 'transparent' : '#1c1c1c')
+        .style('font-family', 'Open Sans, Arial, sans-serif')
+        .style('font-size', 20)
+        .style('font-weight', 800)
+        .attr('pointer-events', 'none');
   }
 }
+
+

@@ -38,8 +38,15 @@ export class TensorflowComponent {
 
     });
 
-    this.electronService.ipcRenderer.on('load-ml-model-from-files', (event: Event, data: any) => {
-      this.tensorflowService.importModel(data);
+    this.electronService.ipcRenderer.on('load-from-files', (event: Event, data: any) => {
+      if (data.type === 'loadData' || data.type === 'loadMLData') {
+        this.tensorflowService.importDataSet(data.d);
+      } else if (data.type === 'loadMLModel') {
+        this.tensorflowService.importModel(data.d);
+      } else if (data.type === 'loadTrainingData') {
+        this.tensorflowService.importLogFile(data.d);
+        this.changeDetection.detectChanges();
+      }
     });
 
 
@@ -57,18 +64,18 @@ export class TensorflowComponent {
       this.tensorflowService.saveDataNN(data);
     });
 
-    this.electronService.ipcRenderer.on('load-from-files', (event: Event, data: any) => {
-      this.tensorflowService.importDataSet(data);
-    });
-
-    this.electronService.ipcRenderer.on('load-datasets', (event: Event, data: Array<DataSet>) => {
-      this.tensorflowService.loadDataSets(data);
+    this.electronService.ipcRenderer.on('load-datasets', (event: Event, data: any) => {
+      this.tensorflowService.loadDataSets(data.d);
       this.changeDetection.detectChanges();
     });
 
     this.tensorflowService.loadData.subscribe((res) => {
       this.tensorflowService.loadDataSets(res);
       this.changeDetection.detectChanges();
+    });
+
+    this.tensorflowService.redraw.subscribe((res) => {
+      this.tensorFlowRecordService.redraw((res.page === 'data' ? this.d.selectedDataset : this.d.selectedMLDataset), this.d.trimLines, (res.page === 'data' ? 'svg_graph_data' : 'svg_graph_deploy'));
     });
 
 
@@ -96,6 +103,7 @@ export class TensorflowComponent {
 
   selectStep(step: number) {
     this.config.activeStep = step;
+    this.d.multipleSelect.active = false;
 
     switch (step) {
       case(0): {
@@ -117,7 +125,7 @@ export class TensorflowComponent {
         this.tensorFlowRecordService.redraw(this.d.selectedMLDataset, null, 'svg_graph_deploy');
       }
       break;
-      default: { console.log('step not listed'); }
+      default:
       break;
     }
   }

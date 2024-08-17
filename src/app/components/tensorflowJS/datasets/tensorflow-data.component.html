@@ -4,9 +4,11 @@
   <div class="row right" id="toolbar-content">
 
     <div id="trimlines-input-data" *ngIf="this.d.trimLinesVisible">
-      <input type="number" class="small header" id="trimline-0" name="trimline-0" [(ngModel)]="this.d.trimLines[0].value" (change)="updateLine()">
-      <input type="number" class="small header" id="trimline-1" name="trimline-1" [(ngModel)]="this.d.trimLines[1].value" (change)="updateLine()">
-      <button class="trim" (click)="this.trimDataSet()">Trim</button>
+      <!-- <input type="number" class="small header" id="trimline-0" name="trimline-0" [(ngModel)]="this.d.trimLines[0].value" (change)="updateLine()">
+      <input type="number" class="small header" id="trimline-1" name="trimline-1" [(ngModel)]="this.d.trimLines[1].value" (change)="updateLine()"> -->
+
+      <button class="trim" (click)="this.trimDataSet()">trim dataset</button>
+      <button class="trim" (click)="this.cancelTrim()">cancel</button>
     </div>
 
     <div>

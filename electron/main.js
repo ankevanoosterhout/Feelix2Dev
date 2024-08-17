@@ -563,11 +563,8 @@ function openFileDialog(extension, storage, location) {
             localStorage.setItem(storage, (loadFile.substring(1, loadFile.length - 1)));
             localStorage.setItem(location, (loadFileLocation.substring(1, loadFileLocation.length - 1)));
 
-          } else if (storage === 'loadData') {
-            tensorflowWindow.webContents.send('load-from-files', JSON.stringify(obj));
-
-          } else if (storage === 'loadMLModel') {
-            tensorflowWindow.webContents.send('load-ml-model-from-files', JSON.stringify(obj));
+          } else if (storage === 'loadData' || storage === 'loadMLData' || storage === 'loadTrainingData') {
+            tensorflowWindow.webContents.send('load-from-files', { type: storage, d: JSON.stringify(obj)});
           }
         });
       }
@@ -1157,8 +1154,9 @@ ipcMain.on('connectToSerialPort', (e, data) => {
   serialPort.connectToSerialPort(data.COM);
 });
 
-ipcMain.on('loadDataFromFile', (e) => {
-  openFileDialog('json', 'loadData', 'loadDataLocation');
+ipcMain.on('loadDataFromFile', (e, data) => {
+  // openFileDialog('json', 'loadData', 'loadDataLocation');
+  openFileDialog('json', data.storageName, data.storageLocation);
 });
 
 // ipcMain.on('connectToSerialPort', (e, data) => {
@@ -1303,14 +1301,14 @@ ipcMain.on('requestData', (event, data) => {
   serialPort.requestData(data);
 });
 
-ipcMain.on('load-dataset', () => {
-  createLoadDataSetWindow('load-dataset');
+ipcMain.on('load-dataset', (event, data) => {
+  createLoadDataSetWindow(data === 'dataset' ? 'load-dataset' : 'load-model');
 });
 
 
-ipcMain.on('loadMLModel', (event, data) => {
-  createLoadDataSetWindow('load-model');
-});
+// ipcMain.on('loadMLModel', (event, data) => {
+//   createLoadDataSetWindow('load-model');
+// });
 
 // ipcMain.on('moveToPos', (event, data) => {
 //   serialPort.moveToPos(data.microcontroller, data.pos);
