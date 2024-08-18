@@ -247,6 +247,12 @@ class newSerialPort {
       this.sp.on('open', (error) => {
         if (error) {
           updateProgress(0, ('Error opening ' + this.COM + ' ' + error));
+          for (item of dataSendWaitList) {
+            if (item.port === this.COM) {
+              const index = dataSendWaitList.indexOf(item);
+              dataSendWaitList.splice(index, 1);
+            }
+          }
           this.sp.close();
         } else {
           updateProgress(50, (this.COM + ' has been added'));

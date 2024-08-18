@@ -28,31 +28,28 @@ export class TensorflowDeployComponent implements AfterViewInit {
 
     this.tensorflowService.updateGraph.subscribe((data) => {
       if (data) {
-        this.tensorflowRecordService.redraw(data.set, data.trimLines, this.graphID);
-        // this.tensorflowDrawService.drawTensorFlowGraphData(data.set, data.trimLines);
+        this.tensorflowRecordService.redraw(data.set, null, this.graphID, false);
+        // this.tensorflowDrawService.drawTensorFlowGraphData(data.set, null);
       }
     });
-
 
     this.tensorflowService.loadMLData.subscribe((res) => {
       this.loadMLdataSet(res);
       this.changeDetection.detectChanges();
     });
 
-
     this.tensorflowRecordService.predictOutput.subscribe(() => {
-      this.tensorflowTrainService.predictOutput()
+      this.tensorflowTrainService.predictOutput();
     });
-
   }
 
   ngAfterViewInit(): void {
-    this.tensorflowRecordService.redraw(this.d.selectedMLDataset, this.d.trimLines, this.graphID);
+    this.tensorflowRecordService.redraw(this.d.selectedMLDataset, this.d.trimLines, this.graphID, false);
   }
 
   @HostListener('window:resize', ['$event'])
   onResize(event: Event) {
-    this.tensorflowRecordService.redraw(this.d.selectedMLDataset, null, this.graphID);
+    this.tensorflowRecordService.redraw(this.d.selectedMLDataset, null, this.graphID, false);
   }
 
 

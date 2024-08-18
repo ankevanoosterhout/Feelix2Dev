@@ -29,7 +29,7 @@ export class TensorflowDataComponent implements OnInit, AfterViewInit {
 
 
         this.tensorflowDrawService.redraw.subscribe(res => {
-          this.tensorflowRecordService.redraw(this.d.selectedDataset, this.d.trimLines, this.graphID);
+          this.tensorflowRecordService.redraw(this.d.selectedDataset, this.d.trimLines, this.graphID, false);
         });
 
 
@@ -47,7 +47,7 @@ export class TensorflowDataComponent implements OnInit, AfterViewInit {
 
         this.tensorflowService.updateGraph.subscribe(data => {
           if (data) {
-            this.tensorflowRecordService.redraw(data.set, data.trimLines, this.graphID);
+            this.tensorflowRecordService.redraw(data.set, data.trimLines, this.graphID, false);
             // this.tensorflowDrawService.drawTensorFlowGraphData(data.set, data.trimLines);
           }
         });
@@ -70,7 +70,7 @@ export class TensorflowDataComponent implements OnInit, AfterViewInit {
 
 
   ngAfterViewInit(): void {
-    this.tensorflowRecordService.redraw(this.d.selectedDataset, this.d.trimLines, this.graphID);
+    this.tensorflowRecordService.redraw(this.d.selectedDataset, this.d.trimLines, this.graphID, false);
   }
 
   ngOnInit(): void {
@@ -85,7 +85,7 @@ export class TensorflowDataComponent implements OnInit, AfterViewInit {
 
   @HostListener('window:resize', ['$event'])
   onResize(event: Event) {
-    this.tensorflowRecordService.redraw(this.d.selectedDataset, this.d.trimLines, this.graphID);
+    this.tensorflowRecordService.redraw(this.d.selectedDataset, this.d.trimLines, this.graphID, false);
   }
 
 

@@ -30,6 +30,7 @@ export class TensorFlowRecordService {
   }
 
   record(page: string) {
+
     this.d.recording.active = !this.d.recording.active;
 
     this.tensorflowDrawService.enableZoom(!this.d.recording.active);
@@ -38,10 +39,14 @@ export class TensorFlowRecordService {
     if (!this.d.recording.active) {
       this.d.recording.starttime = null;
     } else {
+
       if (page === 'data' && this.d.selectedDataset && this.d.selectedDataset.m.length > 0) {
         if (this.d.selectedDataset.m[0].d.length > 0) {
           this.tensorflowService.addDataSet();
         }
+      } else if (page === 'deploy') {
+        this.d.classify = true;
+        this.tensorflowService.createNewMLDataset();
       }
     }
 
@@ -63,19 +68,18 @@ export class TensorFlowRecordService {
 
 
   processRecordedData(dataSetEl: any, time: number) {
+    dataSetEl.bounds.xMax = time * 1.05;
+    dataSetEl.bounds.xMin = dataSetEl.bounds.xMax - 5000 < 0 ? 0 : dataSetEl.bounds.xMax - 5000;
+
     if (this.d.classify) {
       this.predictOutput.next(true);
-
-    } else if (!this.d.classify && time > dataSetEl.bounds.xMax - 500) {
-
-      dataSetEl.bounds.xMax = dataSetEl.bounds.xMax < 3000 ?
-      Math.ceil(dataSetEl.bounds.xMax * 0.006) * 200 : Math.ceil(dataSetEl.bounds.xMax * 0.0024) * 500;
-
-      // this.tensorflowDrawService.updateBounds(dataSetEl.bounds);
-
     }
-    this.redraw(dataSetEl, null, this.d.classify ? 'svg_graph_deploy' : 'svg_graph_data');
+
+    this.redraw(dataSetEl, null, this.d.classify ? 'svg_graph_deploy' : 'svg_graph_data', true);
   }
+
+
+
 
 
   handleIncomingData(referenceData: number, serialPath: string, motorID: string, receivedData: any) {
@@ -128,16 +132,16 @@ export class TensorFlowRecordService {
   }
 
   checkBounds(value: number, set: any) {
-    if (!this.d.classify) {
-      if (value > set.bounds.yMax) {
-        set.bounds.yMax = value >= 10 || set.bounds.yMin <= -10 ? Math.ceil(value/5) * 5 : Math.ceil(value * 2) / 2;
-        this.tensorflowDrawService.updateBounds(set.bounds, 'svg_graph_data');
+    // if (!this.d.classify) {
+        // set.bounds.yMax = value >= 10 || set.bounds.yMin <= -10 ? Math.ceil(value/5) * 5 : Math.ceil(value * 2) / 2;
+      set.bounds.yMax = Math.ceil(value * 1.2) > set.bounds.yMax ? set.bounds.yMax = Math.ceil(value * 1.2) : set.bounds.yMax;
+      // this.tensorflowDrawService.updateBounds(set.bounds, !ML ? 'svg_graph_data' : 'svg_graph_deploy');
 
-      } else if (value < set.bounds.yMin) {
-        this.d.selectedDataset.bounds.yMin = value <= -10 || set.bounds.yMax >= 10 ? Math.floor(value/5) * 5 : Math.floor(value * 2) / 2; //Math.floor(value/2) * 2
-        this.tensorflowDrawService.updateBounds(set.bounds, 'svg_graph_data');
-      }
-    }
+      set.bounds.yMin = Math.floor(value * 1.2) < set.bounds.yMin ? set.bounds.yMin = Math.floor(value * 1.2) : set.bounds.yMin;
+      // set.bounds.yMin = value <= -10 || set.bounds.yMax >= 10 ? Math.floor(value/5) * 5 : Math.floor(value * 2) / 2; //Math.floor(value/2) * 2
+      // this.tensorflowDrawService.updateBounds(set.bounds, !ML ? 'svg_graph_data' : 'svg_graph_deploy');
+
+    // }
   }
 
   getSize() {
@@ -147,13 +151,13 @@ export class TensorFlowRecordService {
 
 
 
-  redraw(set = this.d.selectedDataset, lines = this.d.trimLines, id: string) {
+  redraw(set = this.d.selectedDataset, lines = this.d.trimLines, id: string, running: boolean = false) {
     const size = this.getSize();
     const bounds = set ? set.bounds : new Bounds();
     this.tensorflowDrawService.updateBounds(bounds, id);
     this.tensorflowDrawService.drawGraph(id, bounds, size);
     if (set) {
-      this.tensorflowDrawService.drawTensorFlowGraphData(set, this.d.trimLinesVisible ? lines : null, id, size);
+      this.tensorflowDrawService.drawTensorFlowGraphData(set, this.d.trimLinesVisible ? lines : null, id, size, running);
     }
 
   }

@@ -997,8 +997,8 @@ export class TrainingSet {
 
 
 export class MinMax {
-  min: number = 0;
-  max: number = 1;
+  min: number;
+  max: number;
 }
 
 

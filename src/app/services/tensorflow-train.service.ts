@@ -23,85 +23,98 @@ export class TensorFlowTrainService {
   }
 
   async predictOutput() {
-    let collectData = true;
-    let m = 0;
+
     if (this.d.selectedMLDataset) {
+      let collectData = true;
+      let m = 0;
+
       for (const motor of this.d.selectedMLDataset.m) {
-        if (motor.d.length !== 0 && motor.d.length <= this.d.selectedModel.layers[0].options.inputLength * this.d.selectedModel.training.batchSize ) { //20
+        while(this.d.selectedModel.layers[0].options.inputLength * this.d.selectedModel.training.batchSize <= motor.d.length - 1) { //20
           collectData = false;
         }
         m++;
+        console.log(m, this.d.selectedMLDataset.m.length);
 
         if (m >= this.d.selectedMLDataset.m.length && collectData) {
-
+          console.log(this.d.selectedMLDataset);
           const data = await this.createJSONfromDataSet([this.d.selectedMLDataset]);
           console.log(data);
 
-          this.NN_Deploy(data.xs);
-          this.createNewMLDataset();
+          await this.NN_Deploy(data);
+          this.tensorflowService.createNewMLDataset();
         }
       }
     }
   }
 
 
-  NN_Deploy(input: any) {
+  async NN_Deploy(data: any) {
 
-    // this.serialPath = path;
-    // console.log('predict');
-    // console.log(input);
-
-    const iTensor = tf.tensor(input);
-    const inputTensor = tf.reshape(iTensor, [-1, ...this.getInputShapeModel()]);
-    // console.log(iTensor, inputTensor);
-    const outputs = this.d.selectedModel.training.batchSize > 1 ? this.d.selectedModel.model.predictOnBatch(inputTensor) : this.d.selectedModel.model.predict(inputTensor);
-    // console.log(outputs);
-    const prediction = Array.from((outputs as any).dataSync());
-    // console.log(prediction);
-    this.updatePredictionClassifiers(prediction);
-
-    console.log(prediction, this.d.selectedMLDataset);
-
-    //add prediction to mlDataset > update confidence levels
-
-    // this.d.selectedMLDataset.outputs.filter()
+    if (this.d.selectedModel.model) {
 
 
-    // if (this.d.mlOutputData.length > 0) {
-    //   this.d.mlOutputData[this.d.mlOutputData.length - 1].m[motorIndex].d = input; //{ p: prediction, i: input }
-    //   this.d.mlOutputData[this.d.mlOutputData.length - 1].m[motorIndex].d
-    //   this.d.mlOutputData[this.d.mlOutputData.length - 1].classifier = this.d.selectedModel.outputs.filter(o => o.active)[0].labels;
-    // }
+      const [xReshaped, yReshaped] = await this.transformArray(data.xs, null, this.getInputShapeModel(), false);
 
-    iTensor.dispose();
+      let outputs: any;
+
+      if (this.d.selectedModel.training.validationBatchSize > 1) {
+        // const [trainingSet,validationSet] = await this.splitTrainingData({ xs: xReshaped, ys: null, trainingType: data.trainingType }, this.d.selectedModel.training.validationBatchSize);
+
+        // console.log(trainingSet);
+
+        outputs = this.d.selectedModel.model.predictOnBatch(xReshaped, {
+          verbose: 0,
+          batchSize: this.d.selectedModel.training.validationBatchSize
+        });
+      } else {
+        outputs = this.d.selectedModel.model.predict(xReshaped);
+      }
+      // console.log(outputs);
+      const prediction = Array.from((outputs as any).dataSync());
+
+      console.log(prediction, this.d.selectedMLDataset);
+
+      // console.log(prediction);
+      this.updatePredictionClassifiers(prediction);
+
+
+
+
+      //add prediction to mlDataset > update confidence levels
+
+      // this.d.selectedMLDataset.outputs.filter()
+
+
+      // if (this.d.mlOutputData.length > 0) {
+        // this.d.selectedMLDataset.m[motorIndex].d = input; //{ p: prediction, i: input }
+        // this.d.selectedMLDataset.m[motorIndex].d
+        // this.d.selectedMLDataset.classifier = this.d.selectedModel.outputs.filter(o => o.active)[0].labels;
+      // }
+
+      xReshaped.dispose();
+    }
 
   }
 
   updatePredictionClassifiers(results: Array<any>) {
     // console.log(this.d.selectedModel.outputs);
-    for (const classifier of this.d.selectedModel.outputs) {
+    for (const output of this.d.selectedModel.outputs) {
       let i  = 0;
-      for (const label of classifier.labels) {
-        // console.log(label);
-        label.confidence = results[i];
-        (this.document.getElementById('bar-' + classifier.id + '-' + label.id) as HTMLElement).style.width = (label.confidence * 100) + '%';
-        (this.document.getElementById('confidence-' + classifier.id + '-' + label.id) as HTMLElement).innerHTML = (label.confidence * 100).toFixed(2) + '%';
+      if (output.active) {
+        for (const label of output.labels) {
+          label.confidence = results[i];
+          console.log(label);
+          (this.document.getElementById('bar-' + output.id + '-' + label.id) as HTMLElement).style.width = (label.confidence * 100) + '%';
+          (this.document.getElementById('confidence-' + output.id + '-' + label.id) as HTMLElement).innerHTML = (label.confidence * 100).toFixed(2) + '%';
 
-        i++;
+          i++;
+        }
       }
     }
   }
 
 
-  createNewMLDataset() {
-    const predictionDataset = new MLDataSet(uuid(), 'Prediction', this.d.selectedMicrocontrollers);
-    predictionDataset.bounds = new Bounds(0,700,0,1);
-    this.d.mlOutputData.push(predictionDataset);
 
-    this.d.recording.starttime = new Date().getTime();
-
-    this.tensorflowService.selectDataSet(predictionDataset.id, true);
-  }
 
   splitData(distribution: number, first:boolean) {
     if (this.d.dataSets.length > 0 && (first && this.d.dataSets.filter(d => d.trainingType === null || d.trainingType === undefined).length > 0) || !first) { //online sort when training types are not yet assigned
@@ -154,10 +167,18 @@ export class TensorFlowTrainService {
         if (input.active) { inputLabels.push(input.name); }
       }
 
+      if (this.d.selectedModel.outputs.length > 0 && this.d.selectedModel.outputs.filter(output => output.active).length === 0) {
+        this.d.selectedModel.outputs[0].active = true;
+      } else {
+        this.tensorflowService.updateProgess('error: no output selected', 0);
+        return;
+      }
       for (const output of this.d.selectedModel.outputs) {
-        for (const label of output.labels) {
-          if (label.name) {
-            if (!outputLabels.includes(label.name)) { outputLabels.push(label.name); }
+        if (output.active) {
+          for (const label of output.labels) {
+            if (label.name) {
+              if (!outputLabels.includes(label.name)) { outputLabels.push(label.name); }
+            }
           }
         }
       }
@@ -230,6 +251,9 @@ export class TensorFlowTrainService {
       let m = 0;
 
       set.m.forEach(motor => {
+
+        console.log(motor);
+
         let inputArray = [];
         let i = 0;
         let n = 0 + dataSize;
@@ -245,20 +269,22 @@ export class TensorFlowTrainService {
               }
             }
             if (m !== 0 && data.xs[n]) {
-              if (data.xs[n][i]) {
+              if (data.xs[n][i] && inputs.length > 0) {
                 data.xs[n][i].push(inputs);
               }
-            } else {
+            } else if (inputs.length > 0) {
               inputArray.push([inputs]); // [inputs]
             }
 
             i++;
 
-            if (i > motor.d.length - 1 || i > this.d.selectedModel.layers[0].options.inputLength.value) { //inputLength //this.d.selectedModel.training.batchSize
+            if ((i > motor.d.length - 1 && this.d.selectedModel.layers[0].options.sparse && !this.d.classify) || i >= this.d.selectedModel.layers[0].options.inputLength.value) { //inputLength //this.d.selectedModel.training.batchSize
               if (m === 0) {
-                data.xs.push(inputArray);
-                data.ys.push(outputs);
-                data.trainingType.push(set.trainingType);
+                if (inputArray.length > 0 && (this.d.classify || outputs.length > 0)) {
+                  data.xs.push(inputArray);
+                  data.ys.push(outputs);
+                  data.trainingType.push(set.trainingType ? set.trainingType : TrainingType.training);
+                }
               } else {
                 n++;
               }
@@ -310,6 +336,8 @@ export class TensorFlowTrainService {
 
               // [this.d.selectedModel.layers[0].options.inputLength.value, motors, inputs];
     }
+
+    console.log(shape);
 
     return shape;
   }
@@ -490,6 +518,8 @@ export class TensorFlowTrainService {
     this.document.body.style.cursor = 'wait';
 
     const data = await this.createJSONfromDataSet(this.d.dataSets);
+
+    // console.log(data);
     const validation = this.d.dataSets.filter(d => d.trainingType === TrainingType.validation).length > 0 ? true : false;
 
     if (!this.d.selectedModel.model) { await this.processingModel(false); }
@@ -497,6 +527,8 @@ export class TensorFlowTrainService {
     if (this.d.selectedModel.model) {
 
       const [xReshaped, yReshaped] = await this.transformArray(data.xs, data.ys, this.getInputShapeModel(), validation);
+
+      // console.log(xReshaped, yReshaped);
 
       // this.createPredictionModel.next(true);
 
@@ -533,7 +565,7 @@ export class TensorFlowTrainService {
     let reshapedInputTensor: any;
     let reshapedOutputTensor: any;
 
-    const outputTensor = tf.tensor(outputArray);
+    const outputTensor = outputArray ? tf.tensor(outputArray) : null;
 
     if (!this.d.selectedModel.layers[0].options.sparse.value) {
 
@@ -543,12 +575,13 @@ export class TensorFlowTrainService {
 
     } else {
       const spd = this.getSparseRepresentation(inputArray);
+
       const sparseTensor = tf.sparseToDense(spd.sparseIndices, spd.sparseValues, spd.denseShape);
       const squeezedTensor = sparseTensor.shape.includes(1) ? sparseTensor.squeeze() : sparseTensor;
       reshapedInputTensor = squeezedTensor.reshape([-1, ...shape]);
     }
 
-    if (reshapedInputTensor.rank < outputTensor.rank || this.d.selectedModel.model.layers[this.d.selectedModel.model.layers.length - 2].outboundNodes[0].outputTensors[0].rank < outputTensor.rank) {
+    if (outputTensor && (reshapedInputTensor.rank < outputTensor.rank || this.d.selectedModel.model.layers[this.d.selectedModel.model.layers.length - 2].outboundNodes[0].outputTensors[0].rank < outputTensor.rank)) {
       if (outputTensor.shape.includes(1)) {
         reshapedOutputTensor = outputTensor.squeeze();
       }
@@ -564,7 +597,7 @@ export class TensorFlowTrainService {
 
 
   getSparseRepresentation(denseArray: Array<any>) {
-    const denseShape = [];
+    const denseShape: Array<number> = [];
     const sparseIndices = [];
     const sparseValues = [];
 
@@ -572,7 +605,7 @@ export class TensorFlowTrainService {
 
       if (Array.isArray(arr)) {
 
-        for (let i = 0; i < arr.length; i++) {
+        for (let i = 0; i < arr.length - 1; i++) {
           findSparseIndices(arr[i], currentIndex.concat(i));
         }
       } else {
@@ -589,6 +622,11 @@ export class TensorFlowTrainService {
     while (Array.isArray(currentLevel)) {
       denseShape.push(currentLevel.length);
       currentLevel = currentLevel[0];
+    }
+
+    while (denseShape.includes(1)) {
+      const index = denseShape.indexOf(1);
+      if (index > -1) { denseShape.splice(index, 1); }
     }
 
     return {
@@ -674,7 +712,7 @@ export class TensorFlowTrainService {
     let logFile: any;
 
     await this.d.selectedModel.model.fit(iTensor, oTensor, {
-      verbose: 1,
+      verbose: 0,
       shuffle: true,
       batchSize: batchSize,
       epochs: this.d.selectedModel.training.epochs,
@@ -713,7 +751,7 @@ export class TensorFlowTrainService {
         epochs: this.d.selectedModel.training.epochs,
         validationData: validationDs,
         validationBatchSize: this.d.selectedModel.training.validationBatchSize,
-        verbose: 1,
+        verbose: 0,
         callbacks: {
           onTrainBegin: async() => {
             const emptyFile = this.d.trainingData.filter(d => d.data.length === 0)[0];
@@ -779,29 +817,38 @@ export class TensorFlowTrainService {
   for (const type of data.trainingType) {
     if (type === TrainingType.training) {
       trainingData.xs.push(data.xs[index]);
-      trainingData.ys.push(data.ys[index]);
+      if (data.ys) {
+        trainingData.ys.push(data.ys[index]);
+      }
     } else if (type === TrainingType.validation) {
       validationData.xs.push(data.xs[index]);
-      validationData.ys.push(data.ys[index]);
+      if (data.ys) {
+        validationData.ys.push(data.ys[index]);
+      }
     }
     index++;
   }
 
   batchSize = batchSize !== null && batchSize !== 0 ? batchSize : 1;
 
+  if (data.ys) {
+    const trainingDataset = tf.data.zip({
+      xs: tf.data.array(trainingData.xs),
+      ys: tf.data.array(trainingData.ys)
+    }).shuffle(trainingData.xs.length);
 
 
-  const trainingDataset = tf.data.zip({
-    xs: tf.data.array(trainingData.xs),
-    ys: tf.data.array(trainingData.ys)
-  }).shuffle(trainingData.xs.length);
+    const validationDataset = data.ys ? tf.data.zip({
+      xs: tf.data.array(validationData.xs),
+      ys: tf.data.array(validationData.ys)
+    }).shuffle(validationData.xs.length) : null;
 
-  const validationDataset = tf.data.zip({
-    xs: tf.data.array(validationData.xs),
-    ys: tf.data.array(validationData.ys)
-  }).shuffle(validationData.xs.length);
+    return [trainingDataset.batch(batchSize), (validationDataset ? validationDataset.batch(this.d.selectedModel.training.validationBatchSize) : null)];
 
-  return [trainingDataset.batch(batchSize), validationDataset.batch(batchSize)];
+  } else {
+
+    return [tf.data.array(trainingData.xs).batch(this.d.selectedModel.training.validationBatchSize), null];
+  }
 }
 
 

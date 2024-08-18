@@ -81,15 +81,15 @@ import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service'
 
           <div class="sidebar-column-content" *ngIf="this._page === 'deploy'">
             <ul id="data_output_list" class="results">
-              <li *ngFor="let classifier of this.d.selectedModel.outputs">
-                <label class="label bold" *ngIf="classifier.active">{{ classifier.name }}</label>
+              <li *ngFor="let output of this.d.selectedModel.outputs">
+                <label class="label bold" *ngIf="output.active">{{ output.name }}</label>
 
-                <ul id="data_output_list_items" *ngIf="classifier.active">
-                  <li *ngFor="let label of classifier.labels; let i=index;">
+                <ul id="data_output_list_items" *ngIf="output.active">
+                  <li *ngFor="let label of output.labels; let i=index;">
                     <label class="label list">{{ label.name }}</label>
                     <div class="confidence-levels">
-                      <div class="bar-container"><div class="bar" id="bar-{{ classifier.id }}-{{ label.id }}"></div></div>
-                      <span class="confidence" id="confidence-{{ classifier.id }}-{{ label.id }}">0%</span>
+                      <div class="bar-container"><div class="bar" id="bar-{{ output.id }}-{{ label.id }}"></div></div>
+                      <span class="confidence" id="confidence-{{ output.id }}-{{ label.id }}">0%</span>
                     </div>
                   </li>
                 </ul>
@@ -290,9 +290,11 @@ export class SidebarComponent {
     const MLdata = this._page === 'deploy' ? true : false;
 
     if (this.getActiveDataset()) {
-      const index = MLdata ? this.d.mlOutputData.indexOf(this.d.selectedMLDataset) : this.d.dataSets.indexOf(this.d.selectedDataset);
+      const dataset = MLdata ? this.d.mlOutputData : this.d.dataSets;
+      const index = dataset.indexOf(this.d.selectedMLDataset);
+      const newIndex = index + (next ? 1 : -1);
 
-      if (index > -1) {
+      if (newIndex > -1 && newIndex < dataset.length) {
         const newIndex = index + (next ? 1 : -1);
         this.selectDataSet(MLdata ? this.d.mlOutputData[newIndex].id : this.d.dataSets[newIndex].id, MLdata);
         // this.tensorflowService.selectDataSet(MLdata ? this.d.mlOutputData[newIndex].id : this.d.dataSets[newIndex].id, MLdata);

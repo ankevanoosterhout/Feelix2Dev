@@ -341,15 +341,15 @@ export class TensorFlowJSComponent implements OnInit {
   }
 
   processRecordedData(dataSetEl: any, time: number) {
+    dataSetEl.bounds.xMax = dataSetEl.bounds.xMax < 3000 ? 3000 : time * 1.05;
+    dataSetEl.bounds.xMin = dataSetEl.bounds.xMax < 3000 ? 0 : dataSetEl.bounds.xMax - (dataSetEl.bounds.xMax - 3000);
+
     if (this.d.classify) {
       this.tensorflowTrainService.predictOutput();
 
     } else if (!this.d.classify && time > dataSetEl.bounds.xMax - 500) {
 
-      dataSetEl.bounds.xMax = dataSetEl.bounds.xMax < 3000 ?
-      Math.ceil(dataSetEl.bounds.xMax * 0.006) * 200 : Math.ceil(dataSetEl.bounds.xMax * 0.0024) * 500;
-
-      this.tensorflowDrawService.updateBounds(dataSetEl.bounds);
+      dataSetEl.bounds.xMax = time * 1.05;
     }
 
     this.redraw(dataSetEl);

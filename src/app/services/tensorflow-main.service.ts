@@ -2,7 +2,7 @@ import { DOCUMENT } from '@angular/common';
 import { Injectable, Inject } from '@angular/core';
 import { v4 as uuid } from 'uuid';
 import { ActuatorType, MicroController } from '../models/hardware.model';
-import { Model, DataSet, Classifier, Label, MotorEl, ModelVariable, ModelType, OutputItem, InputColor, VariableType, MLDataSet, Data, MinMax, TrimSection } from '../models/tensorflow.model';
+import { Model, DataSet, Classifier, Label, MotorEl, ModelVariable, ModelType, OutputItem, InputColor, VariableType, MLDataSet, Data, MinMax, TrimSection, Bounds } from '../models/tensorflow.model';
 import { HardwareService } from './hardware.service';
 import { DataSetService } from './dataset.service';
 import { Subject } from 'rxjs';
@@ -117,6 +117,17 @@ export class TensorFlowMainService {
       // console.log(dataSets.length);
     // }
 
+    createNewMLDataset() {
+      const nrOfSets = this.d.mlOutputData.filter(d => d.name.split('-')[0] === 'Prediction').length + 1;
+      const predictionDataset = new MLDataSet(uuid(), 'Prediction-' + nrOfSets, this.d.selectedMicrocontrollers);
+      predictionDataset.bounds = new Bounds(0,700,0,1);
+      this.d.mlOutputData.push(predictionDataset);
+
+      // this.d.recording.starttime = new Date().getTime();
+
+      this.selectDataSet(predictionDataset.id, true);
+    }
+
 
     exportFileData(fileData: Array<any>) {
       console.log(fileData);
@@ -228,15 +239,18 @@ export class TensorFlowMainService {
 
         const bounds = this.trimmedDataSize(dataSetCopy, this.d.trimLines[i].values);
 
-        const span = this.d.trimLines[i].values.max - this.d.trimLines[i].values.min;
+        if (bounds.set.m.length > 0 && bounds.set.m[0].d.length > 0) {
 
-        dataSetCopy.bounds.xMin = 0;
-        dataSetCopy.bounds.xMax = span < 1000 ? Math.ceil(span / 100) * 100 : span < 3000 ? Math.ceil(span / 200) * 200 : Math.ceil(span / 500) * 500;
-        dataSetCopy.bounds.yMin = bounds.yMin < -10 || bounds.yMax > 10 ? Math.floor(bounds.yMin/5) * 5 : Math.floor(bounds.yMin*4) / 4;
-        dataSetCopy.bounds.yMax = bounds.yMin < -10 || bounds.yMax > 10 ? Math.ceil(bounds.yMax/5) * 5 : Math.ceil(bounds.yMax*4) / 4;
+          const span = this.d.trimLines[i].values.max - this.d.trimLines[i].values.min;
+
+          dataSetCopy.bounds.xMin = 0;
+          dataSetCopy.bounds.xMax = span < 1000 ? Math.ceil(span / 100) * 100 : span < 3000 ? Math.ceil(span / 200) * 200 : Math.ceil(span / 500) * 500;
+          dataSetCopy.bounds.yMin = bounds.yMin < -10 || bounds.yMax > 10 ? Math.floor(bounds.yMin/5) * 5 : Math.floor(bounds.yMin*4) / 4;
+          dataSetCopy.bounds.yMax = bounds.yMin < -10 || bounds.yMax > 10 ? Math.ceil(bounds.yMax/5) * 5 : Math.ceil(bounds.yMax*4) / 4;
 
 
-        this.d.dataSets.push(dataSetCopy);
+          this.d.dataSets.push(bounds.set);
+        }
 
       }
 
@@ -274,7 +288,7 @@ export class TensorFlowMainService {
           size.push(m.d.length);
         }
       }
-      return { yMin: Ymin, yMax: Ymax, dataSize: size };
+      return { yMin: Ymin, yMax: Ymax, dataSize: size, set: dataSet };
     }
 
 
@@ -376,6 +390,7 @@ export class TensorFlowMainService {
       set.open = set.id === id ? true : false;
 
       if (set.open) {
+        set.bounds.xMin = 0;
         this.updateGraphBounds.next(set.bounds);
         ML && set instanceof MLDataSet ? this.d.selectedMLDataset = set : this.d.selectedDataset = set;
 
@@ -870,23 +885,26 @@ export class TensorFlowMainService {
   }
 
   updateModelBasedOnDatasets() {
-    let maxLength = 0;
+    let range = new MinMax();
     this.d.selectedModel.inputs.forEach(i => { i.active = false; i.visible = false; });
     this.d.selectedMicrocontrollers.forEach(mcu => mcu.motors.forEach(m => m.record = false));
     this.d.selectedModel.layers[0].options.actuators.value = 0;
     this.d.selectedModel.layers[0].options.sparse.value = false;
 
     for (const set of this.d.dataSets) {
+
       if (set.m.length > 0) {
 
-        if (set.m[0].d.length > maxLength) {
-          maxLength = set.m[0].d.length;
+        if (range.min === undefined) { range.min =  set.m[0].d.length; }
+        if (range.max === undefined) { range.max =  set.m[0].d.length; }
+
+        if (set.m[0].d.length > range.max) {
+          range.max = set.m[0].d.length;
+        } else if (set.m[0].d.length < range.min) {
+          range.min = set.m[0].d.length;
         }
 
         if (set.m[0].d.length > 0) {
-          if (set.m[0].d.length !== maxLength) {
-            this.d.selectedModel.layers[0].options.sparse.value = true;
-          }
 
           for (const input of set.m[0].d[0].inputs) {
             const inputItem = this.d.selectedModel.inputs.filter(i => i.name === input.name)[0];
@@ -912,9 +930,15 @@ export class TensorFlowMainService {
         }
       }
     }
+    if (range.max - range.min > 0 && range.max - range.min < 3) {
+      this.d.selectedModel.layers[0].options.sparse.value = true;
+    } else {
+      this.d.selectedModel.layers[0].options.sparse.value = false;
+    }
+
     this.d.selectedModel.layers[0].options.units.value = this.d.selectedModel.inputs.filter(i => i.active).length;
     if (this.d.selectedModel.layers[0].options.inputDimension > 1) { this.d.selectedModel.layers[0].options.units.value *= this.d.selectedModel.layers[0].options.actuators.value; }
-    this.d.selectedModel.layers[0].options.inputLength.value = maxLength;
+    this.d.selectedModel.layers[0].options.inputLength.value = range.min > 30 ? Math.ceil(range.min / 3) : range.min;
   }
 
 

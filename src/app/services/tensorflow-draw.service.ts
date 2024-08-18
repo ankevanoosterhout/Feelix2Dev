@@ -248,7 +248,7 @@ export class TensorFlowDrawService {
 
 
 
-  drawTensorFlowGraphData(data: DataSet, trimLines: any, id: string, size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
+  drawTensorFlowGraphData(data: DataSet, trimLines: any, id: string, size = { width: this.config.width, height: this.config.height, margin: this.config.margin }, running = false) {
 
     if (data && data.m.length > 0) {
       d3.selectAll('#dataGroup-' + id).remove();
@@ -285,7 +285,7 @@ export class TensorFlowDrawService {
                     .append('svg:title')
                       .text(() => m.mcu.name + '-' + m.id + ' ' + input.name);
 
-                if (this.config.zoomable) {
+                if (!running) {
 
                   dataGroup.selectAll('circle.m-' + m.id + '-' + m.mcu.id + '-' + input.name)
                     .data(m.d)
