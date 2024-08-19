@@ -303,7 +303,7 @@ export class ModelFile {
   id: string;
   name: string;
   path: string;
-  softwareVersion = '3.1.1';
+  softwareVersion = '3.1.2';
   date = new Dates();
   joints: Array<JointLink> = [];
   links: Array<Root> = [];

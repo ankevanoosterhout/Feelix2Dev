@@ -14,7 +14,7 @@ const checkSerialPortTimeInterval = 60000;
 let dataSendWaitList = [];
 let datalist = [];
 
-const softwareVersion = { major: 3, minor: 1, patch: 1 };
+const softwareVersion = { major: 3, minor: 1, patch: 2 };
 
 function checkSerialPorts() {
   setInterval(getSerialConnections, checkSerialPortTimeInterval);

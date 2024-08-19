@@ -21,7 +21,7 @@ const msiCreator = new MSICreator({
     exe: 'Feelix',
     name: 'Feelix',
     manufacturer: 'Anke',
-    version: '3.1.1',
+    version: '3.1.2',
     arch: 'x64',
     icon: path.resolve(__dirname, './src/feelix.ico'),
     // certificateFile: './cert.pfx',
