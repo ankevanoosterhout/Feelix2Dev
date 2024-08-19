@@ -34,6 +34,9 @@ export class TensorFlowMainService {
     redrawNN: Subject<any> = new Subject<void>();
     createModel: Subject<any> = new Subject<void>();
     getColorListItem: Subject<any> = new Subject<void>();
+    resetStartTime: Subject<any> = new Subject<void>();
+    selectLogFileTrain: Subject<any> = new Subject<void>();
+
 
     constructor(@Inject(DOCUMENT) private document: Document, public hardwareService: HardwareService, private dataSetService: DataSetService,
                 private tensorflowModelService: TensorFlowModelService, private electronService: ElectronService, private _FileSaverService: FileSaverService,
@@ -63,14 +66,17 @@ export class TensorFlowMainService {
           this.addDataSet();
           index = 0;
         } else {
-          this.redraw.next({ page: ML ? 'deploy' : 'data' });
+          this.d.selectedMLDataset = null;
+          this.redraw.next({ page: 'deploy' });
         }
       }
       if (index > -1 && index < dataset.length) {
         this.selectDataSet(dataset[index].id, ML);
       }
 
+      if (!ML) { this.updateModelBasedOnDatasets(); }
     }
+
 
     addDataSet() {
       const newID = uuid();
@@ -118,19 +124,22 @@ export class TensorFlowMainService {
     // }
 
     createNewMLDataset() {
-      const nrOfSets = this.d.mlOutputData.filter(d => d.name.split('-')[0] === 'Prediction').length + 1;
-      const predictionDataset = new MLDataSet(uuid(), 'Prediction-' + nrOfSets, this.d.selectedMicrocontrollers);
-      predictionDataset.bounds = new Bounds(0,700,0,1);
-      this.d.mlOutputData.push(predictionDataset);
+      const activeSet = this.d.selectedMLDataset;
+      if (!activeSet || (activeSet.m.length > 0 && activeSet.m[0].d.length > 0)) {
 
-      // this.d.recording.starttime = new Date().getTime();
+        const nrOfSets = this.d.mlOutputData.filter(d => d.name.split('-')[0] === 'Prediction').length + 1;
+        const predictionDataset = new MLDataSet(uuid(), 'Prediction-' + nrOfSets, this.d.selectedMicrocontrollers);
+        predictionDataset.bounds = new Bounds(0,700,-1,1);
+        this.d.mlOutputData.push(predictionDataset);
 
-      this.selectDataSet(predictionDataset.id, true);
+        this.resetStartTime.next(true);
+
+        this.selectDataSet(predictionDataset.id, true);
+      }
     }
 
 
     exportFileData(fileData: Array<any>) {
-      console.log(fileData);
       if (fileData.length > 1) {
         this.zipFiles(fileData);
       } else if (fileData.length === 1) {
@@ -149,7 +158,8 @@ export class TensorFlowMainService {
       }
       catch(e) {
         const error = (e as Error).message;
-        console.log(error);
+        this.updateProgess(error, 0);
+        // console.log(error);
       }
     }
 
@@ -259,6 +269,8 @@ export class TensorFlowMainService {
 
       this.selectDataSet(this.d.dataSets[this.d.dataSets.length - 1].id, false);
 
+      this.updateModelBasedOnDatasets();
+
     }
 
 
@@ -327,7 +339,7 @@ export class TensorFlowMainService {
 
       if (page === 'data') {
         for (const set of dataSets) {
-          console.log(set);
+          // console.log(set);
           if (set.classifierID) {
             const output  = this.d.selectedModel.outputs.filter(o => o.id === set.classifierID)[0];
             const index = this.d.selectedModel.outputs.indexOf(output);
@@ -383,8 +395,9 @@ export class TensorFlowMainService {
     // this.d.classify = ML;
     const dataSet = !ML ? this.d.dataSets : this.d.mlOutputData;
 
-    this.getItemsMultipleSelect(dataSet, id, event);
-
+    if (event) {
+      this.getItemsMultipleSelect(dataSet, id, event);
+    }
 
     for (const set of dataSet) {
       set.open = set.id === id ? true : false;
@@ -626,7 +639,6 @@ export class TensorFlowMainService {
   }
 
   addMicrocontroller(microcontroller: MicroController = null, updateInputs = true) {
-    console.log('add ', microcontroller);
     if (microcontroller === null) {
       microcontroller = this.d.selectOptionMicrocontroller;
     }
@@ -735,7 +747,7 @@ export class TensorFlowMainService {
     //select a folder
     if (model) {
       const modelObj = JSON.parse(model);
-      console.log(modelObj);
+      // console.log(modelObj);
       this.d.selectedModel = modelObj;
     }
   }
@@ -930,11 +942,11 @@ export class TensorFlowMainService {
         }
       }
     }
-    if (range.max - range.min > 0 && range.max - range.min < 3) {
-      this.d.selectedModel.layers[0].options.sparse.value = true;
-    } else {
-      this.d.selectedModel.layers[0].options.sparse.value = false;
-    }
+    // if (range.max - range.min > 0 && range.max - range.min < 3) {
+    //   this.d.selectedModel.layers[0].options.sparse.value = true;
+    // } else {
+    this.d.selectedModel.layers[0].options.sparse.value = false;
+    // }
 
     this.d.selectedModel.layers[0].options.units.value = this.d.selectedModel.inputs.filter(i => i.active).length;
     if (this.d.selectedModel.layers[0].options.inputDimension > 1) { this.d.selectedModel.layers[0].options.units.value *= this.d.selectedModel.layers[0].options.actuators.value; }
@@ -980,15 +992,17 @@ export class TensorFlowMainService {
 
 
   selectLogFile(id: string) {
-    const activeFile = this.d.trainingData.filter(t => t.open)[0];
-    if (activeFile) { activeFile.open = false; }
-
-    const file = this.d.trainingData.filter(t => t.id === id)[0];
-    if (file) { file.open = true; }
-
-    this.d.selectedModel.training = this.cloneService.deepClone(file.training);
-
-    // console.log(this.d.selectedModel);
+    for (const trainingLog of this.d.trainingData) {
+      if (trainingLog.open && trainingLog.id !== id) {
+        trainingLog.open = false;
+        trainingLog.selected = false;
+      } else if (trainingLog.id === id) {
+        trainingLog.open = true;
+        trainingLog.selected = true;
+        this.d.selectedTrainingSet = trainingLog;
+        this.d.selectedModel.training = this.cloneService.deepClone(this.d.selectedTrainingSet.training);
+      }
+    }
   }
 
 
@@ -1002,6 +1016,8 @@ export class TensorFlowMainService {
         this.d.trainingData.splice(index, 1);
         if (this.d.trainingData.length > 0) {
           this.selectLogFile(this.d.trainingData[(index > 0 ? index - 1 : 0)].id);
+        } else {
+          this.d.selectedTrainingSet = null;
         }
       }
     }
@@ -1014,10 +1030,9 @@ export class TensorFlowMainService {
       const oldTrainingData = this.d.trainingData;
       this.d.trainingData = oldTrainingData.concat(data);
 
-      console.log(this.d.trainingData);
-
       if (this.d.trainingData.length > 0) {
-        this.selectLogFile(this.d.trainingData[this.d.trainingData.length - 1].id);
+        // this.selectLogFile(this.d.trainingData[this.d.trainingData.length - 1].id);
+        this.selectLogFileTrain.next(this.d.trainingData[this.d.trainingData.length - 1].id);
       }
     }
   }

@@ -28,11 +28,6 @@ export class TensorflowDataComponent implements OnInit, AfterViewInit {
         this.config = this.tensorflowDrawService.config;
 
 
-        this.tensorflowDrawService.redraw.subscribe(res => {
-          this.tensorflowRecordService.redraw(this.d.selectedDataset, this.d.trimLines, this.graphID, false);
-        });
-
-
         // this.tensorflowDrawService.updateTrimSize.subscribe(res => {
         //   const bounds = this.tensorflowService.trimmedDataSize();
         //   if (bounds.dataSize.length > 0) {
@@ -64,6 +59,11 @@ export class TensorflowDataComponent implements OnInit, AfterViewInit {
 
         this.tensorflowDrawService.addOrRemoveSection.subscribe(res => {
           res.add ? this.addTrimLine(res.index) : this.removeTrimLine(res.id);
+        });
+
+
+        this.tensorflowDrawService.redrawGraphData.subscribe(res => {
+          this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.trimLinesVisible ? this.d.trimLines : null, this.graphID);
         });
       }
 
@@ -112,11 +112,13 @@ export class TensorflowDataComponent implements OnInit, AfterViewInit {
 
     const line = index < this.d.trimLines.length ? this.d.trimLines[index] : null;
 
-    const min = index - 1 >= 0  && line ? this.d.trimLines[index - 1].values.max + 20 : !line ? this.d.trimLines[this.d.trimLines.length - 1].values.max + 20 : 20;
-    const size = this.tensorflowRecordService.getSize();
-    const max = line ? line.values.min - 20 : this.config.scaleX.invert(size.width - size.margin) - 20;
+    const min = index - 1 >= 0  && line ? this.d.trimLines[index - 1].values.max  : !line ? this.d.trimLines[this.d.trimLines.length - 1].values.max : 0;
 
-    this.d.trimLines.splice(index, 0, new TrimSection(uuid(), { min: min, max: max }));
+    const size = this.tensorflowRecordService.getSize();
+    const offset = Math.abs(this.config.scaleX.invert((size.width - size.margin) * 0.05));
+    const max = line ? line.values.min : this.config.scaleX.invert(size.width - size.margin);
+
+    this.d.trimLines.splice(index, 0, new TrimSection(uuid(), { min: min + offset, max: max - offset}));
 
     this.d.trimLines.sort((a: TrimSection, b: TrimSection) => a.values.min - b.values.min);
     this.tensorflowDrawService.drawTrimLines(true, this.d.trimLines, this.tensorflowRecordService.getSize());

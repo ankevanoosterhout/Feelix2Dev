@@ -3,7 +3,7 @@ import { TensorFlowData } from '../models/tensorflow-data.model';
 import { TensorFlowMainService } from './tensorflow-main.service';
 import { Subject } from 'rxjs/internal/Subject';
 import { TensorFlowConfig } from '../models/tensorflow-config.model';
-import { Bounds, Data, InputItem } from '../models/tensorflow.model';
+import { Bounds, Data, DataSet, InputItem, MLDataSet } from '../models/tensorflow.model';
 import { TensorFlowDrawService } from './tensorflow-draw.service';
 
 @Injectable()
@@ -17,27 +17,44 @@ export class TensorFlowRecordService {
   predictOutput: Subject<any> = new Subject<void>();
 
 
+
   constructor(private tensorflowService: TensorFlowMainService, private tensorflowDrawService: TensorFlowDrawService) {
     this.d = this.tensorflowService.d;
     this.config = this.tensorflowDrawService.config;
+
+
+    this.tensorflowService.resetStartTime.subscribe(() => {
+      this.config.recording.starttime = new Date().getTime();
+    });
   }
 
 
   startRecording(data: number) {
-    if (this.d.recording.active && this.d.recording.starttime === null && (data > 0.03 || data < -0.03)) {
-      this.d.recording.starttime = new Date().getTime();
+    if (this.config.recording.active && this.config.recording.starttime === null && (data > 0.03 || data < -0.03)) {
+      this.config.recording.starttime = new Date().getTime();
     }
   }
 
+
+
+
   record(page: string) {
 
-    this.d.recording.active = !this.d.recording.active;
+    this.config.recording.active = !this.config.recording.active;
 
-    this.tensorflowDrawService.enableZoom(!this.d.recording.active);
+    // this.tensorflowDrawService.enableZoom(!this.config.recording.active);
 
+    if (!this.config.recording.active) {
+      this.config.recording.starttime = null;
 
-    if (!this.d.recording.active) {
-      this.d.recording.starttime = null;
+      if (page === 'data') {
+        this.d.selectedDataset.bounds.xMin = 0;
+        this.redraw(this.d.selectedDataset, this.d.trimLines, 'svg_graph_data', false);
+        this.tensorflowService.updateModelBasedOnDatasets();
+      } else if (page === 'deploy') {
+        this.d.selectedMLDataset.bounds.xMin = 0;
+        this.redraw(this.d.selectedMLDataset, null, 'svg_graph_deploy', false);
+      }
     } else {
 
       if (page === 'data' && this.d.selectedDataset && this.d.selectedDataset.m.length > 0) {
@@ -47,11 +64,12 @@ export class TensorFlowRecordService {
       } else if (page === 'deploy') {
         this.d.classify = true;
         this.tensorflowService.createNewMLDataset();
+
       }
     }
 
     for (const microcontroller of this.d.selectedMicrocontrollers) {
-      microcontroller.record = this.d.recording.active;
+      microcontroller.record = this.config.recording.active;
 
       if (!microcontroller.record) {
 
@@ -68,7 +86,7 @@ export class TensorFlowRecordService {
 
 
   processRecordedData(dataSetEl: any, time: number) {
-    dataSetEl.bounds.xMax = time * 1.05;
+    dataSetEl.bounds.xMax = time * 1.02;
     dataSetEl.bounds.xMin = dataSetEl.bounds.xMax - 5000 < 0 ? 0 : dataSetEl.bounds.xMax - 5000;
 
     if (this.d.classify) {
@@ -86,7 +104,7 @@ export class TensorFlowRecordService {
 
     this.startRecording(referenceData); //data.velocity
 
-    if (this.d.recording.starttime !== null) {
+    if (this.config.recording.starttime !== null) {
 
       this.updateRecording(referenceData); //data.velocity
 
@@ -114,7 +132,7 @@ export class TensorFlowRecordService {
               }
             }
 
-            const time = new Date().getTime() - this.d.recording.starttime;
+            const time = new Date().getTime() - this.config.recording.starttime;
             dataObject.time = time;
 
             motorEl.d.push(dataObject);
@@ -124,6 +142,10 @@ export class TensorFlowRecordService {
         }
       }
     }
+  }
+
+  recordingActive() {
+    return this.config.recording.active;
   }
 
 
@@ -151,7 +173,7 @@ export class TensorFlowRecordService {
 
 
 
-  redraw(set = this.d.selectedDataset, lines = this.d.trimLines, id: string, running: boolean = false) {
+  redraw(set: DataSet | MLDataSet, lines = this.d.trimLines, id: string, running: boolean = false) {
     const size = this.getSize();
     const bounds = set ? set.bounds : new Bounds();
     this.tensorflowDrawService.updateBounds(bounds, id);
@@ -159,7 +181,6 @@ export class TensorFlowRecordService {
     if (set) {
       this.tensorflowDrawService.drawTensorFlowGraphData(set, this.d.trimLinesVisible ? lines : null, id, size, running);
     }
-
   }
 
 

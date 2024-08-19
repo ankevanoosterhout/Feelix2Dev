@@ -29,6 +29,7 @@ export class TensorFlowData {
   dataSets: Array<DataSet> = [];
   selectedDataset: DataSet = null;
   selectedMLDataset: MLDataSet = null;
+  selectedTrainingSet: TrainingSet = null;
   mlOutputData: Array<MLDataSet> = [];
   trainingData: Array<TrainingSet> = [];
 
@@ -42,7 +43,7 @@ export class TensorFlowData {
   dataVisible = true;
   sidebarWidth = 150;
 
-  recording = { active: false, starttime: null };
+
   random = true;
 
   trimLinesVisible = false;

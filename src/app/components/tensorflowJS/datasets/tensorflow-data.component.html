@@ -14,7 +14,9 @@
     <div>
       <ul class="buttons-list">
         <li id="new" (click)="this.tensorflowService.addDataSet()"><img src="./assets/icons/tools/collections.svg" title="Create new data set"></li>
+        <li class="padding" id="updateModel" (click)="this.tensorflowService.updateModelBasedOnDatasets()"><img src="./assets/icons/buttons/settings.svg" title="Update model settings based on data"></li>
         <li id="classifiers" (click)="this.tensorflowService.importClassifiersFromModel()"><img src="./assets/icons/buttons/classifier.svg" title="Import classifiers from model"></li>
+
         <li id="load" (click)="this.tensorflowService.loadDataSet()"><img src="./assets/icons/buttons/open.svg" title="Open data set"></li>
         <li id="save" (click)="this.tensorflowService.saveDataSet()"><img src="./assets/icons/buttons/save.svg" title="Save data set"></li>
         <li id="savecopy" (click)="this.tensorflowService.saveCopyDataSet('data')"><img src="./assets/icons/buttons/save-copy.svg" title="Save copy of data set"></li>
@@ -25,7 +27,7 @@
         <!-- <li id="merge" (click)="this.tensorflowService.mergeDataSets()" disabled="!this.multipleSelect.active"><img src="./assets/icons/buttons/merge2.svg" title="Merge data sets"></li> -->
       </ul>
 
-      <div id="record-button" class="record-button" (click)="this.tensorflowRecordService.record('data')" [ngClass]="{ red: this.d.recording.active }">
+      <div id="record-button" class="record-button" (click)="this.tensorflowRecordService.record('data')" [ngClass]="{ red: this.config.recording.active }">
         <div class="circle"></div>
         <div class="rec-text">rec</div>
       </div>

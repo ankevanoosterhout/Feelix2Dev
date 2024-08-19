@@ -12,7 +12,7 @@
         <li class="padding" id="delete" (click)="this.tensorflowService.deleteDataSets(null, true)"><img src="./assets/icons/buttons/bin.svg" title="Delete output files"></li>
       </ul>
 
-      <div id="record-button" class="record-button" [ngClass]="{ red: this.d.recording.active }" (click)="this.tensorflowRecordService.record('deploy')">
+      <div id="record-button" class="record-button" [ngClass]="{ red: this.tensorflowRecordService.recordingActive() }" (click)="this.tensorflowRecordService.record('deploy')">
         <div class="circle"></div>
         <div class="rec-text">rec</div>
       </div>

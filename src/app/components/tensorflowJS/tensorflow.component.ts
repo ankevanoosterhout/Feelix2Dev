@@ -6,7 +6,7 @@ import { v4 as uuid } from 'uuid';
 import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
 import { TensorFlowConfig } from 'src/app/models/tensorflow-config.model';
 import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
-import { DataSet, Model, ModelType } from 'src/app/models/tensorflow.model';
+import { Model, ModelType } from 'src/app/models/tensorflow.model';
 import { TensorFlowModelDrawService } from 'src/app/services/tensorflow-model-draw.service';
 import { TensorFlowRecordService } from 'src/app/services/tensorflow-record.service';
 
@@ -76,6 +76,9 @@ export class TensorflowComponent {
 
     this.tensorflowService.redraw.subscribe((res) => {
       this.tensorFlowRecordService.redraw((res.page === 'data' ? this.d.selectedDataset : this.d.selectedMLDataset), this.d.trimLines, (res.page === 'data' ? 'svg_graph_data' : 'svg_graph_deploy'));
+      if (res.page === 'deploy' && this.d.selectedMLDataset === null) {
+        this.changeDetection.detectChanges();
+      }
     });
 
 
@@ -118,7 +121,8 @@ export class TensorflowComponent {
       }
       break;
       case(2): {
-        this.tensorflowDrawService.redrawGraphTraining.next(true);
+        this.tensorflowDrawService.redrawGraph(this.d.trainingData.length > 0 ? this.d.trainingData.filter(t => t.open || (this.d.selectedTrainingSet && t.id === this.d.selectedTrainingSet.id))[0] : null,
+          { width: innerWidth - (this.d.sidebarWidth + 450), height: (innerHeight - 240) / 2, margin: innerWidth * 0.035 });
       }
       break;
       case(3): {

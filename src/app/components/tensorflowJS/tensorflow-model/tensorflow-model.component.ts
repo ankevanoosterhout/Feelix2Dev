@@ -48,7 +48,7 @@ export class TensorflowModelComponent implements OnInit {
 
   public LayerTypes = [
     new LayerType('dense', 'basic', tf.layers.dense),
-    new LayerType('activation', 'basic', tf.layers.activation),
+    // new LayerType('activation', 'basic', tf.layers.activation),
     new LayerType('dropout', 'basic', tf.layers.dropout),
     new LayerType('embedding', 'basic', tf.layers.embedding),
     new LayerType('flatten', 'basic', tf.layers.flatten),
@@ -172,7 +172,7 @@ export class TensorflowModelComponent implements OnInit {
   importModel() {
 
   }
-  
+
 
   updateNetworkVisualization() {
     this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
@@ -180,7 +180,7 @@ export class TensorflowModelComponent implements OnInit {
 
   updateUnits(index: number) {
     const nextLayer = this.d.selectedModel.layers[index + 1];
-    if (nextLayer && nextLayer.type && nextLayer.type.subgroup === 'normalization' || nextLayer.type.name === 'dropout') {
+    if (nextLayer && nextLayer.type && (nextLayer.type.subgroup === 'normalization' || nextLayer.type.name === 'dropout')) {
       nextLayer.options.units.value = this.getUnits(index);
     }
     this.updateNetworkVisualization();

@@ -713,19 +713,25 @@ export class Model {
     this.type = type;
 
     if (this.type === ModelType.RNN) {
-      const layerEmbedding = new Layer('embedding', new LayerType('embedding', 'basic', tf.layers.embedding));
-      layerEmbedding.hidden = true;
+      this.layers[0].options.inputDimension = 1;
 
       const layerGRU = new Layer('gru', new LayerType('gru', 'recurrent', tf.layers.gru));
+      layerGRU.options.units = new Option(10);
       layerGRU.hidden = true;
 
       const layerSimpleRNN = new Layer('simpleRNN', new LayerType('simpleRNN', 'recurrent', tf.layers.simpleRNN));
       layerSimpleRNN.hidden = true;
+      layerSimpleRNN.options.units = new Option(10);
 
       const layerDense = new Layer('dense', new LayerType('dense', 'basic', tf.layers.dense));
       layerDense.hidden = true;
+      layerDense.options.units = new Option(8);
 
-      this.layers.splice(1, 0, layerEmbedding, layerGRU, layerSimpleRNN, layerDense);
+      const layerDense2 = new Layer('dense', new LayerType('dense', 'basic', tf.layers.dense));
+      layerDense2.hidden = true;
+      layerDense2.options.units = new Option(6);
+
+      this.layers.splice(1, 0, layerGRU, layerSimpleRNN, layerDense, layerDense2);
 
     } else if (this.type === ModelType.DQN) {
       const layerDense = new Layer('dense', new LayerType('dense', 'basic', tf.layers.dense));
@@ -741,6 +747,8 @@ export class Model {
       this.layers.splice(1, 0, layerDense, layerDense2);
 
     } else if (this.type === ModelType.CNN) {
+      this.layers[0].options.inputDimension = 2;
+      
       const layerConv2D = new Layer('conv2D', new LayerType('conv2d', 'convolutional', tf.layers.conv2d, { dimensions: 2 }));
       layerConv2D.hidden = true;
 

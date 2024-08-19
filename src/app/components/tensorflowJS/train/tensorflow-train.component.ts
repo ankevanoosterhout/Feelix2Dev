@@ -27,6 +27,8 @@ export class TensorflowTrainComponent implements OnInit {
   public d: TensorFlowData;
   training = false;
 
+
+
   constructor(public tensorflowService: TensorFlowMainService, private tensorflowDrawService: TensorFlowDrawService, private tensorflowTrainService: TensorFlowTrainService,
               private changeDetection: ChangeDetectorRef, private electronService: ElectronService) {
 
@@ -43,9 +45,9 @@ export class TensorflowTrainComponent implements OnInit {
         file.bounds_metric.yMax = Math.max(file.bounds_metric.yMax, data.metric * 1.2, data.val_metric * 1.2);
 
 
-        this.tensorflowDrawService.updateBounds(file.bounds_loss, this.graphID_A, this.size);
-        this.tensorflowDrawService.updateBounds(file.bounds_metric, this.graphID_B, this.size);
-        this.redrawGraph(file);
+        // this.tensorflowDrawService.updateBounds(file.bounds_loss, this.graphID_A, this.size);
+        // this.tensorflowDrawService.updateBounds(file.bounds_metric, this.graphID_B, this.size);
+        this.tensorflowDrawService.redrawGraph(file, this.size);
       }
     });
 
@@ -53,20 +55,22 @@ export class TensorflowTrainComponent implements OnInit {
       this.selectLogFile(id);
     });
 
-    this.tensorflowDrawService.redrawGraphTraining.subscribe((res) => {
-      const file = this.d.trainingData.filter(t => t.open)[0];
-      if (file) {
-        this.resize();
-      }
-
+    this.tensorflowService.selectLogFileTrain.subscribe((id) => {
+      this.selectLogFile(id);
     });
   }
 
 
   ngOnInit(): void {
-    this.resize();
+    this.updateSize();
     this.split(true);
   }
+
+  ngAfterViewInit(): void {
+    this.tensorflowDrawService.redrawGraph(this.d.trainingData.length > 0 ? this.d.trainingData.filter(t => t.open || (this.d.selectedTrainingSet && t.id === this.d.selectedTrainingSet.id))[0] : null, this.size);
+  }
+
+
 
   split(first: boolean = false) {
     this.tensorflowTrainService.splitData(this.d.selectedModel.training.distribution, first);
@@ -133,51 +137,26 @@ export class TensorflowTrainComponent implements OnInit {
 
   resize()  {
     this.updateSize();
-    this.redrawGraph(this.d.trainingData.length ? this.d.trainingData.filter(t => t.open)[0] : null);
-
+    this.tensorflowDrawService.redrawGraph(this.d.trainingData.length > 0 ? this.d.trainingData.filter(t => t.open || (this.d.selectedTrainingSet && t.id === this.d.selectedTrainingSet.id))[0] : null, this.size);
   }
 
-  redrawGraph(file: TrainingSet) {
-    const bounds_loss = file ? file.bounds_loss : new Bounds(0, 100, 0, 1);
-    const bounds_metric = file ? file.bounds_metric : new Bounds(0, 100, 0, 1);
-
-    this.tensorflowDrawService.updateBounds(bounds_loss, this.graphID_A, this.size);
-    this.tensorflowDrawService.updateBounds(bounds_metric, this.graphID_B, this.size);
-    this.tensorflowDrawService.drawGraph(this.graphID_A, bounds_loss, this.size);
-    this.tensorflowDrawService.drawGraph(this.graphID_B, bounds_metric, this.size);
-
-    if (file) {
-      this.drawData(file);
-    }
-
-  }
-
-  drawData(logs: TrainingSet) {
-    if (logs && logs.data && logs.data.length > 0 ) {
-      this.training = this.d.selectedModel.training.epochs - 1 == logs.data[logs.data.length - 1].epoch ? false : true;
-      this.tensorflowDrawService.drawTensorflowTrainingProgress(logs.data);
-    }
-  }
 
   selectLogFile(id: string) {
-    if (!this.training) {
-      this.tensorflowService.selectLogFile(id);
-      this.changeDetection.detectChanges();
-      this.resize();
-    }
+    this.tensorflowService.selectLogFile(id);
+    this.changeDetection.detectChanges();
+    this.resize();
   }
 
   deleteLogFile(id: string) {
-    if (!this.training) {
-
-      if (this.d.trainingData.length === 1) {
-        this.d.trainingData = [];
-        this.resize();
-      } else {
-        this.tensorflowService.deleteLogFile(id);
-      }
-      this.changeDetection.detectChanges();
+    // if (!this.training) {
+    if (this.d.trainingData.length === 1) {
+      this.d.trainingData = [];
+    } else {
+      this.tensorflowService.deleteLogFile(id);
     }
+    this.changeDetection.detectChanges();
+    this.resize();
+    // }
   }
 
   shuffle() {
@@ -186,15 +165,10 @@ export class TensorflowTrainComponent implements OnInit {
   }
 
   exportLogFiles() {
-    console.log(this.d.trainingData);
     if (this.d.trainingData.length > 0) {
 
       this.tensorflowService.exportFileData(this.d.trainingData);
     }
-  }
-
-  saveLogFiles() {
-
   }
 
   importLogFiles() {

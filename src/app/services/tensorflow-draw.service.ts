@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import * as d3 from 'd3';
 import { Subject } from 'rxjs/internal/Subject';
 import { TensorFlowConfig } from '../models/tensorflow-config.model';
-import { DataSet, Bounds, MinMax, TrimSection } from '../models/tensorflow.model';
+import { DataSet, Bounds, MinMax, TrimSection, TrainingSet } from '../models/tensorflow.model';
 import { v4 as uuid } from 'uuid';
 
 
@@ -11,9 +11,8 @@ export class TensorFlowDrawService {
 
   public config: TensorFlowConfig;
 
-  redraw: Subject<any> = new Subject<void>();
+  redrawGraphData: Subject<any> = new Subject<void>();
   // updateTrimSize: Subject<any> = new Subject<void>();
-  redrawGraphTraining: Subject<any> = new Subject<void>();
   updateBoundsGraph: Subject<any> = new Subject<void>();
   addOrRemoveSection: Subject<any> = new Subject<void>();
 
@@ -102,7 +101,7 @@ export class TensorFlowDrawService {
       .scaleExtent([0.01, Infinity])
       .translateExtent([[0,0], [size.width - size.margin, size.height - size.margin]]) // 1.2
       .on('zoom', (event: any) => {
-        if (this.config.zoomable) {
+        if (this.config.zoomable && !this.config.recording.active) {
           this.config.transform = event.transform;
           this.scaleContent(this.config.transform, size);
         }
@@ -120,7 +119,7 @@ export class TensorFlowDrawService {
         .attr('y', size.height - (2 * size.margin) + 10)
         .attr('x', 0);
 
-    this.redraw.next(true);
+    this.redrawGraphData.next(true);
   }
 
   updateBounds(bounds: Bounds, id: string, size: any = null) {
@@ -205,6 +204,28 @@ export class TensorFlowDrawService {
       this.drawTrainingData(dataGroup2, logs, 1);
     }
   }
+
+
+  redrawGraph(file: TrainingSet, size: any) {
+    const bounds_loss = file ? file.bounds_loss : new Bounds(0, 100, 0, 1);
+    const bounds_metric = file ? file.bounds_metric : new Bounds(0, 100, 0, 1);
+
+    this.updateBounds(bounds_loss, 'svg_graph_training_A', size);
+    this.updateBounds(bounds_metric, 'svg_graph_training_B', size);
+    this.drawGraph('svg_graph_training_A', bounds_loss, size);
+    this.drawGraph('svg_graph_training_B', bounds_metric, size);
+
+    if (file) {
+      this.drawTensorflowTrainingProgress(file.data);
+    }
+  }
+
+  // drawData(logs: TrainingSet) {
+    // if (logs && logs.data && logs.data.length > 0 ) {
+      // this.training = this.d.selectedModel.training.epochs - 1 == logs.data[logs.data.length - 1].epoch ? false : true;
+      // this.drawTensorflowTrainingProgress(logs.data);
+    // }
+  // }
 
 
 
@@ -332,6 +353,7 @@ export class TensorFlowDrawService {
 
     if (visible) {
 
+
       const trimLinesGroup =  d3.select('#svg_svg_graph_data').append('g')
         .attr('id', 'dataTrimLines')
         // .attr('clip-path', 'url(#clipPathGraph)')
@@ -424,7 +446,6 @@ export class TensorFlowDrawService {
       const extraButtonList = [ new TrimSection(uuid(), { min: lastBlockPosition, max: lastBlockPosition + 1 }) ];
 
       this.drawCircleButton(trimLinesGroup, lines.concat(extraButtonList), 'add', size);
-
 
       this.addTrimLine(trimLinesGroup, lines, 'trimLeft', size, dragLineLeft);
       this.addTrimLine(trimLinesGroup, lines, 'trimRight', size, dragLineRight);

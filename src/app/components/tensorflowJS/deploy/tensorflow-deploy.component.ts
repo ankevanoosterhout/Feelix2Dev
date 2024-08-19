@@ -40,7 +40,10 @@ export class TensorflowDeployComponent implements AfterViewInit {
 
     this.tensorflowRecordService.predictOutput.subscribe(() => {
       this.tensorflowTrainService.predictOutput();
+      this.changeDetection.detectChanges();
     });
+
+    
   }
 
   ngAfterViewInit(): void {
