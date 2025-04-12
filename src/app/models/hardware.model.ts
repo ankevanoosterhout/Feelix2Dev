@@ -14,14 +14,16 @@ export enum ActuatorType {
   bldc = 0,
   stepper = 1,
   pneumatic = 2,
-  torquetuner = 3
+  torquetuner = 3,
+  hydraulic = 4
 };
 
 export const ActuatorLabelMapping: Record<ActuatorType, string> = {
   [ActuatorType.bldc]: 'BLDC Motor',
   [ActuatorType.stepper]: 'Stepper Motor',
   [ActuatorType.pneumatic]: 'Pneumatic Actuator',
-  [ActuatorType.torquetuner]: 'TorqueTuner'
+  [ActuatorType.torquetuner]: 'TorqueTuner',
+  [ActuatorType.hydraulic]: 'Hydraulic Actuator'
 };
 
 export class TorqueTunerConfig {
@@ -110,6 +112,7 @@ export class CurrentSense {
 
 export class Config {
   supplyVoltage: number = 12;
+  serialNumber: any;
 }
 
 export class BLDCConfig extends Config {
@@ -142,6 +145,38 @@ export class minMax {
     this.min = min;
     this.max = max;
   }
+}
+
+export class HydraulicConfig extends Config {
+  pressureLimit: number = 150;
+  nrOfSensors: number = 1;
+  sensorCommunication: SensorCommunication = SensorCommunication.SPI;
+  closedLoop = true;
+  pressure_pid = new PID(0.13, 0.0001, 0.0, 0.01, 1000);
+  height_pid = new PID(0.5, 0.0005, 0.0, 0.01, 1000);
+  pressure_range = new minMax(15.0, 135.0);
+  height_range = new minMax(1.0, 13.5);
+  leadScrewPitch = 2.0;
+
+  polepairs: number = 7;
+  phaseResistance: number = 15.2;
+  voltageLimit: number = 12;
+  velocityLimit: number = 21;
+  inlineCurrentSensing = false;
+  encoderType: string = 'Magnetic sensor';
+  encoder: any = new MagneticSensor();
+  sensorOffset = 0.0;
+  calibration = new Calibration();
+  rotation = new Rotation();
+  transmission = 1;
+  frequency = 50000;
+  current_sense = [ new CurrentSense('a', 0.0), new CurrentSense('b', 0.0) ];
+  current_sense_calibration: number;
+  overheatProtection = false;
+  output_ramp_angle = 10000;
+  output_ramp_velocity = 1000;
+  position_pid = new PID(20.0, 0.0, 0.0, 0, 1000);
+  velocity_pid = new PID(0.5, 10, .001, 0.01, 1000);
 }
 
 export class PneuConfig extends Config {
@@ -207,6 +242,8 @@ export class Motor {
       this.config.pin = id + 2;
     } else if (this.type === ActuatorType.torquetuner){
       this.config = new TorqueTunerConfig();
+    } else if (this.type === ActuatorType.hydraulic){
+      this.config = new HydraulicConfig();
     }
   }
 }

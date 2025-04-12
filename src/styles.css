@@ -35,6 +35,10 @@ html, body {
   opacity: 0.5;
 }
 
+p.full-width {
+  width: 100%;
+}
+
 .toolbar-header {
   top: 0;
   left:0;

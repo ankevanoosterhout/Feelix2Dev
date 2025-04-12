@@ -6,7 +6,8 @@ export enum EffectType {
   velocity = 2,
   pneumatic = 3,
   midi = 4,
-  midiNote = 5
+  midiNote = 5,
+  hydraulic = 6
 };
 
 
@@ -15,6 +16,7 @@ export const EffectTypeLabelMapping: Record<EffectType, string> = {
   [EffectType.position]: 'position',
   [EffectType.velocity]: 'velocity',
   [EffectType.pneumatic]: 'pneumatic',
+  [EffectType.hydraulic]: 'hydraulic',
   [EffectType.midi]: 'midi',
   [EffectType.midiNote]: 'midi note'
 };
@@ -66,7 +68,8 @@ export class Configuration {
       new EffectTypeColor(EffectType.position, ['#d94313', '#d5afaf']),
       new EffectTypeColor(EffectType.pneumatic, ['#37DEF8']),
       new EffectTypeColor(EffectType.midi, ['#5993bd']),
-      new EffectTypeColor(EffectType.midiNote, ['#0970ba']) ];
+      new EffectTypeColor(EffectType.midiNote, ['#0970ba']),
+      new EffectTypeColor(EffectType.hydraulic, ['#4390E6']), ];
 
   colorList = [ new InputColor('pressure', '#FF9100'),
                 new InputColor('pressure-1', '#00AEEF'),

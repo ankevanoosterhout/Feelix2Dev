@@ -172,11 +172,13 @@ function createConnection(serialData, data = null, callback = null) {
 }
 
 function deleteDataItemsCOM(COM) {
-  const dataItems = this.dataSendWaitList.filter(d => d.port === COM);
-  for (const item of dataItems) {
-    const index = this.dataSendWaitList.indexOf(item);
-    if (index > -1) {
-      this.dataSendWaitList.splice(index, 1);
+  if (this.dataSendWaitList && this.dataSendWaitList.length > 0) {
+    const dataItems = this.dataSendWaitList.filter(d => d.port === COM);
+    for (const item of dataItems) {
+      const index = this.dataSendWaitList.indexOf(item);
+      if (index > -1) {
+        this.dataSendWaitList.splice(index, 1);
+      }
     }
   }
 }
@@ -271,11 +273,11 @@ class newSerialPort {
       });
 
       parser.on('data', (d) => {
-
+        console.log(d);
         // uncomment to print incoming data
-        // if (d.charAt(0) === '#') {
-          // console.log('received data ', d);
-        // } else
+        if (d.charAt(0) === '#') {
+          console.log('received data ', d);
+        } else
         if (d.charAt(0) === '*') {
           if (dataSendWaitList.filter(d => d.port === this.COM).length > 0) {
             uploadFromWaitList(ports.filter(p => p.COM === this.COM)[0]);
@@ -300,7 +302,7 @@ class newSerialPort {
           incomingData = { d: dataList, motorID: dataArray[0], serialPath: this.COM };
           main.visualizaMotorData(incomingData);
 
-        } else if (d.charAt(0) === 'J') { //pneumatic data
+        } else if (d.charAt(0) === 'J') { //pressure data
           // console.log(d);
           const dataArray = d.substr(1).split(':');
 
@@ -347,7 +349,7 @@ class newSerialPort {
           const dataArray = d.substr(1).split(':');
           const data = {
               motorID: dataArray[0],
-              current_sense_calibration: dataArray[1],
+              current_sense_calibration: parseFloat(dataArray[1]),
               serialPath: this.COM
           };
           main.updateCurrentSenseCalibration(data);
@@ -373,14 +375,17 @@ class newSerialPort {
               patch: parseInt(dataArray[2])
           };
           if (data.major !== softwareVersion.major || data.minor !== softwareVersion.minor) {
-            main.showMessageConfirmation({ msg: "The software version of Feelix does not match the software version on the microcontroller (v"
-              + (data.major + '.' + data.minor + '.' + data.patch) + "), update to v" + (softwareVersion.major + '.' + softwareVersion.minor + '.X'), action:"updateVersion", type: "message", d: this.COM });
+            
+            
+            main.showMessageConfirmation({ msg: isNaN(data.major) || data.major == undefined ? "The version of Feelix does not match the software version on the microcontroller (v"
+              + (data.major + '.' + data.minor + '.' + data.patch) + "), update to v" + (softwareVersion.major + '.' + softwareVersion.minor + '.X') : "The microcontroller is not running the appropriate code. Please update.", action:"updateVersion", type: "message", d: this.COM });
                           // this.sp.close();
-          } else {
+        
             if (dataSendWaitList.filter(d => d.port === this.COM).length > 0) {
               uploadFromWaitList(ports.filter(p => p.COM === this.COM)[0]);
             }
           }
+          
         } else if (d.charAt(0) === 'R') {
           const dataArray = d.substr(1).split(':');
           const data = {
@@ -397,13 +402,66 @@ class newSerialPort {
           this.connected = true;
           main.updateSerialStatus({ microcontroller: this.portData, connected: this.connected });
           updateProgress(100, ('Connected to ' + this.COM));
-        }
-        else if (this.connected && (d.charAt(0) === 'H' || d === 0)) {
+        
+        } else if (this.connected && (d.charAt(0) === 'H' || d === 0)) {
           if (dataSendWaitList.filter(d => d.port === this.COM).length > 0) {
             uploadFromWaitList(ports.filter(p => p.COM === this.COM)[0]);
           }
-        }
+        } else if (d.charAt(0) === 'Q') {
+          //Serial.println((String) "Q" + direction + ":" + mean + ":" + (stDevSum/sample_count)); 
+          if (d.charAt(1) === '0') { //previous P
+            const dataArray = d.substr(2).split(':');
+            const data = {
+                angle: parseFloat(dataArray[0]), //update code microcontroller
+                electricAngle: parseFloat(dataArray[1]),
+                sensorElectricAngle: parseFloat(dataArray[2]),
+                electricAngleError: parseInt(dataArray[3]),
+                serialPath: this.COM
+            };
+            // console.log(data);
+            main.updateCoggingData(data, 'cogging_data');
+          } else if (d.charAt(1) === '1') {
+            const dataArray = d.substr(2).split(':');
+            const data = {
+                direction: dataArray[0], //update code microcontroller
+                mean: dataArray[1],
+                stDevSum: parseFloat(dataArray[2]),
+                serialPath: this.COM
+            };
 
+            // console.log(data);
+            main.updateCoggingData(data, 'cogging_data_output');
+          } else if (d.charAt(1) === '2') { //previous T
+            const round = parseInt(d.charAt(1));
+            console.log('MEASURED COGGNIG DIRECTION ' + round + ' ' + this.COM + ' ' + d);
+            updateProgress((round * 50), ('Measured cogging direction ' + round + ' ' + this.COM + ' ' + d));
+          }
+        } else if (d.charAt(0) === 'T') { // hydraulic pressure
+          const operation = d.charAt(1);
+          const dataArray = d.substr(2).split(':');
+
+          if (operation === '1') {
+            const data = {
+              motorID: dataArray[0],
+              height: parseFloat(dataArray[1]),
+              voltage: parseFloat(dataArray[2]),
+              pressure: parseFloat(dataArray[3]),
+              serialPath: this.COM
+            };
+
+          } else if (operation === '2') {
+            const data = {
+              motorID: dataArray[0],
+              startPos: parseFloat(dataArray[1]),
+              endPos: parseFloat(dataArray[2]) + parseFloat(dataArray[1]),
+              serialPath: this.COM
+            };
+
+            main.updateHydraulicCalibrationData(data);  
+            updateProgress(100, ('Height calibration complete ' + this.COM));   
+          }
+
+      }
     });
 
 
@@ -481,9 +539,14 @@ function prepareMotorData(uploadContent, motor, datalist, index) {
   }
 
   if (motor.config.position_pid && motor.config.velocity_pid) {
-    datalist.unshift('FM' + motor.id + 'A' + ':' + motor.config.position_pid.p.toFixed(2) + ':' + motor.config.position_pid.i.toFixed(2));
+    if (motor.config.position_pid.p !== undefined && motor.config.position_pid.i !== undefined) {
+      datalist.unshift('FM' + motor.id + 'A' + ':' + motor.config.position_pid.p.toFixed(2) + ':' + motor.config.position_pid.i.toFixed(2));
+    }
     datalist.unshift('FM' + motor.id + '$' + ':' + motor.config.position_pid.output_ramp + ':' + motor.config.position_pid.Tf.toFixed(3));
-    datalist.unshift('FM' + motor.id + 'Q' + ':' + motor.config.velocity_pid.p.toFixed(2) + ':' + motor.config.velocity_pid.i.toFixed(2));
+
+    if (motor.config.velocity_pid.p !== undefined && motor.config.velocity_pid.i !== undefined) {
+      datalist.unshift('FM' + motor.id + 'Q' + ':' + motor.config.velocity_pid.p.toFixed(2) + ':' + motor.config.velocity_pid.i.toFixed(2));
+    }
     datalist.unshift('FM' + motor.id + '@' + ':' + motor.config.velocity_pid.output_ramp + ':' + motor.config.velocity_pid.Tf.toFixed(3));
   }
   datalist.unshift('FM' + motor.id + 'G' + (motor.config.inlineCurrentSensing ? 1 : 0));
@@ -492,6 +555,10 @@ function prepareMotorData(uploadContent, motor, datalist, index) {
   }
   // datalist.unshift('FM' + motor.id + 'X' + (motor.config.overheatProtection ? 1 : 0));
 
+  if (motor.type === 4) {
+    //add data from hydraulic setup
+    //dataList.unshift('FM' + motor.id + '')
+  }
 
   // datalist.unshift('FM' + motor.id + 'B' + uploadContent.baudRate);
   return datalist;
@@ -499,7 +566,7 @@ function prepareMotorData(uploadContent, motor, datalist, index) {
 
 
 
-function preparePneumaticData(uploadContent, motor, datalist) {
+function preparePressureData(uploadContent, motor, datalist) {
 
   // datalist.unshift('FM' + motor.id + 'F');
 
@@ -664,6 +731,7 @@ function tryToEstablishConnection(receivingPort, uploadContent, callback) {
 
 
 function uploadData(uploadContent) {
+  console.log(uploadContent);
   receivingPort = ports.filter(p => p.COM === uploadContent.config.serialPort.path)[0];
 
   datalist = [];
@@ -685,7 +753,7 @@ function upload_to_receivedPort(port, uploadContent) {
       // console.log("RESET");
     }
     datalist.unshift('FM' + motor.id + 'F');
-    datalist = motor.type === 2 ? preparePneumaticData(uploadContent, motor, datalist, index) : prepareMotorData(uploadContent, motor, datalist);
+    datalist = motor.type === 2 ? preparePressureData(uploadContent, motor, datalist, index) : prepareMotorData(uploadContent, motor, datalist);
     if (uploadContent.data) {
       datalist = prepareEffectData(uploadContent, motor, datalist);
     }
@@ -800,7 +868,7 @@ function calibrate_current_sense(port, uploadContent) {
 
     datalist.unshift('FM' + motor.id + 'I' + motor.id);
     datalist.unshift('FM' + motor.id + 'S' + motor.config.supplyVoltage);
-    datalist.unshift('FM' + motor.id + 'P' + motor.config.polepairs);
+    datalist.unshift('FM' + motor.id + 'P' + motor.config.polepairs % 1 != 0 ? motor.config.polepairs.toFixed(12) : motor.config.polepairs);
     datalist.unshift('FM' + motor.id + 'Z' + motor.config.calibration.value.toFixed(12));
     datalist.unshift('FM' + motor.id + 'N' + (motor.config.calibration.direction === 'CW' ? 1 : -1));
     datalist.unshift('FM' + motor.id + 'U');
@@ -820,7 +888,7 @@ function calibrate_current_sense(port, uploadContent) {
 
 
 function calibrateMotor(uploadContent) {
-  // console.log(uploadContent);
+  console.log(uploadContent);
   if (uploadContent.config) {
     receivingPort = ports.filter(p => p.COM === uploadContent.config.serialPort.path)[0];
     // motor = microcontroller.motors.filter(m => m.id === motor_id)[0];
@@ -893,27 +961,30 @@ function update_filter(port, uploadContent) {
 
 
 function sendDataString(uploadContent) {
+  console.log(uploadContent.config.serialPort.path);
+
   if (uploadContent.config) {
     receivingPort = ports.filter(p => p.COM === uploadContent.config.serialPort.path)[0];
     // receivingPort =
+    console.log(receivingPort);
     tryToEstablishConnection(receivingPort, uploadContent, send_data_string);
   } else {
     main.updateSerialProgress({ progress: 0, str: 'Error: Not able to send data ' });
   }
 }
 
+
 function send_data_string(port, uploadContent) {
   receivingPort = port;
 
-  if (receivingPort) {
+  if (receivingPort && receivingPort.COM) {
 
     dataSendWaitList.push({ port: uploadContent.config.serialPort.path, data: [uploadContent.dataString], totalItems: 1 });
     main.updateSerialProgress({ progress: 0, str: 'Send data ' + receivingPort.COM });
     uploadFromWaitList(receivingPort);
   } else {
-    main.updateSerialProgress({ progress: 0, str: 'Error: Not able to send data ' + receivingPort.COM });
+    main.updateSerialProgress({ progress: 0, str: 'Error: Not able to send data ' + (receivingPort ? receivingPort.COM : '') });
   }
-
 }
 
 

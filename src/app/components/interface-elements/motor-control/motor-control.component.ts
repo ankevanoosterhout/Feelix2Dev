@@ -163,8 +163,9 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
 
         if (selectedCollection.visualizationType === EffectType.velocity && selectedCollection.time) {
-          const feedbackValue = selectedCollection.rotation.units_y.name === 'deg' ? d_angle.val * (180/Math.PI) : ((velocity / selectedCollection.microcontroller.motors[selectedCollection.motorID.index].config.velocityLimit) * 100);
-          this.drawFeedbackDataOnPlay(selectedCollection.rotation.loop, selectedCollection, feedbackValue);
+          const motor = selectedCollection.microcontroller.motors[selectedCollection.motorID.index];
+          const feedbackValue = selectedCollection.rotation.units_y.name === 'deg' ? d_angle.val * (180/Math.PI) : ((velocity / motor.config.velocityLimit) * 100);
+          this.drawFeedbackDataOnPlay(selectedCollection.rotation.loop, selectedCollection, (!motor.config.encoder.direction ? feedbackValue * -1 : feedbackValue));
         }
 
 
@@ -187,6 +188,18 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
         if (motor) {
           motor.config.calibration.value = data.zero_electric_angle;
           motor.config.calibration.direction = data.direction === 1 ? 'CW' : 'CCW';
+          this.hardwareService.updateMicroController(microcontroller);
+        }
+      }
+    });
+
+    this.electronService.ipcRenderer.on('hydraulicCalibrationData', (event: Event, data: any) => {
+      const microcontroller = this.hardwareService.getMicroControllerByCOM(data.serialPath);
+      if (microcontroller) {
+        const motor = microcontroller.motors.filter(m => m.id === data.motorID)[0];
+        if (motor) {
+          motor.state.position.start = data.startPos;
+          motor.state.position.end = data.endPos;
           this.hardwareService.updateMicroController(microcontroller);
         }
       }
@@ -316,6 +329,10 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
     if (collection) {
 
+      if (!collection.returnToStart && collection.offsetAngle === 0) {
+        collection.offsetAngle = data;
+      }
+
       if (loop && collection.feedbackData.length > 0 && collection.feedbackData[index] && collection.feedbackData[index][collection.feedbackData[index].length - 1].time >= collection.time) {
         collection.feedbackData[index] = [];
       }
@@ -328,7 +345,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
           collection.feedbackData[index].push({ value: data, time: collection.time });
         } else {
           const newArray = [];
-          newArray.push({ value: data, time: collection.time });
+          newArray.push({ value: data + collection.offsetAngle, time: collection.time });
           collection.feedbackData.push(newArray);
         }
       }
@@ -445,6 +462,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
         } else {
           collection.playing = false;
         }
+        collection.offsetAngle = 0;
         collection.feedbackData = [];
         this.motorControlService.saveCollection(collection);
       } else {
@@ -651,7 +669,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
         collection.rotation.units_y = { name: '%', PR: 100 };
         this.changeUnitsY(collection);
 
-    } else if (collection.visualizationType === EffectType.pneumatic) {
+    } else if (collection.visualizationType === EffectType.pneumatic || collection.visualizationType === EffectType.hydraulic) {
         collection.rotation.start_y = 0; //0
         collection.rotation.end_y = 100;
         this.oldUnits = collection.rotation.units;
@@ -695,6 +713,12 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       if (collection.visualizationType === EffectType.pneumatic) {
         coll_microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].config.inflate_pid = collection.microcontroller.motors[collection.motorID.index].config.inflate_pid;
         coll_microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].config.deflate_pid = collection.microcontroller.motors[collection.motorID.index].config.deflate_pid;
+        coll_microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].config.pressureLimit = collection.microcontroller.motors[collection.motorID.index].config.pressureLimit;
+      }
+
+      if (collection.visualizationType === EffectType.hydraulic) {
+        coll_microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].config.pressure_pid = collection.microcontroller.motors[collection.motorID.index].config.pressure_pid;
+        coll_microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].config.height_pid = collection.microcontroller.motors[collection.motorID.index].config.height_pid;
         coll_microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].config.pressureLimit = collection.microcontroller.motors[collection.motorID.index].config.pressureLimit;
       }
 

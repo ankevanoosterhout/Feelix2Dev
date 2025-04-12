@@ -306,6 +306,12 @@ const mainMenuTemplate = [
         }
       },
       {
+        label: 'Anti-cogging and alignment test',
+        click() {
+          createAntiCoggingWindow();
+        }
+      },
+      {
         label: 'Reset microcontroller data',
         click() {
           serialPort.closeAllSerialPorts();
@@ -761,8 +767,8 @@ function drawTemporaryWindow(width, minWidth, height, minHeight, title, resizabl
     backgroundColor: '#333',
     alwaysOnTop: true,
     frame: false,
-    resizable: resizable,
-    // resizable: true,
+    // resizable: resizable,
+    resizable: true,
     fullscreenable:false,
     center: false,
     movable: true,
@@ -791,7 +797,7 @@ function drawTemporaryWindow(width, minWidth, height, minHeight, title, resizabl
     mainWindow.webContents.send('resetCursor');
   })
 
-  // tmpWindow.webContents.openDevTools();
+  tmpWindow.webContents.openDevTools();
 
   tmpWindow.on('close', () => {
     tmpWindow = null
@@ -960,6 +966,10 @@ function createEffectSettingWindow(filepath) {
 
 function createMotorSettingsWindow() {
   drawTemporaryWindow(520, 400, 450, 300, 'Microcontroller settings', true, 'motor-settings');
+}
+
+function createAntiCoggingWindow() {
+  drawTemporaryWindow(700, 500, 500, 300, 'Anti-Cogging and Alignment', true, 'anti-cogging');
 }
 
 function adjustGridSettings() {
@@ -1445,7 +1455,7 @@ function visualizaMotorData(data) {
 function visualizaPressureMotorData(data) {
   mainWindow.webContents.send('playDataPressure', data);
   if (tensorflowWindow !== null) {
-    tensorflowWindow.webContents.send('pneumaticDataPressure', data);
+    tensorflowWindow.webContents.send('dataPressure', data);
   }
 }
 
@@ -1457,6 +1467,13 @@ function updateZeroElectricAngle(data) {
     tmpWindow.webContents.send('zero_electric_angle', data);
   }
 
+}
+
+function updateCoggingData(data, dataType) {
+  // console.log(data, dataType, activeWindow);
+  if (tmpWindow !== null && (activeWindow === 'anti-cogging')) {
+    tmpWindow.webContents.send(dataType, data);
+  }
 }
 
 function uploadSuccesful(collection) {
@@ -1490,6 +1507,14 @@ function checkPorts(portlist) {
 }
 
 
+function updateHydraulicCalibrationData(data) {
+  mainWindow.webContents.send('hydraulicCalibrationData', data);
+
+  if (tmpWindow !== null && (activeWindow === 'motor-settings')) { 
+    tmpWindow.webContents.send('hydraulicCalibrationData', data);
+  } 
+}
+
 
 
 exports.updateSerialStatus = updateSerialStatus;
@@ -1504,3 +1529,5 @@ exports.updateCurrentSenseCalibration = updateCurrentSenseCalibration;
 exports.showMessageConfirmation = showMessageConfirmation;
 exports.returnData = returnData;
 exports.checkPorts = checkPorts;
+exports.updateCoggingData = updateCoggingData;
+exports.updateHydraulicCalibrationData = updateHydraulicCalibrationData;

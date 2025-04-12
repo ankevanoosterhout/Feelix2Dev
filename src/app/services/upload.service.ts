@@ -458,14 +458,14 @@ export class UploadService {
 
   createUploadModel(collection: Collection, microcontroller: MicroController) {
     let model = new UploadModel(collection, microcontroller);
-    // console.log(model);
+    console.log(model);
     return model;
   }
 
     // TODO: Revise this section too
   createUploadModel_TT(message: any, microcontroller: MicroController) {
     let model = new UploadModel_TT(message, microcontroller);
-    // console.log(model);
+    console.log(model);
     return model;
   }
 

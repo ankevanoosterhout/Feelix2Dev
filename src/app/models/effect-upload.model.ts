@@ -119,7 +119,7 @@ export class EffectModel {
       this.vis_type = new Model('T', 0);
     } else if (effect.type === EffectType.position) {
       this.vis_type = new Model('T', 1);
-    } else if (effect.type === EffectType.velocity || effect.type === EffectType.pneumatic) {
+    } else if (effect.type === EffectType.velocity || effect.type === EffectType.pneumatic  || effect.type === EffectType.hydraulic) {
       if (effect.yUnit === 'deg') {
         this.vis_type = new Model('T', 3);
       } else {

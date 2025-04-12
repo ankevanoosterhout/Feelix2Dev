@@ -71,11 +71,11 @@
               <input type="number" (focus)="this.focusInputField(true)" (focusout)="this.focusInputField(false)"
                 id="range-end" name="rotation-end" [(ngModel)]="collection.rotation.end" (change)="this.motorControlService.updateCollection(collection)">
 
-              <select class="form-control" *ngIf="collection.visualizationType < 2 || collection.visualizationType > 3" id="unitsDropdown" (focus)="this.oldUnits = collection.rotation.units" [(ngModel)]="collection.rotation.units" (change)="changeUnits(collection)" name="units-r-{{ collection.id }}" [compareWith]="compareName">
+              <select class="form-control" *ngIf="collection.visualizationType < 2 || (collection.visualizationType > 3 && collection.visualizationType < 6)" id="unitsDropdown" (focus)="this.oldUnits = collection.rotation.units" [(ngModel)]="collection.rotation.units" (change)="changeUnits(collection)" name="units-r-{{ collection.id }}" [compareWith]="compareName">
                 <option *ngFor="let unit of unitOptions" [ngValue]="unit">{{ unit.name }}</option>
               </select>
 
-              <select class="form-control" *ngIf="collection.visualizationType === 2 || collection.visualizationType === 3" id="unitsDropdown" (focus)="this.oldUnits = collection.rotation.units" [(ngModel)]="collection.rotation.units" (change)="changeUnits(collection)" name="units-r-vel-{{ collection.id }}" [compareWith]="compareName">
+              <select class="form-control" *ngIf="collection.visualizationType === 2 || collection.visualizationType === 3 || collection.visualizationType === 6" id="unitsDropdown" (focus)="this.oldUnits = collection.rotation.units" [(ngModel)]="collection.rotation.units" (change)="changeUnits(collection)" name="units-r-vel-{{ collection.id }}" [compareWith]="compareName">
                 <option *ngFor="let unit of unitOptionsVelocity" [ngValue]="unit">{{ unit.name }}</option>
               </select>
 
@@ -99,7 +99,7 @@
                     [ngClass]="{ active: collection.rotation.constrain }" (click)="constrain(collection.id)" title="constrain range within which the motor can move">
                   <img class="no-pointer-events" src="./assets/icons/buttons/constrain.svg">
                 </li>
-                <li *ngIf="(!collection.rotation.constrain && collection.visualizationType < 2) || (collection.visualizationType < 4)" id="loop" (click)="loop(collection.id)"
+                <li *ngIf="(!collection.rotation.constrain && collection.visualizationType < 2) || collection.visualizationType < 4 || collection.visualizationType === 6" id="loop" (click)="loop(collection.id)"
                     [ngClass]="{ active: collection.rotation.loop }" title="infinite rotation / loop (motor cursor)">
                     <img class="no-pointer-events" src="./assets/icons/buttons/infinite.svg">
                 </li>
@@ -136,7 +136,7 @@
             </span>
 
             <span class="info-column" *ngIf="collection.microcontroller && collection.microcontroller.motors[collection.motorID.index].config.inflate_pid">
-              <div class="form-row left collection_pid" id="PID_inflate_P" *ngIf="(collection.visualizationType === 3) && collection.microcontroller && this.motorControlService.width > 980 && collection.effectDataList.length > 0" title="PID controller inflating valve">
+              <div class="form-row left collection_pid" id="PID_inflate_P" *ngIf="(collection.visualizationType === 3) && collection.microcontroller && collection.effectDataList.length > 0" title="PID controller inflating valve">
                 <label>infl PI</label>
                 <input type="number" id="collection-PID" name="collection-inflate-PID_P-{{ collection.id }}" (focus)="this.focusInputField(true)" (focusout)="this.focusInputField(false)" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].config.inflate_pid.p"
                   (change)="saveMotorData(collection, 'E', [collection.microcontroller.motors[collection.motorID.index].config.inflate_pid.p, collection.microcontroller.motors[collection.motorID.index].config.inflate_pid.i, collection.microcontroller.motors[collection.motorID.index].config.inflate_pid.d])">
@@ -148,7 +148,7 @@
             </span>
 
             <span class="info-column" *ngIf="collection.microcontroller && collection.microcontroller.motors[collection.motorID.index].config.deflate_pid">
-              <div class="form-row left collection_pid" id="PID_deflate_P" *ngIf="(collection.visualizationType === 3) && collection.microcontroller && this.motorControlService.width > 980 && collection.effectDataList.length > 0" title="PID controller deflating valve">
+              <div class="form-row left collection_pid" id="PID_deflate_P" *ngIf="(collection.visualizationType === 3) && collection.microcontroller && collection.effectDataList.length > 0" title="PID controller deflating valve">
                 <label>defl PI</label>
                 <input type="number" id="collection-PID" name="collection-deflate-PID_P-{{ collection.id }}" (focus)="this.focusInputField(true)" (focusout)="this.focusInputField(false)" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].config.deflate_pid.p"
                   (change)="saveMotorData(collection, 'G', [collection.microcontroller.motors[collection.motorID.index].config.deflate_pid.p, collection.microcontroller.motors[collection.motorID.index].config.deflate_pid.i, collection.microcontroller.motors[collection.motorID.index].config.deflate_pid.d])">
@@ -159,25 +159,50 @@
               </div>
             </span>
 
+            
+            <span class="info-column" *ngIf="collection.microcontroller && collection.visualizationType === 6">
+              <div class="form-row left collection_pid" id="PID_pressure_P" *ngIf="collection.microcontrollers && collection.effectDataList.length > 0" title="PID controller pressure">
+                <label>press PID</label>
+                <input type="number" id="collection-PID" name="collection-pressure-PID_P-{{ collection.id }}" (focus)="this.focusInputField(true)" (focusout)="this.focusInputField(false)" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].config.pressure_pid.p"
+                  (change)="saveMotorData(collection, 'G', [collection.microcontroller.motors[collection.motorID.index].config.pressure_pid.p, collection.microcontroller.motors[collection.motorID.index].config.pressure_pid.i, collection.microcontroller.motors[collection.motorID.index].config.pressure_pid.d])">
+                <input type="number" id="collection-PID" name="collection-pressure-PID_I-{{ collection.id }}" (focus)="this.focusInputField(true)" (focusout)="this.focusInputField(false)" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].config.pressure_pid.i"
+                  (change)="saveMotorData(collection, 'G', [collection.microcontroller.motors[collection.motorID.index].config.pressure_pid.p, collection.microcontroller.motors[collection.motorID.index].config.pressure_pid.i, collection.microcontroller.motors[collection.motorID.index].config.pressure_pid.d])">
+                <input type="number" id="collection-PID" name="collection-pressure-PID_D-{{ collection.id }}" (focus)="this.focusInputField(true)" (focusout)="this.focusInputField(false)" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].config.pressure_pid.d"
+                  (change)="saveMotorData(collection, 'G', [collection.microcontroller.motors[collection.motorID.index].config.pressure_pid.p, collection.microcontroller.motors[collection.motorID.index].config.pressure_pid.i, collection.microcontroller.motors[collection.motorID.index].config.pressure_pid.d])">
+              </div>
+            </span>
+
+            <span class="info-column" *ngIf="collection.microcontroller && collection.visualizationType === 6">
+              <div class="form-row left collection_pid" id="PID_height_P" *ngIf="collection.microcontroller && collection.effectDataList.length > 0" title="PID controller height">
+                <label>height PID</label>
+                <input type="number" id="collection-PID" name="collection-height-PID_P2-{{ collection.id }}" (focus)="this.focusInputField(true)" (focusout)="this.focusInputField(false)" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].config.height_pid.p"
+                  (change)="saveMotorData(collection, 'G', [collection.microcontroller.motors[collection.motorID.index].config.height_pid.p, collection.microcontroller.motors[collection.motorID.index].config.height_pid.i, collection.microcontroller.motors[collection.motorID.index].config.height_pid.d])">
+                <input type="number" id="collection-PID" name="collection-height-PID_I2-{{ collection.id }}" (focus)="this.focusInputField(true)" (focusout)="this.focusInputField(false)" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].config.height_pid.i"
+                  (change)="saveMotorData(collection, 'G', [collection.microcontroller.motors[collection.motorID.index].config.height_pid.p, collection.microcontroller.motors[collection.motorID.index].config.height_pid.i, collection.microcontroller.motors[collection.motorID.index].config.height_pid.d])">
+                <input type="number" id="collection-PID" name="collection-height-PID_D2-{{ collection.id }}" (focus)="this.focusInputField(true)" (focusout)="this.focusInputField(false)" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].config.height_pid.d"
+                  (change)="saveMotorData(collection, 'G', [collection.microcontroller.motors[collection.motorID.index].config.height_pid.p, collection.microcontroller.motors[collection.motorID.index].config.height_pid.i, collection.microcontroller.motors[collection.motorID.index].config.height_pid.d])">
+              </div>
+            </span>
+
 
             <!-- maximum values -->
 
             <span class="info-column">
               <div class="form-row left collection_pid" id="max" *ngIf="(collection.visualizationType === 2 && collection.rotation.units_y.name !== 'deg') && collection.microcontroller && collection.motorID && collection.microcontroller.motors[collection.motorID.index]" title="Maximum velocity (rad/s)">
                 <label>max vel.</label>
-                <input type="number" id="collection-PID" name="collection-max-vel-{{ collection.id }}" (focus)="this.focusInputField(true)" (focusout)="this.focusInputField(false)" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].config.velocityLimit" title="Maximum velocity (rad/s)"
+                <input type="number" id="maxVelocity" name="collection-max-vel-{{ collection.id }}" (focus)="this.focusInputField(true)" (focusout)="this.focusInputField(false)" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].config.velocityLimit" title="Maximum velocity (rad/s)"
                   (change)="saveMotorData(collection, 'V', [collection.microcontroller.motors[collection.motorID.index].config.velocityLimit] )">
               </div>
 
               <div class="form-row left collection_pid" id="max" *ngIf="collection.visualizationType < 2 && collection.microcontroller && collection.motorID && collection.microcontroller.motors[collection.motorID.index] && this.motorControlService.width > 400" title="Maximum voltage (V)">
                 <label>max volt.</label>
-                <input type="number" id="collection-PID" name="collection-max-vol-{{ collection.id }}" (focus)="this.focusInputField(true)" (focusout)="this.focusInputField(false)" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].config.voltageLimit"
+                <input type="number" id="maxVoltage" name="collection-max-vol-{{ collection.id }}" (focus)="this.focusInputField(true)" (focusout)="this.focusInputField(false)" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].config.voltageLimit"
                   (change)="saveMotorData(collection, 'L', [collection.microcontroller.motors[collection.motorID.index].config.voltageLimit] )">
               </div>
 
-              <div class="form-row left collection_pid" id="max" *ngIf="collection.visualizationType === 3 && collection.microcontroller && collection.motorID && collection.microcontroller.motors[collection.motorID.index] && this.motorControlService.width > 400" title="Maximum pressure (bar)">
+              <div class="form-row left collection_pid" id="max" *ngIf="(collection.visualizationType === 3 || collection.visualizationType === 6) && collection.microcontroller && collection.motorID && collection.microcontroller.motors[collection.motorID.index] && this.motorControlService.width > 400" title="Maximum pressure (bar)">
                 <label>max pressure</label>
-                <input type="number" id="collection-PID" name="collection-max-pressure-{{ collection.id }}" (focus)="this.focusInputField(true)" (focusout)="this.focusInputField(false)" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].config.pressureLimit"
+                <input type="number" id="maxPressure" name="collection-max-pressure-{{ collection.id }}" (focus)="this.focusInputField(true)" (focusout)="this.focusInputField(false)" [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].config.pressureLimit"
                   (change)="saveMotorData(collection, 'L', [collection.microcontroller.motors[collection.motorID.index].config.pressureLimit] )">
               </div>
 
@@ -194,7 +219,7 @@
 
             <!-- layers -->
 
-            <div class="form-row left info-column" *ngIf="this.motorControlService.width > 800 && (collection.visualizationType < 2 || collection.visualizationType > 3)">
+            <div class="form-row left info-column" *ngIf="this.motorControlService.width > 800 && (collection.visualizationType < 2 || (collection.visualizationType > 3 && collection.visualizationType < 6))">
               <div id="coll-layers-row" *ngFor="let layer of collection.layers">
                 <ul id="coll-layers">
                   <li id="visible" [ngClass]="{ active: layer.visible }" (click)="toggleVisibility(collection, layer)" title="toggle visibility {{ layer.name }} layer">
@@ -231,7 +256,7 @@
 
             </div>
 
-            <div class="form-row info-column" *ngIf="collection.playing && collection.visualizationType === 3">
+            <div class="form-row info-column" *ngIf="collection.playing && (collection.visualizationType === 3 || collection.visualizationType === 6)">
 
               <div class="motor-info" id="pressure-{{ collection.id }}">0 </div>
               <div class="motor-info posUnits" id="pressureUnits-{{ collection.id }}">bar</div>

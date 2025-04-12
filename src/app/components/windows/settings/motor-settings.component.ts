@@ -5,7 +5,7 @@ import { FileService } from 'src/app/services/file.service';
 import { UploadService } from 'src/app/services/upload.service';
 import { Router } from '@angular/router';
 import { DOCUMENT } from '@angular/common';
-import { ActuatorLabelMapping, ActuatorType, BLDCConfig, MicroController, Motor, PneuConfig, SensorCommunication, SensorCommunicationMapping, StepperConfig, TorqueTunerConfig, Unit } from 'src/app/models/hardware.model';
+import { ActuatorLabelMapping, ActuatorType, BLDCConfig, HydraulicConfig, MicroController, Motor, PneuConfig, SensorCommunication, SensorCommunicationMapping, StepperConfig, TorqueTunerConfig, Unit } from 'src/app/models/hardware.model';
 import { MagneticSensor, Encoder } from 'src/app/models/position-sensors.model';
 
 
@@ -129,8 +129,27 @@ export class MotorSettingsComponent implements OnInit {
 
 
     this.electronService.ipcRenderer.on('checkPorts',  (event: Event, portlist: any) => {
-      console.log(portlist);
+      //console.log(portlist);
       this.hardwareService.checkPorts(portlist);
+    });
+
+
+    this.electronService.ipcRenderer.on('hydraulicCalibrationData',  (event: Event, data: any) => {
+      console.log(data);
+      const microcontroller = this.microcontrollers.filter(m => m.serialPort.path === data.serialPath)[0];
+      if (microcontroller) {
+        const motor = microcontroller.motors.filter(m => m.id === data.motorID)[0];
+        motor.state.position.start = data.startPos;
+        motor.state.position.end = data.endPos;
+
+        if (this.document.getElementById('startPosition-' + data.serialPath + '-' + data.motorID)) {
+          (this.document.getElementById('startPosition-' + data.serialPath + '-' + data.motorID) as HTMLInputElement).value = motor.state.position.start.toString();
+        }
+        if (this.document.getElementById('endPosition-' + data.serialPath + '-' + data.motorID)) {
+          (this.document.getElementById('endPosition-' + data.serialPath + '-' + data.motorID) as HTMLInputElement).value = motor.state.position.end.toString();
+        }
+      }
+      
     });
 
     this.electronService.ipcRenderer.on('receiveData', (event: Event, data: any) => {
@@ -145,7 +164,7 @@ export class MotorSettingsComponent implements OnInit {
             (this.document.getElementById('instruction-' + data.serialPath + '-' + data.motorID) as HTMLElement).innerHTML = "rotate motor to end position and press 'OK'";
             if (this.document.getElementById('startPosition-' + data.serialPath + '-' + data.motorID)) {
               (this.document.getElementById('startPosition-' + data.serialPath + '-' + data.motorID) as HTMLInputElement).value = motor.state.position.start.toString();
-              (this.document.getElementById('startPosition-offset-' + data.serialPath + '-' + data.motorID) as HTMLInputElement).value = (motor.state.position.start + motor.config.sensorOffset).toString();
+              // (this.document.getElementById('startPosition-offset-' + data.serialPath + '-' + data.motorID) as HTMLInputElement).value = (motor.state.position.start + motor.config.sensorOffset).toString();
             }
           }
 
@@ -160,12 +179,12 @@ export class MotorSettingsComponent implements OnInit {
               motor.state.position.start = tmp;
               if (this.document.getElementById('startPosition-' + data.serialPath + '-' + data.motorID)) {
                 (this.document.getElementById('startPosition-' + data.serialPath + '-' + data.motorID) as HTMLInputElement).value = motor.state.position.start.toString();
-                (this.document.getElementById('startPosition-offset-' + data.serialPath + '-' + data.motorID) as HTMLInputElement).value = (motor.state.position.start + motor.config.sensorOffset).toString();
+                // (this.document.getElementById('startPosition-offset-' + data.serialPath + '-' + data.motorID) as HTMLInputElement).value = (motor.state.position.start + motor.config.sensorOffset).toString();
               }
             }
             if (this.document.getElementById('endPosition-' + data.serialPath + '-' + data.motorID)) {
               (this.document.getElementById('endPosition-' + data.serialPath + '-' + data.motorID) as HTMLInputElement).value = motor.state.position.end.toString();
-              (this.document.getElementById('endPosition-offset-' + data.serialPath + '-' + data.motorID) as HTMLInputElement).value = (motor.state.position.end + motor.config.sensorOffset).toString();
+              // (this.document.getElementById('endPosition-offset-' + data.serialPath + '-' + data.motorID) as HTMLInputElement).value = (motor.state.position.end + motor.config.sensorOffset).toString();
             }
           }
           this.hardwareService.updateMicroController(microcontroller);
@@ -244,6 +263,8 @@ export class MotorSettingsComponent implements OnInit {
         motor.config = new StepperConfig();
       } else if (motor.type === ActuatorType.torquetuner) {
         motor.config = new TorqueTunerConfig();
+      } else if (motor.type === ActuatorType.hydraulic) {
+        motor.config = new HydraulicConfig();
       }
     }
     this.hardwareService.updateMicroController(microcontroller);

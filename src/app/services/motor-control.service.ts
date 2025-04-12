@@ -543,8 +543,8 @@ export class MotorControlService {
 
     const cursor = collection.config.svg.append('line')
       .attr('class', 'cursorIndicator-' + collection.id)
-      .attr('x1', position)
-      .attr('x2', position)
+      .attr('x1', position - 1)
+      .attr('x2', position - 1)
       .attr('y1', 0)
       .attr('y2', this.height - 39)
       .attr('transform', () => this.file.configuration.collectionDisplay === 'small' ? 'translate(5, 0)' : 'translate(5, 26)')

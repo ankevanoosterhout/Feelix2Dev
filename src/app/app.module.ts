@@ -61,6 +61,7 @@ import { DrawAudioService } from './services/draw-audio.service';
 import { MidiDataService } from './services/midi-data.service';
 import { TensorflowModule } from './components/tensorflowJS/tensorflow.module';
 import { StatusbarModule } from './components/interface-elements/statusbar.module';
+import { AntiCoggingComponent } from './components/windows/settings/anti-cogging.component';
 
 @NgModule({
     declarations: [
@@ -90,7 +91,8 @@ import { StatusbarModule } from './components/interface-elements/statusbar.modul
         KinematicsComponent,
         KinematicsControlComponent,
         KinematicsToolbarComponent,
-        KinematicsCursorComponent
+        KinematicsCursorComponent,
+        AntiCoggingComponent
     ],
     imports: [
         BrowserModule,

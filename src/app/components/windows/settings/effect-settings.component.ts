@@ -33,7 +33,7 @@ import { EffectType, EffectTypeLabelMapping } from 'src/app/models/configuration
                 </div>
 
                 <!-- unit options for rotation  effects -->
-                <div class="form-row" *ngIf="!this.updateMode && (effect.type !== 2 && effect.type !== 3)">
+                <div class="form-row" *ngIf="!this.updateMode && (effect.type !== 2 && effect.type !== 3 && effect.type !== 6)">
                     <label class="select units">Units</label>
                     <select class="form-control" id="select-units"
                         (change)="updateRotationRange()" [(ngModel)]="effect.grid.xUnit" name="xUnit" [compareWith]="compareUnits">
@@ -41,8 +41,8 @@ import { EffectType, EffectTypeLabelMapping } from 'src/app/models/configuration
                     </select>
                 </div>
 
-                <!-- unit options for velocity and pneumatic effects -->
-                <div class="form-row" *ngIf="!this.updateMode && (effect.type === 2 || effect.type === 3)">
+                <!-- unit options for velocity and pressure effects -->
+                <div class="form-row" *ngIf="!this.updateMode && (effect.type === 2 || effect.type === 3 || effect.type === 6)">
                     <label class="select units">Units</label>
                     <select class="form-control" id="select-units"
                         (change)="updateRotationRange()" [(ngModel)]="effect.grid.xUnit" name="xUnit" [compareWith]="compareUnits">
@@ -126,11 +126,11 @@ export class EffectSettingsComponent implements OnInit {
 
   updateControlType() {
     this.prevUnits = this.effect.grid.xUnit;
-    if ((this.effect.type === EffectType.velocity || this.effect.type === EffectType.pneumatic) && this.effect.grid.xUnit.name !== 'ms') {
+    if ((this.effect.type === EffectType.velocity || this.effect.type === EffectType.pneumatic  || this.effect.type === EffectType.hydraulic) && this.effect.grid.xUnit.name !== 'ms') {
       // this.prevUnits = this.effect.grid.xUnit;
       this.effect.grid.xUnit = { name: 'ms', PR: 1000 };
       this.updateRotationRange();
-    } else if (this.effect.type !== EffectType.velocity && this.effect.type !== EffectType.pneumatic && this.effect.grid.xUnit.name === 'ms') {
+    } else if (this.effect.type !== EffectType.velocity && this.effect.type !== EffectType.pneumatic && this.effect.type !== EffectType.hydraulic && this.effect.grid.xUnit.name === 'ms') {
       // this.prevUnits = { name: 'ms', PR: 1000 };
       this.effect.grid.xUnit = { name: 'deg', PR: 360 };
       this.updateRotationRange();
@@ -149,7 +149,8 @@ export class EffectSettingsComponent implements OnInit {
         this.effect.grid.yUnit = new Unit('%', 100);
         this.effect.range_y.start = -100;
         this.effect.range_y.end = 100;
-      } else if (this.effect.type === EffectType.position || this.effect.type === EffectType.pneumatic || this.effect.type === EffectType.midi || this.effect.type === EffectType.midiNote) {
+      } else if (this.effect.type === EffectType.position || this.effect.type === EffectType.pneumatic || this.effect.type === EffectType.hydraulic || 
+                 this.effect.type === EffectType.midi || this.effect.type === EffectType.midiNote) {
         this.effect.range_y.start = 0;
         if (this.effect.type === EffectType.midi || this.effect.type === EffectType.midiNote) {
           this.effect.range_y.end = 128;

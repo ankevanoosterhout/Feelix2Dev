@@ -95,9 +95,11 @@ export class Collection {
   renderedData = [];
   playing = false;
   returnToStart = false;
+  offsetAngle = 0;
   changedAfterRender = false;
   time = 0;
   feedbackData: Array<any> = [];
+
 
   constructor(id: string, name: string) {
     this.id = id;

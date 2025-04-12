@@ -28,7 +28,8 @@ export class FixedToolbarComponent implements OnInit {
   type = EffectType.torque;
   xAxis = 'deg';
   yAxis = '%';
-  rotationType = 'dependent';
+  // rotationType = 'dependent';
+  // actuationType = 'pneumatic';
 
   transformData: object;
   activeSelection = this.dataService.activeBoxSelection();
@@ -42,7 +43,8 @@ export class FixedToolbarComponent implements OnInit {
   // typeOptions = [EffectType.torque, EffectType.position, EffectType.velocity, EffectType.pneumatic];
   public typeOptions = Object.values(EffectType).filter(value => typeof value === 'number');
   public midiDataTypeOptions = Object.values(MidiDataType).filter(value => typeof value === 'number');
-  rotationOptions = ['independent', 'dependent'];
+  rotationType = ['independent', 'dependent'];
+  pressureType = ['pneumatic', 'hydraulic'];
 
   referencePoints = [
     { name: 'nw', id: 0 },

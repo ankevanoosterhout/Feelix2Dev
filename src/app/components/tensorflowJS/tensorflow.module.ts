@@ -21,6 +21,7 @@ import { StatusbarModule } from "../interface-elements/statusbar.module";
 import { GraphComponent } from "./graph.component";
 import { SidebarComponent } from "./sidebar.component";
 import { TensorFlowRecordService } from "src/app/services/tensorflow-record.service";
+import { TfWarningComponent } from "./tf-warning.component";
 
 @NgModule({
   imports: [
@@ -41,6 +42,7 @@ import { TensorFlowRecordService } from "src/app/services/tensorflow-record.serv
     LoadDataSetsComponent,
     GraphComponent,
     SidebarComponent,
+    TfWarningComponent
   ],
   providers: [
     TensorFlowModelDrawService,

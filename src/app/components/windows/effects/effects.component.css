@@ -975,6 +975,15 @@ select.playWindow {
   width: 140px;
 }
 
+select.wide {
+  width: 175px;
+}
+
+select.small {
+  width: 50px;
+  margin-left: 5px;
+}
+
 select.details {
   margin-top:0;
   margin-bottom: 4px;
@@ -1023,7 +1032,7 @@ label.select.playWindowSmall:after {
 }
 
 .image-button {
-  padding-top: 0;
+  padding: 3px 4px 1px;
   width: 23px;
   height: 22px;
 }
@@ -1178,6 +1187,11 @@ button {
 
 button.inline {
   margin-left: 5px;
+}
+
+button.height30 {
+  margin-top: 2px;
+  height: 30px;
 }
 
 button:hover {
@@ -1551,4 +1565,17 @@ input.html-slider {
 
 #find-range.hidden, #find-range-2.hidden {
   display: none;
+}
+
+.window-content {
+  width: 100%;
+  height: 100%;
+  padding: 40px;
+  box-sizing: border-box;
+}
+
+#svg_graph_cogging {
+  display: inline-block;
+  width: 100%;
+  height: 200px;
 }

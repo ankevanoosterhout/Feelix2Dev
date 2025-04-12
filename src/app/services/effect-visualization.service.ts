@@ -310,8 +310,8 @@ export class EffectVisualizationService {
       .append('circle')
       .attr('class', 'feedback_' + collection.id + '_' + index)
       .attr('r', 1)
-      .attr('cx', (d: { time: number }) => collection.config.newXscale(collection.rotation.units.name === 'sec' ? d.time / 1000 : d.time))
-      .attr('cy', (d: { value: number }) => collection.config.newYscale(d.value))
+      .attr('cx', (d: { time: number }) => collection.config.newXscale(collection.rotation.units.name === 'sec' ? (d.time - 1) / 1000 : (d.time - 1)))
+      .attr('cy', (d: { value: number }) => !collection.returnToStart ? collection.config.newYscale(d.value) : collection.config.newYscale(d.value + collection.offsetAngle))
       .style('fill', color);
 
     feedbackData.append('path')
@@ -320,7 +320,7 @@ export class EffectVisualizationService {
       .attr('stroke', color)
       .attr('stroke-width', 1.5)
       .attr('d', d3.line()
-        .x((d: { time: number }) => collection.config.newXscale(collection.rotation.units.name === 'sec' ? d.time / 1000 : d.time))
+        .x((d: { time: number }) => collection.config.newXscale(collection.rotation.units.name === 'sec' ? (d.time - 1) / 1000 : (d.time - 1)))
         .y((d: { value: number }) => collection.config.newYscale(d.value)));
 
   }

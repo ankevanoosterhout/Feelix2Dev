@@ -671,9 +671,10 @@ export class DrawingService {
 
   updateYunitsActiveEffect(value: string) {
     if (this.file.activeEffect) {
-      if (this.file.activeEffect.type === EffectType.pneumatic) {
-        const newYunits = this.file.activeEffect.type === EffectType.pneumatic ?
-          this.config.yAxisOptions_pneumatic.filter(p => p.name === value)[0] : this.config.xAxisOptions_velocity.filter(o => o.name === value)[0];
+      if (this.file.activeEffect.type === EffectType.pneumatic || this.file.activeEffect.type === EffectType.hydraulic  || this.file.activeEffect.type === EffectType.velocity) {
+        const newYunits = this.file.activeEffect.type === EffectType.velocity ? this.config.xAxisOptions_velocity.filter(o => o.name === value)[0] :
+        this.config.yAxisOptions_pressure.filter(p => p.name === value)[0];
+        
         if (newYunits) {
           this.fileService.updateUnits(this.file.activeEffect.grid.yUnit, newYunits, 'y');
         }

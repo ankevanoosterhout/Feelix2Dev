@@ -89,7 +89,7 @@ export class TensorflowComponent {
       }
     });
 
-    this.electronService.ipcRenderer.on('pneumaticDataPressure', (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('dataPressure', (event: Event, data: any) => {
       // console.log(data);
 
       for (const item of data.list) {
