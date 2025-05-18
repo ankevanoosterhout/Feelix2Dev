@@ -797,7 +797,7 @@ function drawTemporaryWindow(width, minWidth, height, minHeight, title, resizabl
     mainWindow.webContents.send('resetCursor');
   })
 
-  tmpWindow.webContents.openDevTools();
+  //tmpWindow.webContents.openDevTools();
 
   tmpWindow.on('close', () => {
     tmpWindow = null
@@ -1515,6 +1515,9 @@ function updateHydraulicCalibrationData(data) {
   } 
 }
 
+function checkSafetyMeasures(data) {
+  mainWindow.webContents.send('safetyMeasures', data);
+}
 
 
 exports.updateSerialStatus = updateSerialStatus;
@@ -1531,3 +1534,4 @@ exports.returnData = returnData;
 exports.checkPorts = checkPorts;
 exports.updateCoggingData = updateCoggingData;
 exports.updateHydraulicCalibrationData = updateHydraulicCalibrationData;
+exports.checkSafetyMeasures = checkSafetyMeasures;

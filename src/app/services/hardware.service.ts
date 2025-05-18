@@ -316,8 +316,6 @@ export class HardwareService {
     this.store();
   }
 
-
-
   getAvailableCOMPorts(): Array<any> {
     return this.availableCOMPortList;
   }

@@ -197,6 +197,23 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       this.showMessage('By clicking yes all data will be removed. When the application restarts, all files and effects will be lost. Do you want to proceed?', 'verification', 'clearApplicationData');
     });
 
+    this.electronService.ipcRenderer.on('safetyMeasures', (event: Event, data: any) => {
+      const mcu = this.hardwareService.getMicroControllerByCOM(data.serialPath);
+      const motor = mcu.motors.filter(m => m.id === data.motorID)[0];
+      if (motor) {
+        motor.config.measuredSupplyVoltage = data.measuredSupplyVoltage;
+        motor.config.temperature = data.temp;
+
+        this.hardwareService.updateMicroController(mcu);
+
+        if (motor.config.measuredSupplyVoltage < motor.config.supplyVoltage - 2.0) {
+          this.showMessage('Your set supplyVoltage (' + motor.config.supplyVoltage + 'V) does not match the measured supply voltage (' + motor.config.measuredSupplyVoltage + 'V)', 'message', 'msg');
+        }
+        if (motor.config.temperature > 65.0) {
+          this.showMessage('The driver has been disabled due to a detected temperature of ' + motor.config.temperature + ' degrees.', 'message', 'msg');
+        }
+      }
+    });
 
     // this.hardwareService.connectWithMicrocontroller.subscribe(res => {
     //   console.log(res);

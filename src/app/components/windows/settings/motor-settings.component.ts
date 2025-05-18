@@ -120,7 +120,6 @@ export class MotorSettingsComponent implements OnInit {
     this.electronService.ipcRenderer.on('updateCurrentSenseCalibration', (event: Event, data: any) => {
       const microcontroller = this.microcontrollers.filter(m => m.serialPort.path === data.serialPath)[0];
       if (microcontroller) {
-        microcontroller.motors.filter(m => m.id === data.motorID)[0].config.overheatProtection = true;
         microcontroller.motors.filter(m => m.id === data.motorID)[0].config.current_sense_calibration = data.current_sense_calibration;
         this.hardwareService.updateMicroController(microcontroller);
         (this.document.getElementById('currentSenseCalibrationValue-' + data.serialPath + '-' + data.motorID) as HTMLInputElement).value = data.current_sense_calibration.toString();

@@ -130,11 +130,12 @@ export class BLDCConfig extends Config {
   frequency = 50000;
   current_sense = [ new CurrentSense('a', 0.0), new CurrentSense('b', 0.0) ];
   current_sense_calibration: number;
-  overheatProtection = false;
   output_ramp_angle = 10000;
   output_ramp_velocity = 1000;
   position_pid = new PID(20.0, 0.0, 0.0, 0, 1000);
   velocity_pid = new PID(0.5, 10, .001, 0.01, 1000);
+  temperature = 0.0;
+  measuredSupplyVoltage: number;
 }
 
 export class minMax {
@@ -172,7 +173,6 @@ export class HydraulicConfig extends Config {
   frequency = 50000;
   current_sense = [ new CurrentSense('a', 0.0), new CurrentSense('b', 0.0) ];
   current_sense_calibration: number;
-  overheatProtection = false;
   output_ramp_angle = 10000;
   output_ramp_velocity = 1000;
   position_pid = new PID(20.0, 0.0, 0.0, 0, 1000);

@@ -240,7 +240,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     });
 
     this.electronService.ipcRenderer.on('updateStatus', (event: Event, data: any) => {
-      console.log(data);
+      // console.log(data);
       this.hardwareService.updatePlay(data.microcontroller.port.path, data.microcontroller.type, data.connected);
 
       if (!data.connected) {

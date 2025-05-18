@@ -170,13 +170,28 @@
 
             <div class="form-group" *ngIf="motor.type !== 3">
               <div class="row">
-                <label class="labelRow motorsettings inset"><div class="question-mark" title="Voltage applied to the motor. Usually between 10V and 20V, check your pcb and motor type for the specifications">?</div>Supply voltage</label>
+                <label class="labelRow motorsettings inset"><div class="question-mark" title="Voltage supplied to the motor. Usually between 10V and 20V, check your pcb and motor type for the specifications">?</div>Supply voltage</label>
                 <input type="number" class="motor-settings" name="supply-voltage-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" id="supply-voltage-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" [(ngModel)]="motor.config.supplyVoltage" disabled><span class="units motor-settings disabled">V</span>
               </div>
               <div class="row-slider">
                 <div class="slider">
-                  <input type="range" class="html-slider" [min]="10" [max]="24" step="0.5" name="frequencyMotor" [(ngModel)]="motor.config.supplyVoltage" (change)="updateSupplyVoltage(selectedMicrocontroller)">
+                  <input type="range" class="html-slider" [min]="6" [max]="24" step="0.5" name="frequencyMotor" [(ngModel)]="motor.config.supplyVoltage" (change)="updateSupplyVoltage(selectedMicrocontroller)">
                 </div>
+              </div>
+            </div>
+
+            <div class="form-group" *ngIf="motor.type === 0">
+              <div class="row">
+                <label class="labelRow motorsettings inset"><div class="question-mark" title="Measured voltage supplied to the motor. Usually between 10V and 20V, check your pcb and motor type for the specifications">?</div>Measured voltage</label>
+                <input type="number" class="motor-settings" name="measured-supply-voltage-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" id="measured-supply-voltage-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" [(ngModel)]="motor.config.measuredSupplyVoltage" disabled><span class="units motor-settings disabled">V</span>
+              </div>
+            </div>
+
+
+            <div class="form-group" *ngIf="motor.type === 0">
+              <div class="row">
+                <label class="labelRow motorsettings inset"><div class="question-mark" title="Measured motor temperature, above 65 degrees the motor will automatically shut down.">?</div>Measured temperature</label>
+                <input type="number" class="motor-settings" name="measured-temperature-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" id="measured-temperature-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" [(ngModel)]="motor.config.temperature" disabled><span class="units motor-settings disabled">&deg;C</span>
               </div>
             </div>
 
@@ -387,17 +402,12 @@
 
             <div class="form-group" *ngIf="selectedMicrocontroller && selectedMicrocontroller.vendor !== 'ESP8266' && motor.type === 0">
               <div class="row">
-                <label class="radio-container motorsettings">Inline current sensing <div class="question-mark" title="Optional: enables Field Oriented Control (FOC) and overheat protection. Can only be used when current sensors are included on the board">?</div>
+                <label class="radio-container motorsettings">Inline current sensing <div class="question-mark" title="Optional: enables Field Oriented Control (FOC)">?</div>
                   <input type="checkbox" class="type" id="inline-current-sensing" name="inline-current-sensing" [(ngModel)]="motor.config.inlineCurrentSensing" [checked]="motor.config.inlineCurrentSensing" (change)="updateMicrocontroller(selectedMicrocontroller)">
                   <span class="checkmark radio playwindow"></span>
                 </label>
               </div>
-              <div class="row" *ngIf="motor.config.overheatProtection !== undefined && motor.config.inlineCurrentSensing">
-                <label class="radio-container motorsettings">Overheat protection <div class="question-mark" title="Can only be used when current sensors are included on the board">?</div>
-                  <input type="checkbox" class="type" id="overheat-protection" name="overheat-protection" [(ngModel)]="motor.config.overheatProtection" [checked]="motor.config.overheatProtection" (change)="updateMicrocontroller(selectedMicrocontroller)">
-                  <span class="checkmark radio playwindow"></span>
-                </label>
-              </div>
+
               <div class="row" *ngIf="motor.config.calibration.value !== 0.0">
                 <label class="labelRow motorsettings inset"><div class="question-mark" title="The motor will move during current sense calibration. Make sure the supply voltage is correct.">?</div>Current sense</label>
                 <input type="text" class="motor-settings small" id="currentSenseCalibrationValue-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" name="currentSenseCalibrationValue"

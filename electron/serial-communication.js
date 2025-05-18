@@ -273,10 +273,10 @@ class newSerialPort {
       });
 
       parser.on('data', (d) => {
-        console.log(d);
+        // console.log(d);
         // uncomment to print incoming data
         if (d.charAt(0) === '#') {
-          console.log('received data ', d);
+          // console.log('received data ', d);
         } else
         if (d.charAt(0) === '*') {
           if (dataSendWaitList.filter(d => d.port === this.COM).length > 0) {
@@ -360,32 +360,25 @@ class newSerialPort {
         } else if (d.charAt(0) === 'V') { // receive variable
           updateProgress(progress, 'Motor stopped automatically because it reached a high velocity');
 
-        } else if (d.charAt(0) === 'O') { // receive variable
-          updateProgress(progress, 'Overheat protection activitated');
+        } else if (d.charAt(0) === 'W') { // receive variable
+          const dataArray = d.substr(1).split(':');
+          const data = {
+            motorID: dataArray[0],
+            temp: parseFloat(dataArray[1]),
+            measuredSupplyVoltage: parseFloat(dataArray[2]),
+            serialPath: this.COM
+          }
+
+          main.checkSafetyMeasures(data);
 
         } else if (d.charAt(0) === 'L') { // receive variable
           // console.log('listed devices ' + d.substr(1));
           updateProgress(progress, d.substr(1));
 
         } else if (d.charAt(0) === 'S') { // receive software version data
-          const dataArray = d.substr(1).split('.');
-          const data = {
-              major: parseInt(dataArray[0]),
-              minor: parseInt(dataArray[1]),
-              patch: parseInt(dataArray[2])
-          };
-          if (data.major !== softwareVersion.major || data.minor !== softwareVersion.minor) {
-            
-            
-            main.showMessageConfirmation({ msg: isNaN(data.major) || data.major == undefined ? "The version of Feelix does not match the software version on the microcontroller (v"
-              + (data.major + '.' + data.minor + '.' + data.patch) + "), update to v" + (softwareVersion.major + '.' + softwareVersion.minor + '.X') : "The microcontroller is not running the appropriate code. Please update.", action:"updateVersion", type: "message", d: this.COM });
-                          // this.sp.close();
-        
-            if (dataSendWaitList.filter(d => d.port === this.COM).length > 0) {
-              uploadFromWaitList(ports.filter(p => p.COM === this.COM)[0]);
-            }
-          }
-          
+          checkSoftwareVersion(d);
+
+
         } else if (d.charAt(0) === 'R') {
           const dataArray = d.substr(1).split(':');
           const data = {
@@ -433,7 +426,7 @@ class newSerialPort {
             main.updateCoggingData(data, 'cogging_data_output');
           } else if (d.charAt(1) === '2') { //previous T
             const round = parseInt(d.charAt(1));
-            console.log('MEASURED COGGNIG DIRECTION ' + round + ' ' + this.COM + ' ' + d);
+            // console.log('MEASURED COGGNIG DIRECTION ' + round + ' ' + this.COM + ' ' + d);
             updateProgress((round * 50), ('Measured cogging direction ' + round + ' ' + this.COM + ' ' + d));
           }
         } else if (d.charAt(0) === 'T') { // hydraulic pressure
@@ -486,6 +479,39 @@ class newSerialPort {
         // dataSendWaitList = [];
     });
   }
+}
+
+
+function checkSoftwareVersion(d) {
+    const dataArray = d.substr(1).split('.');
+    const data = {
+        major: parseInt(dataArray[0]),
+        minor: parseInt(dataArray[1]),
+        patch: parseInt(dataArray[2]),
+        voltage: dataArray.length > 2 ? parseFloat(dataArray[3]) : -1
+    };
+
+    const message = '';
+
+    if (data.major !== softwareVersion.major || data.minor !== softwareVersion.minor) {
+      
+      message += !isNaN(data.major) && data.major != undefined ? "The version of Feelix does not match the software version on the microcontroller (v"
+        + (data.major + '.' + data.minor + '.' + data.patch) + "), update to v" + (softwareVersion.major + '.' + softwareVersion.minor + '.X') : "The microcontroller is not running the appropriate code. Please update.";
+                  
+                    // this.sp.close();
+  
+      if (dataSendWaitList.filter(d => d.port === this.COM).length > 0) {
+        uploadFromWaitList(ports.filter(p => p.COM === this.COM)[0]);
+      }
+    }
+
+    if (data.voltage > -1 && data.voltage < 5.5) {
+      message += " The measure power supplied to the motor " + data.voltage + " is insufficient to drive the motor";
+    }
+    
+    if (message !== '') {
+      main.showMessageConfirmation({ msg: message, action:"updateVersion", type: "message", d: this.COM });
+    }
 }
 
 function updateProgress(_progress, _str) {
@@ -553,7 +579,6 @@ function prepareMotorData(uploadContent, motor, datalist, index) {
   if (motor.config.calibrateCurrentSense) {
     datalist.unshift('FM' + motor.id + 'Y' + motor.config.calibrateCurrentSense.toFixed(5));
   }
-  // datalist.unshift('FM' + motor.id + 'X' + (motor.config.overheatProtection ? 1 : 0));
 
   if (motor.type === 4) {
     //add data from hydraulic setup
@@ -731,7 +756,7 @@ function tryToEstablishConnection(receivingPort, uploadContent, callback) {
 
 
 function uploadData(uploadContent) {
-  console.log(uploadContent);
+  // console.log(uploadContent);
   receivingPort = ports.filter(p => p.COM === uploadContent.config.serialPort.path)[0];
 
   datalist = [];
@@ -888,7 +913,7 @@ function calibrate_current_sense(port, uploadContent) {
 
 
 function calibrateMotor(uploadContent) {
-  console.log(uploadContent);
+  // console.log(uploadContent);
   if (uploadContent.config) {
     receivingPort = ports.filter(p => p.COM === uploadContent.config.serialPort.path)[0];
     // motor = microcontroller.motors.filter(m => m.id === motor_id)[0];
@@ -961,12 +986,12 @@ function update_filter(port, uploadContent) {
 
 
 function sendDataString(uploadContent) {
-  console.log(uploadContent.config.serialPort.path);
+  // console.log(uploadContent.config.serialPort.path);
 
   if (uploadContent.config) {
     receivingPort = ports.filter(p => p.COM === uploadContent.config.serialPort.path)[0];
     // receivingPort =
-    console.log(receivingPort);
+    // console.log(receivingPort);
     tryToEstablishConnection(receivingPort, uploadContent, send_data_string);
   } else {
     main.updateSerialProgress({ progress: 0, str: 'Error: Not able to send data ' });
@@ -1099,3 +1124,4 @@ exports.requestData = requestData;
 exports.sendDataString = sendDataString;
 exports.getValue = getValue;
 exports.listDevices = listDevices;
+
