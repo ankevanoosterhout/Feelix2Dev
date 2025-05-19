@@ -48,7 +48,8 @@ const msiCreator = new MSICreator({
 // Step 3: Compile the template to a .msi file
 // await msiCreator.compile()
 // Step 2: Create a .wxs template file
-// const supportBinaries = await msiCreator.create();
+// const supportBinarie
+// s = await msiCreator.create();
 
 
 // 4. Create a .wxs template file
