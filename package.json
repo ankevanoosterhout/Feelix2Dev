@@ -49,7 +49,7 @@
     "max-listeners-exceeded-warning": "^0.0.1",
     "ngx-color-picker": "^7.5.0",
     "ngx-electron": "^2.2.0",
-    "ngx-electronyzer": "^22.0.0",
+    "ngx-electronyzer": "^18.0.0",
     "ngx-filesaver": "^16.0.0",
     "ngx-fs": "0.0.1",
     "ngx-webstorage": "^11.1.1",
