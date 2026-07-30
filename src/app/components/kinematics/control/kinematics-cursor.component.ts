@@ -2,7 +2,6 @@ import { DOCUMENT } from '@angular/common';
 import { Component, Inject, AfterViewInit } from '@angular/core';
 import { KinematicsDrawingService } from 'src/app/services/kinematics-drawing.service';
 
-
 @Component({
     selector: 'app-kinematics-cursor',
     template: `

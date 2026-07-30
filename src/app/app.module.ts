@@ -1,14 +1,13 @@
 import { BrowserModule } from '@angular/platform-browser';
+import { RouterModule } from '@angular/router'; 
+import { CommonModule } from '@angular/common'; 
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgxWebstorageModule } from 'ngx-webstorage';
-import { NgxFsModule } from 'ngx-fs';
-
 import { AppComponent } from './app.component';
 import { InfoPageComponent } from './pages/info-page.component';
 import { ToolbarComponent } from './components/interface-elements/toolbars/toolbar.component';
 import { ToolbarInsetComponent } from './components/interface-elements/toolbars/toolbar-inset.component'
-import { NgxElectronModule } from 'ngx-electron';
 import { MainPageComponent } from './pages/main-page.component';
 import { AppRoutingModule } from './app-routing.module';
 import { EffectsComponent } from './components/windows/effects/effects.component';
@@ -63,6 +62,7 @@ import { TensorflowModule } from './components/tensorflowJS/tensorflow.module';
 import { StatusbarModule } from './components/interface-elements/statusbar.module';
 import { AntiCoggingComponent } from './components/windows/settings/anti-cogging.component';
 
+
 @NgModule({
     declarations: [
         AppComponent,
@@ -97,10 +97,10 @@ import { AntiCoggingComponent } from './components/windows/settings/anti-cogging
     imports: [
         BrowserModule,
         NgxWebstorageModule.forRoot(),
-        NgxElectronModule,
+        CommonModule,
+        RouterModule,
         AppRoutingModule,
         FormsModule,
-        NgxFsModule,
         MatDialogModule,
         BrowserAnimationsModule,
         FileSaverModule,

@@ -15,7 +15,6 @@ import { TensorFlowTrainService } from 'src/app/services/tensorflow-train.servic
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 import { DataSetService } from 'src/app/services/dataset.service';
 import { FormsModule } from "@angular/forms";
-import { NgxFsModule } from "ngx-fs";
 import { MatDialogModule } from "@angular/material/dialog";
 import { StatusbarModule } from "../interface-elements/statusbar.module";
 import { GraphComponent } from "./graph.component";
@@ -28,7 +27,6 @@ import { TfWarningComponent } from "./tf-warning.component";
     CommonModule,
     BrowserModule,
     FormsModule,
-    NgxFsModule,
     MatDialogModule,
     StatusbarModule
   ],

@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, Inject } from '@angular/core';
-import { ElectronService } from 'ngx-electron';
+import { ElectronService } from './electron.service';
 import { DOCUMENT } from '@angular/common';
 import { IpcRendererEvent } from 'electron';
 

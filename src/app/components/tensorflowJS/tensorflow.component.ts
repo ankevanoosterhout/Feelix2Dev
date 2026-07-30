@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { Component, Inject, ChangeDetectorRef } from '@angular/core';
-import { ElectronService } from 'ngx-electron';
+import { ElectronService } from './electron.service';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 import { v4 as uuid } from 'uuid';
 import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';

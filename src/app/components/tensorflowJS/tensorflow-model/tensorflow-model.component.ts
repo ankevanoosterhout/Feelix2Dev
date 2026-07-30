@@ -6,7 +6,7 @@ import { Activation, ActivationLabelMapping, Basic_options, Classifier, Constrai
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
 import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
 import { v4 as uuid } from 'uuid';
-import { ElectronService } from 'ngx-electron';
+import { ElectronService } from './electron.service';
 import { TensorFlowModelDrawService } from 'src/app/services/tensorflow-model-draw.service';
 import { HardwareService } from 'src/app/services/hardware.service';
 import { ActuatorType, Motor } from 'src/app/models/hardware.model';

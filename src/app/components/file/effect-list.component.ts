@@ -3,7 +3,7 @@ import { FileService } from 'src/app/services/file.service';
 import { File } from '../../models/file.model';
 import { MatDialog } from '@angular/material/dialog';
 import { DOCUMENT } from '@angular/common';
-import { ElectronService } from 'ngx-electron';
+import { ElectronService } from './electron.service';
 import { DataService } from 'src/app/services/data.service';
 import { EffectType } from 'src/app/models/configuration.model';
 

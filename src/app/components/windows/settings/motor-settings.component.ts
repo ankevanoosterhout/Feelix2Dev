@@ -1,5 +1,5 @@
 import { Component, OnInit, Inject } from '@angular/core';
-import { ElectronService } from 'ngx-electron';
+import { ElectronService } from './electron.service';
 import { HardwareService } from 'src/app/services/hardware.service';
 import { FileService } from 'src/app/services/file.service';
 import { UploadService } from 'src/app/services/upload.service';

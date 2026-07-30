@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, Inject } from '@angular/core';
-import { ElectronService } from 'ngx-electron';
+import { ElectronService } from './electron.service';
 import { FileService } from 'src/app/services/file.service';
 import { File } from '../../models/file.model';
 import { MatDialog } from '@angular/material/dialog';

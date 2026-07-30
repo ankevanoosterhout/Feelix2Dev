@@ -8,7 +8,7 @@ import { MotorControlService } from 'src/app/services/motor-control.service';
 import { DOCUMENT } from '@angular/common';
 import { CloneService } from 'src/app/services/clone.service';
 import { UploadService } from 'src/app/services/upload.service';
-import { ElectronService } from 'ngx-electron';
+import { ElectronService } from './electron.service';
 import { EffectType, EffectTypeLabelMapping } from 'src/app/models/configuration.model';
 import { IpcRendererEvent } from 'electron';
 

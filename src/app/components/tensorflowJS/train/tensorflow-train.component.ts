@@ -1,6 +1,6 @@
 
 import { ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/core';
-import { ElectronService } from 'ngx-electron';
+import { ElectronService } from './electron.service';
 import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
 import { Bounds, TrainingSet } from 'src/app/models/tensorflow.model';
 import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
@@ -12,7 +12,7 @@ import { TensorFlowTrainService } from 'src/app/services/tensorflow-train.servic
 // import { ML_Data, TensorFlowData } from 'src/app/models/tensorflow-data.model';
 // import { TensorFlowTrainService } from 'src/app/services/tensorflow-train.service';
 // import { v4 as uuid } from 'uuid';
-// import { ElectronService } from 'ngx-electron';
+// import { ElectronService } from './electron.service';
 
 @Component({
   selector: 'app-tensorflow-train',

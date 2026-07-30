@@ -1,6 +1,6 @@
 import { Component, OnInit, Inject, AfterViewInit } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
-import { ElectronService } from 'ngx-electron';
+import { ElectronService } from './electron.service';
 import { EffectLibraryService } from 'src/app/services/effect-library.service';
 import { EffectVisualizationService } from 'src/app/services/effect-visualization.service';
 import { DrawingService } from 'src/app/services/drawing.service';

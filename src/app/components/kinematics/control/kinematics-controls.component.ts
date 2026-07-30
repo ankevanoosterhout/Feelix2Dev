@@ -1,5 +1,5 @@
 import { Component, Inject, AfterViewInit } from '@angular/core';
-import { ElectronService } from 'ngx-electron';
+import { ElectronService } from './electron.service';
 import * as THREE from 'three';
 import { KinematicService } from 'src/app/services/kinematic.service';
 import { Connector, ConnectorSize, JointLink, Model, Point, URFD_Joint, URFD_Link, Vector3 } from 'src/app/models/kinematic.model';

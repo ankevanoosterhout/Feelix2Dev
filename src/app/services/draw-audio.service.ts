@@ -8,7 +8,7 @@ import { MidiDataService } from './midi-data.service';
 import { DataService } from './data.service';
 import { Range } from '../models/effect.model';
 import { EffectType } from '../models/configuration.model';
-import { ElectronService } from 'ngx-electron';
+import { ElectronService } from './electron.service';
 
 
 @Injectable()
