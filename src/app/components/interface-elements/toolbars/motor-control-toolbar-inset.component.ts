@@ -4,6 +4,7 @@ import { ElectronService } from 'ngx-electron';
 import { DrawingPlaneConfig } from 'src/app/models/drawing-plane-config.model';
 import { DrawingService } from 'src/app/services/drawing.service';
 import { MotorControlService } from 'src/app/services/motor-control.service';
+import { IpcRendererEvent } from 'electron';
 
 @Component({
     selector: 'app-motor-control-toolbar-inset',
@@ -128,7 +129,7 @@ export class MotorControlToolbarInsetComponent implements OnInit {
 
     this.config = this.drawingService.config;
 
-    this.electronService.ipcRenderer.on('attachMotorControlToolbar', (event: Event) => {
+    this.electronService.ipcRenderer.on('attachMotorControlToolbar', (event: IpcRendererEvent) => {
       this.attachToolbar();
     });
 

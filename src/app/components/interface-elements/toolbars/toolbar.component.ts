@@ -3,6 +3,7 @@ import { DOCUMENT } from '@angular/common';
 import { ElectronService } from 'ngx-electron';
 import { ToolService } from 'src/app/services/tool.service';
 import { EffectType } from 'src/app/models/configuration.model';
+import { IpcRendererEvent } from 'electron';
 
 @Component({
     selector: 'app-toolbar',
@@ -133,12 +134,12 @@ export class ToolbarComponent implements OnInit {
   constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService,
               public toolService: ToolService) {
 
-    this.electronService.ipcRenderer.on('selectCursor', (event: Event, acc: string) => {
+    this.electronService.ipcRenderer.on('selectCursor', (event: IpcRendererEvent, acc: string) => {
       const tool = this.toolList.filter(f => f.acceleration === acc)[0];
       this.selectTool(tool.id);
     });
 
-    this.electronService.ipcRenderer.on('updateToolbar', (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('updateToolbar', (event: IpcRendererEvent, data: any) => {
       if (data.type !== EffectType.position) {
         this.toolService.disable(['thick']);
         this.electronService.ipcRenderer.send('updateToolbarSize', 'small');

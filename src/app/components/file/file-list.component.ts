@@ -7,7 +7,7 @@ import { DialogComponent } from '../windows/dialog.component';
 import { DOCUMENT } from '@angular/common';
 import { v4 as uuid } from 'uuid';
 import { KinematicService } from 'src/app/services/kinematic.service';
-
+import { IpcRendererEvent } from 'electron';
 
 @Component({
     selector: 'app-file-list',
@@ -47,7 +47,7 @@ export class FileListComponent implements OnInit {
   constructor(@Inject(DOCUMENT) private document: Document, public fileService: FileService,
               private electronService: ElectronService, public dialog: MatDialog, private kinematicService: KinematicService) {
 
-    this.electronService.ipcRenderer.on('saveActiveFile', (event: Event, type: any) => {
+    this.electronService.ipcRenderer.on('saveActiveFile', (event: IpcRendererEvent, type: any) => {
       const activeFile = this._list === 'designFiles' ? this.fileService.getAllFileData() : this.kinematicService.getActiveModel();
       // console.log(activeFile);
       if (activeFile.overwrite) { // prevent overwrite example files
@@ -61,7 +61,7 @@ export class FileListComponent implements OnInit {
       }
     });
 
-    this.electronService.ipcRenderer.on('updatedFile', (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('updatedFile', (event: IpcRendererEvent, data: any) => {
       if (data.type === 'add') {
         this.fileService.add(data.file);
       } else if (data.type === 'update') {

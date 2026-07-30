@@ -7,7 +7,7 @@ import { Router } from '@angular/router';
 import { DOCUMENT } from '@angular/common';
 import { ActuatorLabelMapping, ActuatorType, BLDCConfig, HydraulicConfig, MicroController, Motor, PneuConfig, SensorCommunication, SensorCommunicationMapping, StepperConfig, TorqueTunerConfig, Unit } from 'src/app/models/hardware.model';
 import { MagneticSensor, Encoder } from 'src/app/models/position-sensors.model';
-
+import { IpcRendererEvent } from 'electron';
 
 
 
@@ -93,7 +93,7 @@ export class MotorSettingsComponent implements OnInit {
 
 
 
-    this.electronService.ipcRenderer.on('comports', (event: Event, comports: any) => {
+    this.electronService.ipcRenderer.on('comports', (event: IpcRendererEvent, comports: any) => {
       console.log(comports);
       this.comports = comports;
       if (this.comports.length > 0) {
@@ -101,7 +101,7 @@ export class MotorSettingsComponent implements OnInit {
       }
     });
 
-    this.electronService.ipcRenderer.on('zero_electric_angle', (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('zero_electric_angle', (event: IpcRendererEvent, data: any) => {
 
       this.microcontrollers.filter(m => m.serialPort.path === data.serialPath)[0].motors.filter(m => m.id === data.motorID)[0].config.calibration.value = data.zero_electric_angle;
       this.microcontrollers.filter(m => m.serialPort.path === data.serialPath)[0].motors.filter(m => m.id === data.motorID)[0].config.calibration.direction = data.direction === 1 ? 'CW' : 'CCW';
@@ -111,13 +111,13 @@ export class MotorSettingsComponent implements OnInit {
 
     });
 
-    this.electronService.ipcRenderer.on('microcontrollers', (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('microcontrollers', (event: IpcRendererEvent, data: any) => {
       this.microcontrollers = data;
       this.selectedMicrocontroller = this.microcontrollers[this.microcontrollers.length - 1];
       this.showSelectMicrocontroller = false;
     });
 
-    this.electronService.ipcRenderer.on('updateCurrentSenseCalibration', (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('updateCurrentSenseCalibration', (event: IpcRendererEvent, data: any) => {
       const microcontroller = this.microcontrollers.filter(m => m.serialPort.path === data.serialPath)[0];
       if (microcontroller) {
         microcontroller.motors.filter(m => m.id === data.motorID)[0].config.current_sense_calibration = data.current_sense_calibration;
@@ -127,13 +127,13 @@ export class MotorSettingsComponent implements OnInit {
     });
 
 
-    this.electronService.ipcRenderer.on('checkPorts',  (event: Event, portlist: any) => {
+    this.electronService.ipcRenderer.on('checkPorts',  (event: IpcRendererEvent, portlist: any) => {
       //console.log(portlist);
       this.hardwareService.checkPorts(portlist);
     });
 
 
-    this.electronService.ipcRenderer.on('hydraulicCalibrationData',  (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('hydraulicCalibrationData',  (event: IpcRendererEvent, data: any) => {
       console.log(data);
       const microcontroller = this.microcontrollers.filter(m => m.serialPort.path === data.serialPath)[0];
       if (microcontroller) {
@@ -151,7 +151,7 @@ export class MotorSettingsComponent implements OnInit {
       
     });
 
-    this.electronService.ipcRenderer.on('receiveData', (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('receiveData', (event: IpcRendererEvent, data: any) => {
       // console.log(data);
       const microcontroller = this.microcontrollers.filter(m => m.serialPort.path === data.serialPath)[0];
       if (microcontroller && data.type === 'A') {

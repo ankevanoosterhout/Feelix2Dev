@@ -4,6 +4,7 @@ import { ElectronService } from 'ngx-electron';
 import { DrawingPlaneConfig } from 'src/app/models/drawing-plane-config.model';
 import { DrawingService } from 'src/app/services/drawing.service';
 import { MotorControlService } from 'src/app/services/motor-control.service';
+import { IpcRendererEvent } from 'electron';
 
 @Component({
     selector: 'app-motor-control-toolbar',
@@ -138,12 +139,12 @@ export class MotorControlToolbarComponent implements OnInit {
 
     this.config = this.drawingService.config;
 
-    this.electronService.ipcRenderer.on('attachMotorControlToolbar', (event: Event) => {
+    this.electronService.ipcRenderer.on('attachMotorControlToolbar', (event: IpcRendererEvent) => {
       this.attachToolbar();
       // this.motorControlService.drawCollections();
     });
 
-    this.electronService.ipcRenderer.on('disableButton', (event: Event, buttonDisabled: boolean) => {
+    this.electronService.ipcRenderer.on('disableButton', (event: IpcRendererEvent, buttonDisabled: boolean) => {
 
       this.motorControlService.toolList[4].disabled = buttonDisabled;
       this.motorControlService.toolList[5].disabled = buttonDisabled;

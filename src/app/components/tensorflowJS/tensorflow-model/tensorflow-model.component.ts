@@ -14,6 +14,7 @@ import { UploadService } from 'src/app/services/upload.service';
 import * as tf from '@tensorflow/tfjs';
 import { DOCUMENT } from '@angular/common';
 import { TensorFlowTrainService } from 'src/app/services/tensorflow-train.service';
+import { IpcRendererEvent } from 'electron';
 
 @Component({
   selector: 'app-tensorflow-model',
@@ -100,17 +101,17 @@ export class TensorflowModelComponent implements OnInit {
 
       this.d = this.tensorflowService.d;
 
-      this.electronService.ipcRenderer.on('export-model', (event: Event) => {
+      this.electronService.ipcRenderer.on('export-model', (event: IpcRendererEvent) => {
         this.tensorflowService.exportModel();
       });
 
 
-      this.electronService.ipcRenderer.on('checkPorts',  (event: Event, portlist: any) => {
+      this.electronService.ipcRenderer.on('checkPorts',  (event: IpcRendererEvent, portlist: any) => {
         this.hardwareService.checkPorts(portlist);
       });
 
 
-      this.electronService.ipcRenderer.on('comports', (event: Event, comports: any) => {
+      this.electronService.ipcRenderer.on('comports', (event: IpcRendererEvent, comports: any) => {
         if (this.d.selectedMicrocontrollers.filter(m => m.serialPort.path === comports[0].serialPort).length === 0) {
           const mcu = this.hardwareService.microcontrollers.filter(m => m.serialPort.path === comports[0].serialPort)[0];
           if (mcu) {

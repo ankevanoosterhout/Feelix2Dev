@@ -1,6 +1,7 @@
 import { Component, OnInit, Input, Inject } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
 import { DOCUMENT } from '@angular/common';
+import { IpcRendererEvent } from 'electron';
 
 @Component({
   selector: 'app-statusbar',
@@ -111,14 +112,14 @@ export class StatusbarComponent implements OnInit {
 
   constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService) {
 
-    this.electronService.ipcRenderer.on('updateProgress', (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('updateProgress', (event: IpcRendererEvent, data: any) => {
       this._progress = data.progress;
       this.updateProgressBar(this._progress);
       this._status = data.str;
       this.document.getElementById('msg').innerHTML = this._status;
     });
 
-    this.electronService.ipcRenderer.on('statusMsg', (event: Event, msg: any) => {
+    this.electronService.ipcRenderer.on('statusMsg', (event: IpcRendererEvent, msg: any) => {
       this._status = msg;
       this.document.getElementById('msg').innerHTML = this._status;
     });

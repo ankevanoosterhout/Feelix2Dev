@@ -3,6 +3,7 @@ import { DOCUMENT } from '@angular/common';
 import { ElectronService } from 'ngx-electron';
 import { Cursor } from 'src/app/models/tool.model';
 import { KinematicsDrawingService } from 'src/app/services/kinematics-drawing.service';
+import { IpcRendererEvent } from 'electron';
 
 @Component({
     selector: 'app-kinematics-toolbar',
@@ -175,7 +176,7 @@ export class KinematicsToolbarComponent implements OnInit {
 
   // tslint:disable-next-line: variable-name
   constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService, private kinematicsDrawingService: KinematicsDrawingService) {
-    this.electronService.ipcRenderer.on('toolsVisible', (event: Event, visible: boolean) => {
+    this.electronService.ipcRenderer.on('toolsVisible', (event: IpcRendererEvent, visible: boolean) => {
       this.hidden = visible;
     });
   }

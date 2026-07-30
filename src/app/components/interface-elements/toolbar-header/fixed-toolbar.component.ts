@@ -10,6 +10,7 @@ import { Unit } from 'src/app/models/effect.model';
 import { CloneService } from 'src/app/services/clone.service';
 import { EffectType, EffectTypeLabelMapping } from 'src/app/models/configuration.model';
 import { MidiDataType, MidiDataTypeLabelMapping } from 'src/app/models/audio.model';
+import { IpcRendererEvent } from 'electron';
 
 @Component({
   selector: 'app-fixed-toolbar',
@@ -79,11 +80,11 @@ export class FixedToolbarComponent implements OnInit {
     this.innerHeight = window.innerHeight;
     this.innerWidth = window.innerWidth;
 
-    this.electronService.ipcRenderer.on('saveEffectToLibrary', (event: Event, lock: boolean) => {
+    this.electronService.ipcRenderer.on('saveEffectToLibrary', (event: IpcRendererEvent, lock: boolean) => {
       this.saveEffectToLibrary();
     });
 
-    this.electronService.ipcRenderer.on('exportEffect', (event: Event, lock: boolean) => {
+    this.electronService.ipcRenderer.on('exportEffect', (event: IpcRendererEvent, lock: boolean) => {
       if (this.drawingService.file.activeEffect) {
         this.exportEffect(this.drawingService.file.activeEffect.id);
       }

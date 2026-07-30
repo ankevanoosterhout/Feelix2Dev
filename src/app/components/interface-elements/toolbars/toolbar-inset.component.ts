@@ -5,6 +5,7 @@ import { ToolService } from 'src/app/services/tool.service';
 import { DrawingPlaneConfig } from 'src/app/models/drawing-plane-config.model';
 import { DrawingService } from 'src/app/services/drawing.service';
 import { EffectType } from 'src/app/models/configuration.model';
+import { IpcRendererEvent } from 'electron';
 
 @Component({
     selector: 'app-toolbar-inset',
@@ -136,16 +137,16 @@ export class ToolbarInsetComponent implements OnInit {
 
     this.config = this.drawingService.config;
 
-    this.electronService.ipcRenderer.on('selectCursor', (event: Event, acc: string) => {
+    this.electronService.ipcRenderer.on('selectCursor', (event: IpcRendererEvent, acc: string) => {
       const tool = this.toolList.filter(f => f.acceleration === acc)[0];
       this.selectTool(tool.id);
     });
 
-    this.electronService.ipcRenderer.on('attachToolbar', (event: Event) => {
+    this.electronService.ipcRenderer.on('attachToolbar', (event: IpcRendererEvent) => {
       this.attachToolbar();
     });
 
-    this.electronService.ipcRenderer.on('updateToolbar', (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('updateToolbar', (event: IpcRendererEvent, data: any) => {
       if (data.type !== EffectType.position) {
         this.toolService.disable(['thick']);
         this.electronService.ipcRenderer.send('updateToolbarSize', 'small');

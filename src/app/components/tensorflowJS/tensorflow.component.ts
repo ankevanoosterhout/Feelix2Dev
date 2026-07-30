@@ -9,6 +9,7 @@ import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
 import { Model, ModelType } from 'src/app/models/tensorflow.model';
 import { TensorFlowModelDrawService } from 'src/app/services/tensorflow-model-draw.service';
 import { TensorFlowRecordService } from 'src/app/services/tensorflow-record.service';
+import { IpcRendererEvent } from 'electron';
 
 @Component({
   selector: 'app-tensorflow',
@@ -38,7 +39,7 @@ export class TensorflowComponent {
 
     });
 
-    this.electronService.ipcRenderer.on('load-from-files', (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('load-from-files', (event: IpcRendererEvent, data: any) => {
       if (data.type === 'loadData' || data.type === 'loadMLData') {
         this.tensorflowService.importDataSet(data.d);
       } else if (data.type === 'loadMLModel') {
@@ -54,17 +55,17 @@ export class TensorflowComponent {
       this.selectStep(res);
     });
 
-    this.electronService.ipcRenderer.on('load-model', (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('load-model', (event: IpcRendererEvent, data: any) => {
       if (data && data[0]) {
         this.tensorflowService.loadModel(data[0].id);
       }
     });
 
-    this.electronService.ipcRenderer.on('export-dataset-model', (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('export-dataset-model', (event: IpcRendererEvent, data: any) => {
       this.tensorflowService.saveDataNN(data);
     });
 
-    this.electronService.ipcRenderer.on('load-datasets', (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('load-datasets', (event: IpcRendererEvent, data: any) => {
       this.tensorflowService.loadDataSets(data.d);
       this.changeDetection.detectChanges();
     });
@@ -82,14 +83,14 @@ export class TensorflowComponent {
     });
 
 
-    this.electronService.ipcRenderer.on('motorData', (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('motorData', (event: IpcRendererEvent, data: any) => {
       const velocity = data.d.filter((d: { name: string; }) => d.name === 'velocity')[0];
       if (velocity) {
         this.tensorFlowRecordService.handleIncomingData(velocity.val, data.serialPath, data.motorID, data.d);
       }
     });
 
-    this.electronService.ipcRenderer.on('dataPressure', (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('dataPressure', (event: IpcRendererEvent, data: any) => {
       // console.log(data);
 
       for (const item of data.list) {

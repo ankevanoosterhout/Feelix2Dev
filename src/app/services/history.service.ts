@@ -4,6 +4,7 @@ import { File } from '../models/file.model';
 import { ElectronService } from 'ngx-electron';
 import { CloneService } from './clone.service';
 import { Subject } from 'rxjs';
+import { IpcRendererEvent } from 'electron';
 
 
 @Injectable({providedIn: 'root'})
@@ -16,14 +17,14 @@ export class HistoryService {
 
   constructor(private electronService: ElectronService, private cloneService: CloneService) {
 
-    this.electronService.ipcRenderer.on('undo', (event: Event) => {
+    this.electronService.ipcRenderer.on('undo', (event: IpcRendererEvent) => {
       const data = this.undo();
       if (data) {
         this.reloadFileData.next(data);
       }
     });
 
-    this.electronService.ipcRenderer.on('redo', (event: Event) => {
+    this.electronService.ipcRenderer.on('redo', (event: IpcRendererEvent) => {
       const data = this.redo();
       if (data) {
         this.reloadFileData.next(data);

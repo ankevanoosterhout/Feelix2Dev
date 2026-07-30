@@ -6,6 +6,7 @@ import { KinematicsDrawingService } from 'src/app/services/kinematics-drawing.se
 import { DOCUMENT } from '@angular/common';
 import { DragControlsService } from 'src/app/services/drag-controls.service';
 import { Raycaster } from 'three';
+import { IpcRendererEvent } from 'electron';
 // import { ClosedChainIKService } from 'src/app/services/closed-chain-ik.service';
 
 @Component({
@@ -40,7 +41,7 @@ export class KinematicsComponent implements OnInit {
 
     this.config = this.kinematicsDrawingService.config;
 
-    this.electronService.ipcRenderer.on('gridVisible', (event: Event, visible: boolean) => {
+    this.electronService.ipcRenderer.on('gridVisible', (event: IpcRendererEvent, visible: boolean) => {
       // const items = ['mesh', 'grid'];
       const objects = this.config.scene.getObjectsByName('no-pointer-events');
       // console.log(objects);
@@ -53,29 +54,29 @@ export class KinematicsComponent implements OnInit {
       this.kinematicsDrawingService.animate();
     });
 
-    this.electronService.ipcRenderer.on('deselect', (event: Event) => {
+    this.electronService.ipcRenderer.on('deselect', (event: IpcRendererEvent) => {
       this.kinematicsDrawingService.deselectAllObjects();
     });
 
-    this.electronService.ipcRenderer.on('delete', (event: Event, data: string) => {
+    this.electronService.ipcRenderer.on('delete', (event: IpcRendererEvent, data: string) => {
       data === 'seleted' ? this.kinematicsDrawingService.deleteSelectedJoints() : this.kinematicsDrawingService.deleteAllJoints();
     });
 
 
 
-    this.electronService.ipcRenderer.on('save', (event: Event) => {
+    this.electronService.ipcRenderer.on('save', (event: IpcRendererEvent) => {
       this.kinematicsDrawingService.save();
     });
 
 
 
 
-    this.electronService.ipcRenderer.on('copy', (event: Event) => {
+    this.electronService.ipcRenderer.on('copy', (event: IpcRendererEvent) => {
       this.kinematicsDrawingService.copySelectedJoints();
     });
 
 
-    this.electronService.ipcRenderer.on('example', (event: Event, data: any) =>  {
+    this.electronService.ipcRenderer.on('example', (event: IpcRendererEvent, data: any) =>  {
       this.openExample(data);
     });
 
@@ -97,7 +98,7 @@ export class KinematicsComponent implements OnInit {
     });
 
 
-    this.electronService.ipcRenderer.on('newModel', (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('newModel', (event: IpcRendererEvent, data: any) => {
       this.kinematicsDrawingService.newModel(data);
 
     });

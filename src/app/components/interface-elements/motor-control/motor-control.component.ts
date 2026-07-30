@@ -10,6 +10,7 @@ import { CloneService } from 'src/app/services/clone.service';
 import { UploadService } from 'src/app/services/upload.service';
 import { ElectronService } from 'ngx-electron';
 import { EffectType, EffectTypeLabelMapping } from 'src/app/models/configuration.model';
+import { IpcRendererEvent } from 'electron';
 
 @Component({
     selector: 'app-motor-control',
@@ -78,7 +79,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       this.playAll(data.play, data.d);
     });
 
-    this.electronService.ipcRenderer.on('playDataPressure', (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('playDataPressure', (event: IpcRendererEvent, data: any) => {
       // console.log(data);
 
       for (const item of data.list) {
@@ -115,7 +116,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     });
 
 
-    this.electronService.ipcRenderer.on('playData', (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('playData', (event: IpcRendererEvent, data: any) => {
       // console.log(data);
       const d_angle = data.d.filter((d: { name: string; }) => d.name === 'angle')[0];
       const d_velocity = data.d.filter((d: { name: string; }) => d.name === 'velocity')[0];
@@ -181,7 +182,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       }
     });
 
-    this.electronService.ipcRenderer.on('zero_electric_angle', (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('zero_electric_angle', (event: IpcRendererEvent, data: any) => {
       const microcontroller = this.hardwareService.getMicroControllerByCOM(data.serialPath);
       if (microcontroller) {
         const motor = microcontroller.motors.filter(m => m.id === data.motorID)[0];
@@ -193,7 +194,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       }
     });
 
-    this.electronService.ipcRenderer.on('hydraulicCalibrationData', (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('hydraulicCalibrationData', (event: IpcRendererEvent, data: any) => {
       const microcontroller = this.hardwareService.getMicroControllerByCOM(data.serialPath);
       if (microcontroller) {
         const motor = microcontroller.motors.filter(m => m.id === data.motorID)[0];
@@ -218,7 +219,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
 
 
-    this.electronService.ipcRenderer.on('upload_succesful', (event: Event, collection: any) => {
+    this.electronService.ipcRenderer.on('upload_succesful', (event: IpcRendererEvent, collection: any) => {
       const selectedCollection = this.motorControlService.file.collections.filter(c => c.id === collection)[0];
       if (selectedCollection) {
         if (selectedCollection.rotation.units.name !== 'ms' && selectedCollection.rotation.units.name !== 'sec') {
@@ -230,7 +231,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       }
     });
 
-    this.electronService.ipcRenderer.on('deleteMicrocontrollerCollections', (event: Event, microcontroller: any) => {
+    this.electronService.ipcRenderer.on('deleteMicrocontrollerCollections', (event: IpcRendererEvent, microcontroller: any) => {
       for (const collection of this.motorControlService.file.collections) {
         if (collection.microcontroller && collection.microcontroller.id === microcontroller.id) {
           collection.microcontroller = null;
@@ -239,7 +240,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       }
     });
 
-    this.electronService.ipcRenderer.on('updateStatus', (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('updateStatus', (event: IpcRendererEvent, data: any) => {
       // console.log(data);
       this.hardwareService.updatePlay(data.microcontroller.port.path, data.microcontroller.type, data.connected);
 
@@ -257,19 +258,19 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       }
     });
 
-    this.electronService.ipcRenderer.on('addCollection', (event: Event) => {
+    this.electronService.ipcRenderer.on('addCollection', (event: IpcRendererEvent) => {
       this.motorControlService.addCollection(true);
     });
 
-    this.electronService.ipcRenderer.on('uploadAll', (event: Event) => {
+    this.electronService.ipcRenderer.on('uploadAll', (event: IpcRendererEvent) => {
       this.uploadAll();
     });
 
-    this.electronService.ipcRenderer.on('playAll', (event: Event, play:any) => {
+    this.electronService.ipcRenderer.on('playAll', (event: IpcRendererEvent, play:any) => {
       this.playAll(play);
     });
 
-    this.electronService.ipcRenderer.on('playAllSequenceWindow', (event: Event, data:any) => {
+    this.electronService.ipcRenderer.on('playAllSequenceWindow', (event: IpcRendererEvent, data:any) => {
       this.playAllInSequence();
     });
   }

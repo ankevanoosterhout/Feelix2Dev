@@ -5,8 +5,8 @@ import { HardwareService } from 'src/app/services/hardware.service';
 import { UploadService } from 'src/app/services/upload.service';
 import * as d3 from 'd3';
 import { DOCUMENT } from '@angular/common';
-import { UploadStringModel } from 'src/app/models/effect-upload.model';
-
+//import { UploadStringModel } from 'src/app/models/effect-upload.model';
+import { IpcRendererEvent } from 'electron';
 
 @Component({
   selector: 'app-anti-cogging',
@@ -24,13 +24,13 @@ export class AntiCoggingComponent implements OnInit {
 
     constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService, private uploadService: UploadService, public hardwareService: HardwareService) {
 
-        this.electronService.ipcRenderer.on('cogging_data', (event: Event, data: any) => {
+        this.electronService.ipcRenderer.on('cogging_data', (event: IpcRendererEvent, data: any) => {
             console.log(data);
             this.coggingData.push(data);
             this.drawGraphData();
         });
 
-        this.electronService.ipcRenderer.on('cogging_data_output', (event: Event, data: any) => {
+        this.electronService.ipcRenderer.on('cogging_data_output', (event: IpcRendererEvent, data: any) => {
             // console.log(data);
             (this.document.getElementById('direction') as HTMLDivElement).innerHTML = 'Direction: ' + data.direction;
             (this.document.getElementById('mean-error') as HTMLDivElement).innerHTML = 'Mean error (alignment): ' + data.meanError + ' deg (electrical) ';

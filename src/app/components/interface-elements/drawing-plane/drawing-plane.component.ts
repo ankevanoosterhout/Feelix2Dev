@@ -21,10 +21,11 @@ import { HardwareService } from 'src/app/services/hardware.service';
 import { CloneService } from 'src/app/services/clone.service';
 import { GridService } from 'src/app/services/grid.service';
 import { PlaySequenceComponent } from '../../windows/play-sequence.component';
-import { EffectType } from 'src/app/models/configuration.model';
+//import { EffectType } from 'src/app/models/configuration.model';
 import { DrawAudioService } from 'src/app/services/draw-audio.service';
-import { MidiDataType } from 'src/app/models/audio.model';
+//import { MidiDataType } from 'src/app/models/audio.model';
 import { MidiDataService } from 'src/app/services/midi-data.service';
+import { IpcRendererEvent } from 'electron';
 
 @Component({
   selector: 'app-drawing-plane',
@@ -71,13 +72,13 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       this.showPlayInSequenceWindow(res);
     });
 
-    this.electronService.ipcRenderer.on('disconnect', (event: Event) => {
+    this.electronService.ipcRenderer.on('disconnect', (event: IpcRendererEvent) => {
       this.hardwareService.disconnectAll();
     });
 
 
 
-    this.electronService.ipcRenderer.on('rulers:toggle', (event: Event, visible: boolean) => {
+    this.electronService.ipcRenderer.on('rulers:toggle', (event: IpcRendererEvent, visible: boolean) => {
       if (!visible) {
         this.config.rulerWidth = 0;
         this.config.rulerVisible = false;
@@ -91,7 +92,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
     });
 
-    this.electronService.ipcRenderer.on('showGuides', (event: Event, visible: boolean) => {
+    this.electronService.ipcRenderer.on('showGuides', (event: IpcRendererEvent, visible: boolean) => {
       this.file.activeEffect.grid.guidesVisible = visible;
       if (visible && !this.config.rulerVisible) {
         this.config.rulerVisible = true;
@@ -100,28 +101,28 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       this.fileService.updateEffect(this.file.activeEffect);
     });
 
-    this.electronService.ipcRenderer.on('showMessage', (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('showMessage', (event: IpcRendererEvent, data: any) => {
       this.showMessage(data, 'message', 'msg');
     });
 
 
-    this.electronService.ipcRenderer.on('lockGuides', (event: Event, lock: boolean) => {
+    this.electronService.ipcRenderer.on('lockGuides', (event: IpcRendererEvent, lock: boolean) => {
       this.file.activeEffect.grid.lockGuides = lock;
       this.fileService.updateEffect(this.file.activeEffect);
     });
 
-    this.electronService.ipcRenderer.on('updateCursor', (event: Event, details: any) => {
+    this.electronService.ipcRenderer.on('updateCursor', (event: IpcRendererEvent, details: any) => {
       this.config.svg.select('.cursorConnection').remove();
       this.drawingService.changeCursor(details);
       this.config.svg.select('#selectionBox').remove();
     });
 
 
-    this.electronService.ipcRenderer.on('resetCursor', (event: Event) => {
+    this.electronService.ipcRenderer.on('resetCursor', (event: IpcRendererEvent) => {
       this.document.body.style.cursor = 'default';
     });
 
-    this.electronService.ipcRenderer.on('transform', (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('transform', (event: IpcRendererEvent, data: any) => {
       // console.log(data.horizontal, data.vertical);
       this.nodeService.translateSelectedPaths(data);
       this.drawFileData();
@@ -134,55 +135,55 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
 
 
-    this.electronService.ipcRenderer.on('grid:toggle', (event: Event, visible: boolean) => {
+    this.electronService.ipcRenderer.on('grid:toggle', (event: IpcRendererEvent, visible: boolean) => {
       this.file.activeEffect.grid.visible = visible;
       if (!visible) { this.file.activeEffect.grid.snap = false; }
       this.fileService.updateEffect(this.file.activeEffect);
     });
 
-    this.electronService.ipcRenderer.on('grid:snap', (event: Event, snap: boolean) => {
+    this.electronService.ipcRenderer.on('grid:snap', (event: IpcRendererEvent, snap: boolean) => {
       this.file.activeEffect.grid.snap = snap;
       this.fileService.updateEffect(this.file.activeEffect);
     });
 
-    this.electronService.ipcRenderer.on('reflect:horizontal', (event: Event, snap: boolean) => {
+    this.electronService.ipcRenderer.on('reflect:horizontal', (event: IpcRendererEvent, snap: boolean) => {
 
       this.bboxService.mirrorPath('horizontal');
     });
 
-    this.electronService.ipcRenderer.on('reflect:vertical', (event: Event, snap: boolean) => {
+    this.electronService.ipcRenderer.on('reflect:vertical', (event: IpcRendererEvent, snap: boolean) => {
 
       this.bboxService.mirrorPath('vertical');
     });
 
 
-    this.electronService.ipcRenderer.on('showExport', (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('showExport', (event: IpcRendererEvent, data: any) => {
       this.showExportWindow('', data.effect, data.microcontrollers);
     });
 
 
-    this.electronService.ipcRenderer.on('saveToEffectLibrary', (event: Event, effect: any) => {
+    this.electronService.ipcRenderer.on('saveToEffectLibrary', (event: IpcRendererEvent, effect: any) => {
       effect.path = this.nodeService.getAll();
       this.effectLibraryService.addEffect(effect);
     });
 
-    this.electronService.ipcRenderer.on('clearCache', (event: Event) => {
+    this.electronService.ipcRenderer.on('clearCache', (event: IpcRendererEvent) => {
       this.showMessage('Are you sure you want to clear all effects from the library?', 'verification', 'clearCache');
     });
 
-    this.electronService.ipcRenderer.on('resetCOMList', (event: Event) => {
+    this.electronService.ipcRenderer.on('resetCOMList', (event: IpcRendererEvent) => {
       this.showMessage('Are you sure you want to clear all microcontroller data?', 'verification', 'resetCOMList');
     });
 
-    this.electronService.ipcRenderer.on('showMessageConfirmation', (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('showMessageConfirmation', (event: IpcRendererEvent, data: any) => {
       this.showMessage(data.msg, data.type, data.action, data.d);
     });
 
-    this.electronService.ipcRenderer.on('openEffectInNewFile', (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('openEffectInNewFile', (event: IpcRendererEvent, data: any) => {
       this.fileService.createFileFrom(data);
     });
 
-    this.electronService.ipcRenderer.on('changeViewSettings', (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('changeViewSettings', (event: IpcRendererEvent, data: any) => {
       this.motorControlService.changeViewSettings();
     });
 
@@ -197,7 +198,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       this.showMessage('By clicking yes all data will be removed. When the application restarts, all files and effects will be lost. Do you want to proceed?', 'verification', 'clearApplicationData');
     });
 
-    this.electronService.ipcRenderer.on('safetyMeasures', (event: Event, data: any) => {
+    this.electronService.ipcRenderer.on('safetyMeasures', (event: IpcRendererEvent, data: any) => {
       const mcu = this.hardwareService.getMicroControllerByCOM(data.serialPath);
       const motor = mcu.motors.filter(m => m.id === data.motorID)[0];
       if (motor) {
