@@ -8,7 +8,7 @@ import { DataSetService } from './dataset.service';
 import { Subject } from 'rxjs';
 import { TensorFlowModelService } from './tensorflow-model.service';
 import { UploadStringModel } from '../models/effect-upload.model';
-import { ElectronService } from './electron.service';
+import { ElectronService } from 'src/app/services/electron.service';
 import { FileSaverService } from 'ngx-filesaver';
 import * as JSZip from 'jszip';
 import { TensorFlowData } from '../models/tensorflow-data.model';

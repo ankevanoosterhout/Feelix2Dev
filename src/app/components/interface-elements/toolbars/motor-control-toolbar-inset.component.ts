@@ -1,6 +1,6 @@
 import { Component, OnInit, Inject } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
-import { ElectronService } from './electron.service';
+import { ElectronService } from 'src/app/services/electron.service';
 import { DrawingPlaneConfig } from 'src/app/models/drawing-plane-config.model';
 import { DrawingService } from 'src/app/services/drawing.service';
 import { MotorControlService } from 'src/app/services/motor-control.service';

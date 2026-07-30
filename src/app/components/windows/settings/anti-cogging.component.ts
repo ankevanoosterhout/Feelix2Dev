@@ -1,5 +1,5 @@
 import { Component, HostListener, Inject, OnInit } from '@angular/core';
-import { ElectronService } from './electron.service';
+import { ElectronService } from 'src/app/services/electron.service';
 import { MicroController } from 'src/app/models/hardware.model';
 import { HardwareService } from 'src/app/services/hardware.service';
 import { UploadService } from 'src/app/services/upload.service';

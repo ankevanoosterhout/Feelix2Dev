@@ -17,4 +17,10 @@ export class ElectronService {
       }
     }
   }
+
+
+    // Add this getter to restore the missing property helper:
+  get isElectronApp(): boolean {
+    return !!(window && window.process && (window.process as any).type === 'renderer');
+  }
 }

@@ -1,5 +1,5 @@
 import { AfterViewInit, ChangeDetectorRef, Component, HostListener } from '@angular/core';
-import { ElectronService } from './electron.service';
+import { ElectronService } from 'src/app/services/electron.service';
 import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
 import { Classifier, InputColor, InputItem, Label, MLDataSet, MotorEl } from 'src/app/models/tensorflow.model';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';

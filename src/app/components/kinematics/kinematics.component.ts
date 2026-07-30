@@ -1,5 +1,5 @@
 import { Component, OnInit, HostListener, Inject } from '@angular/core';
-import { ElectronService } from './electron.service';
+import { ElectronService } from 'src/app/services/electron.service';
 import * as THREE from 'three';
 import { KinematicsConfig } from 'src/app/models/kinematics-config.model';
 import { KinematicsDrawingService } from 'src/app/services/kinematics-drawing.service';

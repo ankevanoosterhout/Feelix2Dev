@@ -1,6 +1,6 @@
 import { Component, OnInit, Inject } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
-import { ElectronService } from './electron.service';
+import { ElectronService } from 'src/app/services/electron.service';
 // import { DataSet, Model } from 'src/app/models/tensorflow.model';
 import { DataSetService } from 'src/app/services/dataset.service';
 import { TensorFlowModelService } from 'src/app/services/tensorflow-model.service';

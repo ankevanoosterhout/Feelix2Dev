@@ -1,6 +1,6 @@
 import { Component, OnInit, Inject, HostListener } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
-import { ElectronService } from './electron.service';
+import { ElectronService } from 'src/app/services/electron.service';
 import { ToolService } from 'src/app/services/tool.service';
 import { EffectType } from 'src/app/models/configuration.model';
 import { IpcRendererEvent } from 'electron';

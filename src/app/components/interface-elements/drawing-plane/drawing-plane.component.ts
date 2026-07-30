@@ -1,5 +1,5 @@
 import { Component, OnInit, OnChanges, HostListener, Inject, ViewEncapsulation, AfterViewInit } from '@angular/core';
-import { ElectronService } from './electron.service';
+import { ElectronService } from 'src/app/services/electron.service';
 import { NodeService } from '../../../services/node.service';
 import { DataService } from '../../../services/data.service';
 import { FileService } from '../../../services/file.service';

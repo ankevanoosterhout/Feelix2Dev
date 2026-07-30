@@ -4,7 +4,7 @@ import { Toolbar } from '../../../models/data.model';
 import { DrawingService } from 'src/app/services/drawing.service';
 import { DOCUMENT } from '@angular/common';
 import { BezierService } from 'src/app/services/bezier.service';
-import { ElectronService } from './electron.service';
+import { ElectronService } from 'src/app/services/electron.service';
 import { EffectLibraryService } from 'src/app/services/effect-library.service';
 import { Unit } from 'src/app/models/effect.model';
 import { CloneService } from 'src/app/services/clone.service';

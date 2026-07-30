@@ -1,6 +1,6 @@
 import { Component, HostListener, AfterViewInit, OnInit } from '@angular/core';
 import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
-import { ElectronService } from './electron.service';
+import { ElectronService } from 'src/app/services/electron.service';
 import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
 import { Classifier, DataSet, TrimSection} from 'src/app/models/tensorflow.model';
 import { TensorFlowData } from 'src/app/models/tensorflow-data.model';

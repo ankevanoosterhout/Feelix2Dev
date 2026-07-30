@@ -1,6 +1,6 @@
 import { Component, OnInit, Inject } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
-import { ElectronService } from './electron.service';
+import { ElectronService } from 'src/app/services/electron.service';
 import { FileService } from 'src/app/services/file.service';
 import { File } from 'src/app/models/file.model';
 import { v4 as uuid } from 'uuid';

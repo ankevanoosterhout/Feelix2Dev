@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HistoryConfig, HistoryEffects, HistoryListElement } from '../models/history.model';
 import { File } from '../models/file.model';
-import { ElectronService } from './electron.service';
+import { ElectronService } from 'src/app/services/electron.service';
 import { CloneService } from './clone.service';
 import { Subject } from 'rxjs';
 import { IpcRendererEvent } from 'electron';

@@ -3,8 +3,8 @@ import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common'; 
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgxWebstorageModule } from 'ngx-webstorage';
-import { AppComponent } from './app.component';
+import { provideNgxWebstorage } from 'ngx-webstorage'; 
+import { AppComponent } from 'src/app/app.component';
 import { InfoPageComponent } from './pages/info-page.component';
 import { ToolbarComponent } from './components/interface-elements/toolbars/toolbar.component';
 import { ToolbarInsetComponent } from './components/interface-elements/toolbars/toolbar-inset.component'
@@ -92,11 +92,12 @@ import { AntiCoggingComponent } from './components/windows/settings/anti-cogging
         KinematicsControlComponent,
         KinematicsToolbarComponent,
         KinematicsCursorComponent,
-        AntiCoggingComponent
+        AntiCoggingComponent,
+        ExportDialogComponent 
     ],
     imports: [
         BrowserModule,
-        NgxWebstorageModule.forRoot(),
+        // NgxWebstorageModule.forRoot(),
         CommonModule,
         RouterModule,
         AppRoutingModule,
@@ -130,7 +131,12 @@ import { AntiCoggingComponent } from './components/windows/settings/anti-cogging
         DragControlsService,
         IKService,
         DrawAudioService,
-        MidiDataService
+        MidiDataService,
+        provideNgxWebstorage({
+            prefix: 'ngx-webstorage', // Your custom prefix if you used one
+            separator: '|',
+            caseSensitive: false
+        })
         // FullIKService
     ],
     bootstrap: [

@@ -1,6 +1,6 @@
 import { Component, OnInit, Inject, HostListener } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
-import { ElectronService } from './electron.service';
+import { ElectronService } from 'src/app/services/electron.service';
 import { Cursor } from 'src/app/models/tool.model';
 import { KinematicsDrawingService } from 'src/app/services/kinematics-drawing.service';
 import { IpcRendererEvent } from 'electron';
