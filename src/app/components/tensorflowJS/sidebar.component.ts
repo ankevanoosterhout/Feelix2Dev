@@ -7,6 +7,7 @@ import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service'
 
 @Component({
   selector: 'app-sidebar',
+  standalone: false,
   template: `
 
         <div class="sidebar-column small" *ngIf="this._page !== 'train'">

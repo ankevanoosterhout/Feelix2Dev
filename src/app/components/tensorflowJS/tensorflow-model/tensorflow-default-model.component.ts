@@ -7,6 +7,7 @@ import { TensorFlowConfig } from 'src/app/models/tensorflow-config.model';
 
 @Component({
   selector: 'app-tensorflow-default-model',
+  standalone: false,
   templateUrl: 'tensorflow-default-model.component.html',
   styleUrls: ['../../windows/effects/effects.component.css','./../tensorflow.component.scss'],
 })

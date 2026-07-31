@@ -13,6 +13,7 @@ import { IpcRendererEvent } from 'electron';
 
 @Component({
   selector: 'app-motor-settings',
+  standalone: false,
   templateUrl: './motor-settings.component.html',
   styleUrls: ['../../windows/effects/effects.component.css'],
 })

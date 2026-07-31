@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { v4 as uuid } from 'uuid';
-import { LocalStorageService } from 'ngx-webstorage';
+import { LocalStorageService } from 'src/app/services/local-storage-fallback.service';
 import { CloneService } from './clone.service';
 import { DataSet } from '../models/tensorflow.model';
 import { Folder } from '../models/file.model';
@@ -19,7 +19,8 @@ export class DataSetService {
     window.addEventListener('storage', event => {
       if (event.storageArea === localStorage) {
         if (event.key === DataSetService.LIBRARY_LOCATION) {
-          const dataSetLib: Array<any> = JSON.parse(localStorage.getItem(DataSetService.LIBRARY_LOCATION));
+          const storedData = localStorage.getItem(DataSetService.LIBRARY_LOCATION);
+          const dataSetLib: Array<any> = storedData ? JSON.parse(storedData) : [];
           this.dataSetLibrary = dataSetLib;
         }
       }

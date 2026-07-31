@@ -3,6 +3,7 @@ import { ElectronService } from 'src/app/services/electron.service';
 
 @Component({
   selector: 'app-info-page',
+  standalone: false,
   template: `
   <div class="image-bg" style="background-image: url('./assets/images/info-window-bg.png');"></div>
   <div class="window-content">

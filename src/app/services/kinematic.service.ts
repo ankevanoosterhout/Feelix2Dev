@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import { v4 as uuid } from 'uuid';
-import { LocalStorageService } from 'ngx-webstorage';
+import { LocalStorageService } from 'src/app/services/local-storage-fallback.service';
 import { JointLink, Object3D, Connector, Point, ModelFile, URFD_Joint, Model, URFD_Link } from '../models/kinematic.model';
 import * as THREE from 'three';
 import { FileSaverService } from 'ngx-filesaver';

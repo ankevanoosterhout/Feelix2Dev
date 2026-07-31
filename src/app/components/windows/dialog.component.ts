@@ -4,6 +4,7 @@ import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-dialog',
+  standalone: false,
   template: `
   <div mat-dialog-title class="window-title-bar">Feelix</div>
     <div class="window-content">

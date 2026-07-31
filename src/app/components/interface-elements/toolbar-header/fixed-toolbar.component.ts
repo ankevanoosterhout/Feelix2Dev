@@ -14,6 +14,7 @@ import { IpcRendererEvent } from 'electron';
 
 @Component({
   selector: 'app-fixed-toolbar',
+  standalone: false,
   templateUrl: './fixed-toolbar.component.html',
   styleUrls: ['./fixed-toolbar.component.css']
 })

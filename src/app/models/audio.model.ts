@@ -23,14 +23,14 @@ export class Midi_config {
   //              Decimal ->
   //                Data 1 -> (00 - 127)
   //                Data 2 -> (00 - 127)
-  channel: number = null;
-  message_type: number = null;
-  data1: number = null;
+  channel: number;
+  message_type: number;
+  data1: number;
 
   constructor(message_type:number, channel: number, data1: number){
     this.channel = channel;
     this.message_type = message_type;
-    this.data1 = data1
+    this.data1 = data1;
   }
 }
 

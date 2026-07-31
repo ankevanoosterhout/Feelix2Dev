@@ -4,6 +4,7 @@ import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'app-tf-warning',
+  standalone: false,
   template: `
     <div id="warning" *ngIf="this._show">
         <div class="close" (click)="showWarning(false)"><div></div></div>

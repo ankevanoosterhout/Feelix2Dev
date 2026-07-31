@@ -10,6 +10,7 @@ import { Folder } from 'src/app/models/file.model';
 
 @Component({
   selector: 'app-load-dataset',
+  standalone: false,
   templateUrl: './load-dataset.component.html',
   styleUrls: ['./load-dataset.component.css', '../tensorflow.component.scss'],
 })

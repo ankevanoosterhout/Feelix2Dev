@@ -3,6 +3,7 @@ import { ElectronService } from 'src/app/services/electron.service';
 
 @Component({
   selector: 'app-zigzag',
+  standalone: false,
   template: `
     <div class="window-body"></div>
     <div class="window-title-bar">Zig Zag</div>

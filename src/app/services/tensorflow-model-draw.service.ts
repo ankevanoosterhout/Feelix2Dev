@@ -307,7 +307,7 @@ export class TensorFlowModelDrawService {
         }
       })
       .style('stroke-width', 1.5)
-      .style('fill', (d, i:number) => overflow && (i % ((d.row + 1) * max - 2)) === 0 && i !== 0 ? (d.index > 0 ? 'transparent' : '#000') : !d.active ? '#4a4a4a' : '#ccc');
+      .style('fill', (d: { row: number; index: number; active: any; }, i:number) => overflow && (i % ((d.row + 1) * max - 2)) === 0 && i !== 0 ? (d.index > 0 ? 'transparent' : '#000') : !d.active ? '#4a4a4a' : '#ccc');
 
 
     if (layerIndex === 0) {
@@ -317,7 +317,7 @@ export class TensorFlowModelDrawService {
         .append('text')
         .attr('x', (d: { x: number }) => d.x)
         .attr('y', (d: { y: number }) => d.y + Math.round(distance/8))
-        .text((d, i) => {
+        .text((d: any, i: number) => {
           const inputList = inputs.filter(input => input.active);
           if (overflow && i === max - 2) {
             return '';
@@ -338,7 +338,7 @@ export class TensorFlowModelDrawService {
         .data(coords.filter(c => c.index === 0))
         .enter()
         .append('svg:image')
-        .attr('xlink:xlink:href', (d, i) => overflow && (i % (max - 2)) === 0 && i !== 0  ? '' : './assets/icons/functions/' + icon + '.svg')
+        .attr('xlink:xlink:href', (d: any, i: number) => overflow && (i % (max - 2)) === 0 && i !== 0  ? '' : './assets/icons/functions/' + icon + '.svg')
         .attr('width', imageWidth)
         .attr('height', imageWidth * 0.76142)
         .attr('x', (d: { x: number }) => d.x - (imageWidth/2))

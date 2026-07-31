@@ -5,6 +5,7 @@ import { File } from 'src/app/models/file.model';
 
 @Component({
   selector: 'app-transform',
+  standalone: false,
   template: `
   <div class="window-title-bar">Move</div>
   <div class="window-content">

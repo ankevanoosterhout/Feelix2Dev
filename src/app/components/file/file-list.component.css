@@ -150,6 +150,7 @@
   display: flex;
   display: -webkit-box;
   text-overflow: ellipsis;
+  line-clamp:1;
   -webkit-line-clamp:1;
   -webkit-box-orient: vertical;
   float:left;

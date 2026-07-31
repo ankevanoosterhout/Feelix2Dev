@@ -3,6 +3,7 @@ import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-play-sequence',
+  standalone: false,
   template: `
   <div mat-dialog-title class="window-title-bar">Play sequence</div>
   <div class="window-content">

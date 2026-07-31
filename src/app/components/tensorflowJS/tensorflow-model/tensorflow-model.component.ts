@@ -18,6 +18,7 @@ import { IpcRendererEvent } from 'electron';
 
 @Component({
   selector: 'app-tensorflow-model',
+  standalone: false,
   templateUrl: 'tensorflow-model.component.html',
   styleUrls: ['../../windows/effects/effects.component.css','./../tensorflow.component.scss'],
 })

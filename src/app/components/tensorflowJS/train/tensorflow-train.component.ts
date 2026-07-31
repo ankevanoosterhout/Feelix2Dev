@@ -16,6 +16,7 @@ import { TensorFlowTrainService } from 'src/app/services/tensorflow-train.servic
 
 @Component({
   selector: 'app-tensorflow-train',
+  standalone: false,
   templateUrl: 'tensorflow-train.component.html',
   styleUrls: ['../../windows/effects/effects.component.css','./../sidebar.component.scss', './../tensorflow.component.scss'],
 })

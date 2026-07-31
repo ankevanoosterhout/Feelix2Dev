@@ -11,6 +11,7 @@ import { EffectType, EffectTypeLabelMapping } from 'src/app/models/configuration
 
 @Component({
   selector: 'app-effect-settings',
+  standalone: false,
   template: `
   <div class="window-title-bar" *ngIf="!this.updateMode">New Effect</div>
   <div class="window-title-bar" *ngIf="this.updateMode">Update Effect</div>

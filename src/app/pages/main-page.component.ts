@@ -4,6 +4,7 @@ import { MotorControlService } from '../services/motor-control.service';
 
 @Component({
     selector: 'app-main-page',
+    standalone: false,
     template: `
       <app-file-list [list]="list"></app-file-list>
       <div id="top-section">

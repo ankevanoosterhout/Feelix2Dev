@@ -3,7 +3,6 @@ import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common'; 
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { provideNgxWebstorage } from 'ngx-webstorage'; 
 import { AppComponent } from 'src/app/app.component';
 import { InfoPageComponent } from './pages/info-page.component';
 import { ToolbarComponent } from './components/interface-elements/toolbars/toolbar.component';
@@ -61,6 +60,8 @@ import { MidiDataService } from './services/midi-data.service';
 import { TensorflowModule } from './components/tensorflowJS/tensorflow.module';
 import { StatusbarModule } from './components/interface-elements/statusbar.module';
 import { AntiCoggingComponent } from './components/windows/settings/anti-cogging.component';
+import { LocalStorageService } from 'src/app/services/local-storage-fallback.service';
+
 
 
 @NgModule({
@@ -97,7 +98,6 @@ import { AntiCoggingComponent } from './components/windows/settings/anti-cogging
     ],
     imports: [
         BrowserModule,
-        // NgxWebstorageModule.forRoot(),
         CommonModule,
         RouterModule,
         AppRoutingModule,
@@ -106,7 +106,8 @@ import { AntiCoggingComponent } from './components/windows/settings/anti-cogging
         BrowserAnimationsModule,
         FileSaverModule,
         StatusbarModule,
-        TensorflowModule
+        TensorflowModule,
+        
     ],
     providers: [
         FileService,
@@ -132,11 +133,10 @@ import { AntiCoggingComponent } from './components/windows/settings/anti-cogging
         IKService,
         DrawAudioService,
         MidiDataService,
-        provideNgxWebstorage({
-            prefix: 'ngx-webstorage', // Your custom prefix if you used one
-            separator: '|',
-            caseSensitive: false
-        })
+        LocalStorageService
+        // importProvidersFrom(
+        //     provideNgxWebstorage()
+        // )
         // FullIKService
     ],
     bootstrap: [

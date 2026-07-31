@@ -12,21 +12,21 @@ export enum JointType {
 }
 
 export class ObjectUrl {
-  url: string;
-  g: string;
+  url: string = '';
+  g: string = '';
 }
 
 export class Model {
   id: number;
-  name: string;
+  name: string = '';
   active: boolean;
   type: string;
-  modelType: number;
+  modelType: number = -1;
   thumbnail: string;
   objectUrls: Array<ObjectUrl>;
   color: number;
   origin = new Vector3();
-  linkObjectUrls: Array<ObjectUrl>;
+  linkObjectUrls: Array<ObjectUrl> = [];
   rpy = new Vector3();
   axis = new Vector3();
   baseSize = new ConnectorSize(1.5, 1, 25.075, 23.575, new THREE.Vector3(0,1,0));
@@ -300,9 +300,9 @@ export class Point {
 
 
 export class ModelFile {
-  id: string;
-  name: string;
-  path: string;
+  id: string = '';
+  name: string = '';
+  path: string = '';
   softwareVersion = '3.1.3';
   date = new Dates();
   joints: Array<JointLink> = [];

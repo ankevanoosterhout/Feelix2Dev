@@ -11,6 +11,7 @@ import { IpcRendererEvent } from 'electron';
 
 @Component({
     selector: 'app-kinematics',
+    standalone: false,
     templateUrl: './kinematics.component.html',
     styleUrls: ['../windows/effects/effects.component.css','./kinematics.component.css']
 })

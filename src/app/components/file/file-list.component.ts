@@ -11,6 +11,7 @@ import { IpcRendererEvent } from 'electron';
 
 @Component({
     selector: 'app-file-list',
+    standalone: false,
     template: `
       <div class="open-tabs {{ _list }}">
         <ul class="tabs {{ _list }}" id="file-list">

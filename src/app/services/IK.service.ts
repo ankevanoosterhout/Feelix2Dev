@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Solver, Link,	Joint, IKRootsHelper, Goal, findRoots, DOF, setIKFromUrdf, urdfRobotToIKRoot, SOLVE_STATUS_NAMES } from 'closed-chain-ik/src';
-import { LocalStorageService } from 'ngx-webstorage';
+import { LocalStorageService } from 'src/app/services/local-storage-fallback.service';
 import { Subject } from 'rxjs';
 import { IKConfig } from '../models/ik-config.model';
 import { URFD_Joint, URFD_Link } from '../models/kinematic.model';

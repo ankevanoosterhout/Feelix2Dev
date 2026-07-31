@@ -62,7 +62,7 @@ export class KinematicsDrawingService {
       this.config.control.setMode( name );
       this.config.move = false;
       this.document.body.style.cursor = 'default';
-    } else if ('move') {
+    } else if (name === 'move') {
       this.config.move = true;
       this.document.body.style.cursor = 'grab';
       this.config.control.detach();
@@ -535,6 +535,7 @@ export class KinematicsDrawingService {
       if (this.kinematicService.selectedFrames.length === 1) {
         this.config.control.detach();
       }
+      
       for (const joint of this.kinematicService.selectedFrames) {
         this.deleteObjectFromScene(joint.id);
         // this.kinematicLinkService.deleteAllLinks(joint.id);
@@ -775,7 +776,7 @@ export class KinematicsDrawingService {
       }
 
       // let models = this.identifyOrigin([this.kinematicService.getJoint(this.kinematicService.selConnPoints[0].parent_id), this.kinematicService.getJoint(this.kinematicService.selConnPoints[1].parent_id)]);
-      let models = [];
+      let models: any[] = [];
       let sceneModels = [];
       let connPnts = [];
       // console.log(this.kinematicService.joints);

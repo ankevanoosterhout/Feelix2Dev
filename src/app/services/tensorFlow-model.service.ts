@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { LocalStorageService } from 'ngx-webstorage';
+import { LocalStorageService } from 'src/app/services/local-storage-fallback.service';
 import { Model, TrainingSet } from '../models/tensorflow.model';
 import { CloneService } from './clone.service';
 import { v4 as uuid } from 'uuid';

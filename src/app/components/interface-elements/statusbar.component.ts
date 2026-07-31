@@ -5,6 +5,7 @@ import { IpcRendererEvent } from 'electron';
 
 @Component({
   selector: 'app-statusbar',
+  standalone: false,
   template: `
 
     <div class="statusbar {{ this._page }}">

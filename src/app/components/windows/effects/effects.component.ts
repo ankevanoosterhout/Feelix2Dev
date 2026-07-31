@@ -12,6 +12,7 @@ import { EffectTypeLabelMapping } from 'src/app/models/configuration.model';
 
 @Component({
     selector: 'app-effects',
+    standalone: false,
     templateUrl: './effects.component.html',
     styleUrls: ['./effects.component.css'],
 })

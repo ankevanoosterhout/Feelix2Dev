@@ -8,6 +8,7 @@ import { IpcRendererEvent } from 'electron';
 
 @Component({
     selector: 'app-motor-control-toolbar-inset',
+    standalone: false,
     template: `
           <div class="toolbar-menu-section" id="toolbar-motor-control">
             <div class="detach-toolbar" (click)="detachToolbar()"><div></div></div>

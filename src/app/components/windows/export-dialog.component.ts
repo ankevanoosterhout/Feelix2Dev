@@ -6,6 +6,7 @@ import { UploadService } from 'src/app/services/upload.service';
 
 @Component({
   selector: 'app-export-dialog',
+  standalone: false,
   template: `
   <div mat-dialog-title class="window-title-bar">Export</div>
     <div class="window-content">

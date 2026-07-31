@@ -8,6 +8,7 @@ import { IpcRendererEvent } from 'electron';
 
 @Component({
     selector: 'app-motor-control-toolbar',
+    standalone: false,
     template: `
       <div class="wrapper">
         <div class="window-body"></div>

@@ -5,6 +5,7 @@ import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service'
 
 @Component({
   selector: 'app-graph',
+  standalone: false,
   template: `
   <div id="{{ this._id }}" [ngStyle]="{ 'width': this._size.width, 'height': this._size.height }">
     <div class="graph-header" *ngIf="this._title">{{ this._title }}</div>

@@ -4,6 +4,7 @@ import { KinematicsDrawingService } from 'src/app/services/kinematics-drawing.se
 
 @Component({
     selector: 'app-kinematics-cursor',
+    standalone: false,
     template: `
         <div class="cursors">
           <ul>

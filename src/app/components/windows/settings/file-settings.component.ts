@@ -14,6 +14,7 @@ import { EffectType } from 'src/app/models/configuration.model';
 
 @Component({
   selector: 'app-file-settings',
+  standalone: false,
   template: `
   <div class="window-title-bar" *ngIf="!this.updateMode">New File</div>
   <div class="window-title-bar" *ngIf="this.updateMode">Update File</div>

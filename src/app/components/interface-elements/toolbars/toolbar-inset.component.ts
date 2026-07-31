@@ -9,6 +9,7 @@ import { IpcRendererEvent } from 'electron';
 
 @Component({
     selector: 'app-toolbar-inset',
+    standalone: false,
     template: `
           <div class="toolbar-menu-section" id="toolbar"
           *ngIf="this.drawingService.file.configuration.horizontalScreenDivision < (100/innerHeight) * (innerHeight - 50)">

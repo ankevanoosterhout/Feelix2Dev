@@ -80,18 +80,18 @@ export class motorid {
 }
 
 export class Collection {
-  id: string = null;
+  id: string = '';
   name: string = 'Sequence-1';
   effects: Array<Details> = [];
   midiEffects: Array<Details> = [];
-  microcontroller: MicroController = null;
+  microcontroller: MicroController | undefined;
   motorID = new motorid();
   rotation = new Rotation();
   config = new Config();
   visualizationType: EffectType = EffectType.torque;
   layers = [ new Layer('CW'), new Layer('CCW') ];
-  overlappingData = [];
-  effectDataList = [];
+  overlappingData: any[] = [];
+  effectDataList: any[] = [];
   renderedData = [];
   playing = false;
   returnToStart = false;

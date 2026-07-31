@@ -10,6 +10,7 @@ import { v4 as uuid } from 'uuid';
 
 @Component({
   selector: 'app-tensorflow-deploy',
+  standalone: false,
   templateUrl: 'tensorflow-deploy.component.html',
   styleUrls: ['../../windows/effects/effects.component.css', './../tensorflow.component.scss'],
 })

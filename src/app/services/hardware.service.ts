@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { MicroController, Motor, ConnectedDevice, OtherDevices, ActuatorType } from '../models/hardware.model';
-import { LocalStorageService } from 'ngx-webstorage';
+import { LocalStorageService } from 'src/app/services/local-storage-fallback.service';
 import { v4 as uuid } from 'uuid';
 import { Subject } from 'rxjs';
 

@@ -10,6 +10,7 @@ import { EffectType } from 'src/app/models/configuration.model';
 
 @Component({
     selector: 'app-effect-list',
+    standalone: false,
     template: `
       <div class="open-tabs effects" id="effect-tabs">
         <ul class="tabs effects" id="effect-list">
@@ -32,10 +33,10 @@ export class EffectListComponent implements OnInit {
   // tslint:disable-next-line: variable-name
   public _list = '';
 
-  public file: File;
-  delete: boolean;
+  public file: File | undefined;
+  delete: boolean | undefined;
 
-  folder: string[];
+  folder: string[] = [];
   rulerVisible = false;
 
   public scrollTab = false;
@@ -76,14 +77,16 @@ export class EffectListComponent implements OnInit {
   }
 
   getEffect(tab: any) {
-    for (const effect of this.file.effects) {
-      if (effect.id === tab.id) {
-        return effect;
-      } else if (effect.type === EffectType.midi) { // && effect.dataType === MidiDataType.notes
-        if (effect.data && effect.data.length > 0) {
-          const midiEffect = effect.data.filter(d => d.effect.id === tab.id)[0];
-          if (midiEffect) {
-            return midiEffect.effect;
+    if (this.file) {
+      for (const effect of this.file.effects) {
+        if (effect.id === tab.id) {
+          return effect;
+        } else if (effect.type === EffectType.midi) { // && effect.dataType === MidiDataType.notes
+          if (effect.data && effect.data.length > 0) {
+            const midiEffect = effect.data.filter((d: { effect: { id: any; }; }) => d.effect.id === tab.id)[0];
+            if (midiEffect) {
+              return midiEffect.effect;
+            }
           }
         }
       }
@@ -97,16 +100,22 @@ export class EffectListComponent implements OnInit {
 
 
   scroll(direction: number) {
-    const offset = this.document.getElementById('effect-list').offsetLeft;
-    const newOffset = offset + (75 * direction);
-    const availableSpace = Math.floor(window.innerWidth / 155);
-    if (newOffset <= 0 && newOffset > (this.file.effects.length - availableSpace) * -155) {
-      this.document.getElementById('effect-list').style.marginLeft = newOffset + 'px';
+    const effectObject = this.document.getElementById('effect-list');
+    const offset = effectObject?.offsetLeft;
+    if (offset !== undefined) {
+      const newOffset = offset + (75 * direction);
+      const availableSpace = Math.floor(window.innerWidth / 155);
+      const length = this.file ? this.file.effects.length : 0;
+      if (newOffset <= 0 && newOffset > (length - availableSpace) * -155) {
+        if (effectObject) {
+          effectObject.style.marginLeft = newOffset + 'px';
+        }
+      }
     }
   }
 
   scrollVisible(window: number) {
-    if ((this.file.effects.length * 155) > window) {
+    if (this.file && (this.file.effects.length * 155) > window) {
       this.scrollTab = true;
     } else {
       this.scrollTab = false;

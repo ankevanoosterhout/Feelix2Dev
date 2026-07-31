@@ -6,6 +6,7 @@ import { DrawingService } from 'src/app/services/drawing.service';
 
 @Component({
   selector: 'app-grid-settings',
+  standalone: false,
   template: `<div class="window-body"></div>
   <div class="window-title-bar">Grid size</div>
   <div class="window-content">

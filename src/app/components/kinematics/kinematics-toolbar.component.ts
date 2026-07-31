@@ -7,6 +7,7 @@ import { IpcRendererEvent } from 'electron';
 
 @Component({
     selector: 'app-kinematics-toolbar',
+    standalone: false,
     template: `
 
       <div class="toolbar-menu-section" id="toolbar-kinematic-control">

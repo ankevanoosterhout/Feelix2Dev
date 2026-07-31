@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { File } from '../models/file.model';
 import { Details, Effect } from '../models/effect.model';
 import { v4 as uuid } from 'uuid';
-import { LocalStorageService } from 'ngx-webstorage';
+import { LocalStorageService } from 'src/app/services/local-storage-fallback.service'
 import { Subject } from 'rxjs';
 import { FileSaverService } from 'ngx-filesaver';
 import { NodeService } from './node.service';
@@ -23,7 +23,7 @@ export class FileService {
   public fileObservable = new Subject<File[]>();
   fs: any;
 
-  files = [];
+  public files: File[] = []; 
 
   // tslint:disable-next-line: variable-name
   constructor(private localSt: LocalStorageService, private _FileSaverService: FileSaverService, private nodeService: NodeService,
@@ -57,7 +57,8 @@ export class FileService {
     window.addEventListener( 'storage', event => {
       if (event.storageArea === localStorage) {
         if (event.key === FileService.FILES_LOCATION) {
-          const files: File[] = JSON.parse(localStorage.getItem(FileService.FILES_LOCATION));
+          const storedData = localStorage.getItem(FileService.FILES_LOCATION);
+          const files: File[] = storedData ? JSON.parse(storedData) : [];
           this.files = files;
           this.fileObservable.next(this.files);
         }
@@ -574,7 +575,7 @@ export class FileService {
     return currentactiveFile;
   }
 
-  getAllFileDataByID(id: string): File {
+  getAllFileDataByID(id: string) {
     const selectedFile = this.files.filter(f => f._id === id)[0];
     if (selectedFile) {
       if (selectedFile.isActive) {
@@ -583,6 +584,7 @@ export class FileService {
       this.store();
       return selectedFile;
     }
+    return;
   }
 
   setActive(file: File) {
@@ -720,11 +722,11 @@ export class FileService {
   copyGuides(guides: Array<string>) {
     const activeFile = this.files.filter(f => f.isActive)[0];
     for (const guide of guides) {
-      const gEl = activeFile.grid.guides.filter(g => g.id === guide)[0];
+      const gEl = activeFile.activeEffect.grid.guides.filter((g: { id: string; }) => g.id === guide)[0];
       if (gEl) {
         const copy = gEl;
         copy.id = uuid();
-        activeFile.guides.push(copy);
+        activeFile.activeEffect.guides.push(copy);
       }
     }
     this.store();

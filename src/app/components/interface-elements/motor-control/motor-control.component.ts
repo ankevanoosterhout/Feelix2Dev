@@ -14,6 +14,7 @@ import { IpcRendererEvent } from 'electron';
 
 @Component({
     selector: 'app-motor-control',
+    standalone: false,
     templateUrl: './motor-control.component.html',
     styleUrls: ['./motor-control.component.css'],
 })

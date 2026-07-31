@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { LibraryEffect } from '../models/effect.model';
 import { v4 as uuid } from 'uuid';
-import { LocalStorageService } from 'ngx-webstorage';
+import { LocalStorageService } from 'src/app/services/local-storage-fallback.service';
 import { Subject } from 'rxjs';
 import { CloneService } from './clone.service';
 

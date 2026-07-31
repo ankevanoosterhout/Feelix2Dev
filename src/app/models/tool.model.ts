@@ -1,6 +1,6 @@
 export class Subcursor {
-  name: string = null;
-  cursor: string = null;
+  name: string = '';
+  cursor: string = '';
 }
 
 export class Cursor {
@@ -12,10 +12,10 @@ export class Cursor {
   acceleration = 'p';
   cursor = 'url(./assets/icons/tools/cursor-zoom.png), none';
   subcursor: Array<Subcursor> = [];
-  selectedSubcursor: string = null;
+  selectedSubcursor: string = '';
 
-  constructor(id: number, name: string, slug: string, disabled: boolean, icon: string, acceleration: string,
-              cursor: string, subcursor: Array<Subcursor> = []) {
+  constructor(id: number = 0, name: string = '', slug: string = '', disabled: boolean = false, icon: string = '', acceleration: string = '',
+              cursor: string = '', subcursor: Array<Subcursor> = []) {
     this.id = id;
     this.name = name;
     this.slug = slug;

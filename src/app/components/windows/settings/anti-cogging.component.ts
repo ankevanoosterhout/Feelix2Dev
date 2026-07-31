@@ -10,6 +10,7 @@ import { IpcRendererEvent } from 'electron';
 
 @Component({
   selector: 'app-anti-cogging',
+  standalone: false,
   templateUrl: './anti-cogging.component.html',
   styleUrls: ['../../windows/effects/effects.component.css'],
 })

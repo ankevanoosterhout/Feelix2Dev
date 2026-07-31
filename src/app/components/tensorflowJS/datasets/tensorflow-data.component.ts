@@ -11,6 +11,7 @@ import { TensorFlowRecordService } from 'src/app/services/tensorflow-record.serv
 
 @Component({
   selector: 'app-tensorflow-data',
+  standalone: false,
   templateUrl: 'tensorflow-data.component.html',
   styleUrls: ['../../windows/effects/effects.component.css', './../tensorflow.component.scss'],
 })

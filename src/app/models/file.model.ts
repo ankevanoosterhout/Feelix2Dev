@@ -4,14 +4,12 @@ import { Details } from './effect.model';
 import { Model, DataSet } from './tensorflow.model';
 
 export class Dates {
-  created = new Date().getTime();
-  modified = null;
+  created: number;
+  modified = new Date().getTime();
   changed = false;
 
-  constructor(date: number = null) {
-    if (date) {
-      this.created = date;
-    }
+  constructor(date: number = new Date().getTime()) {
+    this.created = date;
   }
 }
 
@@ -24,7 +22,7 @@ export class File {
   softwareVersion = '3.1.3';
   overwrite = true;
   isActive = false;
-  date = new Dates();
+  date = new Dates(new Date().getTime());
   configuration = new Configuration();
   collections: Array<Collection> = [];
   effects: Array<any> = [];
@@ -32,7 +30,7 @@ export class File {
   activeCollection: Collection = null;
   activeCollectionEffect: Details = null;
   tensorflow: {
-    models: Array<Model>;
+    models: Model[];
     data: Array<DataSet>;
   }
 
@@ -47,7 +45,7 @@ export class File {
 export class Folder {
   id: string;
   name: string;
-  date = new Dates();
+  date = new Dates(new Date().getTime());
   content: Array<any> = [];
   selected = false;
   parent = null;

@@ -16,7 +16,7 @@ export class MotorControlService {
 
 
   public config: DrawingPlaneConfig;
-  public file = new File(null, null, null);
+  public file = new File('', '', false);
 
   uploadAllCollections: Subject<any> = new Subject<void>();
   playAllCollections: Subject<any> = new Subject<void>();
@@ -34,9 +34,9 @@ export class MotorControlService {
     { id: 5, name: 'play all uploaded collections in sequence', slug: 'play_all_sequence', disabled: true, icon: './assets/icons/buttons/play_all_delay.svg', icon2: './assets/icons/buttons/stop_all.svg' }
   ]
 
-  width: number;
-  height: number;
-  midiHeight: number;
+  width: number = 0;
+  height: number = 0;
+  midiHeight: number = 0;
 
 
   constructor(@Inject(DOCUMENT) private document: Document, private drawingService: DrawingService, private fileService: FileService,
@@ -76,7 +76,7 @@ export class MotorControlService {
     this.updateToolListDisplay(file);
 
     file.configuration.collectionDisplay === 'small' ?
-      this.document.getElementById('motor-list').classList.add('small-') : this.document.getElementById('motor-list').classList.remove('small');
+      this.document.getElementById('motor-list')?.classList.add('small-') : this.document.getElementById('motor-list')?.classList.remove('small');
     this.updateHeight();
 
     setTimeout(() => {
@@ -125,8 +125,12 @@ export class MotorControlService {
 
   onResize() {
     this.resetWidth();
-    this.document.getElementById('motor-control').style.width = (window.innerWidth * this.file.configuration.verticalScreenDivision / 100) + 'px';
-    this.document.getElementById('library').style.width = ((window.innerWidth * (100 - this.file.configuration.verticalScreenDivision) / 100) - 1) + 'px';
+    const motorControlFrame = this.document.getElementById('motor-control');
+    const libraryFrame = this.document.getElementById('library');
+    if (motorControlFrame && libraryFrame) {
+      motorControlFrame.style.width = (window.innerWidth * this.file.configuration.verticalScreenDivision / 100) + 'px';
+      libraryFrame.style.width = ((window.innerWidth * (100 - this.file.configuration.verticalScreenDivision) / 100) - 1) + 'px';
+    }
 
     // for (const collection of this.file.collections) {
     //   this.getSliderPosition(collection);
@@ -214,9 +218,9 @@ export class MotorControlService {
         .data(lineData)
         .enter()
         .append('line')
-        .attr('class', (d, i) =>'range-line rline-' + i)
-        .attr('x1', (d) => collection.config.newXscale(d))
-        .attr('x2', (d) => collection.config.newXscale(d))
+        .attr('class', (d: any, i: string) =>'range-line rline-' + i)
+        .attr('x1', (d: any) => collection.config.newXscale(d))
+        .attr('x2', (d: any) => collection.config.newXscale(d))
         .attr('y1', 0)
         .attr('y2', frameHeight)
         .attr('transform', () => this.file.configuration.collectionDisplay === 'small' ? 'translate(0, 0)' : 'translate(0, 26)')
@@ -241,22 +245,24 @@ export class MotorControlService {
 
     if ((collection.effectDataList.length > 0 && collection.visualizationType === EffectType.torque && collection.microcontroller && collection.motorID) ||
         (collection.rotation.constrain && collection.rotation.units_y.name === 'deg' && collection.visualizationType === EffectType.velocity)) {
-      if (collection.microcontroller.motors[collection.motorID.index].config.voltageLimit || collection.visualizationType === EffectType.velocity) {
-        let value: number;
+      if (collection.microcontroller?.motors[collection.motorID.index].config.voltageLimit || collection.visualizationType === EffectType.velocity) {
+        let limitData;
         if (collection.visualizationType === EffectType.torque) {
-          value = (100 / collection.microcontroller.motors[collection.motorID.index].config.supplyVoltage) * collection.microcontroller.motors[collection.motorID.index].config.voltageLimit;
+          const value = (100 / collection.microcontroller?.motors[collection.motorID.index].config.supplyVoltage) * collection.microcontroller?.motors[collection.motorID.index].config.voltageLimit;
+          limitData = [ value, -value ]; 
+        } else {
+          limitData = [ collection.rotation.start_y, collection.rotation.end_y ];
         }
-        const limitData = collection.visualizationType === EffectType.torque ? [ value, -value ] : [ collection.rotation.start_y, collection.rotation.end_y ];
 
         const limitLines = collection.config.svg.selectAll('line.limit')
           .data(limitData)
           .enter()
           .append('line')
-          .attr('class', (d, i) =>'voltagelimit-' + i)
+          .attr('class', (d: any, i: string) =>'voltagelimit-' + i)
           .attr('x1', 0)
           .attr('x2', this.width)
-          .attr('y1', (d) => collection.config.newYscale(d))
-          .attr('y2', (d) => collection.config.newYscale(d))
+          .attr('y1', (d: any) => collection.config.newYscale(d))
+          .attr('y2', (d: any) => collection.config.newYscale(d))
           .attr('transform', () => this.file.configuration.collectionDisplay === 'small' ? 'translate(0, 0)' : 'translate(0, 26)')
           .attr('shape-rendering', 'crispEdges')
           .attr('stroke', collection.visualizationType === EffectType.torque ? '#FF0000' : '#FF9100')
@@ -402,7 +408,7 @@ export class MotorControlService {
               const svg = effect.type === EffectType.midi || effect.type === EffectType.midiNote ? midiSVG : effectSVG;
               const height = effect.type === EffectType.midi || effect.type === EffectType.midiNote ? (this.height - 39) * 0.25 : (this.height - 39);
               this.effectVisualizationService.drawCollectionEffect(svg, collection, collectionEffect, effect, height,
-                (this.file.activeCollectionEffect ? this.file.activeCollectionEffect.id : null), this.file.configuration.colors);
+                (this.file.activeCollectionEffect ? this.file.activeCollectionEffect.id : ''), this.file.configuration.colors);
             } else {
               this.removeCollectionsEffect(collection, collectionEffect);
             }
@@ -528,8 +534,8 @@ export class MotorControlService {
       } else if (collection.rotation.units.name === 'sec') {
         position = collection.config.newXscale(collection.time / 1000);
       } else {
-        position = collection.microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].state.position.current ?
-        collection.config.newXscale(collection.microcontroller.motors.filter(m => m.id === collection.motorID.name)[0].state.position.current) : 0;
+        position = collection.microcontroller?.motors.filter(m => m.id === collection.motorID.name)[0].state.position.current ?
+        collection.config.newXscale(collection.microcontroller?.motors.filter(m => m.id === collection.motorID.name)[0].state.position.current) : 0;
       }
 
       this.drawCursorAtPosition(position, collection);
@@ -654,7 +660,7 @@ export class MotorControlService {
     }
 
     if (collection.rotation.loop || (collection.rotation.constrain && collection.visualizationType !== EffectType.velocity)) {
-      collection.config.svg.selectAll('.range-line').attr('x1', (d) => collection.config.newXscale(d)).attr('x2', (d) => collection.config.newXscale(d));
+      collection.config.svg.selectAll('.range-line').attr('x1', (d) => collection.config.newXscale(d)).attr('x2', (d: any) => collection.config.newXscale(d));
     }
     if (!collection.rotation.loop && collection.visualizationType !== EffectType.velocity) {
       collection.config.svg.select('.inner-container')
@@ -746,7 +752,7 @@ export class MotorControlService {
       if (tmpEffect && ((tmpEffect.type === EffectType.midi && tmpEffect.data) || tmpEffect.paths.length > 0)) {
 
         this.effectVisualizationService.drawCollectionEffect(tmpEffectSVG, collection, effectDetails, tmpEffect, (this.height - 39),
-        (effectDetails ? effectDetails.id : null), this.file.configuration.colors, true);
+        (effectDetails ? effectDetails.id : ''), this.file.configuration.colors, true);
       }
   }
 

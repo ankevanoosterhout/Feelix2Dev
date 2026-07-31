@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 
 @Component({
     selector: 'app-file',
+    standalone: false,
     template: `
 
     `,

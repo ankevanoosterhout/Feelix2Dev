@@ -13,8 +13,8 @@ export class Color {
 }
 
 export class RepeatInstance {
-  id: string = null;
-  x: number = null;
+  id: string;
+  x: number;
   constructor(id: string, x: number) {
     this.id = id;
     this.x = x;
@@ -35,8 +35,8 @@ export class GridSettings {
 }
 
 export class Unit {
-  name: string = null;
-  PR: number = null;
+  name: string;
+  PR: number;
 
   constructor(name: string, PR: number) {
     this.name = name;
@@ -45,13 +45,13 @@ export class Unit {
 }
 
 export class Coords {
-  x: number = null;
-  y: number = null;
+  x: number = 0;
+  y: number = 0;
 }
 
 export class Guide {
-  id: string = null;
-  axis: string = null;
+  id: string = '';
+  axis: string = '';
   coords = new Coords();
 }
 
@@ -90,12 +90,12 @@ export class XY {
 }
 
 export class Size {
-  x: number = null;
-  y: number = null;
-  width: number = null;
-  height: number = null;
-  top: number = null;
-  bottom: number = null;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  top: number = 0;
+  bottom: number = 0;
 
   constructor(x: number, y: number, width: number, height: number) {
     this.x = x;
@@ -112,9 +112,9 @@ export class Direction {
 
 
 export class Details {
-  id: string = null;
-  name: string = null;
-  effectID: string = null;
+  id: string;
+  name: string;
+  effectID: string;
   direction = new Direction();
   scale = new XY(100,100);
   position = new Size(0,0,0,0);
@@ -134,9 +134,9 @@ export class Details {
 
 
 export class Effect {
-  id: string = null;
+  id: string;
   name: string = 'effect-1';
-  date = new Dates();
+  date = new Dates(new Date().getTime());
   type: EffectType = EffectType.torque;
   paths: Array<Path> = [];
   grid = new Grid();
@@ -164,7 +164,7 @@ export class Effect {
 
 export class LibraryEffect {
   id: string;
-  effect: Effect = null;
+  effect: Effect;
 
   constructor(id: string, effect: Effect) {
     this.id = id;

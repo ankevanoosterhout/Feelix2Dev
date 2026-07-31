@@ -29,6 +29,7 @@ import { IpcRendererEvent } from 'electron';
 
 @Component({
   selector: 'app-drawing-plane',
+  standalone: false,
   template: `
     <div id="field-inset"></div>
   `,

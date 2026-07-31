@@ -13,6 +13,7 @@ import { DOCUMENT } from '@angular/common';
 
 @Component({
     selector: 'app-kinematics-control',
+    standalone: false,
     templateUrl: './kinematics-control.component.html',
     styleUrls: ['../../windows/effects/effects.component.css','./../kinematics.component.css']
 })

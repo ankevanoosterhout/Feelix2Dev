@@ -4,18 +4,18 @@ import { Unit } from './effect.model';
 
 
 export class Margin {
-  top: number = null;
-  right: number = null;
-  bottom: number = null;
-  left: number = null;
-  offsetTop: number = null;
+  top: number | undefined;
+  right: number | undefined;
+  bottom: number | undefined;
+  left: number | undefined;
+  offsetTop: number | undefined;
 }
 
 export class EditBounds {
-  xMin: number = null;
-  xMax: number = null;
-  yMin: number = null;
-  yMax: number = null;
+  xMin: number | undefined;
+  xMax: number | undefined;
+  yMin: number | undefined;
+  yMax: number | undefined;
 
   constructor(xMin: number, xMax: number, yMin: number, yMax: number) {
     this.xMin = xMin;
@@ -26,8 +26,8 @@ export class EditBounds {
 }
 
 export class Coords {
-  x: number = null;
-  y: number = null;
+  x: number | undefined;
+  y: number | undefined;
 }
 
 export class Clipboard {
@@ -36,8 +36,8 @@ export class Clipboard {
 }
 
 export class Slider {
-  min: number = null;
-  max: number = null;
+  min: number | undefined;
+  max: number | undefined;
 }
 
 export class ReferenceBox {
@@ -57,11 +57,11 @@ export class SliderDrawplane {
 export class DrawingPlaneConfig {
   rulerVisible = true;
   rulerWidth = 13;
-  drawRulerAxis: string = null;
-  cursor = new Cursor(null, null, null, null, null, null, null , null);
+  drawRulerAxis: string = '';
+  cursor = new Cursor();
   mouseDown = new Coords();
   mouseMove = new Coords();
-  newNode: Node = null;
+  newNode: Node | undefined;
   newNodePlaced = false;
 
   svg: any;
@@ -77,8 +77,8 @@ export class DrawingPlaneConfig {
   svgDx = innerWidth;
   svgDy = innerHeight;
   margin = new Margin();
-  chartDx: number;
-  chartDy: number;
+  chartDx: number = 0;
+  chartDy: number = 0;
   toolbarOffset = 45;
   motorControlToolbarOffset = 45;
   editBounds = new EditBounds(0, 360, 0, 100);
@@ -110,7 +110,7 @@ export class DrawingPlaneConfig {
   sliderDrawplaneVertical = new SliderDrawplane();
   timeCursor = 0;
   playing = false;
-  activeInput = null;
+  activeInput: boolean = false;
   tmpEffect: any = null;
   newGuide = false;
   dataLoggingEnabled = false;

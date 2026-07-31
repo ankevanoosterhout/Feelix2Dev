@@ -13,6 +13,7 @@ import { IpcRendererEvent } from 'electron';
 
 @Component({
   selector: 'app-tensorflow',
+  standalone: false,
   templateUrl: './tensorflow.component.html',
   styleUrls: ['./tensorflow.component.scss', './../file/file-list.component.css'],
 })

@@ -19,11 +19,19 @@ export class NodeService {
   public selectedPaths: Array<string> = [];
   public selectedNodes: Array<string> = [];
 
-  public clipboard = {
-    copy: [],
-    selectedNodes: [],
-    selectedPaths: []
-  };
+
+  public clipboard: {
+    copy: any[];
+    selectedPaths: Path[]; 
+    selectedNodes: Node[]; 
+  } = { copy: [], selectedPaths: [], selectedNodes: [] };
+
+  pathObject: {
+    id: string;
+    svgPath: string;
+    parent: string;
+  } = { id: '', svgPath: '', parent: ''};
+
   public scale = new Scale();
   public grid: any;
   public inputFieldsActive = false;
@@ -43,7 +51,7 @@ export class NodeService {
     this.selectedNodes = [id];
   }
 
-  newNode(type: string, pos: Coords, angle: Coords, shift = false): Node {
+  newNode(type: string, pos: Coords, angle: Coords, shift = false) {
     // create new path
     if (this.selectedNodes.length === 0) {
       const nodePath = new Path(uuid());
@@ -53,7 +61,7 @@ export class NodeService {
       const path = this.getPath(this.selectedPaths[0]);
       if (path.box) {
         if (pos.x > path.box.left && pos.x < path.box.right) {
-          return null;
+          return;
         }
       }
       if (shift) {
@@ -137,11 +145,12 @@ export class NodeService {
     }
   }
 
-  getNode(path: string, id: string): Node {
+  getNode(path: string, id: string) {
     const nodeArray = this.paths.filter(p => p.id === path)[0];
     if (nodeArray) {
       return nodeArray.nodes.filter(n => n.id === id)[0];
     }
+    return;
   }
 
   getNodes(path: string, type: string): Array<Node> {
@@ -153,17 +162,19 @@ export class NodeService {
   }
 
 
-  getNodeByID(id: string): Node {
+  getNodeByID(id: string) {
     for (const path of this.paths) {
       const node = path.nodes.filter(n => n.id === id && n.type === 'node')[0];
       if (node) { return node; }
     }
+    return;
   }
 
 
-  getNodeByIndex(index: number, pathId: string): Node {
+  getNodeByIndex(index: number, pathId: string) {
     const node = this.paths.filter(p => p.id === pathId)[0].nodes[index];
     if (node) { return node; }
+    return;
   }
 
 
@@ -175,10 +186,11 @@ export class NodeService {
   getNodeIndexByID(id: string): number {
     for (const path of this.paths) {
       const node = path.nodes.filter(n => n.id === id && n.type === 'node')[0];
-      if (node !== null) {
+      if (node) {
         return path.nodes.indexOf(node, 0);
       }
     }
+    return -1;
   }
 
 
@@ -188,6 +200,7 @@ export class NodeService {
       const node = nodePath.nodes.filter(n => n.id === id && n.type === 'node')[0];
       return nodePath.nodes.indexOf(node, 0);
     }
+    return -1;
   }
 
 
@@ -343,11 +356,8 @@ export class NodeService {
 
 
   emptyClipboard() {
-    this.clipboard = {
-      copy: [],
-      selectedNodes: [],
-      selectedPaths: []
-    };
+    this.clipboard.copy = [];
+    this.deselectAll();
   }
 
 
@@ -475,7 +485,7 @@ export class NodeService {
         n.pos.x = old.x * scaleX;
         n.pos.y = (maxY - old.y) * scaleY;
       }
-      if (path.nodes.filter(n => n.type === 'node').length > 1) {
+      if (path.nodes.filter((n: { type: string; }) => n.type === 'node').length > 1) {
         const str = this.returnCopyPathAsString(path);
         strArray.push(str);
       }
@@ -531,7 +541,7 @@ export class NodeService {
     const nodeElements = [];
 
     for (const node of nodes) {
-      const el = copyPath.nodes.filter(n => n.id === node && n.type === 'node');
+      const el = copyPath.nodes.filter((n: { id: string; type: string; }) => n.id === node && n.type === 'node');
       if (el) {
         for (const element of el) {
           nodeElements.push({ i: copyPath.nodes.indexOf(element), n: element });
@@ -625,10 +635,10 @@ export class NodeService {
     return newPaths;
   }
 
-  createNewID(path: any, newID: string, oldNodeID = null, newNodeID = null) {
+  createNewID(path: any, newID: string, oldNodeID = '', newNodeID = '') {
     for (const el of path) {
       el.path = newID;
-      if (oldNodeID !== null && newNodeID !== null) {
+      if (oldNodeID !== '' && newNodeID !== '') {
         if (el.id === oldNodeID) {
           el.id = newNodeID;
         }
@@ -651,12 +661,14 @@ export class NodeService {
 
   addCP(node: Node, mouse: { x: number; y: number }) {
     const index = this.getNodeIndex(node.path, node.id);
-    const cp1 = new Node(node.id, node.path, uuid(), 'cp',
-                        { x: node.pos.x - (mouse.x - node.pos.x), y: node.pos.y - (mouse.y - node.pos.y) },
-                        { x: node.pos.x - (mouse.x - node.pos.x), y: node.pos.y - (mouse.y - node.pos.y) });
-    const cp2 = new Node(node.id, node.path, uuid(), 'cp', mouse, mouse);
-    this.paths.filter(p => p.id === node.path)[0].nodes.splice(index + 1, 0, cp2);
-    this.paths.filter(p => p.id === node.path)[0].nodes.splice(index, 0, cp1);
+    if (index > -1) {
+      const cp1 = new Node(node.id, node.path, uuid(), 'cp',
+                          { x: node.pos.x - (mouse.x - node.pos.x), y: node.pos.y - (mouse.y - node.pos.y) },
+                          { x: node.pos.x - (mouse.x - node.pos.x), y: node.pos.y - (mouse.y - node.pos.y) });
+      const cp2 = new Node(node.id, node.path, uuid(), 'cp', mouse, mouse);
+      this.paths.filter(p => p.id === node.path)[0].nodes.splice(index + 1, 0, cp2);
+      this.paths.filter(p => p.id === node.path)[0].nodes.splice(index, 0, cp1);
+    }
   }
 
 
@@ -666,7 +678,7 @@ export class NodeService {
       const numberOfNodes = this.paths.filter(p => p.id === id)[0].nodes.filter(n => n.type === 'node');
 
       if (numberOfNodes.length > 1) {
-        const pathStrArray = [];
+        const pathStrArray : any[] = [];
         let pathStr = 'M';
         let n = 0;
         let idStr = '';
@@ -716,15 +728,17 @@ export class NodeService {
         return pathStrArray;
       }
     }
+    return [];
   }
 
 
-  returnCopyPathAsString(path: Path): Array<object> {
+  returnCopyPathAsString(path: Path): Array<any> {
     const nodes = path.nodes;
     const numberOfNodes = path.nodes.filter(n => n.type === 'node');
 
+
     if (numberOfNodes.length > 1) {
-      const pathStrArray = [];
+      const pathStrArray: Array<any> = [];
       let pathStr = 'M';
       let n = 0;
       let idStr = '';
@@ -754,10 +768,11 @@ export class NodeService {
       });
       return pathStrArray;
     }
+    return [];
   }
 
 
-  returnPlaneAsString(id: string): Array<object> {
+  returnPlaneAsString(id: string): Array<any> {
     const nodes = this.paths.filter(p => p.id === id)[0].nodes;
     const numberOfNodes = this.paths.filter(p => p.id === id)[0].nodes.filter(n => n.type === 'node');
 
@@ -765,7 +780,7 @@ export class NodeService {
       const planeStrArray = [];
       let pathStr = 'M ';
       const pathSegments = [];
-      let tmpArray = [];
+      let tmpArray: any[] = [];
 
       for (const node of nodes) {
         if (node.type === 'node') {
@@ -804,6 +819,7 @@ export class NodeService {
       }
       return planeStrArray;
     }
+    return [];
   }
 
 
@@ -904,6 +920,7 @@ export class NodeService {
         return path;
       }
     }
+    return '';
   }
 
 
@@ -1320,7 +1337,7 @@ export class NodeService {
         x: this.grid.settings.spacingX / (this.grid.settings.subDivisionsX),
         y: this.grid.settings.spacingY / (this.grid.settings.subDivisionsY)
       };
-      const newCoords = { x: null,  y: null };
+      const newCoords = { x: 0,  y: 0 };
       const divisionX = coords.x / precision.x;
       const modX = coords.x - (Math.floor(divisionX) * precision.x);
       newCoords.x = modX > precision.x / 2 ? coords.x + (precision.x - modX) : coords.x - modX;
