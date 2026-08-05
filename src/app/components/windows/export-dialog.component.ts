@@ -1,12 +1,14 @@
 import { Component, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { DOCUMENT } from '@angular/common';
-import { UploadService } from 'src/app/services/upload.service';
+import { UploadService } from '../../services/upload.service';
+import { FormsModule } from '@angular/forms';
 
 
 @Component({
   selector: 'app-export-dialog',
-  standalone: false,
+  standalone: true,
+  imports: [FormsModule, MatDialogModule],
   template: `
   <div mat-dialog-title class="window-title-bar">Export</div>
     <div class="window-content">
@@ -21,9 +23,11 @@ import { UploadService } from 'src/app/services/upload.service';
       </div>
       <div class="form-row buttons">
           <button (click)="this.copy()">Copy</button>
-          <div class="dialogBtn" *ngFor="let btn of buttons">
+          @for (btn of buttons; track btn) {
+          <div class="dialogBtn">
             <button mat-button [mat-dialog-close]="btn">{{ btn }}</button>
           </div>
+          }
       </div>
   </div>
   `,

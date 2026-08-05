@@ -1,19 +1,26 @@
 import { Component, Inject, AfterViewInit } from '@angular/core';
-import { ElectronService } from 'src/app/services/electron.service';
-import * as THREE from 'three';
-import { KinematicService } from 'src/app/services/kinematic.service';
-import { Connector, ConnectorSize, JointLink, Model, Point, URFD_Joint, URFD_Link, Vector3 } from 'src/app/models/kinematic.model';
-import { HardwareService } from 'src/app/services/hardware.service';
+import { DOCUMENT, CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
-import { KinematicsConfig } from 'src/app/models/kinematics-config.model';
-import { KinematicsDrawingService } from 'src/app/services/kinematics-drawing.service';
-import { DragControlsService } from 'src/app/services/drag-controls.service';
-import { IKService } from 'src/app/services/IK.service';
-import { DOCUMENT } from '@angular/common';
+import { ElectronService } from './../../../services/electron.service';
+import * as THREE from 'three';
+import { KinematicService } from './../../../services/kinematic.service';
+import { Connector, ConnectorSize, Model, URFD_Joint, URFD_Link} from './../../../models/kinematic.model'; //JointLink, Point, Vector3
+import { HardwareService } from './../../../services/hardware.service';
+
+import { KinematicsConfig } from './../../../models/kinematics-config.model';
+import { KinematicsDrawingService } from './../../../services/kinematics-drawing.service';
+import { DragControlsService } from './../../../services/drag-controls.service';
+import { IKService } from './../../../services/IK.service';
+
 
 @Component({
     selector: 'app-kinematics-control',
-    standalone: false,
+    standalone: true,
+    imports: [
+      CommonModule,
+      FormsModule 
+    ],
     templateUrl: './kinematics-control.component.html',
     styleUrls: ['../../windows/effects/effects.component.css','./../kinematics.component.css']
 })
@@ -28,19 +35,29 @@ export class KinematicsControlComponent implements AfterViewInit {
 
   models = [
     new Model(0, 'revolute', true, 'active_joint_1.png', [ { g:'B', url:'active_joint_stator.obj'} ], 0xcc0000, { x: 0, y: 0, z: Math.PI },
-    new ConnectorSize(1.5, 1, 25.075, 23.575, new THREE.Vector3(0,1,0)), new ConnectorSize(2.5, 1, 29, 26.5, new THREE.Vector3(0,1,0)), new THREE.Vector3(0,0,1), Math.PI, [ { g:'A', url:'joint_rotor.obj' } ]),
+      new ConnectorSize(1.5, 1, 25.075, 23.575, new THREE.Vector3(0,1,0)), 
+      new ConnectorSize(2.5, 1, 29, 26.5, new THREE.Vector3(0,1,0)),
+      new THREE.Vector3(0,0,1), Math.PI, [ { g:'A', url:'joint_rotor.obj' } ]),
 
     new Model(0, 'revolute', false, 'passive_joint_1.png', [ { g:'B', url:'passive_joint_stator.obj'} ], 0x0000e6, { x: 0, y: 0, z: Math.PI },
-    new ConnectorSize(1.5, 1, 19.93, 18.43, new THREE.Vector3(0,1,0)), new ConnectorSize(2.5, 1, 25.5, 23, new THREE.Vector3(0,1,0)), new THREE.Vector3(0,0,1), Math.PI, [ { g:'A', url:'passive_joint_rotor.obj' } ]),
+      new ConnectorSize(1.5, 1, 19.93, 18.43, new THREE.Vector3(0,1,0)), 
+      new ConnectorSize(2.5, 1, 25.5, 23, new THREE.Vector3(0,1,0)), 
+      new THREE.Vector3(0,0,1), Math.PI, [ { g:'A', url:'passive_joint_rotor.obj' } ]),
 
     new Model(0, 'revolute', true, 'active_joint_3.png', [ { g:'A', url:'active_joint_stator_Z_top.obj'} ], 0xcc0000, { x: 0, y:0, z: 0 },
-    new ConnectorSize(1.5, 1, 17, 15.5, new THREE.Vector3(0,1,0)), new ConnectorSize(1.5, 1, 17, 15.5, new THREE.Vector3(0,-1,0)), new THREE.Vector3(0,1,0), 0, [ { g:'A', url:'active_joint_stator_Z_bottom.obj' } ]),
+      new ConnectorSize(1.5, 1, 17, 15.5, new THREE.Vector3(0,1,0)), 
+      new ConnectorSize(1.5, 1, 17, 15.5, new THREE.Vector3(0,-1,0)), 
+      new THREE.Vector3(0,1,0), 0, [ { g:'A', url:'active_joint_stator_Z_bottom.obj' } ]),
 
     new Model(0, 'revolute', false, 'passive_joint_3.png', [ { g:'B', url:'passive_joint_stator_Z_top.obj'} ], 0x0000e6, { x: (Math.PI/2), y:0, z: 0 },
-    new ConnectorSize(1.5, 1, 17, 15.5, new THREE.Vector3(0,1,0)), new ConnectorSize(1.5, 1, 17, 15.5, new THREE.Vector3(0,-1,0)), new THREE.Vector3(0,1,0), 0, [ { g:'A', url:'passive_joint_stator_Z_bottom.obj' } ]),
+      new ConnectorSize(1.5, 1, 17, 15.5, new THREE.Vector3(0,1,0)), 
+      new ConnectorSize(1.5, 1, 17, 15.5, new THREE.Vector3(0,-1,0)), 
+      new THREE.Vector3(0,1,0), 0, [ { g:'A', url:'passive_joint_stator_Z_bottom.obj' } ]),
 
     new Model(0, 'fixed', false, 'fixed_joint.png', [ { g:'B', url:'fixed_joint_base.obj'}, { g:'Z', url: 'fixed_joint_connector_X.obj' }], 0x222222, { x: 0, y: 0, z: Math.PI },
-    new ConnectorSize(1.5, 1, 25.075, 23.575, new THREE.Vector3(0,1,0)), new ConnectorSize(1.5, 1, 25.075, 23.575, new THREE.Vector3(0,1,0)), new THREE.Vector3(0,0,1))
+    new ConnectorSize(1.5, 1, 25.075, 23.575, new THREE.Vector3(0,1,0)), 
+    new ConnectorSize(1.5, 1, 25.075, 23.575, new THREE.Vector3(0,1,0)), 
+    new THREE.Vector3(0,0,1))
   ];
 
 
@@ -182,23 +199,23 @@ export class KinematicsControlComponent implements AfterViewInit {
       // console.log(model);
       const updatedModel = this.updatePosition(selectedFrame, model);
       if (selectedFrame instanceof URFD_Joint) {
-        this.addLink(updatedModel, this.ikService.ikConfig.drag.selected, null, true);
+        this.addLink(updatedModel, this.ikService.ikConfig.drag.selected, undefined, true);
       } else {
-        this.addJoint(updatedModel, this.ikService.ikConfig.drag.selected, null, false);
+        this.addJoint(updatedModel, this.ikService.ikConfig.drag.selected, undefined, false);
       }
     } else {
       // console.log(model);
-      this.addJoint(model, null, null, false);
+      this.addJoint(model, undefined, undefined, false);
     }
 
   }
 
 
-  addJoint(model: Model, selected: any, urfd_link: URFD_Link = null, parent = false) {
+  addJoint(model: Model, selected: any, urfd_link: URFD_Link | undefined = undefined, parent = false) {
     let selectedName = null;
 
     if (selected !== null || urfd_link !== null) {
-      selectedName = selected !== null ? selected.parent.name : urfd_link.id.slice(0, -5);
+      selectedName = selected !== null ? selected.parent.name : urfd_link?.id.slice(0, -5);
     }
 
     const urfd_joint = this.kinematicService.addNewJoint(!parent ? null : selectedName, model, parent);
@@ -216,11 +233,11 @@ export class KinematicsControlComponent implements AfterViewInit {
 
 
 
-  addLink(model: Model, selected: any, urfd_joint: URFD_Joint = null, parent = false) {
+  addLink(model: Model, selected: any, urfd_joint: URFD_Joint | undefined = undefined, parent = false) {
     let selectedName = null;
 
-    if (!parent && (selected !== null || urfd_joint !== null)) {
-      selectedName = selected !== null ? selected.parent.name : urfd_joint.id;
+    if (!parent && (selected !== undefined || urfd_joint !== undefined)) {
+      selectedName = selected !== undefined ? selected.parent.name : urfd_joint !== undefined ? urfd_joint.id : '';
     }
 
     const urfd_link = this.kinematicService.addNewLink(selectedName, model, parent);
@@ -254,16 +271,16 @@ export class KinematicsControlComponent implements AfterViewInit {
 
     // rotationVector.applyMatrix4(this.ikService.ikConfig.drag.selected.parent.matrix);
 
-    positionVector.applyMatrix4(this.ikService.ikConfig.drag.selected.parent.matrixWorld);
+    positionVector.applyMatrix4(this.ikService.ikConfig.drag.selected?.parent.matrixWorld);
 
     // console.log(this.ikService.ikConfig.drag.selected.parent.matrixWorld);
 
-    const updatedPosition = this.dragControlService.getRotatedPosition(this.ikService.ikConfig.drag.selected.parent.matrixWorld, SF.axis, positionVector);
+    const updatedPosition = this.dragControlService.getRotatedPosition(this.ikService.ikConfig.drag.selected?.parent.matrixWorld, SF.axis, positionVector);
 
     const translationMatrix = new THREE.Matrix4()
-        .makeTranslation(this.ikService.ikConfig.drag.selected.parent.position.x,
-                         this.ikService.ikConfig.drag.selected.parent.position.y,
-                         this.ikService.ikConfig.drag.selected.parent.position.z);
+        .makeTranslation(this.ikService.ikConfig.drag.selected?.parent.position.x,
+                         this.ikService.ikConfig.drag.selected?.parent.position.y,
+                         this.ikService.ikConfig.drag.selected?.parent.position.z);
 
     // const rotationMatrix  = new THREE.Matrix4()
     //     .makeRotationFromEuler(new THREE.Euler( this.ikService.ikConfig.drag.selected.parent.rotation.x,
@@ -310,9 +327,9 @@ export class KinematicsControlComponent implements AfterViewInit {
     // rotationVector.applyQuaternion(this.ikService.ikConfig.drag.selected.parent.quaternion);
     console.log(model.rpy, modelCopy.rpy, modelCopy.startAngle);
     // if (model.rpy.z !== 0) {
-    modelCopy.rpy.x = this.ikService.ikConfig.drag.selected.parent.rotation.x;
-    modelCopy.rpy.y = this.ikService.ikConfig.drag.selected.parent.rotation.y;
-    modelCopy.rpy.z = this.ikService.ikConfig.drag.selected.parent.rotation.z + modelCopy.startAngle;
+    modelCopy.rpy.x = this.ikService.ikConfig.drag.selected?.parent.rotation.x;
+    modelCopy.rpy.y = this.ikService.ikConfig.drag.selected?.parent.rotation.y;
+    modelCopy.rpy.z = this.ikService.ikConfig.drag.selected?.parent.rotation.z + modelCopy.startAngle;
 
 
     // console.log("MODEL VECTOR", rotationVector);
@@ -379,7 +396,7 @@ export class KinematicsControlComponent implements AfterViewInit {
 
     this.ikService.ikConfig.screen.displayModels = !this.ikService.ikConfig.screen.displayModels;
 
-    this.config.scene.traverse(c => {
+    this.config.scene.traverse((c: { type: string; name: any; visible: boolean; }) => {
 
       if (c.type === 'Group') {
         const name = c.name;
@@ -395,7 +412,7 @@ export class KinematicsControlComponent implements AfterViewInit {
 
   showRootsHelper() {
     this.ikService.ikConfig.screen.displayIK = !this.ikService.ikConfig.screen.displayIK;
-    this.config.scene.traverse( c => {
+    this.config.scene.traverse((c: { name: string; visible: boolean; }) => {
       if (c.name === 'ikHelper') {
         c.visible = this.ikService.ikConfig.screen.displayIK;
       }
@@ -408,7 +425,7 @@ export class KinematicsControlComponent implements AfterViewInit {
   updateModelsFromRoot(roots: any) {
     // console.log(roots);
     for (const root of roots) {
-      root.traverse( c => {
+      root.traverse((c: { name: any; quaternion: any[]; position: any[]; }) => {
         console.log(c);
         const frameObject = this.config.scene.getObjectByName(c.name);
         console.log(frameObject);
@@ -471,7 +488,7 @@ export class KinematicsControlComponent implements AfterViewInit {
 
       sceneObject.traverse( ( child: any ) => {
         if ( child.isGroup ) {
-          const selectedMesh = child.children.filter(c => c.name === point.id)[0];
+          const selectedMesh = child.children.filter((c: { name: string | undefined; }) => c.name === point.id)[0];
           if (selectedMesh) {
             const angleRad = point.plane === 'Y' ? (point.angle + this.kinematicService.selectedFrames[0].angle) * (Math.PI/180) : point.angle * (Math.PI/180);
             selectedMesh.rotation.z = angleRad;
@@ -569,7 +586,7 @@ export class KinematicsControlComponent implements AfterViewInit {
       // const group = sceneObject.children.filter(c => c.name === name)[0];
       sceneObject.traverseVisible( ( child: any ) => {
         if ( child.isGroup ) {
-          const selectedMesh = child.children.filter(c => c.name === point.id)[0];
+          const selectedMesh = child.children.filter((c: { name: string | undefined; }) => c.name === point.id)[0];
           sceneObject.remove(selectedMesh);
         }
       });

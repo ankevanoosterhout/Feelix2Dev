@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
-import { v4 as uuid } from 'uuid';
-import { LocalStorageService } from 'src/app/services/local-storage-fallback.service';
-import { JointLink, Object3D, Connector, Point, ModelFile, URFD_Joint, Model, URFD_Link } from '../models/kinematic.model';
-import * as THREE from 'three';
 import { FileSaverService } from 'ngx-filesaver';
+import { v4 as uuid } from 'uuid';
+import * as THREE from 'three';
+import { JointLink, Object3D, Connector, Point, ModelFile, URFD_Joint, Model, URFD_Link } from '../models/kinematic.model';
+
+import { LocalStorageService } from '../services/local-storage-fallback.service';
 // import { RAD2DEG } from 'three/src/math/MathUtils';
 
 
@@ -26,7 +27,7 @@ export class KinematicService {
   public modelObservable = new Subject<ModelFile[]>();
   public framesObservable = new Subject<any>();
 
-  selectedFrames = [];
+  selectedFrames: Array<any> = [];
 
 
   selConnPoints: Array<Point> = [];
@@ -64,27 +65,35 @@ export class KinematicService {
 
     window.addEventListener( 'storage', event => {
       // console.log(event, event.storageArea, localStorage, event.key);
-      if (event.storageArea === localStorage) {
+      if (event && event.storageArea === localStorage) {
         if (event.key === KinematicService.MODEL_FILES_LOCATION) {
-          const models: ModelFile[] = JSON.parse(localStorage.getItem(KinematicService.MODEL_FILES_LOCATION));
+          const fileModel = localStorage.getItem(KinematicService.MODEL_FILES_LOCATION);
+          const models: ModelFile[] = fileModel ? JSON.parse(fileModel) : [];
+
           // console.log(models);
           this.models = models;
           this.modelObservable.next(this.models);
         }
 
-        if (event.key.startsWith(KinematicService.LOAD_FILE)) {
-          const fileLocation: string = JSON.parse(localStorage.getItem(KinematicService.LOAD_FILE_LOCATION));
+        if (event?.key?.startsWith(KinematicService.LOAD_FILE)) {
+          const fileLocation = localStorage.getItem(KinematicService.LOAD_FILE_LOCATION);
+          const location: string = fileLocation ? fileLocation : '';
           // console.log(fileLocation);
-          this.parseFile(localStorage.getItem(KinematicService.LOAD_FILE)).then((model: ModelFile) => {
-            try {
-              model.path = fileLocation;
-              model.isActive = false;
-              this.models.push(model);
-              this.store();
-              this.setActive(model);
-            } catch (error) {
-            }
-          });
+          const file = localStorage.getItem(KinematicService.LOAD_FILE);
+          if (file) {
+            (this.parseFile(file) as Promise<ModelFile>).then((model: ModelFile) => {
+              try {
+                model.path = location;
+                model.isActive = false;
+                this.models.push(model);
+                this.store();
+                this.setActive(model);
+              } catch (error) {
+                // Handle or log error
+                console.log("error parsing model");
+              }
+            });
+          }
 
           localStorage.removeItem(KinematicService.LOAD_FILE);
           localStorage.removeItem(KinematicService.LOAD_FILE_LOCATION);
@@ -170,7 +179,7 @@ export class KinematicService {
   }
 
 
-  save(modelObj: ModelFile, close = false) {
+  save(modelObj: ModelFile | undefined, close = false) {
 
     const model = modelObj ? modelObj : this.models.filter(m => m.isActive)[0];
 
@@ -328,13 +337,13 @@ export class KinematicService {
       const newID = uuid();
       sceneObject.name = newID;
       // console.log(sceneObject.name, newID);
-      const newJoint = new JointLink(newID, null);
+      const newJoint = new JointLink(newID, undefined);
       // console.log(newJoint.id);
       newJoint.object3D = joint.object3D;
       newJoint.isJoint = joint.isJoint;
       newJoint.isMotor = joint.isMotor;
       newJoint.name = joint.name + '-copy';
-      newJoint.motor = null;
+      newJoint.motor = undefined;
       newJoint.sceneObject = sceneObject;
       newJoint.connectors = joint.connectors;
       // console.log(newJoint.id, newJoint.connectors);
@@ -556,7 +565,7 @@ export class KinematicService {
     return joint;
   }
 
-  getJointColor(id: string): number {
+  getJointColor(id: string) {
     const joint = this.frames.filter(j => j.id === id)[0];
     if (joint) {
       return joint.object3D.color;
@@ -565,10 +574,10 @@ export class KinematicService {
   }
 
 
-  updateConnectionPoint(id: string, point_: Connector): JointLink {
+  updateConnectionPoint(id: string, point_: Connector) {
     const joint = this.frames.filter(j => j.id === id)[0];
     if (joint) {
-      let point = joint.connectors.filter(p => p.id === point_.id)[0];
+      let point = joint.connectors.filter((p: { id: string | undefined; }) => p.id === point_.id)[0];
       if (point) {
         point = point;
         this.store();

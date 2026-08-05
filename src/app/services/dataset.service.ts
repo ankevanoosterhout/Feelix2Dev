@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { v4 as uuid } from 'uuid';
-import { LocalStorageService } from 'src/app/services/local-storage-fallback.service';
+import { LocalStorageService } from '../services/local-storage-fallback.service';
 import { CloneService } from './clone.service';
 import { DataSet } from '../models/tensorflow.model';
 import { Folder } from '../models/file.model';
@@ -39,7 +39,7 @@ export class DataSetService {
   }
 
 
-  getAllDataSets(folderID = null) {
+  getAllDataSets(folderID: string | undefined = undefined) {
     this.getDataFromLocalStorage();
     if (folderID) {
       return this.getFolder(folderID, this.dataSetLibrary.filter(d => d instanceof Folder));
@@ -64,11 +64,11 @@ export class DataSetService {
     if (activeFolder.id) {
       const folder = this.getFolder(activeFolder.id, this.dataSetLibrary.filter(d => d instanceof Folder));
       if (folder) {
-        let item = folder.content.filter(d => d.id === dataSet.id)[0];
+        let item = folder.content.filter((d: { id: string; }) => d.id === dataSet.id)[0];
         if (item) { item = dataSet; }
       }
     } else {
-      let item = this.dataSetLibrary.filter(d => d.id === dataSet.id)[0];
+      let item = this.dataSetLibrary.filter((d: { id: string; }) => d.id === dataSet.id)[0];
       if (item) { item = dataSet; }
     }
     this.store();
@@ -133,8 +133,8 @@ export class DataSetService {
     this.store();
   }
 
-  copyDataSet(dataSet: DataSet) {
-    if (dataSet) {
+  copyDataSet(dataSet: DataSet | undefined = undefined) {
+    if (dataSet !== undefined) {
       const copy = this.cloneService.deepClone(dataSet);
       copy.date = this.cloneService.deepClone(dataSet.date);
       copy.id = uuid();

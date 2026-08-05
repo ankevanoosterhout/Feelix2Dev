@@ -21,9 +21,9 @@ export class NodeService {
 
 
   public clipboard: {
-    copy: any[];
-    selectedPaths: Path[]; 
-    selectedNodes: Node[]; 
+    copy: Array<any>;
+    selectedPaths: Array<Path>; 
+    selectedNodes: Array<Node>; 
   } = { copy: [], selectedPaths: [], selectedNodes: [] };
 
   pathObject: {
@@ -40,7 +40,7 @@ export class NodeService {
 
 
   addNode(id: string, path: string, type: string, pos: Coords, angle: Coords) {
-    const node = new Node(id, path, null, type, pos, angle);
+    const node = new Node(id, path, '', type, pos, angle);
     let selectedNodeIndex = -1;
     if (this.selectedNodes.length > 0) { selectedNodeIndex = this.getNodeIndexByID(this.selectedNodes[0]); }
     if (this.paths.filter(p => p.id === path)[0].nodes.filter(n => n.type === 'node').length > 1 && selectedNodeIndex === 0) {
@@ -59,16 +59,17 @@ export class NodeService {
       this.selectedPaths = [ nodePath.id ];
     } else if (this.selectedNodes.length === 1) {
       const path = this.getPath(this.selectedPaths[0]);
-      if (path.box) {
-        if (pos.x > path.box.left && pos.x < path.box.right) {
-          return;
-        }
+
+      if ((pos.x ?? 0) > (path.box.left ?? 0) && 
+          (pos.x ?? 0) < (path.box.right ?? 0)) {
+        return;
       }
+      
       if (shift) {
         const node = path.nodes.filter(n => n.id === this.selectedNodes[0])[0];
         if (node) {
-          const diffY = Math.abs(node.pos.y - pos.y);
-          const diffX = Math.abs(node.pos.x - pos.x);
+          const diffY = Math.abs((node.pos.y ?? 0) - (pos.y ?? 0));
+          const diffX = Math.abs((node.pos.x ?? 0) - (pos.x ?? 0));
           if (diffY > diffX) {
             pos.x = node.pos.x;
             angle.x = node.pos.x;
@@ -282,8 +283,8 @@ export class NodeService {
             for (const n of nodes) {
               const index = path.nodes.indexOf(n);
               const copy = new Node(uuid(), n.path, n.cp, n.type,
-                { x: n.pos.x + distanceX, y: n.pos.y + distanceY },
-                { x: n.angle.x + distanceX, y: n.angle.y + distanceY });
+                { x: (n.pos.x ?? 0) + distanceX, y: (n.pos.y ?? 0) + distanceY },
+                { x: (n.angle.x ?? 0)+ distanceX, y: (n.angle.y ?? 0) + distanceY });
               nodeArray.push(copy);
               indexes.push({ c: copy, i: index });
             }
@@ -308,17 +309,21 @@ export class NodeService {
         }
       }
     } else if (this.clipboard.selectedPaths.length > 0 && this.clipboard.selectedNodes.length === 0) {
+
       for (const path of this.clipboard.selectedPaths) {
+
         const copyPath = new Path(uuid());
         for (const n of path.nodes) {
           const copy = new Node(n.id, copyPath.id, n.cp, n.type,
-            { x: n.pos.x + distanceX, y: n.pos.y + distanceY },
-            { x: n.angle.x + distanceX, y: n.angle.y + distanceY });
+            { x: (n.pos.x ?? 0) + distanceX, y: (n.pos.y ?? 0) + distanceY },
+            { x: (n.angle.x ?? 0) + distanceX, y: (n.angle.y ?? 0) + distanceY });
           copyPath.nodes.push(copy);
         }
         copyPath.box = path.box;
-        copyPath.box.left += distanceX;
-        copyPath.box.right += distanceX;
+
+        copyPath.box.left !== undefined ? copyPath.box.left += distanceX : distanceX;
+        copyPath.box.right !== undefined ? copyPath.box.right += distanceX : distanceX;
+
         this.clipboard.copy.push(copyPath);
       }
     }
@@ -659,9 +664,9 @@ export class NodeService {
     return newPath;
   }
 
-  addCP(node: Node, mouse: { x: number; y: number }) {
+  addCP(node: Node, mouse: Coords) {
     const index = this.getNodeIndex(node.path, node.id);
-    if (index > -1) {
+    if (index > -1 && node.pos.x !== undefined && mouse.x !== undefined && node.pos.y !== undefined && mouse.y !== undefined) {
       const cp1 = new Node(node.id, node.path, uuid(), 'cp',
                           { x: node.pos.x - (mouse.x - node.pos.x), y: node.pos.y - (mouse.y - node.pos.y) },
                           { x: node.pos.x - (mouse.x - node.pos.x), y: node.pos.y - (mouse.y - node.pos.y) });
@@ -850,6 +855,7 @@ export class NodeService {
         return path;
       }
     }
+    return '';
   }
 
 
@@ -924,7 +930,7 @@ export class NodeService {
   }
 
 
-  calculateCP(node: Node, mouse: { x: number; y: number}): Array<object> {
+  calculateCP(node: Node, mouse: Coords): Array<object> {
 
     const cpArray: Array<object> = [];
     const path = this.paths.filter(p => p.id === node.path)[0];
@@ -948,12 +954,16 @@ export class NodeService {
           const el = this.paths.filter(p => p.id === node.path)[0].nodes[i];
           if (el.type === 'cp') {
             const nodeEl = this.paths.filter(p => p.id === node.path)[0].nodes.filter(n => n.type === 'node' && n.id === el.id)[0];
-            if (el.id === node.id && i < index) {
-              el.pos = { x: node.pos.x - (mouse.x - node.pos.x), y: node.pos.y - (mouse.y - node.pos.y) };
-              el.angle = { x: node.pos.x - (mouse.x - node.pos.x), y: node.pos.y - (mouse.y - node.pos.y) };
-            } else if (el.id === node.id  && i > index) {
-              el.pos = { x: mouse.x, y: mouse.y };
-              el.angle = { x: mouse.x, y: mouse.y };
+
+            if (node.pos.x !== undefined && mouse.x !== undefined && node.pos.y !== undefined && mouse.y !== undefined) {
+
+              if (el.id === node.id && i < index) {
+                el.pos = { x: node.pos.x - (mouse.x - node.pos.x), y: node.pos.y - (mouse.y - node.pos.y) };
+                el.angle = { x: node.pos.x - (mouse.x - node.pos.x), y: node.pos.y - (mouse.y - node.pos.y) };
+              } else if (el.id === node.id  && i > index) {
+                el.pos = { x: mouse.x, y: mouse.y };
+                el.angle = { x: mouse.x, y: mouse.y };
+              }
             }
             cpArray.push( { cp: el, node: nodeEl });
             this.updateCP(el);
@@ -965,25 +975,50 @@ export class NodeService {
   }
 
 
-  getUpdatedCP(node: Node, diff: { x: number; y: number }, single: boolean, type = 'pos'): Node {
+  getUpdatedCP(node: Node, diff: { x: number; y: number }, single: boolean, type = 'pos') {
 
-    const mainNode = this.paths.filter(p => p.id === node.path)[0].nodes.filter(n => n.type === 'node' && n.id === node.id)[0];
-    const oppositeCP = this.paths.filter(p => p.id === node.path)[0]
-      .nodes.filter(n => n.type === 'cp' && n.id === node.id && n.cp !== node.cp)[0];
+    const parentPathMain = this.paths.find(p => p.id === node.path);
+    const mainNode = parentPathMain?.nodes.find(n => 
+      n.type === 'node' && 
+      n.id === node.id
+    ); 
 
-    const old = { x: node.pos.x, y: node.pos.y, ax: node.angle.x, ay: node.angle.y };
+    const parentPath = this.paths.find(p => p.id === node.path);
+    const oppositeCP = parentPath?.nodes.find(n => 
+      n.type === 'cp' && 
+      n.id === node.id && 
+      n.cp !== node.cp
+    );
+
+
+    const mainNodeX = mainNode?.pos.x ?? 0;
+    const mainNodeY = mainNode?.pos.y ?? 0;
+
+    const mainNodeAngleX = mainNode?.angle.x ?? 0;
+    const mainNodeAngleY = mainNode?.angle.y ?? 0;
+
+    const oppositeCPX = oppositeCP?.pos.x ?? 0;
+    const oppositeCPY = oppositeCP?.pos.y ?? 0;
+
+    let oldNodeX: number = node.pos.x ?? 0;
+    let oldNodeY: number = node.pos.y ?? 0;
+
+    let oldNodeAngleX = node.angle.x ?? 0;
+    let oldNodeAngleY = node.angle.y ?? 0;
+    
 
     if (type === 'pos') {
-      node.pos = { x: old.x + diff.x, y: old.y + diff.y };
+      oldNodeX += diff.x;
+      oldNodeY += diff.y;
     }
-    node.angle = { x: old.ax + diff.x, y: old.ay + diff.y };
-
-
+    oldNodeAngleX += diff.x;
+    oldNodeAngleY += diff.y;
+    node.angle = { x: oldNodeAngleX + diff.x, y: oldNodeAngleY + diff.y };
 
     if (oppositeCP) {
-      const angle = Math.atan(Math.abs(mainNode.pos.x - old.x) / Math.abs(mainNode.pos.y - old.y));
-      const angleOpposite = Math.atan(Math.abs(oppositeCP.pos.x - mainNode.pos.x) / Math.abs(oppositeCP.pos.y - mainNode.pos.y));
-      const distanceCP2 = Math.sqrt(Math.pow((oppositeCP.pos.y - mainNode.pos.y), 2) + Math.pow((oppositeCP.pos.x - mainNode.pos.x), 2));
+      const angle = Math.atan(Math.abs(mainNodeX - oldNodeX) / Math.abs(mainNodeY - oldNodeY));
+      const angleOpposite = Math.atan(Math.abs(oppositeCPX - mainNodeX) / Math.abs(oppositeCPY - mainNodeY));
+      const distanceCP2 = Math.sqrt(Math.pow((oppositeCPY - mainNodeY), 2) + Math.pow((oppositeCPX - mainNodeX), 2));
       if (Math.round(angle * 1000) !== Math.round(angleOpposite * 1000)) {  single = true; }
 
       let newX: number;
@@ -991,27 +1026,28 @@ export class NodeService {
       if (type === 'pos') {
 
         if (!single) {
-          const angleNew = Math.atan(Math.abs(mainNode.pos.x - node.pos.x) / Math.abs(mainNode.pos.y - node.pos.y));
+          const angleNew = Math.atan(Math.abs(mainNodeX - oldNodeX) / Math.abs(mainNodeY - oldNodeY));
           newY = Math.cos(angleNew) * distanceCP2;
           newX = Math.sin(angleNew) * distanceCP2;
 
-          if (mainNode.pos.x < node.pos.x) { newX *= -1; }
-          if (mainNode.pos.y < node.pos.y) { newY *= -1; }
-          oppositeCP.pos.x = mainNode.pos.x + newX;
-          oppositeCP.pos.y = mainNode.pos.y + newY;
+          if (mainNodeX < oldNodeX) { newX *= -1; }
+          if (mainNodeY < oldNodeY) { newY *= -1; }
+          oppositeCP.pos.x = mainNodeX + newX;
+          oppositeCP.pos.y = mainNodeY + newY;
 
-          oppositeCP.angle.x = mainNode.angle.x + newX;
-          oppositeCP.angle.y = mainNode.angle.y + newY;
+          oppositeCP.angle.x = mainNodeAngleX + newX;
+          oppositeCP.angle.y = mainNodeAngleY + newY;
         }
         return oppositeCP;
       }
     }
+    return;
   }
 
 
-  getCP(node: Node): Array<object> {
+  getCP(node: Node) {
 
-    const cpArray: Array<object> = [];
+    const cpArray: Array<any> = [];
     const nodes = this.paths.filter(p => p.id === node.path)[0].nodes;
     if (nodes.length > 0) {
       const index = nodes.indexOf(node);
@@ -1031,20 +1067,26 @@ export class NodeService {
       }
       return cpArray;
     }
+    return;
   }
 
 
   moveNode(node: Node, diff: { x: number; y: number }, shift = false) {
-    const nodes = this.paths.filter(p => p.id === node.path)[0].nodes.filter(n => n.id === node.id);
+    const parentPath = this.paths.find(p => p.id === node.path);
+    const nodes = parentPath?.nodes.filter(n => n.id === node.id);
+
     if (shift) {
-      if (Math.abs(diff.x) > Math.abs(diff.y)) { diff.y = 0; } else if (Math.abs(diff.y) > Math.abs(diff.x)) { diff.x = 0; }
+      if (Math.abs(diff.x) > Math.abs(diff.y)) { diff.y = 0; } 
+      else if (Math.abs(diff.y) > Math.abs(diff.x)) { diff.x = 0; }
     }
-    for (const n of nodes) {
-      const old = { x: n.pos.x, y: n.pos.y, ax: n.angle.x, ay: n.angle.y };
-      n.pos.x = old.x + diff.x;
-      n.pos.y = old.y + diff.y;
-      n.angle.x = old.ax + diff.x;
-      n.angle.y = old.ay + diff.y;
+    if (nodes) { 
+      for (const n of nodes) {
+        // const old = { x: n.pos.x, y: n.pos.y, ax: n.angle.x, ay: n.angle.y };
+        if (n.pos.x !== undefined) n.pos.x += diff.x;
+        if (n.pos.y !== undefined) n.pos.y += diff.y;
+        if (n.angle.x !== undefined) n.angle.x += diff.x;
+        if (n.angle.y !== undefined) n.angle.y += diff.y;
+      }
     }
   }
 
@@ -1052,7 +1094,9 @@ export class NodeService {
   moveAllSelectedNodes(diff: { x: number; y: number }, shift = false) {
     for (const n of this.selectedNodes) {
       const node = this.getNodeByID(n);
-      this.moveNode(node, diff, shift);
+      if (node) {
+        this.moveNode(node, diff, shift);
+      }
     }
   }
 
@@ -1060,8 +1104,8 @@ export class NodeService {
   moveNodeAngle(node: Node, diff: { x: number }) {
     const nodes = this.paths.filter(p => p.id === node.path)[0].nodes.filter(n => n.id === node.id);
     for (const n of nodes) {
-      const old = { ax: n.angle.x };
-      n.angle.x = old.ax + diff.x;
+      // const old = { ax: n.angle.x };
+      if (n.angle.x !== undefined) n.angle.x += diff.x;
     }
   }
 
@@ -1072,54 +1116,67 @@ export class NodeService {
       if (Math.abs(diff.x) > Math.abs(diff.y)) { diff.y = 0; } else if (Math.abs(diff.y) > Math.abs(diff.x)) { diff.x = 0; }
     }
     for (const n of nodes) {
-      const old = { x: n.pos.x, y: n.pos.y, ax: n.angle.x, ay: n.angle.y };
-      n.pos.x = old.x + diff.x;
-      n.pos.y = old.y + diff.y;
-      n.angle.x = old.ax + diff.x;
-      n.angle.y = old.ay + diff.y;
+      // const old = { x: n.pos.x, y: n.pos.y, ax: n.angle.x, ay: n.angle.y };
+      if (n.pos.x !== undefined) n.pos.x += diff.x;
+      if (n.pos.y !== undefined) n.pos.y += diff.y;
+      if (n.angle.x !== undefined) n.angle.x += diff.x;
+      if (n.angle.y !== undefined) n.angle.y += diff.y;
     }
-    this.paths.filter(p => p.id === path)[0].box.left += diff.x;
-    this.paths.filter(p => p.id === path)[0].box.right += diff.x;
-    this.paths.filter(p => p.id === path)[0].box.top += diff.y;
-    this.paths.filter(p => p.id === path)[0].box.bottom += diff.y;
+    const pathObj = this.paths.filter(p => p.id === path)[0];
+    if (pathObj !== undefined) {
+      pathObj.box.left !== undefined ? pathObj.box.left += diff.x : diff.x;
+      pathObj.box.right !== undefined ? pathObj.box.right += diff.x : diff.x;
+      pathObj.box.top !== undefined ? pathObj.box.top += diff.y : diff.y;
+      pathObj.box.bottom !== undefined ? pathObj.box.bottom += diff.y : diff.y;
+    }
   }
 
 
   scalePath(paths: Array<string>, scaleX: number, scaleY: number, offsetX: number, offsetY: number) {
+
     for (const path of paths) {
       const pathEl = this.paths.filter(p => p.id === path)[0];
       if (pathEl) {
+
         const nodes = pathEl.nodes;
+
         for (const n of nodes) {
-          const old = { x: n.pos.x, y: n.pos.y, ax: n.angle.x, ay: n.angle.y };
-          n.pos.x = ((old.x - offsetX) * scaleX) + offsetX;
-          n.pos.y = ((old.y - offsetY) * scaleY) + offsetY;
-          n.angle.x = ((old.ax - offsetX) * scaleX) + offsetX;
-          n.angle.y = ((old.ay - offsetY) * scaleY) + offsetY;
+          // const old = { x: n.pos.x, y: n.pos.y, ax: n.angle.x, ay: n.angle.y };
+          if (n.pos.x !== undefined) n.pos.x = (((n.pos.x - offsetX) * scaleX) + offsetX);
+          if (n.pos.y !== undefined) n.pos.y = (((n.pos.y - offsetY) * scaleY) + offsetY);
+          if (n.angle.x !== undefined) n.angle.x = (((n.angle.x - offsetX) * scaleX) + offsetX);
+          if (n.angle.y !== undefined) n.angle.y = (((n.angle.y - offsetY) * scaleY) + offsetY);
         }
-        const oldBox = { left: pathEl.box.left, right: pathEl.box.right, top: pathEl.box.top, bottom: pathEl.box.bottom };
-        pathEl.box.left = ((oldBox.left - offsetX) * scaleX) + offsetX;
-        pathEl.box.right = ((oldBox.right - offsetX) * scaleX) + offsetX;
-        pathEl.box.top = ((oldBox.top - offsetY) * scaleY) + offsetY;
-        pathEl.box.bottom = ((oldBox.bottom - offsetY) * scaleY) + offsetY;
+
+        const oldBox = { 
+          left: pathEl.box.left, 
+          right: pathEl.box.right, 
+          top: pathEl.box.top, 
+          bottom: pathEl.box.bottom 
+        };
+
+        pathEl.box.left = (((oldBox.left ?? 0) - offsetX) * scaleX) + offsetX;
+        pathEl.box.right = (((oldBox.right ?? 0) - offsetX) * scaleX) + offsetX;
+        pathEl.box.top = (((oldBox.top ?? 0) - offsetY) * scaleY) + offsetY;
+        pathEl.box.bottom = (((oldBox.bottom ?? 0) - offsetY) * scaleY) + offsetY;
         pathEl.box.width = pathEl.box.right - pathEl.box.left;
         pathEl.box.height = pathEl.box.bottom - pathEl.box.top;
+
         if (pathEl.box.height < 0) { pathEl.box.height *= -1; }
         if (pathEl.box.width < 0) { pathEl.box.width *= -1; }
-
       }
     }
   }
 
-  copyPath(path: Path, newID = null) {
+  copyPath(path: Path, newID = '') {
     const newPath = this.copyPathEl(path, newID);
     this.paths.push(newPath);
     return newPath;
   }
 
 
-  copyPathEl(path: Path, newID = null) {
-    if (newID === null) { newID = uuid(); }
+  copyPathEl(path: Path, newID = '') {
+    if (newID === '') { newID = uuid(); }
     const copy = JSON.stringify(path.nodes);
     const copyBox = JSON.stringify(path.box);
     const newPath = new Path(newID);
@@ -1190,7 +1247,9 @@ export class NodeService {
     if (this.selectedNodes.length > 0) {
       for (const id of this.selectedNodes) {
         const node = this.getNodeByID(id);
-        this.moveNode(node, { x: translate.horizontal, y: translate.vertical }, shift);
+        if (node !== undefined) {
+          this.moveNode(node, { x: translate.horizontal, y: translate.vertical }, shift);
+        }
       }
     } else if (this.selectedPaths.length > 0) {
       for (const path of this.selectedPaths) {
@@ -1228,16 +1287,16 @@ export class NodeService {
       const old = { x: node.pos.x, y: node.pos.y, ax: node.angle.x, ay: node.angle.y };
       if (reflectY) {
         const diff = {
-          pos: mirrorLine.y - old.y,
-          angle: mirrorLine.y - old.ay
+          pos: mirrorLine.y - (old.y ?? 0),
+          angle: mirrorLine.y - (old.ay ?? 0)
         };
         node.pos.y = mirrorLine.y + diff.pos;
         node.angle.y = mirrorLine.y + diff.angle;
       }
       if (reflectX) {
         const diff = {
-          pos: mirrorLine.x - old.x,
-          angle: mirrorLine.x - old.ax
+          pos: mirrorLine.x - (old.x ?? 0),
+          angle: mirrorLine.x - (old.ax ?? 0)
         };
         node.pos.x = mirrorLine.x + diff.pos;
         node.angle.x = mirrorLine.x + diff.angle;
@@ -1260,7 +1319,7 @@ export class NodeService {
   }
 
 
-  checkIfNodeIsAtTheEndOfArray(node: Node) {
+  checkIfNodeIsAtTheEndOfArray(node: Node): number {
     const path = this.paths.filter(p => p.id === node.path)[0];
     if (path) {
       const nodes = path.nodes.filter(n => n.type === 'node');
@@ -1279,6 +1338,7 @@ export class NodeService {
     } else {
       console.log('error identifying path ', node);
     }
+    return -1;
   }
 
 
@@ -1298,7 +1358,9 @@ export class NodeService {
         let index = 0;
 
         for (const n of path.nodes) {
-          if (n.pos.x >= box.x1 && n.pos.x <= box.x2 && n.pos.y >= box.y1 && n.pos.y <= box.y2) {
+          if (n.pos.x !== undefined && n.pos.x >= box.x1 && n.pos.x <= box.x2 && 
+              n.pos.y !== undefined && n.pos.y >= box.y1 && n.pos.y <= box.y2) {
+
               selected = true;
 
               !alt ? this.addSelectedNode(n.id) : this.removeSelectedNode(n.id);
@@ -1312,13 +1374,13 @@ export class NodeService {
         }
       } else if (cursor === 'sel') {
 
-        if (path.box) {
-          const leftSide = path.box.left >= box.x1 && path.box.left <= box.x2 ? true : false;
-          const rightSide = path.box.right >= box.x1 && path.box.right <= box.x2 ? true : false;
-          const topSide = path.box.top >= box.y1 && path.box.top <= box.y2 ? true : false;
-          const bottomSide = path.box.top >= box.y1 && path.box.top <= box.y2 ? true : false;
-          const insideWidth = box.x1 >= path.box.left && box.x2 <= path.box.right ? true : false;
-          const insideHeight = box.y1 >= path.box.bottom && box.y2 <= path.box.top ? true : false;
+        if (path.box !== undefined) {
+          const leftSide = (path.box.left ?? 0) >= box.x1 && (path.box.left ?? 0) <= box.x2 ? true : false;
+          const rightSide = (path.box.right ?? 0) >= box.x1 && (path.box.right ?? 0) <= box.x2 ? true : false;
+          const topSide = (path.box.top ?? 0) >= box.y1 && (path.box.top ?? 0) <= box.y2 ? true : false;
+          const bottomSide = (path.box.top ?? 0) >= box.y1 && (path.box.top ?? 0) <= box.y2 ? true : false;
+          const insideWidth = box.x1 >= (path.box.left ?? 0) && box.x2 <= (path.box.right ?? 0) ? true : false;
+          const insideHeight = box.y1 >= (path.box.bottom ?? 0) && box.y2 <= (path.box.top ?? 0) ? true : false;
 
           if ((insideWidth && (topSide || bottomSide || insideHeight)) ||
               (insideHeight && (leftSide || rightSide || insideWidth)) ||
@@ -1331,8 +1393,8 @@ export class NodeService {
   }
 
 
-  calculateSnapPoint(coords: { x: number, y: number }) {
-    if (this.grid && this.grid.snap && this.grid.visible) {
+  calculateSnapPoint(coords: Coords): Coords {
+    if (this.grid && this.grid.snap && this.grid.visible && coords.x !== undefined && coords.y !== undefined) {
       const precision = {
         x: this.grid.settings.spacingX / (this.grid.settings.subDivisionsX),
         y: this.grid.settings.spacingY / (this.grid.settings.subDivisionsY)
@@ -1364,15 +1426,15 @@ export class NodeService {
   }
 
 
-  calculateGuideSnapPoint(coords: { x: number, y: number }, guides: any) {
+  calculateGuideSnapPoint(coords: Coords, guides: any) {
     if (this.grid.guides.length > 0 && this.grid.guidesVisible) {
       const newCoords = { x: coords.x,  y: coords.y };
       for (const guide of guides) {
-        if (guide.axis === 'y') {
+        if (guide.axis === 'y' && coords.x !== undefined) {
           if (Math.abs(coords.x - guide.coords.x) < 2) {
             newCoords.x = guide.coords.x;
           }
-        } else if (guide.axis === 'x') {
+        } else if (guide.axis === 'x' && coords.y !== undefined) {
           if (Math.abs(coords.y - guide.coords.y) < 2) {
             newCoords.y = guide.coords.y;
           }
@@ -1557,33 +1619,36 @@ export class NodeService {
 
 
   getEndNodes(module: any, scale = true) {
-    const position = { start: null, end: null };
+    let startPos = null;
+    let endPos = null;
     if (module.nodes !== null && module.nodes.length > 0) {
-      const typeNode = module.nodes[0].nodes.filter(n => n.type === 'node');
-      if (typeNode.length > 0) {
-        position.start = typeNode[0].pos;
-        position.end = typeNode[typeNode.length - 1].pos;
+      const typeNode = module.nodes[0].nodes.filter((n: { type: string; }) => n.type === 'node');
+      if (typeNode && typeNode.length > 0) {
+        startPos = typeNode[0].pos;
+        endPos = typeNode[typeNode.length - 1].pos;
+
 
         for (const path of module.nodes) {
-          const pathTypeNode = path.nodes.filter(n => n.type === 'node');
+          const pathTypeNode = path.nodes.filter((n: { type: string; }) => n.type === 'node');
           for (const n of pathTypeNode) {
-            if (n.pos.x < position.start.x) {
-              position.start = n.pos;
-            } else if (n.angle.x > position.end.x) {
-              position.end = n.pos;
+            if (n.pos.x < startPos.x) {
+              startPos = n.pos;
+            } else if (n.angle.x > endPos.x) {
+              endPos = n.pos;
             }
           }
-        }
+      }
+        
         if (scale) {
           const scaleY = module.details.range.max - module.details.range.min;
           return {
-            start: position.start.y * scaleY + module.details.range.min,
-            end: position.end.y * scaleY + module.details.range.min
+            start: startPos.y * scaleY + module.details.range.min,
+            end: endPos.y * scaleY + module.details.range.min
           };
         } else {
           return {
-            start: position.start.y,
-            end: position.end.y
+            start: startPos.y,
+            end: endPos.y
           };
         }
       }
@@ -1616,7 +1681,7 @@ export class NodeService {
         const path = this.getPath(effect.path);
         path.box.left = effect.details.position.start;
         path.box.right = effect.details.position.end;
-        path.box.width = path.box.right - path.box.left;
+        path.box.width = (path.box.right ?? 0) - (path.box.left ?? 0);
       }
     }
     return effects;
@@ -1636,13 +1701,16 @@ export class NodeService {
   }
 
   updatePathOnChangeEffectSize(pathID: string, left: number, right: number) {
+
     const path = this.getPath(pathID);
-    if (path) {
+
+    if (path !== undefined) {
+
       const offsetX = path.box.left;
-      const scaleX = (right - left) / path.box.width;
-      this.scalePath([pathID], scaleX, 1, offsetX, 0);
-      if (left - path.box.left !== 0) {
-        this.translatePath(pathID, { horizontal: (left - path.box.left), vertical: 0});
+      const scaleX = (right - left) / (path.box.width ?? 0);
+      this.scalePath([pathID], scaleX, 1, (offsetX ?? 0), 0);
+      if (left - (path.box.left ?? 0) !== 0) {
+        this.translatePath(pathID, { horizontal: (left - (path.box.left ?? 0)), vertical: 0});
       }
       path.box.left = left;
       path.box.right = right;
@@ -1660,8 +1728,8 @@ export class NodeService {
     let numerator1: number;
     let numerator2: number;
     const result = {
-        x: null,
-        y: null,
+        x: 0,
+        y: 0,
         onLine1: false,
         onLine2: false
     };
@@ -1706,14 +1774,14 @@ export class NodeService {
   }
 
 
-  simplifyPath_r(path: Array<Node>, first: number, last: number, eps: number) {
+  simplifyPath_r(path: Array<Node>, first: number, last: number, eps: number): any {
       if (first >= last - 1) { return [path[first]]; }
 
-      const px = path[first].pos.x;
-      const py = path[first].pos.y;
+      const px = path[first].pos.x ?? 0;
+      const py = path[first].pos.y ?? 0;
 
-      const dx = path[last].pos.x - px;
-      const dy = path[last].pos.y - py;
+      const dx = (path[last].pos.x ?? 0) - px;
+      const dy = (path[last].pos.y ?? 0) - py;
 
       const nn = Math.sqrt(dx * dx + dy * dy);
       const nx = -dy / nn;
@@ -1724,8 +1792,8 @@ export class NodeService {
 
       for (let i = first + 1; i < last; i++) {
 
-          const qx = path[i].pos.x - px;
-          const qy = path[i].pos.y - py;
+          const qx = (path[i].pos.x ?? 0) - px;
+          const qy = (path[i].pos.y ?? 0) - py;
 
           const d = Math.abs(qx * nx + qy * ny);
           if (d > max) {

@@ -23,7 +23,7 @@ export const EffectTypeLabelMapping: Record<EffectType, string> = {
 
 
 export class ScrollOffset {
-  id: string = null;
+  id?: string;
   value = 0;
 
   constructor(id: string) {
@@ -32,9 +32,9 @@ export class ScrollOffset {
 };
 
 export class OpenTab {
-  id: string = null;
+  id?: string;
   isActive = false;
-  name: string = null;
+  name?: string;
 
   constructor(id: string, name: string) {
     this.id = id;

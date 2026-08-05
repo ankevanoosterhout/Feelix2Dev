@@ -1,24 +1,30 @@
 import { Component, HostListener, Inject, OnInit } from '@angular/core';
-import { ElectronService } from 'src/app/services/electron.service';
-import { MicroController } from 'src/app/models/hardware.model';
-import { HardwareService } from 'src/app/services/hardware.service';
-import { UploadService } from 'src/app/services/upload.service';
+import { CommonModule, DOCUMENT } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
 import * as d3 from 'd3';
-import { DOCUMENT } from '@angular/common';
-//import { UploadStringModel } from 'src/app/models/effect-upload.model';
 import { IpcRendererEvent } from 'electron';
+
+import { ElectronService } from '../../../services/electron.service';
+import { MicroController } from '../../../models/hardware.model';
+import { HardwareService } from '../../../services/hardware.service';
+import { UploadService } from '../../../services/upload.service';
+
+//import { UploadStringModel } from 'src/app/models/effect-upload.model';
+
 
 @Component({
   selector: 'app-anti-cogging',
-  standalone: false,
+  standalone: true,
+  imports: [ CommonModule, FormsModule ],
   templateUrl: './anti-cogging.component.html',
   styleUrls: ['../../windows/effects/effects.component.css'],
 })
 export class AntiCoggingComponent implements OnInit {
 
-    coggingData = [];
-    microcontroller: MicroController;
-    motor_id: string;
+    coggingData: Array<any> = [];
+    microcontroller?: MicroController;
+    motor_id?: string;
     scaleX: any;
     scaleY: any;
 
@@ -74,25 +80,30 @@ export class AntiCoggingComponent implements OnInit {
 
             const model = this.createUploadModel();
 
-            const data = {
-                config: model.config,
-                dataString: 'FA'
-            };
+            if (model !== undefined)  {
+                const data = {
+                    config: model.config,
+                    dataString: 'FA'
+                };
+                
 
-            console.log(data);
-            // const newUploadStringModel = new UploadStringModel(this.microcontroller, 'FA');
+                console.log(data);
+                // const newUploadStringModel = new UploadStringModel(this.microcontroller, 'FA');
 
-            // console.log(newUploadStringModel);
+                // console.log(newUploadStringModel);
 
-            this.electronService.ipcRenderer.send('send_data_str', data);
+                this.electronService.ipcRenderer.send('send_data_str', data);
+            }
         }
     }
 
 
     createUploadModel() {
         const uploadModel = this.uploadService.createUploadModel_TT('FA', this.microcontroller);
-        const motor = this.microcontroller.motors.filter(m => m.id === this.motor_id)[0];
-        uploadModel.config.motors = [ motor ];
+        const motor = this.microcontroller?.motors.filter(m => m.id === this.motor_id)[0];
+        if (motor !== undefined && uploadModel !== undefined && uploadModel.config !== undefined) {
+            uploadModel.config.motors = [ motor ];
+        }
         return uploadModel;
     }
 
@@ -156,9 +167,9 @@ export class AntiCoggingComponent implements OnInit {
         //     .x((d: { angle: number; }) => this.scaleX(d.angle))
         //     .y((d: { sensorElectricAngle: number; }) => this.scaleY(d.sensorElectricAngle));
 
-        const errorElectricAngle = d3.line()
-            .x((d: { angle: number; }) => this.scaleX(d.angle))
-            .y((d: { electricAngleError: number; }) => this.scaleY(d.electricAngleError));
+        const errorElectricAngle = d3.line<{ angle: number; electricAngleError: number }>()
+                                     .x((d) => this.scaleX(d.angle))
+                                     .y((d) => this.scaleY(d.electricAngleError));
 
 
         

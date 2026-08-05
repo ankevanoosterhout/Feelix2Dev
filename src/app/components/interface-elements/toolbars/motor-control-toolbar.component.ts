@@ -1,23 +1,27 @@
-import { Component, OnInit, Inject, HostListener } from '@angular/core';
-import { DOCUMENT } from '@angular/common';
-import { ElectronService } from 'src/app/services/electron.service';
-import { DrawingPlaneConfig } from 'src/app/models/drawing-plane-config.model';
-import { DrawingService } from 'src/app/services/drawing.service';
-import { MotorControlService } from 'src/app/services/motor-control.service';
+import { Component, OnInit, Inject } from '@angular/core';
+import { CommonModule, DOCUMENT } from '@angular/common';
+import { ElectronService } from '../../../services/electron.service';
+import { DrawingPlaneConfig } from '../../../models/drawing-plane-config.model';
+import { DrawingService } from '../../../services/drawing.service';
+import { MotorControlService } from '../../../services/motor-control.service';
 import { IpcRendererEvent } from 'electron';
 
 @Component({
     selector: 'app-motor-control-toolbar',
-    standalone: false,
+    standalone: true,
+    imports: [ CommonModule ],
     template: `
       <div class="wrapper">
         <div class="window-body"></div>
         <div class="toolbar-menu-section" id="toolbar-kinematics">
           <div class="attach-toolbar"><div class="attach-arrow" (click)="attachToolbar()"></div><div class="draggable"></div></div>
           <ul class="toolbar-menu">
-            <li *ngFor="let item of this.motorControlService.toolList" (click)="this.selectTool(item.id, item.disabled)">
+
+            @for (item of this.motorControlService.toolList; track item) {
+            <li (click)="this.selectTool(item.id, item.disabled)">
               <img class="tool-icon" [ngClass]="{ disabled: item.disabled }" id="tool-motor-control-{{ item.id }}" src="{{ item.icon }}" title="{{ item.name }}">
             </li>
+            }
           </ul>
         </div>
       </div>
@@ -131,7 +135,7 @@ import { IpcRendererEvent } from 'electron';
 })
 export class MotorControlToolbarComponent implements OnInit {
 
-  selectedTool: number;
+  selectedTool?: number;
   public config: DrawingPlaneConfig;
 
   // tslint:disable-next-line: variable-name
@@ -151,11 +155,11 @@ export class MotorControlToolbarComponent implements OnInit {
       this.motorControlService.toolList[5].disabled = buttonDisabled;
 
       if (!buttonDisabled) {
-        this.document.getElementById('tool-motor-control-4').classList.remove('disabled');
-        this.document.getElementById('tool-motor-control-5').classList.remove('disabled');
+        this.document.getElementById('tool-motor-control-4')?.classList.remove('disabled');
+        this.document.getElementById('tool-motor-control-5')?.classList.remove('disabled');
       } else {
-        this.document.getElementById('tool-motor-control-4').classList.add('disabled');
-        this.document.getElementById('tool-motor-control-5').classList.add('disabled');
+        this.document.getElementById('tool-motor-control-4')?.classList.add('disabled');
+        this.document.getElementById('tool-motor-control-5')?.classList.add('disabled');
       }
     });
   }

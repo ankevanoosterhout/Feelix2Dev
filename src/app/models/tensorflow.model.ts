@@ -162,11 +162,11 @@ export const ModelTypeMapping: Record<ModelType, string> = {
 export class LayerType {
   name: string;
   tf: Function;
-  description: string;
+  description?: string;
   args: any = { dimensions: 1 };
   subgroup: string;
 
-  constructor(name: string, subgroup:string, tf: Function, args: object = null) {
+  constructor(name: string, subgroup:string, tf: Function, args: object | undefined = undefined) {
     this.name = name;
     this.subgroup = subgroup;
     this.tf = tf;
@@ -221,12 +221,12 @@ export class ModelVariable {
 };
 
 export class Label {
-  id: string;
-  name: string;
-  confidence: number;
-  prediction: number;
+  id?: string;
+  name?: string;
+  confidence?: number;
+  prediction?: number;
 
-  constructor(id: string, name: string) {
+  constructor(id: string | undefined, name: string | undefined) {
     this.id = id;
     this.name = name;
   }
@@ -254,11 +254,11 @@ export class Classifier  {
 export class Layer {
   name: string;
   options: any = new Options();
-  type: LayerType = null;
+  type?: LayerType;
   settingsVisible = false;
   hidden = false;
 
-  constructor(name: string, type = null) {
+  constructor(name: string, type : LayerType | undefined = undefined) {
     this.name = name;
 
     if (type) {
@@ -294,11 +294,11 @@ export class Layer {
 
 
 export class Option {
-  value: any;
-  min: number;
-  max: number;
+  value?: any;
+  min?: number;
+  max?: number;
 
-  constructor(value = null, min = null, max = null) {
+  constructor(value : any | undefined = undefined, min : number | undefined = undefined, max : number | undefined = undefined) {
     this.value = value;
     this.min = min;
     this.max = max;
@@ -307,9 +307,9 @@ export class Option {
 
 export class tf_function {
   name: string;
-  value: Function | string;
+  value?: Function | string;
 
-  constructor(name: string, value: Function | string) {
+  constructor(name: string, value: Function | string | undefined) {
     this.name = name;
     this.value = value;
   }
@@ -329,14 +329,14 @@ export class TrainingOptions {
 
 export class Options {
   // batchNormalization: boolean = true;
-  weights = new Option([]); //'Initial weight values of the layer.'
-  trainable = new Option(true);
+  weights = new Option(undefined, undefined, undefined); //'Initial weight values of the layer.'
+  trainable = new Option(true, undefined, undefined);
   // units = new Option(4, 'Positive integer, dimensionality of the output space.');
 };
 
 export class InputLayerOptions extends Options {
   inputs: Array<any> = [];
-  inputDim: Array<any>; // Defines input shape as [inputDim].
+  inputDim: Array<any> = []; // Defines input shape as [inputDim].
   units = new Option(3);
   actuators = new Option(1);
   batchInputShape: any;
@@ -355,30 +355,30 @@ export class OutputLayerOptions extends Options {
 
 
 export class Basic_options extends Options {
-  units = new Option(4);
-  useBias = new Option(false);
-  activation = new Option(Activation.relu);
-  activityRegularizer = new Option({ name: 'none', regularizer: undefined});
-  kernelInitializer = new Option({ name: 'zeros', initializer: tf.initializers.zeros });
-  kernelConstraint = new Option(Constraint.none);
-  kernelRegularizer = new Option({ name: 'none', regularizer: undefined});
-  biasInitializer = new Option({ name: 'zeros', initializer: tf.initializers.zeros });
-  biasConstraint = new Option(Constraint.none);
-  biasRegularizer = new Option({ name: 'none', regularizer: undefined});
-  embeddingsInitializer = new Option({ name: 'zeros', initializer: tf.initializers.zeros });
-  embeddingsRegularizer = new Option({ name: 'none', regularizer: undefined});
-  embeddingsConstraint  = new Option(Constraint.none);
-  maskZero = new Option(false);
-  dataFormat = new Option('channelsLast');
-  n = new Option(1);
-  dims = new Option([]);
-  inputDim = new Option(1);
-  outputDim = new Option(0);
-  rate = new Option(0.2);
-  noiseShape: Array<number> = [];
-  seed = new Option(0);
-  inputLength = new Option(undefined);
-  targetShape = new Option([1,1]);
+  units : Option | undefined = new Option(4);
+  useBias : Option | undefined = new Option(false);
+  activation : Option | undefined = new Option(Activation.relu);
+  activityRegularizer : Option | undefined = new Option({ name: 'none', regularizer: undefined});
+  kernelInitializer : Option | undefined = new Option({ name: 'zeros', initializer: tf.initializers.zeros });
+  kernelConstraint : Option | undefined = new Option(Constraint.none);
+  kernelRegularizer : Option | undefined = new Option({ name: 'none', regularizer: undefined});
+  biasInitializer : Option | undefined = new Option({ name: 'zeros', initializer: tf.initializers.zeros });
+  biasConstraint : Option | undefined = new Option(Constraint.none);
+  biasRegularizer : Option | undefined = new Option({ name: 'none', regularizer: undefined});
+  embeddingsInitializer : Option | undefined = new Option({ name: 'zeros', initializer: tf.initializers.zeros });
+  embeddingsRegularizer : Option | undefined = new Option({ name: 'none', regularizer: undefined});
+  embeddingsConstraint : Option | undefined = new Option(Constraint.none);
+  maskZero : Option | undefined = new Option(false);
+  dataFormat : Option | undefined = new Option('channelsLast');
+  n : Option | undefined = new Option(1);
+  dims : Option | undefined  = new Option();
+  inputDim : Option | undefined = new Option(1);
+  outputDim : Option | undefined = new Option(0);
+  rate : Option | undefined = new Option(0.2);
+  noiseShape : Array<number> | undefined = [];
+  seed : Option | undefined = new Option(0);
+  inputLength : Option | undefined = new Option(undefined);
+  targetShape  : Option | undefined= new Option([1,1]);
 
   constructor(layerType: LayerType) {
     super();
@@ -412,7 +412,7 @@ export class Basic_options extends Options {
           this.n = undefined;
         }
 
-        if (name === 'permute') {
+        if (name === 'permute' && this.dims) {
           this.dims.value = [];
           for (let i = 0; i < layerType.args.dimensions; i++) {
             this.dims.value.push(i + 1);
@@ -459,34 +459,34 @@ export class Basic_options extends Options {
 
 
 export class Convolutional_options extends Options {
-  kernelSize = new Option([]);
-  strides = new Option([]);
-  padding = new Option(Padding.none);
-  filters = new Option(1);
-  useBias = new Option(false);
-  activation = new Option(Activation.relu);
-  activityRegularizer = new Option({ name: 'none', regularizer: undefined });
-  biasInitializer = new Option({ name: 'zeros', initializer: tf.initializers.zeros });
-  biasConstraint = new Option(Constraint.none);
-  biasRegularizer = new Option({ name: 'none', regularizer: undefined});
-  kernelInitializer = new Option({ name: 'zeros', initializer: tf.initializers.zeros });
-  kernelConstraint = new Option(Constraint.none);
-  kernelRegularizer = new Option({ name: 'none', regularizer: undefined});
-  dilationRate = new Option([]);
-  depthMultiplier = new Option(1);
-  depthwiseInitializer = new Option({ name: 'zeros', initializer: tf.initializers.glorotNormal });
-  depthwiseConstraint = new Option(Constraint.none);
-  depthwiseRegularizer = new Option({ name: 'none', regularizer: undefined });
-  pointwiseConstraint = new Option(Constraint.none);
-  pointwiseInitializer = new Option({ name: 'none', initializer: undefined });
-  pointwiseRegularizer = new Option({ name: 'none', regularizer: undefined });
-  dataFormat = new Option(DataFormat.channelsFirst);
-  interpolation = undefined;
+  kernelSize : Option | undefined = new Option([]);
+  strides : Option | undefined = new Option([]);
+  padding : Option | undefined = new Option(Padding.none);
+  filters : Option | undefined = new Option(1);
+  useBias : Option | undefined = new Option(false);
+  activation : Option | undefined = new Option(Activation.relu);
+  activityRegularizer : Option | undefined = new Option({ name: 'none', regularizer: undefined });
+  biasInitializer : Option | undefined = new Option({ name: 'zeros', initializer: tf.initializers.zeros });
+  biasConstraint : Option | undefined = new Option(Constraint.none);
+  biasRegularizer : Option | undefined = new Option({ name: 'none', regularizer: undefined});
+  kernelInitializer : Option | undefined = new Option({ name: 'zeros', initializer: tf.initializers.zeros });
+  kernelConstraint : Option | undefined = new Option(Constraint.none);
+  kernelRegularizer : Option | undefined = new Option({ name: 'none', regularizer: undefined});
+  dilationRate : Option | undefined = new Option([]);
+  depthMultiplier : Option | undefined = new Option(1);
+  depthwiseInitializer : Option | undefined = new Option({ name: 'zeros', initializer: tf.initializers.glorotNormal });
+  depthwiseConstraint : Option | undefined = new Option(Constraint.none);
+  depthwiseRegularizer : Option | undefined = new Option({ name: 'none', regularizer: undefined });
+  pointwiseConstraint : Option | undefined = new Option(Constraint.none);
+  pointwiseInitializer : Option | undefined = new Option({ name: 'none', initializer: undefined });
+  pointwiseRegularizer : Option | undefined = new Option({ name: 'none', regularizer: undefined });
+  dataFormat : Option | undefined= new Option(DataFormat.channelsFirst);
+  interpolation : Option | undefined = undefined;
 
 
   constructor(layerType: LayerType) {
     super();
-    if (layerType) {
+    if (layerType && this.kernelSize && this.strides && this.dilationRate) {
       this.kernelSize.value = [];
       this.strides.value = [];
       this.dilationRate.value = [];
@@ -535,30 +535,30 @@ export class Convolutional_options extends Options {
 
 
 export class Recurrent_options extends Options {
-  units = new Option(4);
-  useBias = new Option(false);
-  activation = new Option(Activation.relu);
-  returnSequences = new Option(true);
-  returnState = new Option(false);
-  goBackwards = new Option(false);
-  biasInitializer = new Option({ name: 'zeros', initializer: tf.initializers.zeros });
-  biasConstraint = new Option('none');
-  biasRegularizer = new Option({ name: 'none', regularizer: undefined});
-  stateful = new Option(false); //If true, the final state of each sample at index I in a batch will be used as the beginning state of the next batch’s sample at index i
-  unroll = new Option(false); // The network will be unrolled if true; else, a symbolic loop will be utilized. Although unrolling can speed up an RNN, it is more memory-intensive. Only short sequences are acceptable for unrolling
-  recurrentInitializer = new Option({ name: 'zeros', initializer: tf.initializers.zeros }); //The recurrentKernel weights matrix’s initializer. It is used for the linear transformation of the recurrent state.
-  recurrentActivation = new Option(Activation.hardSigmoid);
-  recurrentRegularizer = new Option({ name: 'none', regularizer: undefined}); //The regularizer function applied to the recurrentKernel weights matrix.
-  recurrentConstraint = new Option(Constraint.none);
-  recurrentDropout = new Option(0);
-  kernelInitializer = new Option({ name: 'zeros', initializer: tf.initializers.zeros }); //The recurrentKernel weights matrix’s initializer. It is used for the linear transformation of the recurrent state.
-  kernelRegularizer = new Option({ name: 'none', regularizer: undefined}); //The regularizer function applied to the recurrentKernel weights matrix.
-  kernelConstraint = new Option(Constraint.none);
-  cell = new Option(null); //A RNN cell instance.
-  dropout = new Option(0.2); // between 0 and 1
-  resetAfter = new Option(false);
-  implementation = new Option(1);
-  unitForgetBias = new Option(false);
+  units : Option | undefined = new Option(4);
+  useBias : Option | undefined = new Option(false);
+  activation : Option | undefined = new Option(Activation.relu);
+  returnSequences : Option | undefined = new Option(true);
+  returnState : Option | undefined = new Option(false);
+  goBackwards : Option | undefined = new Option(false);
+  biasInitializer : Option | undefined = new Option({ name: 'zeros', initializer: tf.initializers.zeros });
+  biasConstraint : Option | undefined = new Option('none');
+  biasRegularizer : Option | undefined = new Option({ name: 'none', regularizer: undefined});
+  stateful : Option | undefined = new Option(false); //If true, the final state of each sample at index I in a batch will be used as the beginning state of the next batch’s sample at index i
+  unroll : Option | undefined = new Option(false); // The network will be unrolled if true; else, a symbolic loop will be utilized. Although unrolling can speed up an RNN, it is more memory-intensive. Only short sequences are acceptable for unrolling
+  recurrentInitializer : Option | undefined = new Option({ name: 'zeros', initializer: tf.initializers.zeros }); //The recurrentKernel weights matrix’s initializer. It is used for the linear transformation of the recurrent state.
+  recurrentActivation : Option | undefined = new Option(Activation.hardSigmoid);
+  recurrentRegularizer : Option | undefined = new Option({ name: 'none', regularizer: undefined}); //The regularizer function applied to the recurrentKernel weights matrix.
+  recurrentConstraint : Option | undefined = new Option(Constraint.none);
+  recurrentDropout : Option | undefined = new Option(0);
+  kernelInitializer : Option | undefined = new Option({ name: 'zeros', initializer: tf.initializers.zeros }); //The recurrentKernel weights matrix’s initializer. It is used for the linear transformation of the recurrent state.
+  kernelRegularizer : Option | undefined = new Option({ name: 'none', regularizer: undefined}); //The regularizer function applied to the recurrentKernel weights matrix.
+  kernelConstraint : Option | undefined = new Option(Constraint.none);
+  cell : Option | undefined = new Option(null); //A RNN cell instance.
+  dropout : Option | undefined = new Option(0.2); // between 0 and 1
+  resetAfter : Option | undefined = new Option(false);
+  implementation : Option | undefined = new Option(1);
+  unitForgetBias : Option | undefined = new Option(false);
 
   // kernelSize = new Option([]);
   // strides = new Option([]);
@@ -653,16 +653,16 @@ export class Normalization_options extends Options {
   center = new Option(true);
   scale = new Option(true);
 
-  momentum = new Option(0.99);
+  momentum? = new Option(0.99);
   betaInitializer = new Option({ name: 'zeros', initializer: tf.initializers.zeros });
   gammaInitializer = new Option({ name: 'ones', initializer: tf.initializers.ones, args: { seed: 1, gain: 1 } });
   betaRegularizer = new Option({ name: 'none', regularizer: undefined});
   gammaRegularizer = new Option({ name: 'none', regularizer: undefined});
 
-  movingMeanInitializer = new Option({ name: 'zeros', initializer: tf.initializers.zeros });
-  movingVarianceInitializer = new Option({ name: 'ones', initializer: tf.initializers.ones  });
-  betaConstraint = new Option(Constraint.none);
-  gammaConstraint = new Option(Constraint.none);
+  movingMeanInitializer? = new Option({ name: 'zeros', initializer: tf.initializers.zeros });
+  movingVarianceInitializer? = new Option({ name: 'ones', initializer: tf.initializers.ones  });
+  betaConstraint? = new Option(Constraint.none);
+  gammaConstraint? = new Option(Constraint.none);
 
 
   constructor(layerType: LayerType) {
@@ -678,9 +678,6 @@ export class Normalization_options extends Options {
         this.betaConstraint = undefined;
         this.gammaConstraint = undefined;
       }
-
-
-
     }
   }
 };
@@ -858,17 +855,17 @@ export class Bounds {
   yMin = 0;
   yMax = 1;
 
-  constructor(xMin = null, xMax = null, yMin = null, yMax = null) {
-    if (xMin !== null) { this.xMin = xMin; }
-    if (xMax !== null) { this.xMax = xMax; }
-    if (yMin !== null) { this.yMin = yMin; }
-    if (yMax !== null) { this.yMax = yMax; }
+  constructor(xMin: number | undefined = undefined, xMax : number | undefined = undefined, yMin: number | undefined = undefined, yMax: number | undefined = undefined) {
+    if (xMin) { this.xMin = xMin; }
+    if (xMax) { this.xMax = xMax; }
+    if (yMin) { this.yMin = yMin; }
+    if (yMax) { this.yMax = yMax; }
   }
 }
 
 export class InputItem {
   name: string;
-  value: number;
+  value?: number;
 
   constructor(name: string) {
     this.name = name;
@@ -876,9 +873,9 @@ export class InputItem {
 }
 
 export class OutputItem {
-  label = new Label(null, null);
-  classifier_id: string;
-  classifier_name: string;
+  label = new Label(undefined, undefined);
+  classifier_id?: string;
+  classifier_name?: string;
 
   constructor(id: string, name: string) {
     if (id && name) {
@@ -890,19 +887,18 @@ export class OutputItem {
 
 export class Data {
   inputs: Array<InputItem> = [];
-  time: number;
-
+  time?: number;
 }
 
 export class McuEl {
-  id: string;
-  name: string;
-  serialPath: string;
+  id?: string;
+  name?: string;
+  serialPath?: string;
 }
 
 export class MotorEl {
   mcu = new McuEl();
-  id: string;
+  id?: string;
   index: number;
   d: Array<Data> = [];
   record: boolean = true;
@@ -913,7 +909,7 @@ export class MotorEl {
              new InputColor('pressure', '#4390E6'),
              new InputColor('target', '#7778E0') ];
 
-  constructor(mcuID: string, mcuName: string, serialPath: string, id: string, index: number) {
+  constructor(mcuID: string, mcuName: string | undefined, serialPath: string | undefined, id: string | undefined, index: number) {
     this.mcu.id = mcuID;
     this.mcu.name = mcuName;
     this.mcu.serialPath = serialPath;
@@ -950,7 +946,7 @@ export class DataSet {
   selected = false;
   bounds = new Bounds();
   offsetTime = 0;
-  trainingType: TrainingType;
+  trainingType?: TrainingType;
 
 
   constructor(id: string, name: string, selectedMCUs: Array<MicroController> = [], outputs: Array<Classifier> = []) {
@@ -980,7 +976,7 @@ export class DataSet {
 
 
 export class MLDataSet extends DataSet {
-  classifierID: string;
+  classifierID: string = '';
   confidencesLevels: Array<Label> = [];
 }
 
@@ -1005,8 +1001,8 @@ export class TrainingSet {
 
 
 export class MinMax {
-  min: number;
-  max: number;
+  min?: number;
+  max?: number;
 }
 
 
@@ -1014,12 +1010,12 @@ export class TrimSection {
   id: string;
   values = new MinMax();
   width: number;
-  size: number;
+  size?: number;
 
   constructor(id: string, values: MinMax) {
     this.id = id;
     this.values = values;
-    this.width = this.values.max - this.values.min;
+    this.width = (this.values.max ?? 0) - (this.values.min ?? 0); 
   }
 }
 

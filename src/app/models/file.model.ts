@@ -16,26 +16,26 @@ export class Dates {
 
 export class File {
   // tslint:disable-next-line:variable-name
-  _id: string;
-  name = 'untitled';
-  path = '';
-  softwareVersion = '3.1.3';
+  _id?: string;
+  name?: string;
+  path?: string;
+  softwareVersion = '3.1.4';
   overwrite = true;
-  isActive = false;
+  isActive?: boolean;
   date = new Dates(new Date().getTime());
   configuration = new Configuration();
   collections: Array<Collection> = [];
   effects: Array<any> = [];
   activeEffect: any = null;
-  activeCollection: Collection = null;
-  activeCollectionEffect: Details = null;
-  tensorflow: {
-    models: Model[];
-    data: Array<DataSet>;
+  activeCollection?: Collection;
+  activeCollectionEffect?: Details;
+  tensorflow? = {
+    models: Array<Model>,
+    data: Array<DataSet>
   }
 
 
-  constructor(name: string, id: string, status: boolean) {
+  constructor(name: string | undefined, id: string | undefined, status: boolean | undefined) {
     this.name = name;
     this._id = id;
     this.isActive = status;
@@ -48,7 +48,7 @@ export class Folder {
   date = new Dates(new Date().getTime());
   content: Array<any> = [];
   selected = false;
-  parent = null;
+  parent?: string;
   level = 0;
 
   constructor(id:string, name: string) {

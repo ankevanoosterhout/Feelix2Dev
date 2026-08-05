@@ -1,14 +1,19 @@
 import { Component, Input, AfterViewInit } from '@angular/core';
-import { Bounds } from 'src/app/models/tensorflow.model';
-import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
+import { Bounds } from '../../models/tensorflow.model';
+import { TensorFlowDrawService } from '../../services/tensorflow-draw.service';
+import { CommonModule } from '@angular/common';
 
 
 @Component({
   selector: 'app-graph',
-  standalone: false,
+  standalone: true,
+  imports: [ CommonModule ],
   template: `
   <div id="{{ this._id }}" [ngStyle]="{ 'width': this._size.width, 'height': this._size.height }">
-    <div class="graph-header" *ngIf="this._title">{{ this._title }}</div>
+
+    @if (this._title !== undefined) {
+    <div class="graph-header">{{ this._title }}</div>
+    }
   </div>`,
   styles: [ `
 
@@ -51,9 +56,9 @@ export class GraphComponent implements AfterViewInit {
 
   public _id = '';
   public _size = { width: innerWidth, height: innerHeight, margin: 100 };
-  public _title = null;
+  public _title: string = '';
 
-  public _bounds: Bounds;
+  public _bounds = new Bounds();
 
 
   constructor(private tensorflowDrawService: TensorFlowDrawService) {

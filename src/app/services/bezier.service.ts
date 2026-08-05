@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { Node } from '../models/node.model';
+import { Coords, Node, Rectangle } from '../models/node.model';
 import { NodeService } from '../services/node.service';
 import { v4 as uuid } from 'uuid';
 import { CloneService } from './clone.service';
+
 
 
 @Injectable()
@@ -12,39 +13,46 @@ export class BezierService {
   constructor(private nodeService: NodeService, private cloneService: CloneService) {}
 
 
-  evalLBez(nodes: Array<Node>, t: number, axis: string, type: string) {
+  evalLBez(node0: any, node1: any, t: number, axis: string, type: string) {
+
     if (type === 'force') {
-      if (axis === 'x') {
-        return ((1 - t) * nodes[0].pos.x) + (t * nodes[1].pos.x);
-      } else {
-        return ((1 - t) * nodes[0].pos.y) + (t * nodes[1].pos.y);
+      if (axis === 'x' && node0.pos.x !== undefined && node1.pos.x !== undefined) {
+        return ((1 - t) * node0.pos.x) + (t * node1.pos.x);
+
+      } else if (axis === 'y' && node0.pos.y !== undefined && node1.pos.y !== undefined) {
+        return ((1 - t) * node0.pos.y) + (t * node1.pos.y);
       }
     } else if (type === 'angle') {
-      if (axis === 'x') {
-        return ((1 - t) * nodes[0].angle.x) + (t * nodes[1].angle.x);
-      } else {
-        return ((1 - t) * nodes[0].angle.y) + (t * nodes[1].angle.y);
+
+      if (axis === 'x' && node0.angle.x !== undefined && node1.angle.x !== undefined) {
+        return ((1 - t) * node0.angle.x) + (t * node1.angle.x);
+
+      } else if (axis === 'y' && node0.angle.y !== undefined && node1.angle.y !== undefined) {
+        return ((1 - t) * node0.angle.y) + (t * node1.angle.y);
       }
     }
+
   }
 
   evalQBez(nodes: Array<Node>, t: number, axis: string, type: string) {
     if (type === 'force') {
-      if (axis === 'x') {
+      if (axis === 'x' && nodes[0].pos.x !== undefined && nodes[1].pos.x !== undefined && nodes[2].pos.x !== undefined) {
         return (Math.pow((1 - t), 2) * nodes[0].pos.x) +
           (2 * (1 - t) * t * nodes[1].pos.x) +
           (Math.pow(t, 2) * nodes[2].pos.x);
-      } else {
+
+      } else if (axis === 'y' && nodes[0].pos.y !== undefined && nodes[1].pos.y !== undefined && nodes[2].pos.y !== undefined) {
         return (Math.pow((1 - t), 2) * nodes[0].pos.y) +
           (2 * (1 - t) * t * nodes[1].pos.y) +
           (Math.pow(t, 2) * nodes[2].pos.y);
       }
-    } else if (type === 'angle') {
+    } else if (type === 'angle' && nodes[0].angle.x !== undefined && nodes[1].angle.x !== undefined && nodes[2].angle.x !== undefined) {
       if (axis === 'x') {
         return (Math.pow((1 - t), 2) * nodes[0].angle.x) +
           (2 * (1 - t) * t * nodes[1].angle.x) +
           (Math.pow(t, 2) * nodes[2].angle.x);
-      } else {
+
+      } else if (type === 'angle' && nodes[0].angle.y !== undefined && nodes[1].angle.y !== undefined && nodes[2].angle.y !== undefined) {
         return (Math.pow((1 - t), 2) * nodes[0].angle.y) +
           (2 * (1 - t) * t * nodes[1].angle.y) +
           (Math.pow(t, 2) * nodes[2].angle.y);
@@ -54,24 +62,26 @@ export class BezierService {
 
   evalCBez(nodes: Array<Node>, t: number, axis: string, type: string) {
     if (type === 'force') {
-      if (axis === 'x') {
+      if (axis === 'x' && nodes[0].pos.x !== undefined && nodes[1].pos.x !== undefined && nodes[2].pos.x !== undefined && nodes[3].pos.x !== undefined) {
         return (Math.pow((1 - t), 3) * nodes[0].pos.x) +
           (3 * Math.pow((1 - t), 2) * t * nodes[1].pos.x) +
           (3 * (1 - t) * Math.pow(t, 2) * nodes[2].pos.x) +
           ((Math.pow(t, 3) * nodes[3].pos.x));
-      } else {
+
+      } else if (axis === 'y' && nodes[0].pos.y !== undefined && nodes[1].pos.y !== undefined && nodes[2].pos.y !== undefined && nodes[3].pos.y !== undefined) {
         return (Math.pow((1 - t), 3) * nodes[0].pos.y) +
           (3 * Math.pow((1 - t), 2) * t * nodes[1].pos.y) +
           (3 * (1 - t) * Math.pow(t, 2) * nodes[2].pos.y) +
           ((Math.pow(t, 3) * nodes[3].pos.y));
       }
     } else if (type === 'angle') {
-      if (axis === 'x') {
+      if (axis === 'x' && nodes[0].angle.x !== undefined && nodes[1].angle.x !== undefined && nodes[2].angle.x !== undefined && nodes[3].angle.x !== undefined) {
         return (Math.pow((1 - t), 3) * nodes[0].angle.x) +
           (3 * Math.pow((1 - t), 2) * t * nodes[1].angle.x) +
           (3 * (1 - t) * Math.pow(t, 2) * nodes[2].angle.x) +
           ((Math.pow(t, 3) * nodes[3].angle.x));
-      } else {
+
+      } else if (axis === 'y' && nodes[0].angle.y !== undefined && nodes[1].angle.y !== undefined && nodes[2].angle.y !== undefined && nodes[3].angle.y !== undefined) {
         return (Math.pow((1 - t), 3) * nodes[0].angle.y) +
           (3 * Math.pow((1 - t), 2) * t * nodes[1].angle.y) +
           (3 * (1 - t) * Math.pow(t, 2) * nodes[2].angle.y) +
@@ -85,10 +95,11 @@ export class BezierService {
 
   d_evalQBez(nodes: Array<Node>, t: number, axis: string) {
 
-    if (axis === 'x') {
+    if (axis === 'x' && nodes[0].pos.x !== undefined && nodes[1].pos.x !== undefined && nodes[2].pos.x !== undefined) {
       return (2 * (1 - t) * ( nodes[1].pos.x - nodes[0].pos.x)) +
              (2 * t * (nodes[2].pos.x - nodes[1].pos.x));
-    } else if (axis === 'y') {
+
+    } else if (axis === 'y' && nodes[0].pos.y !== undefined && nodes[1].pos.y !== undefined && nodes[2].pos.y !== undefined) {
       return (2 * (1 - t) * ( nodes[1].pos.y - nodes[0].pos.y)) +
              (2 * t * (nodes[2].pos.y - nodes[1].pos.y));
     }
@@ -96,12 +107,12 @@ export class BezierService {
 
   d_evalCBez(nodes: Array<Node>, t: number, axis: string) {
 
-    if (axis === 'x') {
+    if (axis === 'x' && nodes[0].pos.x !== undefined && nodes[1].pos.x !== undefined && nodes[2].pos.x !== undefined && nodes[3].pos.x !== undefined) {
       return (Math.pow((3 * (1 - t)), 2) * (nodes[1].pos.x - nodes[0].pos.x)) +
            (6 * (1 - t) * t * (nodes[2].pos.x - nodes[1].pos.x)) +
            (Math.pow((3 * t), 2) * (nodes[3].pos.x - nodes[2].pos.x));
 
-    } else if (axis === 'y') {
+    } else if (axis === 'y' && nodes[0].pos.y !== undefined && nodes[1].pos.y !== undefined && nodes[2].pos.y !== undefined && nodes[3].pos.y !== undefined) {
       return (Math.pow((3 * (1 - t)), 2) * (nodes[1].pos.y - nodes[0].pos.y)) +
            (6 * (1 - t) * t * (nodes[2].pos.y - nodes[1].pos.y)) +
            (Math.pow((3 * t), 2) * (nodes[3].pos.y - nodes[2].pos.y));
@@ -130,138 +141,157 @@ export class BezierService {
   // find boundingBox Cubic bezier
 
   findBBoxCubicBezier(nodes: Array<Node>) {
-    let tYb = 0;
-    let tYt = 0;
-    let a = 3 * nodes[3].pos.x - 9 * nodes[2].pos.x + 9 * nodes[1].pos.x - 3 * nodes[0].pos.x;
-    let b = 6 * nodes[0].pos.x - 12 * nodes[1].pos.x + 6 * nodes[2].pos.x;
-    let c = 3 * nodes[1].pos.x - 3 * nodes[0].pos.x;
+    
+    if (nodes[0].pos.x !== undefined && nodes[1].pos.x !== undefined && nodes[2].pos.x !== undefined && nodes[3].pos.x !== undefined &&
+        nodes[0].pos.y !== undefined && nodes[1].pos.y !== undefined && nodes[2].pos.y !== undefined && nodes[3].pos.y !== undefined) {
 
-    let disc = b * b - 4 * a * c;
-    let xleft = nodes[0].pos.x;
-    let xright = nodes[0].pos.x;
+      let tYb = 0;
+      let tYt = 0;
+      let a = 3 * nodes[3].pos.x - 9 * nodes[2].pos.x + 9 * nodes[1].pos.x - 3 * nodes[0].pos.x;
+      let b = 6 * nodes[0].pos.x - 12 * nodes[1].pos.x + 6 * nodes[2].pos.x;
+      let c = 3 * nodes[1].pos.x - 3 * nodes[0].pos.x;
 
-    if (nodes[3].pos.x < xleft) { xleft = nodes[3].pos.x; }
-    if (nodes[3].pos.x > xright) { xright = nodes[3].pos.x; }
+      let disc = b * b - 4 * a * c;
+      let xleft = nodes[0].pos.x;
+      let xright = nodes[0].pos.x;
 
-    if (disc >= 0) {
-      const t1 = (-b + Math.sqrt(disc)) / (2 * a);
-      if (t1 > 0 && t1 < 1) {
-          const xPoint1 = this.evalCBez(nodes, t1, 'x', 'force');
-          if (xPoint1 < xleft) { xleft = xPoint1; }
-          if (xPoint1 > xright) { xright = xPoint1; }
+      if (nodes[3].pos.x < xleft) { xleft = nodes[3].pos.x; }
+      if (nodes[3].pos.x > xright) { xright = nodes[3].pos.x; }
+      
+
+      if (disc >= 0) {
+        const t1 = (-b + Math.sqrt(disc)) / (2 * a);
+        if (t1 > 0 && t1 < 1) {
+            const xPoint1 = this.evalCBez(nodes, t1, 'x', 'force');
+            if (xPoint1 !== undefined) {
+              if (xPoint1 < xleft) { xleft = xPoint1; }
+              if (xPoint1 > xright) { xright = xPoint1; }
+            }
+        }
+
+        const t2 = (-b - Math.sqrt(disc)) / (2 * a);
+        if (t2 > 0 && t2 < 1) {
+            const xValueAndCategory = this.evalCBez(nodes, t2, 'x', 'force');
+            if(xValueAndCategory !== undefined) {
+              if (xValueAndCategory < xleft) { xleft = xValueAndCategory; }
+              if (xValueAndCategory > xright) { xright = xValueAndCategory; }
+            }
+        }
       }
 
-      const t2 = (-b - Math.sqrt(disc)) / (2 * a);
-      if (t2 > 0 && t2 < 1) {
-          const xValueAndCategory = this.evalCBez(nodes, t2, 'x', 'force');
-          if (xValueAndCategory < xleft) { xleft = xValueAndCategory; }
-          if (xValueAndCategory > xright) { xright = xValueAndCategory; }
+      a = 3 * nodes[3].pos.y - 9 * nodes[2].pos.y + 9 * nodes[1].pos.y - 3 * nodes[0].pos.y;
+      b = 6 * nodes[0].pos.y - 12 * nodes[1].pos.y + 6 * nodes[2].pos.y;
+      c = 3 * nodes[1].pos.y - 3 * nodes[0].pos.y;
+
+      disc = b * b - 4 * a * c;
+      let ybottom = nodes[0].pos.y;
+      let ytop = nodes[0].pos.y;
+
+      if (nodes[3].pos.y < ybottom) { ybottom = nodes[3].pos.y; }
+      if (nodes[3].pos.y > ytop) { ytop = nodes[3].pos.y; }
+
+      if (disc >= 0) {
+
+        const t1 = (-b + Math.sqrt(disc)) / (2 * a);
+
+        if (t1 > 0 && t1 < 1) {
+          const yPoint1 = this.evalCBez(nodes, t1, 'y', 'force');
+          if (yPoint1 !== undefined && yPoint1 < ybottom) {
+              ybottom = yPoint1;
+              tYb = t1;
+          }
+          if (yPoint1 !== undefined && yPoint1 > ytop) {
+              ytop = yPoint1;
+              tYt = t1;
+          }
+        }
+
+        const t2 = (-b - Math.sqrt(disc)) / (2 * a);
+
+        if (t2 > 0 && t2 < 1) {
+          const yValueAndCategory = this.evalCBez(nodes, t2, 'y', 'force');
+          if (yValueAndCategory !== undefined && yValueAndCategory < ybottom) {
+              ybottom = yValueAndCategory;
+              tYb = t2;
+          }
+          if (yValueAndCategory !== undefined && yValueAndCategory > ytop) {
+              ytop = yValueAndCategory;
+              tYt = t2;
+          }
+        }
       }
+      return {
+        left: xleft,
+        top: ytop,
+        right: xright,
+        bottom: ybottom,
+        Yb: tYb,
+        Yt: tYt
+      };
     }
-
-    a = 3 * nodes[3].pos.y - 9 * nodes[2].pos.y + 9 * nodes[1].pos.y - 3 * nodes[0].pos.y;
-    b = 6 * nodes[0].pos.y - 12 * nodes[1].pos.y + 6 * nodes[2].pos.y;
-    c = 3 * nodes[1].pos.y - 3 * nodes[0].pos.y;
-
-    disc = b * b - 4 * a * c;
-    let ybottom = nodes[0].pos.y;
-    let ytop = nodes[0].pos.y;
-
-    if (nodes[3].pos.y < ybottom) { ybottom = nodes[3].pos.y; }
-    if (nodes[3].pos.y > ytop) { ytop = nodes[3].pos.y; }
-
-    if (disc >= 0) {
-
-      const t1 = (-b + Math.sqrt(disc)) / (2 * a);
-
-      if (t1 > 0 && t1 < 1) {
-        const yPoint1 = this.evalCBez(nodes, t1, 'y', 'force');
-        if (yPoint1 < ybottom) {
-            ybottom = yPoint1;
-            tYb = t1;
-        }
-        if (yPoint1 > ytop) {
-            ytop = yPoint1;
-            tYt = t1;
-        }
-      }
-
-      const t2 = (-b - Math.sqrt(disc)) / (2 * a);
-
-      if (t2 > 0 && t2 < 1) {
-        const yValueAndCategory = this.evalCBez(nodes, t2, 'y', 'force');
-        if (yValueAndCategory < ybottom) {
-            ybottom = yValueAndCategory;
-            tYb = t2;
-        }
-        if (yValueAndCategory > ytop) {
-            ytop = yValueAndCategory;
-            tYt = t2;
-        }
-      }
-    }
-    return {
-      left: xleft,
-      top: ytop,
-      right: xright,
-      bottom: ybottom,
-      Yb: tYb,
-      Yt: tYt
-    };
   }
 
 
 
   findBBoxQuadraticBezier(nodes: Array<Node>) {
-    let tYb = 0;
-    let tYt = 0;
-    const tX = (nodes[0].pos.x - nodes[1].pos.x) / (nodes[0].pos.x - 2 * nodes[1].pos.x + nodes[2].pos.x);
-    const tY = (nodes[0].pos.y - nodes[1].pos.y) / (nodes[0].pos.y - 2 * nodes[1].pos.y + nodes[2].pos.y);
+    if (nodes[0].pos.x !== undefined && nodes[1].pos.x !== undefined && nodes[2].pos.x !== undefined &&
+        nodes[0].pos.y !== undefined && nodes[1].pos.y !== undefined && nodes[2].pos.y !== undefined) {
+      let tYb = 0;
+      let tYt = 0;
+      const tX = (nodes[0].pos.x - nodes[1].pos.x) / (nodes[0].pos.x - 2 * nodes[1].pos.x + nodes[2].pos.x);
+      const tY = (nodes[0].pos.y - nodes[1].pos.y) / (nodes[0].pos.y - 2 * nodes[1].pos.y + nodes[2].pos.y);
 
-    let xleft = nodes[0].pos.x;
-    let xright = nodes[0].pos.x;
+      let xleft = nodes[0].pos.x;
+      let xright = nodes[0].pos.x;
 
-    if (nodes[2].pos.x < xleft) { xleft = nodes[2].pos.x; }
-    if (nodes[2].pos.x > xright) { xright = nodes[2].pos.x; }
+      if (nodes[2].pos.x < xleft) { xleft = nodes[2].pos.x; }
+      if (nodes[2].pos.x > xright) { xright = nodes[2].pos.x; }
 
-    if (tX > 0 && tX < 1) {
-      const x = this.evalQBez(nodes, tX, 'x', 'force');
-      if (x < xleft) { xleft = x; }
-      if (x > xright) { xright = x; }
-    }
-
-    let ybottom = nodes[0].pos.y;
-    let ytop = nodes[0].pos.y;
-    if (nodes[2].pos.y < ybottom) { ybottom = nodes[2].pos.y; }
-    if (nodes[2].pos.y > ytop) { ytop = nodes[2].pos.y; }
-
-    if (tY > 0 && tY < 1) {
-      const y = this.evalQBez(nodes, tY, 'y', 'force');
-      if (y < ybottom) {
-          tYb = tY;
-          ybottom = y;
+      if (tX > 0 && tX < 1) {
+        const x = this.evalQBez(nodes, tX, 'x', 'force');
+        if (x !== undefined && x < xleft) { xleft = x; }
+        if (x !== undefined && x > xright) { xright = x; }
       }
-      if (y > ytop) {
-          tYt = tY;
-          ytop = y;
-      }
-    }
 
-    return {
-      left: xleft,
-      top: ytop,
-      right: xright,
-      bottom: ybottom,
-      Yb: tYb,
-      Yt: tYt
-    };
+      let ybottom = nodes[0].pos.y;
+      let ytop = nodes[0].pos.y;
+      if (nodes[2].pos.y < ybottom) { ybottom = nodes[2].pos.y; }
+      if (nodes[2].pos.y > ytop) { ytop = nodes[2].pos.y; }
+
+      if (tY > 0 && tY < 1) {
+        const y = this.evalQBez(nodes, tY, 'y', 'force');
+        if (y !== undefined && y < ybottom) {
+            tYb = tY;
+            ybottom = y;
+        }
+        if (y !== undefined && y > ytop) {
+            tYt = tY;
+            ytop = y;
+        }
+      }
+
+      return {
+        left: xleft,
+        top: ytop,
+        right: xright,
+        bottom: ybottom,
+        Yb: tYb,
+        Yt: tYt
+      };
+    }
   }
 
 
 
   getBBoxSizePath(Path: any) {
     let nodes = [];
-    let boxSize = { id: '', left: null, top: null, right: null, bottom: null, width: null, height: null };
+    let boxSize: { id: '', 
+                   left: number | undefined, 
+                   top: number | undefined, 
+                   right: number | undefined, 
+                   bottom: number | undefined, 
+                   width: number | undefined, 
+                   height: number | undefined };
     const boxes = [];
 
     for (const node of Path.nodes) {
@@ -272,28 +302,38 @@ export class BezierService {
           rectangle.id = Path.id;
           boxes.push(rectangle);
         }
-        const lastEl = nodes[nodes.length - 1];
+        const lastEl : any = nodes[nodes.length - 1];
         nodes = [ lastEl ];
       }
     }
     if (boxes.length > 0) {
-      boxSize = { id: Path.id, left: boxes[0].left, top: boxes[0].top, right: boxes[0].right, bottom: boxes[0].bottom, width: boxes[0].width, height: boxes[0].height };
+      boxSize = { id: Path.id, 
+                  left: boxes[0].left, 
+                  top: boxes[0].top, 
+                  right: boxes[0].right, 
+                  bottom: boxes[0].bottom, 
+                  width: boxes[0].width, 
+                  height: boxes[0].height };
+    
       for (const el of boxes) {
-        if (el.left < boxSize.left) { boxSize.left = el.left; }
-        if (el.top < boxSize.top) { boxSize.top = el.top; }
-        if (el.right > boxSize.right) { boxSize.right = el.right; }
-        if (el.bottom > boxSize.bottom) { boxSize.bottom = el.bottom; }
+        if (boxSize.left !== undefined && boxSize.top !== undefined && boxSize.right !== undefined && boxSize.bottom !== undefined) {
+          if (el.left < boxSize.left) { boxSize.left = el.left; }
+          if (el.top < boxSize.top) { boxSize.top = el.top; }
+          if (el.right > boxSize.right) { boxSize.right = el.right; }
+          if (el.bottom > boxSize.bottom) { boxSize.bottom = el.bottom; }
+        }
       }
-      boxSize.height = boxSize.bottom - boxSize.top;
-      boxSize.width = boxSize.right - boxSize.left;
-
+      if (boxSize.left !== undefined && boxSize.top !== undefined && boxSize.right !== undefined && boxSize.bottom !== undefined) {
+        boxSize.height = boxSize.bottom - boxSize.top;
+        boxSize.width = boxSize.right - boxSize.left;
+      }
       return { box: boxSize, allBoxes: boxes, path: this.nodeService.updateBoxSizePath(boxSize, Path) };
     }
   }
 
 
   getBBoxSize(nodes: Array<Node>): any {
-    let rectangle = { id: null, left: 0, top: 0, bottom: 0, right: 0, width: 0, height: 0, tYb: null, tYt: null };
+    let rectangle = new Rectangle();
 
     if (nodes.length === 2 && nodes[0].type === 'node') {
       rectangle.width = Math.abs(this.nodeService.scale.scaleX(nodes[1].pos.x) - this.nodeService.scale.scaleX(nodes[0].pos.x));
@@ -319,31 +359,32 @@ export class BezierService {
       const details = this.findBBoxQuadraticBezier(nodes);
 
       rectangle = {
-        left: this.nodeService.scale.scaleX(details.left),
-        top: this.nodeService.scale.scaleY(details.top),
-        width: this.nodeService.scale.scaleX(details.right) - this.nodeService.scale.scaleX(details.left),
-        height: this.nodeService.scale.scaleY(details.bottom) - this.nodeService.scale.scaleY(details.top),
-        bottom: this.nodeService.scale.scaleY(details.bottom),
-        right: this.nodeService.scale.scaleX(details.right),
-        id: null,
-        tYb: details.Yb,
-        tYt: details.Yt
+        left: this.nodeService.scale.scaleX(details?.left),
+        top: this.nodeService.scale.scaleY(details?.top),
+        width: this.nodeService.scale.scaleX(details?.right) - this.nodeService.scale.scaleX(details?.left),
+        height: this.nodeService.scale.scaleY(details?.bottom) - this.nodeService.scale.scaleY(details?.top),
+        bottom: this.nodeService.scale.scaleY(details?.bottom),
+        right: this.nodeService.scale.scaleX(details?.right),
+        id: undefined,
+        tYb: details?.Yb,
+        tYt: details?.Yt
       };
+      
 
     } else if (nodes.length === 4) {
 
       const details = this.findBBoxCubicBezier(nodes);
 
       rectangle = {
-        left: this.nodeService.scale.scaleX(details.left),
-        top: this.nodeService.scale.scaleY(details.top),
-        width: this.nodeService.scale.scaleX(details.right) - this.nodeService.scale.scaleX(details.left),
-        height: this.nodeService.scale.scaleY(details.bottom) - this.nodeService.scale.scaleY(details.top),
-        bottom: this.nodeService.scale.scaleY(details.bottom),
-        right: this.nodeService.scale.scaleX(details.right),
-        id: null,
-        tYb: details.Yb,
-        tYt: details.Yt
+        left: this.nodeService.scale.scaleX(details?.left),
+        top: this.nodeService.scale.scaleY(details?.top),
+        width: this.nodeService.scale.scaleX(details?.right) - this.nodeService.scale.scaleX(details?.left),
+        height: this.nodeService.scale.scaleY(details?.bottom) - this.nodeService.scale.scaleY(details?.top),
+        bottom: this.nodeService.scale.scaleY(details?.bottom),
+        right: this.nodeService.scale.scaleX(details?.right),
+        id: undefined,
+        tYb: details?.Yb,
+        tYt: details?.Yt
       };
     }
 
@@ -352,136 +393,145 @@ export class BezierService {
 
 
 
-  findClosestPointOnPath(mouse: { x: number, y: number}, nodes: Array<Node>, pathID: string) {
+  findClosestPointOnPath(mouse: { x: number, y: number}, nodes: Array<Node>, pathID: string): Coords {
 
     const nodeID = pathID.split('&&');
     const startX = nodes.filter(n => n.type === 'node' && n.id === nodeID[0])[0].pos.x;
     const endX = nodes.filter(n => n.type === 'node' && n.id === nodeID[1])[0].pos.x;
+    let coords = new Coords();
 
     // tslint:disable-next-line:variable-name
-    const time = ((mouse.x - startX) / (endX - startX));
-    let coords: { x: any; y: any; t: number; };
+    if (startX !== undefined && endX !== undefined) {
+      const time = ((mouse.x - startX) / (endX - startX));
+      
 
-    if ( time > 0 && time < 1) {
+      if ( time > 0 && time < 1) {
 
-        if (nodes.length === 2) {
-            coords = {
-                x: this.nodeService.scale.scaleX(this.evalLBez(nodes, time, 'x', 'force')),
-                y: this.nodeService.scale.scaleY(this.evalLBez(nodes, time, 'y', 'force')),
-                t: time
-            };
-        } else if (nodes.length === 3) {
-            coords = {
-                x: this.nodeService.scale.scaleX(this.evalQBez(nodes, time, 'x', 'force')),
-                y: this.nodeService.scale.scaleY(this.evalQBez(nodes, time, 'y', 'force')),
-                t: time
-            };
-        } else if (nodes.length === 4) {
-            coords = {
-                x: this.nodeService.scale.scaleX(this.evalCBez(nodes, time, 'x', 'force')),
-                y: this.nodeService.scale.scaleY(this.evalCBez(nodes, time, 'y', 'force')),
-                t: time
-            };
-        }
-
-        return coords;
+          if (nodes.length === 2) {
+              coords = {
+                  x: this.nodeService.scale.scaleX(this.evalLBez(nodes[0], nodes[1], time, 'x', 'force')),
+                  y: this.nodeService.scale.scaleY(this.evalLBez(nodes[0], nodes[1], time, 'y', 'force')),
+                  t: time
+              };
+          } else if (nodes.length === 3) {
+              coords = {
+                  x: this.nodeService.scale.scaleX(this.evalQBez(nodes, time, 'x', 'force')),
+                  y: this.nodeService.scale.scaleY(this.evalQBez(nodes, time, 'y', 'force')),
+                  t: time
+              };
+          } else if (nodes.length === 4) {
+              coords = {
+                  x: this.nodeService.scale.scaleX(this.evalCBez(nodes, time, 'x', 'force')),
+                  y: this.nodeService.scale.scaleY(this.evalCBez(nodes, time, 'y', 'force')),
+                  t: time
+              };
+          }
+          return coords;
+      }
     }
-    return null;
+    return coords; 
   }
 
 
-  splitPath(nodes: Array<Node>, path: string, mouse: { x: number, y: number }) {
-    const pathRange = this.getCurveLength(nodes);
-    const t = 1 / pathRange[0];
-    const newNodes: Array<Node> = [];
-    let tClosest: number;
-    const newCP = [];
-    const newNodeID = uuid();
-    const newNode = new Node(newNodeID, path, null, 'node', mouse, mouse);
+  splitPath(nodes: Array<Node> | undefined, path: string, mouse: { x: number | undefined, y: number | undefined}) {
 
-    for (const n of nodes) {
-      newNodes.push(n);
-    }
+    if (nodes !== undefined && mouse.x !== undefined && mouse.y !== undefined) {
 
-    if (nodes.length === 4) {
+      const pathRange = this.getCurveLength(nodes);
+      const t = 1 / pathRange[0];
+      const newNodes: Array<Node> = [];
+      let tClosest: number;
+      const newCP = [];
+      const newNodeID = uuid();
+      const newNode = new Node(newNodeID, path, undefined, 'node', mouse, mouse);
 
-        newNodes.splice(2, 0, newNode);
+      for (const n of nodes) {
+        newNodes.push(n);
+      }
 
-        const coordinateArray = this.getAllCoordinatesCubicBezier(pathRange[0], t, nodes);
-        tClosest = this.closestIndex(mouse.x, coordinateArray) * t;
+      if (nodes.length === 4) {
 
-        const paths = [];
-        for (let i = 0; i < nodes.length - 1; i++) {
-            const tPath = {
-              pos: {
-                x: this.evalLBez([nodes[i], nodes[i + 1]], tClosest, 'x', 'force'),
-                y: this.evalLBez([nodes[i], nodes[i + 1]], tClosest, 'y', 'force')
-              }
-            };
-            paths.push(tPath);
-        }
-
-        for (let i = 0; i < 2; i++) {
-            const newNodeCP = {
-              pos: {
-                x: this.evalLBez([ paths[i], paths[i + 1]], tClosest, 'x', 'force'),
-                y: this.evalLBez([ paths[i], paths[i + 1]], tClosest, 'y', 'force')
-              }
-            };
-            newCP.push(newNodeCP);
-        }
-
-        newNodes[1].pos = paths[0].pos;
-        newNodes[3].pos = paths[2].pos;
-        newNodes[1].angle = paths[0].pos;
-        newNodes[3].angle = paths[2].pos;
-
-        const newCP1 = new Node(newNodeID, path, uuid(), 'cp', newCP[0].pos, newCP[0].pos);
-        newNodes.splice(2, 0, newCP1);
-        const newCP2 = new Node(newNodeID, path, uuid(), 'cp', newCP[1].pos, newCP[1].pos);
-        newNodes.splice(4, 0, newCP2);
-
-    } else if (nodes.length === 3) {
-
-        const coordinateArray = this.getAllCoordinatesQuadraticBezier(pathRange[0], t, nodes);
-        tClosest = this.closestIndex(mouse.x, coordinateArray) * t;
-
-        const paths = [];
-        for (let i = 0; i < nodes.length - 1; i++) {
-            const tPath = {
-              pos: {
-                x: this.evalLBez([nodes[i], nodes[i + 1]], tClosest, 'x', 'force'),
-                y: this.evalLBez([nodes[i], nodes[i + 1]], tClosest, 'y', 'force')
-              }
-            };
-            paths.push(tPath);
-        }
-
-        if (nodes[0].id === nodes[1].id) {
           newNodes.splice(2, 0, newNode);
 
-          const newCP2 = new Node(newNodeID, path, uuid(), 'cp', paths[1].pos, paths[1].pos);
-          newNodes.splice(3, 0, newCP2);
-          // change quadratic curve to cubic curve
-          const QP = [
-              { x: newNodes[0].pos.x, y: newNodes[0].pos.y },
-              { x: paths[0].pos.x, y: paths[0].pos.y },
-              { x: mouse.x, y: mouse.y }
-          ];
-          newNodes[1].pos.x = QP[0].x + (2 / 3) * (QP[1].x - QP[0].x);
-          newNodes[1].pos.y = QP[0].y + (2 / 3) * (QP[1].y - QP[0].y);
-          newNodes[1].angle.x = QP[0].x + (2 / 3) * (QP[1].x - QP[0].x);
-          newNodes[1].angle.y = QP[0].y + (2 / 3) * (QP[1].y - QP[0].y);
+          const coordinateArray = this.getAllCoordinatesCubicBezier(pathRange[0], t, nodes);
+          tClosest = this.closestIndex(mouse.x, coordinateArray) * t;
 
-          // const newCP1Points = {
-          //   pos: { x: QP[2].x + (2 / 3) * (QP[1].x - QP[2].x),
-          //          y: QP[2].y + (2 / 3) * (QP[1].y - QP[2].y) }
-          // };
-          // const newCP1 = new Node(newNodeID, path, uuid(), 'cp', newCP1Points.pos, newCP1Points.pos);
-          // newNodes.splice(2, 0, newCP1);
+          const paths = [];
+          for (let i = 0; i < nodes.length - 1; i++) {
+              const tPath = {
+                pos: {
+                  x: this.evalLBez(nodes[i], nodes[i + 1], tClosest, 'x', 'force'),
+                  y: this.evalLBez(nodes[i], nodes[i + 1], tClosest, 'y', 'force')
+                }
+              };
+              paths.push(tPath);
+          }
+
+          for (let i = 0; i < 2; i++) {
+              const newNodeCP = {
+                pos: {
+                  x: this.evalLBez(paths[i], paths[i + 1], tClosest, 'x', 'force'),
+                  y: this.evalLBez(paths[i], paths[i + 1], tClosest, 'y', 'force')
+                }
+              };
+              newCP.push(newNodeCP);
+          }
+
+          newNodes[1].pos = paths[0].pos;
+          newNodes[3].pos = paths[2].pos;
+          newNodes[1].angle = paths[0].pos;
+          newNodes[3].angle = paths[2].pos;
+
+          const newCP1 = new Node(newNodeID, path, uuid(), 'cp', newCP[0].pos, newCP[0].pos);
+          newNodes.splice(2, 0, newCP1);
+          const newCP2 = new Node(newNodeID, path, uuid(), 'cp', newCP[1].pos, newCP[1].pos);
+          newNodes.splice(4, 0, newCP2);
+
+      } else if (nodes.length === 3) {
+
+          const coordinateArray = this.getAllCoordinatesQuadraticBezier(pathRange[0], t, nodes);
+          tClosest = this.closestIndex(mouse.x, coordinateArray) * t;
+
+          const paths = [];
+          for (let i = 0; i < nodes.length - 1; i++) {
+              const tPath = {
+                pos: {
+                  x: this.evalLBez(nodes[i], nodes[i + 1], tClosest, 'x', 'force'),
+                  y: this.evalLBez(nodes[i], nodes[i + 1], tClosest, 'y', 'force')
+                }
+              };
+              paths.push(tPath);
+          }
+
+          if (nodes[0].id === nodes[1].id) {
+            newNodes.splice(2, 0, newNode);
+
+            const newCP2 = new Node(newNodeID, path, uuid(), 'cp', paths[1].pos, paths[1].pos);
+            newNodes.splice(3, 0, newCP2);
+            // change quadratic curve to cubic curve
+            const QP = [
+                { x: newNodes[0].pos.x,   y: newNodes[0].pos.y },
+                { x: paths[0].pos.x,      y: paths[0].pos.y },
+                { x: mouse.x,             y: mouse.y }
+            ];
+            if (QP[0].x !== undefined && QP[1].x !== undefined &&
+                QP[0].y !== undefined && QP[1].y !== undefined) {
+              newNodes[1].pos.x = QP[0].x + (2 / 3) * (QP[1].x - QP[0].x);
+              newNodes[1].pos.y = QP[0].y + (2 / 3) * (QP[1].y - QP[0].y);
+              newNodes[1].angle.x = QP[0].x + (2 / 3) * (QP[1].x - QP[0].x);
+              newNodes[1].angle.y = QP[0].y + (2 / 3) * (QP[1].y - QP[0].y);
+            }
+
+            // const newCP1Points = {
+            //   pos: { x: QP[2].x + (2 / 3) * (QP[1].x - QP[2].x),
+            //          y: QP[2].y + (2 / 3) * (QP[1].y - QP[2].y) }
+            // };
+            // const newCP1 = new Node(newNodeID, path, uuid(), 'cp', newCP1Points.pos, newCP1Points.pos);
+            // newNodes.splice(2, 0, newCP1);
 
 
-      } else if (nodes[1].id === nodes[2].id) {
+        } else if (nodes[1].id === nodes[2].id) {
+          
           newNodes.splice(1, 0, newNode);
 
           const newCP1 = new Node(newNodeID, path, uuid(), 'cp', paths[0].pos, paths[0].pos);
@@ -500,16 +550,19 @@ export class BezierService {
 
           // const newCP2 = new Node(newNodeID, path, uuid(), 'cp', newCP2Points.pos, newCP2Points.pos);
           // newNodes.splice(1, 0, newCP2);
+          if (QP[1].x !== undefined && QP[2].x !== undefined &&
+              QP[1].y !== undefined && QP[2].y !== undefined) {
+            newNodes[newNodes.length - 2].pos.x = QP[2].x + (2 / 3) * (QP[1].x - QP[2].x);
+            newNodes[newNodes.length - 2].pos.y = QP[2].y + (2 / 3) * (QP[1].y - QP[2].y);
+            newNodes[newNodes.length - 2].angle.x = QP[2].x + (2 / 3) * (QP[1].x - QP[2].x);
+            newNodes[newNodes.length - 2].angle.y = QP[2].y + (2 / 3) * (QP[1].y - QP[2].y);}
+          }
 
-          newNodes[newNodes.length - 2].pos.x = QP[2].x + (2 / 3) * (QP[1].x - QP[2].x);
-          newNodes[newNodes.length - 2].pos.y = QP[2].y + (2 / 3) * (QP[1].y - QP[2].y);
-          newNodes[newNodes.length - 2].angle.x = QP[2].x + (2 / 3) * (QP[1].x - QP[2].x);
-          newNodes[newNodes.length - 2].angle.y = QP[2].y + (2 / 3) * (QP[1].y - QP[2].y);
+      } else if (nodes.length === 2) {
+        newNodes.splice(1, 0, newNode);
       }
-    } else if (nodes.length === 2) {
-      newNodes.splice(1, 0, newNode);
+      return { nodes: newNodes, _newNode: newNode };
     }
-    return { nodes: newNodes, _newNode: newNode };
   }
 
 
@@ -565,14 +618,19 @@ export class BezierService {
     const cpPoints = [];
     if (pathSegments) {
       for (const el of pathSegments) {
-        if (el.nodes.filter(n => n.type === 'cp').length > 0) {
+        if (el.nodes && el.nodes.filter(n => n.type === 'cp').length > 0) {
           const normal = this.normal(0.5, el.nodes);
           // console.log(normal);
           const copy = this.cloneService.deepClone(el.nodes);
-          const points = this.splitPath(copy, pathId, { x: normal.cX, y: normal.cY });
-          // console.log(points.nodes);
-          const newPoints = points.nodes.filter(n => n.id === id && n.type === 'cp')[0];
-          cpPoints.push(newPoints);
+
+          if (normal !== undefined && normal.cX !== undefined && normal.cY !== undefined) {
+            const points = this.splitPath(copy, pathId, { x: normal.cX, y: normal.cY });
+            // console.log(points.nodes);
+            if (points !== undefined) {
+              const newPoints = points.nodes.filter(n => n.id === id && n.type === 'cp')[0];
+              cpPoints.push(newPoints);
+            }
+          }
         }
       }
     }
@@ -585,8 +643,12 @@ export class BezierService {
     const cXn = (nodes.length === 3) ? this.evalQBez(nodes, t, 'x', 'force') : this.evalCBez(nodes, t, 'x', 'force');
     const dYn = (nodes.length === 3) ? this.d_evalQBez(nodes, t, 'y') : this.d_evalCBez(nodes, t, 'y');
     const cYn = (nodes.length === 3) ? this.evalQBez(nodes, t, 'y', 'force') : this.evalCBez(nodes, t, 'y', 'force');
-    const q = Math.sqrt(dXn * dXn + dYn * dYn);
-    return { x: -dYn / q, y: dXn / q, cX: cXn, cY: cYn };
+
+    if (dXn !== undefined && cXn !== undefined && dYn !== undefined && cYn !== undefined) {
+      const q = Math.sqrt(dXn * dXn + dYn * dYn);
+      return { x: -dYn / q, y: dXn / q, cX: cXn, cY: cYn };
+    }
+    return;
   }
 
 
@@ -595,7 +657,7 @@ export class BezierService {
     const node = nodeType.filter(n => n.id === id)[0];
     const index = nodeType.indexOf(node, 0);
     const pathSegments = [];
-    const parent = { prev: null, next: null };
+    const parent : { prev?: string, next?: string } = { prev: undefined, next: undefined };
 
     if (index > 0) {
       const prevNodeID = nodeType[index - 1].id;
@@ -619,58 +681,80 @@ export class BezierService {
       const newNodes = [];
 
       for (const el of pathSegments) {
-        const bboxSize = this.getBBoxSize(el.nodes);
-        boundsPathSegments.push(bboxSize);
+        if (el !== undefined && el.nodes !== undefined) {
+          const bboxSize = this.getBBoxSize(el.nodes);
+          boundsPathSegments.push(bboxSize);
+        }
       }
 
       let i = 0;
       for (const segment of boundsPathSegments) {
+        const currentSegment = pathSegments[i];
+        
+        // 1. Guard Clause: Skip instantly if the segment or its nodes array is missing
+        if (!currentSegment?.nodes) {
+          i++;
+          continue;
+        }
+
+        // Cache reference to safely typed Node[] array
+        const nodes: Node[] = currentSegment.nodes;
+        const nodeCount = nodes.length;
+
+        // PATH A: Handle Bottom Boundaries (tYb)
         if (segment.tYb > 0) {
+          let nodeCoords: { x: number | undefined; y: number | undefined; nodes: any; box: number } | undefined;
 
-          let nodeCoords: { x: number; y: number; nodes: any; box: number; };
-          if (pathSegments[i].nodes.length === 4) {
+          if (nodeCount === 4) {
             nodeCoords = {
-              x: this.evalCBez(pathSegments[i].nodes, segment.tYb, 'x', 'force'),
-              y: this.evalCBez(pathSegments[i].nodes, segment.tYb, 'y', 'force'),
-              nodes: pathSegments[i].nodes,
+              x: this.evalCBez(nodes, segment.tYb, 'x', 'force'),
+              y: this.evalCBez(nodes, segment.tYb, 'y', 'force'),
+              nodes: nodes,
               box: i,
             };
-          } else if (pathSegments[i].nodes.length === 3) {
+          } else if (nodeCount === 3) {
             nodeCoords = {
-              x: this.evalQBez(pathSegments[i].nodes, segment.tYb, 'x', 'force'),
-              y: this.evalQBez(pathSegments[i].nodes, segment.tYb, 'y', 'force'),
-              nodes: pathSegments[i].nodes,
+              x: this.evalQBez(nodes, segment.tYb, 'x', 'force'),
+              y: this.evalQBez(nodes, segment.tYb, 'y', 'force'),
+              nodes: nodes,
               box: i,
             };
           }
-          newNodes.push(nodeCoords);
+
+          // Only push if a valid coordinate shape was successfully generated
+          if (nodeCoords) newNodes.push(nodeCoords);
         }
 
+        // PATH B: Handle Top Boundaries (tYt)
         if (segment.tYt > 0) {
-          let nodeCoords: { x: number; y: number; nodes: any; box: number; };
+          let nodeCoords: { x: number | undefined; y: number | undefined; nodes: any; box: number } | undefined;
+          const targetSegment = boundsPathSegments[i];
 
-          if (pathSegments[i].nodes.length === 4) {
+          if (nodeCount === 4) {
             nodeCoords = {
-              x: this.evalCBez(pathSegments[i].nodes, boundsPathSegments[i].tYt, 'x', 'force'),
-              y: this.evalCBez(pathSegments[i].nodes, boundsPathSegments[i].tYt, 'y', 'force'),
-              nodes: pathSegments[i].nodes,
+              x: this.evalCBez(nodes, targetSegment.tYt, 'x', 'force'),
+              y: this.evalCBez(nodes, targetSegment.tYt, 'y', 'force'),
+              nodes: nodes,
               box: i
             };
-          } else if (pathSegments[i].nodes.length === 3) {
+          } else if (nodeCount === 3) {
             nodeCoords = {
-              x: this.evalQBez(pathSegments[i].nodes, boundsPathSegments[i].tYt, 'x', 'force'),
-              y: this.evalQBez(pathSegments[i].nodes, boundsPathSegments[i].tYt, 'y', 'force'),
-              nodes: pathSegments[i].nodes,
+              x: this.evalQBez(nodes, targetSegment.tYt, 'x', 'force'),
+              y: this.evalQBez(nodes, targetSegment.tYt, 'y', 'force'),
+              nodes: nodes,
               box: i
             };
           }
-          newNodes.push(nodeCoords);
+
+          if (nodeCoords) newNodes.push(nodeCoords);
         }
+
         i++;
       }
+
       for (const newN of newNodes) {
         const newNodesOnPath = this.splitPath(newN.nodes, pathId, { x: newN.x, y: newN.y });
-        this.nodeService.insertPathSegment(newNodesOnPath.nodes, pathId);
+        if (newNodesOnPath) this.nodeService.insertPathSegment(newNodesOnPath.nodes, pathId);
       }
     }
   }
@@ -678,27 +762,32 @@ export class BezierService {
 
   getAllCoordinates(range: number, tValue: number, n: any, multiply: number, type: string) {
     const values = [];
+
     for (let i = 0; i < range; i++) {
-        const t = i * (tValue);
-        let coordinates: { x: number; y: number; };
-        if (n.length === 4) {
-            coordinates = {
-                x: this.evalCBez(n, t, 'x', type) * multiply,
-                y: this.evalCBez(n, t, 'y', type)
-            };
-        } else if (n.length === 3) {
-            coordinates = {
-                x: this.evalQBez(n, t, 'x', type) * multiply,
-                y: this.evalQBez(n, t, 'y', type)
-            };
-        } else if (n.length === 2) {
-            coordinates = {
-                x: this.evalLBez(n, t, 'x', type) * multiply,
-                y: this.evalLBez(n, t, 'y', type)
-            };
-        }
-        values.push( coordinates );
+      const t = i * tValue;
+      let coordinates: { x: number; y: number } | undefined = undefined;
+
+      if (n.length === 4) {
+        const rawX = this.evalCBez(n, t, 'x', type) ?? 0;
+        const rawY = this.evalCBez(n, t, 'y', type) ?? 0;
+        coordinates = { x: rawX * multiply, y: rawY };
+        
+      } else if (n.length === 3) {
+        const rawX = this.evalQBez(n, t, 'x', type) ?? 0;
+        const rawY = this.evalQBez(n, t, 'y', type) ?? 0;
+        coordinates = { x: rawX * multiply, y: rawY };
+        
+      } else if (n.length === 2) {
+        const rawX = this.evalLBez(n[0], n[1], t, 'x', type) ?? 0;
+        const rawY = this.evalLBez(n[0], n[1], t, 'y', type) ?? 0;
+        coordinates = { x: rawX * multiply, y: rawY };
+      }
+
+      if (coordinates) {
+        values.push(coordinates);
+      }
     }
+
     return values;
   }
 
@@ -767,8 +856,8 @@ export class BezierService {
         const concatBoxes = boxSizes[0];
         if (boxSizes.length > 1) {
           for (const boxEl of boxSizes) {
-            if (boxEl.left < concatBoxes.left) { concatBoxes.left = boxEl.left; }
-            if (boxEl.right > concatBoxes.right) { concatBoxes.right = boxEl.right; }
+            if ((boxEl.left ?? 0) < (concatBoxes.left ?? 0)) { concatBoxes.left = boxEl.left; }
+            if ((boxEl.right ?? 0) > (concatBoxes.right ?? 0)) { concatBoxes.right = boxEl.right; }
           }
         }
         totalPathDuration = this.nodeService.scale.scaleX.invert(concatBoxes.right) -
@@ -815,23 +904,25 @@ export class BezierService {
 
             const bboxAfter = this.getBBoxSizePath(path);
             if (referencePoint.id >= 0 && referencePoint.id <= 2) {
-              translate.vertical = box.top - bboxAfter.path.box.top;
+              translate.vertical = (box.top ?? 0) - (bboxAfter?.path.box.top ?? 0);
             } else if (referencePoint.id >= 6 && referencePoint.id <= 8) {
-              translate.vertical = box.bottom - bboxAfter.path.box.bottom;
+              translate.vertical = (box.bottom ?? 0) - (bboxAfter?.path.box.bottom ?? 0);
             }
 
             if (referencePoint.id % 3 === 0) {
-              translate.horizontal = box.left - bboxAfter.path.box.left;
+              translate.horizontal = box.left - (bboxAfter?.path.box.left ?? 0);
             } else if ((referencePoint.id + 1) % 3 === 0) {
-              translate.horizontal = box.right - bboxAfter.path.box.right;
+              translate.horizontal = (box.right ?? 0) - (bboxAfter?.path.box.right ?? 0);
             }
 
             if (referencePoint.id % 2 !== 0 || referencePoint.id === 4) {
               if (referencePoint.id >= 3 && referencePoint.id <= 5) {
-                translate.vertical = (box.bottom + (box.height / 2)) - (bboxAfter.path.box.bottom + (bboxAfter.path.box.height / 2));
+                translate.vertical = ((box.bottom ?? 0) + ((box.height ?? 1) / 2)) - 
+                                     ((bboxAfter?.path.box.bottom ?? 0) + ((bboxAfter?.path.box.height ?? 0) / 2));
               }
               if ((referencePoint.id - 1) % 3 === 0) {
-                translate.horizontal = (box.left + (box.width / 2)) - (bboxAfter.path.box.left + (bboxAfter.path.box.width / 2));
+                translate.horizontal = (box.left + ((box.width ?? 1) / 2)) - 
+                                       ((bboxAfter?.path.box.left ?? 0) + ((bboxAfter?.path.box.width ?? 0) / 2));
               }
             }
 

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HistoryConfig, HistoryEffects, HistoryListElement } from '../models/history.model';
 import { File } from '../models/file.model';
-import { ElectronService } from 'src/app/services/electron.service';
+import { ElectronService } from './electron.service';
 import { CloneService } from './clone.service';
 import { Subject } from 'rxjs';
 import { IpcRendererEvent } from 'electron';
@@ -11,7 +11,7 @@ import { IpcRendererEvent } from 'electron';
 export class HistoryService {
 
   public config = new HistoryConfig();
-  public file = new File(null, null, null);
+  public file = new File(undefined, undefined, undefined);
 
   reloadFileData: Subject<any> = new Subject<void>();
 
@@ -109,12 +109,14 @@ export class HistoryService {
     return this.file.date.changed;
   }
 
-  clearHistoryFile(id: string) {
-    const historyFile = this.config.history.filter(h => h.fileId === id)[0];
-    if (historyFile) {
-      const index = this.config.history.indexOf(historyFile);
-      if (index > -1) {
-        this.config.history.splice(index, 1);
+  clearHistoryFile(id: string | undefined) {
+    if (id !== undefined) {
+      const historyFile = this.config.history.filter(h => h.fileId === id)[0];
+      if (historyFile) {
+        const index = this.config.history.indexOf(historyFile);
+        if (index > -1) {
+          this.config.history.splice(index, 1);
+        }
       }
     }
   }

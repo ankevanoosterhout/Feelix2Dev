@@ -45,15 +45,15 @@ export class TensorFlowRecordService {
     // this.tensorflowDrawService.enableZoom(!this.config.recording.active);
 
     if (!this.config.recording.active) {
-      this.config.recording.starttime = null;
+      this.config.recording.starttime = undefined;
 
-      if (page === 'data') {
+      if (page === 'data' && this.d.selectedDataset !== undefined) {
         this.d.selectedDataset.bounds.xMin = 0;
         this.redraw(this.d.selectedDataset, this.d.trimLines, 'svg_graph_data', false);
         this.tensorflowService.updateModelBasedOnDatasets();
-      } else if (page === 'deploy') {
+      } else if (page === 'deploy' && this.d.selectedMLDataset !== undefined) {
         this.d.selectedMLDataset.bounds.xMin = 0;
-        this.redraw(this.d.selectedMLDataset, null, 'svg_graph_deploy', false);
+        this.redraw(this.d.selectedMLDataset, undefined, 'svg_graph_deploy', false);
       }
     } else {
 
@@ -93,7 +93,7 @@ export class TensorFlowRecordService {
       this.predictOutput.next(true);
     }
 
-    this.redraw(dataSetEl, null, this.d.classify ? 'svg_graph_deploy' : 'svg_graph_data', true);
+    this.redraw(dataSetEl, undefined, this.d.classify ? 'svg_graph_deploy' : 'svg_graph_data', true);
   }
 
 
@@ -112,27 +112,29 @@ export class TensorFlowRecordService {
 
         const dataSetEl = !this.d.classify ? this.d.selectedDataset : this.d.selectedMLDataset;
 
-        if (dataSetEl.m && dataSetEl.m.length > 0) {
+        if (dataSetEl?.m && dataSetEl.m.length > 0) {
           const motorEl = dataSetEl.m.filter(m => m.mcu.serialPath === serialPath && m.id === motorID)[0]; //data.serialPath, data.motorID
           // console.log(motorEl);
 
           if (motorEl) {
             const dataObject = new Data();
 
-            for (const input of this.d.selectedModel.inputs) {
-              const dataItem = receivedData.filter((d: { slug: string; }) => d.slug === input.slug)[0]; //data.d
-              // console.log(dataItem, input);
+            if (this.d.selectedModel) {
+              for (const input of this.d.selectedModel.inputs) {
+                const dataItem = receivedData.filter((d: { slug: string; }) => d.slug === input.slug)[0]; //data.d
+                // console.log(dataItem, input);
 
-              if (dataItem) {
-                const inputItem = new InputItem(input.name);
-                inputItem.value = dataItem.val;
-                dataObject.inputs.push(inputItem);
-
-                this.checkBounds(inputItem.value, dataSetEl);
+                if (dataItem) {
+                  const inputItem = new InputItem(input.name);
+                  inputItem.value = dataItem.val;
+                  dataObject.inputs.push(inputItem);
+                  
+                  if (inputItem.value) this.checkBounds(inputItem.value, dataSetEl);
+                }
               }
             }
 
-            const time = new Date().getTime() - this.config.recording.starttime;
+            const time = new Date().getTime() - (this.config.recording.starttime ?? 0);
             dataObject.time = time;
 
             motorEl.d.push(dataObject);
@@ -173,13 +175,15 @@ export class TensorFlowRecordService {
 
 
 
-  redraw(set: DataSet | MLDataSet, lines = this.d.trimLines, id: string, running: boolean = false) {
-    const size = this.getSize();
-    const bounds = set ? set.bounds : new Bounds();
-    this.tensorflowDrawService.updateBounds(bounds, id);
-    this.tensorflowDrawService.drawGraph(id, bounds, size);
-    if (set) {
-      this.tensorflowDrawService.drawTensorFlowGraphData(set, this.d.trimLinesVisible ? lines : null, id, size, running);
+  redraw(set: DataSet | MLDataSet | undefined, lines = this.d.trimLines, id: string, running: boolean = false) {
+    if (set !== undefined) {
+      const size = this.getSize();
+      const bounds = set ? set.bounds : new Bounds();
+      this.tensorflowDrawService.updateBounds(bounds, id);
+      this.tensorflowDrawService.drawGraph(id, bounds, size);
+      if (set) {
+        this.tensorflowDrawService.drawTensorFlowGraphData(set, this.d.trimLinesVisible ? lines : null, id, size, running);
+      }
     }
   }
 

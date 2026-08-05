@@ -1,5 +1,5 @@
-import { DOCUMENT } from '@angular/common';
 import { Injectable, Inject } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { DrawingPlaneConfig } from '../models/drawing-plane-config.model';
 import { File } from '../models/file.model';
 import * as d3 from 'd3';
@@ -23,6 +23,7 @@ export class MotorControlService {
   playAllInSequence: Subject<any> = new Subject<void>();
   playSequence: Subject<any> = new Subject<void>();
   playAll: Subject<any> = new Subject<void>();
+  detectChanges: Subject<any> = new Subject<void>();
 
   public toolList = [
     { id: 0, name: 'new collection', slug: 'collection', disabled: false, icon: './assets/icons/tools/collections.svg' },
@@ -41,6 +42,7 @@ export class MotorControlService {
 
   constructor(@Inject(DOCUMENT) private document: Document, private drawingService: DrawingService, private fileService: FileService,
               private effectVisualizationService: EffectVisualizationService) {
+
     this.config = this.drawingService.config;
     this.resetWidth();
     this.updateHeight();
@@ -103,11 +105,14 @@ export class MotorControlService {
   addCollection(update = false) {
     this.fileService.addCollection();
     if (update) {
-      setTimeout(() => {
-        this.drawCollections();
-        this.drawCollections();
-      }, 1000);
+      this.drawCollections();
     }
+    // if (update) {
+    //   setTimeout(() => {
+    //     this.drawCollections();
+        
+    //   }, 1000);
+    // }
   }
 
   deleteCollection(collection: Collection) {
@@ -140,6 +145,7 @@ export class MotorControlService {
 
   resetWidth() {
     this.width = (window.innerWidth * (this.file.configuration.verticalScreenDivision / 100)) - this.config.motorControlToolbarOffset - 28;
+    console.log(this.width);
   }
 
   updateCollection(collection: Collection) {
@@ -154,6 +160,8 @@ export class MotorControlService {
 
 
   drawCollection(collection: Collection) {
+
+    console.log('draw ' + collection.id);
 
     d3.select('#cID-' + collection.id).remove();
 
@@ -327,6 +335,7 @@ export class MotorControlService {
 
   drawCollections(collections: Array<Collection> = this.file.collections) {
     this.resetWidth();
+
 
     for (const collection of collections) {
         this.drawCollection(collection);
@@ -660,7 +669,7 @@ export class MotorControlService {
     }
 
     if (collection.rotation.loop || (collection.rotation.constrain && collection.visualizationType !== EffectType.velocity)) {
-      collection.config.svg.selectAll('.range-line').attr('x1', (d) => collection.config.newXscale(d)).attr('x2', (d: any) => collection.config.newXscale(d));
+      collection.config.svg.selectAll('.range-line').attr('x1', (d: any) => collection.config.newXscale(d)).attr('x2', (d: any) => collection.config.newXscale(d));
     }
     if (!collection.rotation.loop && collection.visualizationType !== EffectType.velocity) {
       collection.config.svg.select('.inner-container')

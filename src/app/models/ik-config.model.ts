@@ -7,7 +7,7 @@ export class DisplaySettings {
 }
 
 export class DragControls {
-  distance: number;
+  distance?: number;
   initialGrabPoint = new Vector3();
   grabPoint = new Vector3();
   prevHitPoint = new Vector3();
@@ -19,10 +19,10 @@ export class DragControls {
   projectedEndPoint = new Vector3();
   mouse = new Vector2();
   hitDistance = -1;
-  manipulating = null;
-  hovered = null;
-  selected = null;
-
+  manipulating: any = null;
+  hovered: any = null;
+  selected?: { parent?: any; id: string }; 
+  parent?: any;
   rayCaster = new Raycaster();
   mousePosition = new Vector2();
 
@@ -40,7 +40,7 @@ export class IKConfig {
   ikHelper: any;
   goal: any;
 
-  ikRoot = null;
+  ikRoot: Array<any> = [];
 
   // newFrames: Array<string> = [];
   targetObject: any;

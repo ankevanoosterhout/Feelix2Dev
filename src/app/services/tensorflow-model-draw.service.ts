@@ -32,7 +32,7 @@ export class TensorFlowModelDrawService {
     let i = 0;
     const columnWidth = ((window.innerWidth - (model.layers.filter(l => l.hidden).length * this.smallColumnWidth)) / model.layers.filter(l => !l.hidden).length);
     const maxUnits = this.getMaxNrOfUnits(model.layers);
-    let distance = (this.height - (this.margin * 2)) / maxUnits;
+    let distance = (this.height - (this.margin * 2)) / (maxUnits ?? 1);
 
     if (distance > 70) { distance = 70; }
 
@@ -43,8 +43,11 @@ export class TensorFlowModelDrawService {
       let xUnits = (i === 0 && layer.options.actuators && layer.options.inputDimension === 1) ? layer.options.units.value * layer.options.actuators.value :
                      layer.options.units ? layer.options.units.value : layer.options.kernelSize ? layer.options.kernelSize.value[0] : layer.options.poolSize ? layer.options.poolSize.value[0] : 1;
       const last = i < model.layers.length - 1 ? false : true;
-      const duplicates = layer.options.kernelSize && layer.type.args.dimensions > 1 ? layer.options.kernelSize.value[1] : layer.options.actuators && layer.options.inputDimension > 1 ? layer.options.actuators.value :
-                         layer.options.poolSize && layer.type.args.dimensions > 1 ? layer.options.poolSize.value[1] : 1;
+      const duplicates = layer.options.kernelSize && layer.type !== undefined && layer.type.args.dimensions > 1 ? 
+                         layer.options.kernelSize.value[1] : layer.options.actuators && 
+                         
+                         layer.options.inputDimension > 1 ? layer.options.actuators.value :
+                         layer.options.poolSize && layer.type !== undefined && layer.type.args.dimensions > 1 ? layer.options.poolSize.value[1] : 1;
 
       let overflow = false;
       let nextUnitsOverflow = false;
@@ -58,7 +61,7 @@ export class TensorFlowModelDrawService {
       const coords = this.getNodeCoords(duplicates, xUnits, xPos, distance, layerMargin, i, (i > 0 ? activeUnitsPerLayer[i - 1] : []));
       const lines = this.getLines(xUnits, model.layers[i + 1], distance, xPos, layerMargin, columnWidth, nextUnitsOverflow, overflow, layer.hidden, last, (i > 0 ? activeUnitsPerLayer[i - 1] : []), activeUnitsPerLayer[i]);
 
-      this.drawLayer(layer, coords, lines, i, layer.hidden ? this.smallColumnWidth : columnWidth, layerOffset, distance, model.inputs, last, maxUnits, overflow);
+      this.drawLayer(layer, coords, lines, i, layer.hidden ? this.smallColumnWidth : columnWidth, layerOffset, distance, model.inputs, last, (maxUnits ?? 0), overflow);
 
       layerOffset += (layer.hidden ? this.smallColumnWidth : columnWidth);
 
@@ -159,19 +162,23 @@ export class TensorFlowModelDrawService {
   }
 
   getMaxNrOfUnits(layers: Array<Layer>) {
-    const nrOfActiveInputs = this.tensorflowService.d.selectedModel.inputs.filter(i => i.active).length;
+    const nrOfActiveInputs = this.tensorflowService.d.selectedModel?.inputs.filter(i => i.active).length;
     // console.log(nrOfActiveInputs);
-    let max: number = layers[0].options.inputDimension > 1 ? nrOfActiveInputs : nrOfActiveInputs * layers[0].options.actuators.value;
-    for (let layer of layers) {
-      if (layer.options.units && layer.options.units.value > max) {
-        max = layer.options.units.value;
-      } else if (layer.options.kernelSize && layer.options.kernelSize.value[0] > max) {
-        max = layer.options.kernelSize.value[0];
-      } else if (layer.options.poolSize && layer.options.poolSize.value[0] > max) {
-        max = layer.options.poolSize.value[0];
+    if (nrOfActiveInputs !== undefined)  {
+      let max: number = layers[0].options.inputDimension > 1 ? nrOfActiveInputs : nrOfActiveInputs * layers[0].options.actuators.value;
+      for (let layer of layers) {
+        if (layer.options.units && layer.options.units.value > max) {
+          max = layer.options.units.value;
+        } else if (layer.options.kernelSize && layer.options.kernelSize.value[0] > max) {
+          max = layer.options.kernelSize.value[0];
+        } else if (layer.options.poolSize && layer.options.poolSize.value[0] > max) {
+          max = layer.options.poolSize.value[0];
+        }
       }
+      
+      return max < 10 ? max : 10;
     }
-    return max < 10 ? max : 10;
+    return;
   }
 
 
@@ -259,7 +266,7 @@ export class TensorFlowModelDrawService {
         .attr('cx', (d: { x: number }) => layer.hidden ? d.x + (distance/6.4) : d.x + (distance/5))
         .attr('cy', (d: { y: number }) => layer.hidden ? d.y - distance/5.2 : d.y - distance/3.5)
         .style('stroke', '#666')
-        .style('stroke-width', (d, i) => overflow && (i % (max - 2)) === 0 && i !== 0 ? 0 : 1)
+        .style('stroke-width', (d: any, i: number) => overflow && (i % (max - 2)) === 0 && i !== 0 ? 0 : 1)
         .style('fill', 'transparent');
 
         for (let arrowLine = 0; arrowLine < 2; arrowLine++) {
@@ -276,7 +283,7 @@ export class TensorFlowModelDrawService {
             .attr('y2', (d: { y: number }) => d.y - (layer.hidden ? distance/8 - 1: distance/4) - 1)
             .attr('y1', (d: { y: number }) => d.y - (layer.hidden ? distance/8 - 1: distance/4) - (distance/16) - 1)
             .style('stroke', '#666')
-            .style('stroke-width', (d, i) => overflow && (i % (max - 2)) === 0 && i !== 0 ? 0 : 1)
+            .style('stroke-width', (d: any, i: number) => overflow && (i % (max - 2)) === 0 && i !== 0 ? 0 : 1)
             .style('shapeRendering', 'geometricPrecision')
         }
     }
@@ -292,12 +299,13 @@ export class TensorFlowModelDrawService {
       .append('circle')
       .attr('id', (d: { x: number, y: number, unit: string }) => 'layer_' + layerIndex)
       .attr('class', 'layer_' + layerIndex)
-      .attr('r', (d, i) => overflow && (i % ((d.row + 1) * max - 2)) === 0 && i !== 0 ? distance/20 : layer.hidden ? distance/8 : distance/4 )
+      .attr('r', (d: { row: number; }, i: number) => 
+                  overflow && (i % ((d.row + 1) * max - 2)) === 0 && i !== 0 ? distance/20 : layer.hidden ? distance/8 : distance/4 )
       .attr('cx', (d: { x: number }) => layer.hidden ? d.x + 5 : d.x)
       .attr('cy', (d: { y: number }) => d.y)
       .style('stroke', (d: { index: number, row: number }, i: number)=> {
         if (last && this.tensorflowService.d.labels.length > 0) {
-          if (this.tensorflowService.d.labels[n].size <= i - total) {
+          if (this.tensorflowService.d.labels[n] !== undefined && this.tensorflowService.d.labels[n].size <= i - total) {
             total += this.tensorflowService.d.labels[n].size;
             n++;
           }
@@ -307,7 +315,8 @@ export class TensorFlowModelDrawService {
         }
       })
       .style('stroke-width', 1.5)
-      .style('fill', (d: { row: number; index: number; active: any; }, i:number) => overflow && (i % ((d.row + 1) * max - 2)) === 0 && i !== 0 ? (d.index > 0 ? 'transparent' : '#000') : !d.active ? '#4a4a4a' : '#ccc');
+      .style('fill', (d: { row: number; index: number; active: any; }, i:number) => overflow && (i % ((d.row + 1) * max - 2)) === 0 && 
+                      i !== 0 ? (d.index > 0 ? 'transparent' : '#000') : !d.active ? '#4a4a4a' : '#ccc');
 
 
     if (layerIndex === 0) {
@@ -332,7 +341,7 @@ export class TensorFlowModelDrawService {
 
 
     if (layerIndex > 0 && !layer.hidden && ((layer.options.activation && layer.options.activation.value) || (layer.type && layer.type.subgroup === 'normalization'))) {
-      const icon = layer.options.activation ? layer.options.activation.value : layer.type.subgroup;
+      const icon = layer.options.activation ? layer.options.activation.value : layer.type?.subgroup;
       const imageWidth = distance / 2;
       this.modelSVG.selectAll('img.layer_' + layerIndex).data([0])
         .data(coords.filter(c => c.index === 0))

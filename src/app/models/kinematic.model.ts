@@ -34,16 +34,14 @@ export class Model {
   startAngle = 0;
 
   constructor(id: number, type: string, active: boolean, thumbnail: string, objectUrls: Array<ObjectUrl>,
-              color: number, rpy: Vector3, baseSize: ConnectorSize, linkSize: ConnectorSize, axis: Vector3, angle = 0, link = null) {
+              color: number, rpy: Vector3, baseSize: ConnectorSize, linkSize: ConnectorSize, axis: Vector3, angle = 0, link: Array<ObjectUrl> | undefined = undefined) {
     this.id = id;
     this.type = type;
     this.active = active;
     this.thumbnail = thumbnail;
     this.objectUrls = objectUrls;
     this.color = color;
-    if (link !== null) {
-      this.linkObjectUrls = link;
-    }
+    this.linkObjectUrls = link ?? [];
     this.rpy.x = rpy.x;
     this.rpy.y = rpy.y;
     this.rpy.z = rpy.z;
@@ -59,7 +57,7 @@ export class Vector3 {
   y: number = 0;
   z: number = 0;
 
-  constructor (x: number = null, y: number = null, z: number = null) {
+  constructor (x: number = 0, y: number = 0, z: number = 0) {
     if (x && y && z) {
       this.x = x;
       this.y = y;
@@ -71,23 +69,23 @@ export class Vector3 {
 export class Object3D {
   // position = new Vector3();
   // rotation = new Vector3();
-  objectID: number;
+  objectID: number | undefined;;
   objectUrls: Array<ObjectUrl> = [];
   // obj: any;
-  color: number;
+  color: number | undefined;;
   hidden = false;
   lock = false;
 }
 
 
 export class ConnectorSize {
-  original: number;
-  scale: number;
-  value: number;
-  offset: number;
-  axis: Vector3;
+  original?: number;
+  scale?: number;
+  value?: number;
+  offset?: number;
+  axis?: Vector3;
 
-  constructor(original: number, scale: number, value: number, offset: number, axis: THREE.Vector3) {
+  constructor(original: number | undefined, scale: number | undefined, value: number | undefined, offset: number | undefined, axis: THREE.Vector3 | undefined = undefined) {
     this.original = original;
     this.scale = scale;
     this.value = value;
@@ -99,13 +97,13 @@ export class ConnectorSize {
 
 
 export class Connector {
-  id: string;
-  connID: string;
-  object: string;
+  id: string | undefined;
+  connID: string | undefined;
+  object: string | undefined;
   name: string;
   angle: number;
   plane: string;
-  block_id: string;
+  block_id: string | undefined;
   connected = false;
   size = new ConnectorSize(2.5, 1, 2.5, 26.5, new THREE.Vector3(0,1,0));
   vector3 = new THREE.Vector3(0,0,0);
@@ -132,10 +130,10 @@ export class Dimensions {
 }
 
 export class JointConfig {
-  active: boolean;
+  active: boolean | undefined;
   grounded: boolean = false;
-  control: MicroController;
-  motorIndex: number;
+  control: MicroController | undefined;
+  motorIndex: number | undefined;
 }
 
 
@@ -143,8 +141,8 @@ export class JointConfig {
 export class URFD_Joint {
   id: string;
   name: string = 'joint';
-  parent: URFD_Link;
-  child: URFD_Link;
+  parent: URFD_Link | undefined;
+  child: URFD_Link | undefined;
   type: JointType;
   dimensions = new Dimensions();
   axis = new Vector3();
@@ -185,8 +183,8 @@ export class URFD_Link {
   id: string;
   name: string = 'link';
   type: JointType;
-  parent: URFD_Joint;
-  children: Array<any>;
+  parent: URFD_Joint | undefined;
+  children: Array<any> = [];
   dimensions = new Dimensions();
   size = new ConnectorSize(2.5, 1, 29, 26.5, new THREE.Vector3(0,1,0));
   object3D = new Object3D();
@@ -216,24 +214,24 @@ export class URFD_Link {
 
 export class JointLink {
   id: string;
-  name: string; //move to in config
+  name: string = ''; //move to in config
   // type: string;
-  modelType: number;
-  active: boolean;
+  modelType: number | undefined;
+  active: boolean | undefined;
   grounded: boolean;
-  size: number;
-  control: MicroController;
+  size: number = 1;
+  control: MicroController | undefined;
   isMotor = false;
   isJoint = false;
-  motor: number;
+  motor: number | undefined;
   angle = 0;
   limits = new Limits();
   object3D = new Object3D();
   selected = false;
   connectors: Array<Connector> = [];
-  sceneObject: THREE.Object3D = null;
+  sceneObject: THREE.Object3D | undefined;
 
-  constructor(id:string, model: Model) {
+  constructor(id:string, model: Model | undefined) {
     this.id = id;
     this.grounded = false;
 
@@ -246,8 +244,8 @@ export class JointLink {
 
         // const Z_connector_a = new Connector(null, 'Yellow:Z:1', 0, 'Z', new THREE.Vector3(1,1,1));
         // const Z_connector_b = new Connector(null, 'Yellow:Z:-1', 0, 'Z', new THREE.Vector3(-1,-1,-1));
-        const Z_connector_a = new Connector(null, 'Yellow:Z:1', 0, 'Z', new THREE.Vector3(0,0,1));
-        const Z_connector_b = new Connector(null, 'Yellow:Z:-1', 0, 'Z', new THREE.Vector3(0,0,-1));
+        const Z_connector_a = new Connector('', 'Yellow:Z:1', 0, 'Z', new THREE.Vector3(0,0,1));
+        const Z_connector_b = new Connector('', 'Yellow:Z:-1', 0, 'Z', new THREE.Vector3(0,0,-1));
 
         this.connectors.push(Z_connector_a, Z_connector_b);
 
@@ -263,10 +261,10 @@ export class JointLink {
 
       } else if (model.type === 'connector') {
         this.size = 15;
-        const X_connector_a = new Connector(null, 'Yellow:X:1', 0, 'X', new THREE.Vector3(1,0,0));
-        const X_connector_b = new Connector(null, 'Yellow:X:-1', 0, 'X', new THREE.Vector3(-1,0,0));
-        const Y_connector_a = new Connector(null, 'Yellow:Y:1', 0, 'Y', new THREE.Vector3(0,1,0));
-        const Y_connector_b = new Connector(null, 'Yellow:Y:-1', 0, 'Y', new THREE.Vector3(0,-1,0));
+        const X_connector_a = new Connector('', 'Yellow:X:1', 0, 'X', new THREE.Vector3(1,0,0));
+        const X_connector_b = new Connector('', 'Yellow:X:-1', 0, 'X', new THREE.Vector3(-1,0,0));
+        const Y_connector_a = new Connector('', 'Yellow:Y:1', 0, 'Y', new THREE.Vector3(0,1,0));
+        const Y_connector_b = new Connector('', 'Yellow:Y:-1', 0, 'Y', new THREE.Vector3(0,-1,0));
 
         this.connectors.push(X_connector_a, X_connector_b, Y_connector_a, Y_connector_b);
       }
@@ -276,7 +274,7 @@ export class JointLink {
 
 export class Arm {
   id: string;
-  grounded: boolean;
+  grounded: boolean = false;
   size: number = 1
   object3D = new Object3D();
 

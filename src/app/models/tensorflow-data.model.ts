@@ -17,8 +17,8 @@ export class ML_Data {
 export class TensorFlowData {
 
   selectedMicrocontrollers: Array<MicroController> = [];
-  selectOptionMicrocontroller: MicroController;
-  selectedModel: Model;
+  selectOptionMicrocontroller?: MicroController;
+  selectedModel?: Model;
 
   kMeans_options = [{ name: 'k clusters', value: 3 },
                     { name: 'Max iterations', value: 4 },
@@ -27,9 +27,9 @@ export class TensorFlowData {
   motorList = [];
 
   dataSets: Array<DataSet> = [];
-  selectedDataset: DataSet = null;
-  selectedMLDataset: MLDataSet = null;
-  selectedTrainingSet: TrainingSet = null;
+  selectedDataset?: DataSet;
+  selectedMLDataset?: MLDataSet;
+  selectedTrainingSet?: TrainingSet;
   mlOutputData: Array<MLDataSet> = [];
   trainingData: Array<TrainingSet> = [];
 
@@ -56,7 +56,7 @@ export class TensorFlowData {
                 new InputColor('target', '#7778E0') ];
 
   colorOptions = ['#ED1A75','#EBAE52','#F2662D','#F0747A','#C05BEB','#7065EB','#43E6D5', '#00AEEF', '#E18257', '#4390E6', '#7778E0', '#F93858', '#B533FF', '#FCFF33', '#BBFF33' ];
-  labels = [];
+  labels : Array<any> = [];
 
   size = 0;
 

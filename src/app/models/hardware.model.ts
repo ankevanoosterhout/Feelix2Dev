@@ -53,7 +53,7 @@ export class Quality {
 
 export class Calibration {
   value = 0.0;
-  direction: string = null;
+  direction?: string;
   xStartPos = 0.0;
 }
 
@@ -84,13 +84,13 @@ export class Rotation {
 }
 
 export class PID {
-  p: number = null;
-  i: number = null;
-  d: number = null;
-  Tf: number = null;
-  output_ramp: number = null;
+  p?: number;
+  i?: number;
+  d?: number;
+  Tf?: number;
+  output_ramp?: number;
 
-  constructor(p: number, i: number, d: number, Tf: number = null, output_ramp: number = null) {
+  constructor(p: number, i: number, d: number, Tf: number | undefined = undefined, output_ramp: number | undefined = undefined) {
     this.p = p;
     this.i = i;
     this.d = d;
@@ -129,13 +129,13 @@ export class BLDCConfig extends Config {
   transmission = 1;
   frequency = 50000;
   current_sense = [ new CurrentSense('a', 0.0), new CurrentSense('b', 0.0) ];
-  current_sense_calibration: number;
+  current_sense_calibration?: number;
   output_ramp_angle = 10000;
   output_ramp_velocity = 1000;
   position_pid = new PID(20.0, 0.0, 0.0, 0, 1000);
   velocity_pid = new PID(0.5, 10, .001, 0.01, 1000);
   temperature = 0.0;
-  measuredSupplyVoltage: number;
+  measuredSupplyVoltage?: number;
 }
 
 export class minMax {
@@ -172,7 +172,7 @@ export class HydraulicConfig extends Config {
   transmission = 1;
   frequency = 50000;
   current_sense = [ new CurrentSense('a', 0.0), new CurrentSense('b', 0.0) ];
-  current_sense_calibration: number;
+  current_sense_calibration?: number;
   output_ramp_angle = 10000;
   output_ramp_velocity = 1000;
   position_pid = new PID(20.0, 0.0, 0.0, 0, 1000);
@@ -218,7 +218,7 @@ export class State {
 }
 
 export class Motor {
-  id: string = null;
+  id: string = '';
   type: ActuatorType;
   config: any;
   state = new State();
@@ -264,16 +264,16 @@ export class OtherDevices {
 
 
 export class MicroController {
-  id: string = null;
-  serialPort: any = null;
-  name: string = null;
-  vendor: string = null;
+  id: string = '';
+  serialPort?: any;
+  name?: string;
+  vendor?: string;
   motors = [ new Motor(0, ActuatorType.bldc, 1) ];
-  storageSpace: number = null;
+  storageSpace?: number;
   connected = false;
   playing = false;
   selected = false;
-  lastDataSend: number = null;
+  lastDataSend?: number;
   updateSpeed = 20;
   baudrate = 115200;
   dataToOtherDevices: Array<any> = [];
@@ -293,12 +293,12 @@ export class MicroController {
 
 
 export class ConnectedDevice {
-  id: string = null;
-  name: string = null;
-  serialPort: any = null;
+  id: string = '';
+  name?: string;
+  serialPort?: any;
   connected = true;
-  lastDataSend: number = null;
-  lastDataReceived: number = null;
+  lastDataSend?: number;
+  lastDataReceived?: number;
   dataSendSpeed = 50;
   baudrate = 115200;
 

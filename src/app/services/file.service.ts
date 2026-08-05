@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { File } from '../models/file.model';
 import { Details, Effect } from '../models/effect.model';
 import { v4 as uuid } from 'uuid';
-import { LocalStorageService } from 'src/app/services/local-storage-fallback.service'
+import { LocalStorageService } from '../services/local-storage-fallback.service'
 import { Subject } from 'rxjs';
 import { FileSaverService } from 'ngx-filesaver';
 import { NodeService } from './node.service';
@@ -63,19 +63,24 @@ export class FileService {
           this.fileObservable.next(this.files);
         }
 
-        if (event.key.startsWith(FileService.LOAD_FILE)) {
-          const fileLocation: string = JSON.parse(localStorage.getItem(FileService.LOAD_FILE_LOCATION));
+        if (event?.key?.startsWith(FileService.LOAD_FILE)) {
+          const fileLocation = localStorage.getItem(FileService.LOAD_FILE_LOCATION)
+          const location: string = fileLocation ? JSON.parse(fileLocation) : '';
 
-          this.parseFile(localStorage.getItem(FileService.LOAD_FILE)).then((file: File) => {
-            try {
-              file.path = fileLocation;
-              if (this.files.filter(f => f._id === file._id).length === 0) {
-                this.files.push(file);
+          const file = localStorage.getItem(FileService.LOAD_FILE);
+          
+          if(file) {
+            (this.parseFile(file) as Promise<File>).then((file: File) => {
+              try {
+                file.path = location;
+                if (this.files.filter(f => f._id === file._id).length === 0) {
+                  this.files.push(file);
+                }
+                this.setActive(file);
+              } catch (error) {
               }
-              this.setActive(file);
-            } catch (error) {
-            }
-          });
+            });
+          }
 
           localStorage.removeItem(FileService.LOAD_FILE);
           localStorage.removeItem(FileService.LOAD_FILE_LOCATION);
@@ -87,6 +92,7 @@ export class FileService {
   }
 
   createDefault(name: string) {
+    console.log('create default file');
     const defaultFile = new File(name, uuid(), true);
     const collection = new Collection(uuid(), 'Collection-' + (defaultFile.collections.length + 1));
     // console.log(collection);
@@ -118,7 +124,7 @@ export class FileService {
   }
 
   addCollection() {
-    const selectedFile = this.files.filter(f => f.isActive)[0];
+    const selectedFile = this.files.find(f => f.isActive);
     if (selectedFile) {
       const collection = new Collection(uuid(), 'Collection-' + (selectedFile.collections.length + 1));
       selectedFile.collections.push(collection);
@@ -137,13 +143,15 @@ export class FileService {
   }
 
 
-  updateCollectionEffect(collection: Collection, collEffect: Details) {
+  updateCollectionEffect(collection: Collection | undefined, collEffect: Details | undefined) {
     const activeFile = this.files.filter(f => f.isActive)[0];
-    if (activeFile) {
+    
+    if (activeFile && collection !== undefined) {
       activeFile.activeCollectionEffect = collEffect;
       activeFile.activeCollection = collection;
       let collectionItem = activeFile.collections.filter(c => c.id === collection.id)[0];
-      if (collectionItem) {
+
+      if (collectionItem !== undefined && collEffect !== undefined) {
         collectionItem.effects.filter(e => e.id === collEffect.id)[0] = this.cloneService.deepClone(collEffect);
         // collectionItem.effects.filter(e => e.id === collEffect.id)[0].flip = this.cloneService.deepClone(collEffect.flip);
         // collectionItem.effects.filter(e => e.id === collEffect.id)[0].scale = this.cloneService.deepClone(collEffect.scale);
@@ -296,16 +304,16 @@ export class FileService {
 
         } else if (effect && effect.type === EffectType.midiNote) {
           const parent = this.getParentEffect(effect.id, file);
-          if (parent && parent.data.filter(p => p.effect.id === effect.id)[0]) {
-            parent.data.filter(p => p.effect.id === effect.id)[0].effect = this.cloneService.deepClone(file.activeEffect);
-            parent.data.filter(p => p.effect.id === effect.id)[0].effect.paths = this.cloneService.deepClone(file.activeEffect.paths);
-            parent.data.filter(p => p.effect.id === effect.id)[0].effect.size = this.cloneService.deepClone(file.activeEffect.size);
-            parent.data.filter(p => p.effect.id === effect.id)[0].effect.type = file.activeEffect.type;
-            parent.data.filter(p => p.effect.id === effect.id)[0].effect.range = this.cloneService.deepClone(file.activeEffect.range);
-            parent.data.filter(p => p.effect.id === effect.id)[0].effect.range_y = this.cloneService.deepClone(file.activeEffect.range_y);
-            parent.data.filter(p => p.effect.id === effect.id)[0].effect.date.modified = new Date().getTime();
-            parent.data.filter(p => p.effect.id === effect.id)[0].effect.grid = this.cloneService.deepClone(file.activeEffect.grid);
-            parent.data.filter(p => p.effect.id === effect.id)[0].effect.midi_config = this.cloneService.deepClone(file.activeEffect.midi_config);
+          if (parent && parent.data.filter((p: { effect: { id: any; }; }) => p.effect.id === effect.id)[0]) {
+            parent.data.filter((p: { effect: { id: any; }; }) => p.effect.id === effect.id)[0].effect = this.cloneService.deepClone(file.activeEffect);
+            parent.data.filter((p: { effect: { id: any; }; }) => p.effect.id === effect.id)[0].effect.paths = this.cloneService.deepClone(file.activeEffect.paths);
+            parent.data.filter((p: { effect: { id: any; }; }) => p.effect.id === effect.id)[0].effect.size = this.cloneService.deepClone(file.activeEffect.size);
+            parent.data.filter((p: { effect: { id: any; }; }) => p.effect.id === effect.id)[0].effect.type = file.activeEffect.type;
+            parent.data.filter((p: { effect: { id: any; }; }) => p.effect.id === effect.id)[0].effect.range = this.cloneService.deepClone(file.activeEffect.range);
+            parent.data.filter((p: { effect: { id: any; }; }) => p.effect.id === effect.id)[0].effect.range_y = this.cloneService.deepClone(file.activeEffect.range_y);
+            parent.data.filter((p: { effect: { id: any; }; }) => p.effect.id === effect.id)[0].effect.date.modified = new Date().getTime();
+            parent.data.filter((p: { effect: { id: any; }; }) => p.effect.id === effect.id)[0].effect.grid = this.cloneService.deepClone(file.activeEffect.grid);
+            parent.data.filter((p: { effect: { id: any; }; }) => p.effect.id === effect.id)[0].effect.midi_config = this.cloneService.deepClone(file.activeEffect.midi_config);
           }
         }
       }
@@ -320,7 +328,7 @@ export class FileService {
         return effect;
       } else if (effect.type === EffectType.midi) { // && effect.dataType === MidiDataType.notes
         if (effect.data && effect.data.length > 0) {
-          const midiEffect = effect.data.filter(d => d.effect.id === id)[0];
+          const midiEffect = effect.data.filter((d: { effect: { id: string; }; }) => d.effect.id === id)[0];
           if (midiEffect) {
             return midiEffect.effect;
           }
@@ -334,7 +342,7 @@ export class FileService {
     for (const effect of file.effects) {
       if (effect.type === EffectType.midi) { // && effect.dataType === MidiDataType.notes
         if (effect.data && effect.data.length > 0) {
-          if (effect.data.filter(d => d.effect.id === child).length > 0) {
+          if (effect.data.filter((d: { effect: { id: string; }; }) => d.effect.id === child).length > 0) {
             return effect;
           }
         }
@@ -692,7 +700,7 @@ export class FileService {
   deleteGuides(guides: Array<string>) {
     for (const guide of guides) {
       const activeFile = this.files.filter(f => f.isActive)[0];
-      const gEl = activeFile.activeEffect.grid.guides.filter(g => g.id === guide)[0];
+      const gEl = activeFile.activeEffect.grid.guides.filter((g: { id: string; }) => g.id === guide)[0];
       if (gEl) {
         const index = activeFile.activeEffect.grid.guides.indexOf(gEl);
         if (index > -1) {

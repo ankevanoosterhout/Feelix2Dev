@@ -57,21 +57,21 @@ export const MidiDataTypeLabelMapping: Record<MidiDataType, string> = {
 
 
 export class MidiBlockVisualization {
-  x: number;
-  y: number;
-  width: number;
+  x: number = 0;
+  y: number = 0;
+  width: number = 0;
 
-  constructor(x: number, y: number, width: number){
-    this.x = x;
-    this.y = y;
-    this.width = width;
+  constructor(x: number | undefined = 0, y: number | undefined = 0, width: number | undefined = 0){
+    if (x !== undefined) this.x = x;
+    if (y !== undefined) this.y = y;
+    if (width !== undefined) this.width = width;
   }
 }
 
 
 export class MidiDataBlock {
   id: string;
-  vis: MidiBlockVisualization;
+  vis = new MidiBlockVisualization();
   effect: MidiNote;
 
 

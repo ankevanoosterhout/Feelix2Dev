@@ -19,6 +19,7 @@ let tmpWindow = null;
 let activeWindow = null;
 let tensorflowWindow = null;
 
+const srcURL = `dist/feelix/browser/index.html`;
 
 /****** start app *****/
 
@@ -674,7 +675,7 @@ function createWindow() {
 
   mainWindow.loadURL(
     url.format({
-      pathname: path.join(__dirname, `../dist/feelix/index.html`),
+      pathname: path.join(process.cwd(), srcURL),
       protocol: "file:",
       slashes: true
     })
@@ -726,7 +727,7 @@ function createTensorFlowWindow() {
 
     tensorflowWindow.loadURL(
       url.format({
-        pathname: path.join(__dirname, `../dist/feelix/index.html`),
+        pathname: path.join(process.cwd(), srcURL),
         protocol: "file:",
         slashes: true,
         hash: '/tensorflowjs'
@@ -782,7 +783,7 @@ function drawTemporaryWindow(width, minWidth, height, minHeight, title, resizabl
 
   tmpWindow.loadURL(
     url.format({
-      pathname: path.join(__dirname, `../dist/feelix/index.html`),
+      pathname: path.join(process.cwd(), srcURL),
       protocol: "file:",
       slashes: true,
       hash: '/' + hash
@@ -828,7 +829,7 @@ function createInfoWindow() {
 
   infoWindow.loadURL(
     url.format({
-      pathname: path.join(__dirname, `../dist/feelix/index.html`),
+      pathname: path.join(process.cwd(), srcURL),
       protocol: "file:",
       slashes: true,
       hash: '/info'
@@ -881,7 +882,7 @@ function createToolbar(hash, width, type) {
     })
     newToolbar.loadURL(
       url.format({
-        pathname: path.join(__dirname, `../dist/feelix/index.html`),
+        pathname: path.join(process.cwd(), srcURL),
         protocol: "file:",
         slashes: true,
         hash: hash
@@ -931,7 +932,7 @@ function createKinematicsWindow() {
 
   kinematicWindow.loadURL(
     url.format({
-      pathname: path.join(__dirname, `../dist/feelix/index.html`),
+      pathname: path.join(process.cwd(), srcURL),
       protocol: "file:",
       slashes: true,
       hash: '/kinematics'

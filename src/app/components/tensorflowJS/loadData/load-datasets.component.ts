@@ -1,16 +1,19 @@
 import { Component, OnInit, Inject } from '@angular/core';
-import { DOCUMENT } from '@angular/common';
-import { ElectronService } from 'src/app/services/electron.service';
-// import { DataSet, Model } from 'src/app/models/tensorflow.model';
-import { DataSetService } from 'src/app/services/dataset.service';
-import { TensorFlowModelService } from 'src/app/services/tensorflow-model.service';
+import { CommonModule, DOCUMENT } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Folder } from 'src/app/models/file.model';
+
+import { ElectronService } from '../../../services/electron.service';
+import { DataSetService } from '../../../services/dataset.service';
+import { TensorFlowModelService } from '../../../services/tensorflow-model.service';
+import { Folder } from '../../../models/file.model';
+
 
 
 @Component({
   selector: 'app-load-dataset',
-  standalone: false,
+  standalone: true,
+  imports: [CommonModule, FormsModule],
   templateUrl: './load-dataset.component.html',
   styleUrls: ['./load-dataset.component.css', '../tensorflow.component.scss'],
 })
@@ -20,9 +23,22 @@ export class LoadDataSetsComponent implements OnInit {
   mode = '';
   data: Array<any>;
   allSelected = false;
-  multipleSelect = {min: null, max: null, active: false};
+
+  multipleSelect: { 
+    min?: number, 
+    max?: number, 
+    active: boolean } = 
+    { min: undefined, 
+      max: undefined, 
+      active: false };
+
   currentLevel = 0;
-  activeFolder = { id: null, parent: null };
+
+  activeFolder: { 
+    id?: string, 
+    parent?: string } = 
+    { id: undefined, 
+      parent: undefined };
 
   // tslint:disable-next-line: variable-name
   constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService, private dataSetService: DataSetService,
@@ -66,12 +82,12 @@ export class LoadDataSetsComponent implements OnInit {
     }
   }
 
-  public createFolder(files: Array<any> = this.data.filter(d => d.selected), name: string = null) {
+  public createFolder(files: Array<any> = this.data.filter(d => d.selected), name: string | undefined = undefined) {
     if (!name) {
       name = 'new Folder ' + (this.data.filter(d => d instanceof Folder).length + 1);
     }
     this.dataSetService.createFolder(files, name, this.currentLevel);
-    this.multipleSelect = {min: null, max: null, active: false};
+    this.multipleSelect = {min: undefined, max: undefined, active: false};
   }
 
   openFolder(folder: Folder) {
@@ -131,14 +147,14 @@ export class LoadDataSetsComponent implements OnInit {
               this.multipleSelect.active = true;
               let index = 0;
               for (const set of this.data) {
-                if (index >= this.multipleSelect.min && index <= this.multipleSelect.max) {
+                if (index >= (this.multipleSelect.min ?? 0) && index <= this.multipleSelect.max) {
                   set.selected = true;
                 }
                 index++;
               }
             } else {
               this.multipleSelect.min = this.data.indexOf(dataSet);
-              this.multipleSelect.max = null;
+              this.multipleSelect.max = undefined;
               this.multipleSelect.active = false;
             }
             dataSet.selected = true;

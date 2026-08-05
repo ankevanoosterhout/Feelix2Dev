@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { LocalStorageService } from 'src/app/services/local-storage-fallback.service';
+import { LocalStorageService } from '../services/local-storage-fallback.service';
 import { Model, TrainingSet } from '../models/tensorflow.model';
-import { CloneService } from './clone.service';
 import { v4 as uuid } from 'uuid';
+
+// import { CloneService } from './clone.service';
 
 
 @Injectable()
@@ -19,7 +20,8 @@ export class TensorFlowModelService {
     window.addEventListener('storage', event => {
       if (event.storageArea === localStorage) {
         if (event.key === TensorFlowModelService.LIBRARY_LOCATION) {
-          const dataSetLib: Array<Model> = JSON.parse(localStorage.getItem(TensorFlowModelService.LIBRARY_LOCATION));
+          const lib = localStorage.getItem(TensorFlowModelService.LIBRARY_LOCATION);
+          const dataSetLib: Array<Model> = lib? JSON.parse(lib) : [];
           this.models = dataSetLib;
         }
       }
@@ -89,7 +91,7 @@ export class TensorFlowModelService {
 
 
   getAllTrainingData() {
-    let data = [];
+    let data: Array<any> = [];
 
     return data;
   }

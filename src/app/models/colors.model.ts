@@ -1,7 +1,7 @@
 export class Color {
-  name: string = null;
-  hash: string = null;
-  sel: string = null;
+  name: string;
+  hash: string;
+  sel: string;
 
   constructor(name: string, hash: string, sel: string) {
     this.name = name;

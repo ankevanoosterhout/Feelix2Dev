@@ -9,6 +9,12 @@ import { DataService } from './data.service';
 import { NodeService } from './node.service';
 
 
+interface SegmentNode {
+  id: string;
+  pos: { x: number; y: number };
+  angle: { x: number; y: number };
+}
+
 
 @Injectable()
 export class EffectVisualizationService {
@@ -113,21 +119,17 @@ export class EffectVisualizationService {
           activeCollEffectID = _collEffect.id;
           d3.selectAll('#coll-effect-' + _collection.id + '-' + _collEffect.id).style('opacity', 0.6);
         })
-        .on('drag', (event: { x: number; dx: number; }, d: { id: string; }) => {
-          if (!layerLocked) {
-            if (_collEffect.repeat.repeatInstances.filter(r => r.id === d.id)[0]) {
-              _collEffect.repeat.repeatInstances.filter(r => r.id === d.id)[0].x += (_collection.config.newXscale.invert(event.x) - _collection.config.newXscale.invert(event.x - event.dx));
-            } else {
-              _collEffect.position.x += (_collection.config.newXscale.invert(event.x) - _collection.config.newXscale.invert(event.x - event.dx));
-            }
+        .on('drag', (event: any, d: any) => { 
+          if (layerLocked) return; 
+          const matchedInstance = _collEffect.repeat.repeatInstances.find((r: any) => r.id === d.id);
+          const deltaX = _collection.config.newXscale.invert(event.x) - _collection.config.newXscale.invert(event.x - event.dx);
 
-            this.drawCollectionEffect(svg, _collection, _collEffect, effect, pixHeight, activeCollEffectID, colors);
+          if (matchedInstance) {
+            matchedInstance.x += deltaX;
+          } else {
+            _collEffect.position.x += deltaX;
           }
-        })
-        .on('end', () => {
-          if (!layerLocked) {
-            this.updateCollectionData({ collection: _collection, collEffect: _collEffect });
-          }
+          this.drawCollectionEffect(svg, _collection, _collEffect, effect, pixHeight, activeCollEffectID, colors);
         });
 
 
@@ -319,9 +321,9 @@ export class EffectVisualizationService {
       .attr('fill', 'none')
       .attr('stroke', color)
       .attr('stroke-width', 1.5)
-      .attr('d', d3.line()
-        .x((d: { time: number }) => collection.config.newXscale(collection.rotation.units.name === 'sec' ? (d.time - 1) / 1000 : (d.time - 1)))
-        .y((d: { value: number }) => collection.config.newYscale(d.value)));
+      .attr('d', d3.line<{ time: number; value: number }>() // Added generic type brackets here
+        .x((d) => collection.config.newXscale(collection.rotation.units.name === 'sec' ? (d.time - 1) / 1000 : (d.time - 1)))
+        .y((d) => collection.config.newYscale(d.value)));
 
   }
 
@@ -485,7 +487,7 @@ export class EffectVisualizationService {
 
 
     if (numberOfNodes.length > 1) {
-      const pathStrArray = [];
+      const pathStrArray: Array<object> = [];
       let pathStr = 'M';
       let n = 0;
       let idStr = '';
@@ -534,6 +536,7 @@ export class EffectVisualizationService {
       });
       return pathStrArray;
     }
+    return [];
   }
 
   returnPlaneAsString(path: any, scaleX: any, scaleY: any, multiply = 1): Array<object> {
@@ -541,10 +544,10 @@ export class EffectVisualizationService {
     const numberOfNodes = path.nodes.filter((n: { type: string; }) => n.type === 'node');
 
     if (numberOfNodes.length > 1) {
-      const planeStrArray = [];
+      const planeStrArray: Array<object> = [];
       let pathStr = 'M ';
-      const pathSegments = [];
-      let tmpArray = [];
+      const pathSegments: Array<object> = [];
+      let tmpArray: Array<any> = [];
 
       for (const node of nodes) {
         if (node.type === 'node') {
@@ -560,29 +563,54 @@ export class EffectVisualizationService {
         }
       }
 
-      for (const el of pathSegments) {
+      const segments = pathSegments as SegmentNode[][];
+
+      for (const el of segments) {
+        // Guard Clause: Skip empty segments to prevent index out of bounds runtime crashes
+        if (!el.length || !el[0]) continue;
+
+        const length = el.length;
 
         pathStr += scaleX(el[0].pos.x * multiply) + ' ' + scaleY(el[0].pos.y);
 
-        if (el.length === 3) { pathStr += ' Q'; } else if (el.length === 4) { pathStr += ' C'; }
+        if (length === 3) { 
+          pathStr += ' Q'; 
+        } else if (length === 4) { 
+          pathStr += ' C'; 
+        }
 
-        for (let i = 1; i < el.length; i++) {
+        for (let i = 1; i < length; i++) {
           pathStr += ' ' + scaleX(el[i].pos.x * multiply) + ' ' + scaleY(el[i].pos.y);
         }
-        pathStr += ' L ' + scaleX(el[el.length - 1].angle.x * multiply) + ' ' + scaleY(el[el.length - 1].angle.y);
+        
+        // Safe item access using verified length boundary
+        const lastNode = el[length - 1];
+        pathStr += ' L ' + scaleX(lastNode.angle.x * multiply) + ' ' + scaleY(lastNode.angle.y);
 
-        if (el.length === 3) { pathStr += ' Q'; } else if (el.length === 4) { pathStr += ' C'; }
+        if (length === 3) { 
+          pathStr += ' Q'; 
+        } else if (length === 4) { 
+          pathStr += ' C'; 
+        }
 
-        for (let i = el.length - 2; i >= 0; i--) {
+        for (let i = length - 2; i >= 0; i--) {
           pathStr += ' ' + scaleX(el[i].angle.x * multiply) + ' ' + scaleY(el[i].angle.y);
         }
         pathStr += ' Z';
 
-        planeStrArray.push( { id: el[0].id + '&&' + el[el.length - 1].id, svgPath: pathStr, parent: path.id } );
+        planeStrArray.push({ 
+          id: `${el[0].id}&&${lastNode.id}`, 
+          svgPath: pathStr, 
+          parent: path.id 
+        });
+        
         pathStr = 'M ';
       }
+
       return planeStrArray;
     }
+
+    return [];
   }
 
 
@@ -625,7 +653,7 @@ export class EffectVisualizationService {
     const numberOfNodes = path.nodes.filter((n: { type: string; }) => n.type === 'node');
 
     if (numberOfNodes.length > 1) {
-      const pathStrArray = [];
+      const pathStrArray: Array<object> = [];
       let pathStr = 'M';
       let n = 0;
       let idStr = '';
@@ -655,6 +683,8 @@ export class EffectVisualizationService {
       });
       return pathStrArray;
     }
+
+    return [];
   }
 
 

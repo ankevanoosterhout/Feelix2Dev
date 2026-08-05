@@ -1,18 +1,23 @@
 import { Component, OnInit, Inject, AfterViewInit } from '@angular/core';
-import { DOCUMENT } from '@angular/common';
-import { ElectronService } from 'src/app/services/electron.service';
-import { EffectLibraryService } from 'src/app/services/effect-library.service';
-import { EffectVisualizationService } from 'src/app/services/effect-visualization.service';
-import { DrawingService } from 'src/app/services/drawing.service';
-import { FileService } from 'src/app/services/file.service';
-import { Effect, RepeatInstance } from 'src/app/models/effect.model';
+import { CommonModule, DOCUMENT } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
 import { v4 as uuid } from 'uuid';
-import { CloneService } from 'src/app/services/clone.service';
-import { EffectTypeLabelMapping } from 'src/app/models/configuration.model';
+
+import { ElectronService } from '../../../services/electron.service';
+import { EffectLibraryService } from '../../../services/effect-library.service';
+import { EffectVisualizationService } from '../../../services/effect-visualization.service';
+import { DrawingService } from '../../../services/drawing.service';
+import { FileService } from '../../../services/file.service';
+import { Effect, RepeatInstance } from '../../../models/effect.model';
+import { CloneService } from '../../../services/clone.service';
+import { EffectTypeLabelMapping } from '../../../models/configuration.model';
+
 
 @Component({
     selector: 'app-effects',
-    standalone: false,
+    standalone: true,
+    imports: [ CommonModule, FormsModule ],
     templateUrl: './effects.component.html',
     styleUrls: ['./effects.component.css'],
 })
@@ -27,7 +32,7 @@ export class EffectsComponent implements OnInit, AfterViewInit {
   reflectVisible = false;
   qualityVisible = false;
 
-  effect: Effect = null;
+  effect?: Effect;
 
   inLibrary = false;
 
@@ -47,9 +52,9 @@ export class EffectsComponent implements OnInit, AfterViewInit {
   // ];
 
   displayOptions = [
-    { name: 'list', src: '../../src/assets/icons/buttons/list.svg', slug: 'list', selected: false },
-    { name: 'small thumbnails', src: '../../src/assets/icons/buttons/small-thumbnail.svg', slug: 'small-thumbnails', selected: false },
-    { name: 'large thumbnails', src: '../../src/assets/icons/buttons/large-thumbnail.svg', slug: 'large-thumbnails', selected: true }
+    { name: 'list', src: '../../../src/assets/icons/buttons/list.svg', slug: 'list', selected: false },
+    { name: 'small thumbnails', src: '../../../src/assets/icons/buttons/small-thumbnail.svg', slug: 'small-thumbnails', selected: false },
+    { name: 'large thumbnails', src: '../../../src/assets/icons/buttons/large-thumbnail.svg', slug: 'large-thumbnails', selected: true }
   ];
 
   sortOptions = [
@@ -93,9 +98,8 @@ export class EffectsComponent implements OnInit, AfterViewInit {
       } else if (this.activeTab === 1) {
         this.drawLibraryEffects();
       } else if (this.activeTab === 2) {
-        if (this.drawingService.file.activeCollectionEffect) {
-          this.effect = this.drawingService.file.effects.filter(e => e.id === this.drawingService.file.activeCollectionEffect.effectID)[0];
-        }
+        const activeEffect = this.drawingService.file.activeCollectionEffect;
+        if (activeEffect) this.effect = this.drawingService.file.effects.filter(e => e.id === activeEffect.effectID)[0];
       }
     });
 
@@ -120,22 +124,26 @@ export class EffectsComponent implements OnInit, AfterViewInit {
 
   public dragstart(item: any) {
     this.drawingService.setTmpEffect(item);
-    this.document.getElementById('overlayEffect-' + item.id).classList.add('dragging');
+    const overEffectItem = this.document.getElementById('overlayEffect-' + item.id);
+    if (overEffectItem) overEffectItem.classList.add('dragging');
   }
 
   public dragend(item: any) {
-    this.document.getElementById('overlayEffect-' + item.id).classList.remove('dragging');
+    this.document.getElementById('overlayEffect-' + item.id)?.classList.remove('dragging');
     this.drawingService.config.tmpEffect = null;
   }
 
 
   drawScrollbar() {
-    const inner = parseInt(this.document.getElementById('inner').style.height, 10);
-    const outer = parseInt(this.document.getElementById('outer').style.height, 10);
+    const innerObj = this.document.getElementById('inner');
+    const outerObj = this.document.getElementById('outer');
+    const inner = innerObj ? parseInt(innerObj.style.height, 10) : 0;
+    const outer = outerObj ? parseInt(outerObj.style.height, 10) : 0;
 
     if (inner + 5 > outer) {
       const ratio = (outer / (inner + 5));
-      this.document.getElementById('handle').style.height = (ratio * outer) + 'px';
+      const handleObj = this.document.getElementById('handle'); 
+      if (handleObj) handleObj.style.height = (ratio * outer) + 'px';
     }
   }
 
@@ -154,9 +162,8 @@ export class EffectsComponent implements OnInit, AfterViewInit {
     } else if (this.activeTab === 1) {
       this.drawLibraryEffects();
     } else if (this.activeTab === 2) {
-      if (this.drawingService.file.activeCollectionEffect) {
-        this.effect = this.drawingService.file.effects.filter(e => e.id === this.drawingService.file.activeCollectionEffect.effectID)[0];
-      }
+      const activeEffectID = this.drawingService.file.activeCollectionEffect?.effectID;
+      if (activeEffectID) this.effect = this.drawingService.file.effects.filter(e => e.id === activeEffectID)[0];
     }
   }
 
@@ -292,23 +299,26 @@ export class EffectsComponent implements OnInit, AfterViewInit {
 
   updateValue(id: string) {
     let valueStr = (this.document.getElementById(id) as HTMLInputElement).value;
-    if (valueStr) {
+    const activeEffect = this.drawingService.file.activeCollectionEffect;
+
+    if (valueStr !== undefined && activeEffect !== undefined) {
       let value = parseFloat(valueStr);
+      
       if (id === 'position-x') {
-        this.drawingService.file.activeCollectionEffect.position.x = value;
+        activeEffect.position.x = value;
       } else if (id === 'position-y') {
-        this.drawingService.file.activeCollectionEffect.position.y = value;
+        activeEffect.position.y = value;
       } else if (id === 'position-width') {
         if (value > 0.0) {
-          const newXscale = this.updateScale(this.drawingService.file.activeCollectionEffect.position.width, value, this.drawingService.file.activeCollectionEffect.scale.x);
-          this.drawingService.file.activeCollectionEffect.position.width = value;
-          this.drawingService.file.activeCollectionEffect.scale.x = newXscale;
+          const newXscale = this.updateScale(activeEffect.position.width, value, activeEffect.scale.x);
+          activeEffect.position.width = value;
+          activeEffect.scale.x = newXscale;
         }
       } else if (id === 'position-height') {
         if (value > 0.0) {
-          const newYscale = this.updateScale(this.drawingService.file.activeCollectionEffect.position.height, value, this.drawingService.file.activeCollectionEffect.scale.y);
-          this.drawingService.file.activeCollectionEffect.position.height = value;
-          this.drawingService.file.activeCollectionEffect.scale.y = newYscale;
+          const newYscale = this.updateScale(activeEffect.position.height, value, activeEffect.scale.y);
+          activeEffect.position.height = value;
+          activeEffect.scale.y = newYscale;
         }
       } else if (id === 'scale-x') {
         this.updateEffectWidth(value);
@@ -326,17 +336,25 @@ export class EffectsComponent implements OnInit, AfterViewInit {
 
   updateEffectWidth(value: number) {
     if (value > 0) {
-      const newWidth = this.updateScale(this.drawingService.file.activeCollectionEffect.scale.x, value, this.drawingService.file.activeCollectionEffect.position.width);
-      this.drawingService.file.activeCollectionEffect.position.width = newWidth;
-      this.drawingService.file.activeCollectionEffect.scale.x = value;
+      const activeEffect = this.drawingService.file.activeCollectionEffect;
+
+      if (activeEffect !== undefined) {
+        const newWidth = this.updateScale(activeEffect.scale.x, value, activeEffect.position.width);
+        activeEffect.position.width = newWidth;
+        activeEffect.scale.x = value;
+      }
     }
   }
 
   updateEffectHeight(value: number) {
     if (value > 0) {
-      const newHeight = this.updateScale(this.drawingService.file.activeCollectionEffect.scale.y, value, this.drawingService.file.activeCollectionEffect.position.height);
-      this.drawingService.file.activeCollectionEffect.position.height = newHeight;
-      this.drawingService.file.activeCollectionEffect.scale.y = value;
+      const activeEffect = this.drawingService.file.activeCollectionEffect;
+
+      if (activeEffect !== undefined) {
+        const newHeight = this.updateScale(activeEffect.scale.y, value, activeEffect.position.height);
+        activeEffect.position.height = newHeight;
+        activeEffect.scale.y = value;
+      }
     }
   }
 
@@ -345,33 +363,39 @@ export class EffectsComponent implements OnInit, AfterViewInit {
   }
 
   updateUniformResize() {
-    if (this.drawingService.file.activeCollectionEffect.scale.uniform) {
-      if (this.drawingService.file.activeCollectionEffect.scale.x !== this.drawingService.file.activeCollectionEffect.scale.y) {
-        this.updateEffectHeight(this.drawingService.file.activeCollectionEffect.scale.x);
+    const activeEffect = this.drawingService.file.activeCollectionEffect;
+
+    if (activeEffect !== undefined && activeEffect.scale.uniform) {
+      if (activeEffect.scale.x !== activeEffect.scale.y) {
+        this.updateEffectHeight(activeEffect.scale.x);
       }
     }
     this.updateCollectionEffect();
   }
 
-  showCompleteValue(id = null) {
-    if (id === 'position-x') {
-      (this.document.getElementById(id) as HTMLInputElement).value = this.drawingService.file.activeCollectionEffect.position.x.toString();
-    } else if (id === 'position-y') {
-      (this.document.getElementById(id) as HTMLInputElement).value = this.drawingService.file.activeCollectionEffect.position.y.toString();
-    } else if (id === 'scale' || id === 'scale-x') {
-      (this.document.getElementById(id) as HTMLInputElement).value = this.drawingService.file.activeCollectionEffect.scale.x.toString();
-    } else if (id === 'scale-y') {
-      (this.document.getElementById(id) as HTMLInputElement).value = this.drawingService.file.activeCollectionEffect.scale.y.toString();
-    } else if (id === 'position-width') {
-      (this.document.getElementById(id) as HTMLInputElement).value = this.drawingService.file.activeCollectionEffect.position.width.toString();
-    } else if (id === 'position-height') {
-      (this.document.getElementById(id) as HTMLInputElement).value = this.drawingService.file.activeCollectionEffect.position.height.toString();
+  showCompleteValue(id: string | undefined = undefined) {
+    const activeEffect = this.drawingService.file.activeCollectionEffect;
+    
+    if (activeEffect !== undefined && id !== undefined) {
+      if (id === 'position-x') {
+        (this.document.getElementById(id) as HTMLInputElement).value = activeEffect.position.x.toString();
+      } else if (id === 'position-y') {
+        (this.document.getElementById(id) as HTMLInputElement).value = activeEffect.position.y.toString();
+      } else if (id === 'scale' || id === 'scale-x') {
+        (this.document.getElementById(id) as HTMLInputElement).value = activeEffect.scale.x.toString();
+      } else if (id === 'scale-y') {
+        (this.document.getElementById(id) as HTMLInputElement).value = activeEffect.scale.y.toString();
+      } else if (id === 'position-width') {
+        (this.document.getElementById(id) as HTMLInputElement).value = activeEffect.position.width.toString();
+      } else if (id === 'position-height') {
+        (this.document.getElementById(id) as HTMLInputElement).value = activeEffect.position.height.toString();
+      }
     }
     this.drawingService.setInputFieldsActive(true);
   }
 
-  hideCompleteValue(id = null) {
-    if (id) {
+  hideCompleteValue(id: string | undefined = undefined) {
+    if (id !== undefined) {
       let value = parseFloat((this.document.getElementById(id) as HTMLInputElement).value);
       if (value) {
         let decimals = this.countDecimals(value);
@@ -384,33 +408,41 @@ export class EffectsComponent implements OnInit, AfterViewInit {
   }
 
   updateEffectRepeat() {
-    const newN = this.drawingService.file.activeCollectionEffect.repeat.instances;
-    const oldN = this.drawingService.file.activeCollectionEffect.repeat.repeatInstances.length + 1;
-    if (newN > 0) {
-      const difference = newN - oldN;
-      if (difference > 0) {
-        for (let i = oldN; i < difference + oldN; i++) {
-          const position = this.drawingService.file.activeCollectionEffect.position.x + (this.drawingService.file.activeCollectionEffect.position.width * i);
-          const newInstance = new RepeatInstance(uuid(), position);
-          this.drawingService.file.activeCollectionEffect.repeat.repeatInstances.push(newInstance);
-        }
-      } else if (difference < 0) {
-        for (let b = difference; b < 0; b++) {
-          if (this.drawingService.file.activeCollectionEffect.repeat.repeatInstances.length > 0) {
-            this.drawingService.file.activeCollectionEffect.repeat.repeatInstances.pop();
+    const activeEffect = this.drawingService.file.activeCollectionEffect;
+
+    if (activeEffect !== undefined) { 
+      const newN = activeEffect.repeat.instances;
+      const oldN = activeEffect.repeat.repeatInstances.length + 1;
+      if (newN > 0) {
+        const difference = newN - oldN;
+        if (difference > 0) {
+          for (let i = oldN; i < difference + oldN; i++) {
+            const position = activeEffect.position.x + (activeEffect.position.width * i);
+            const newInstance = new RepeatInstance(uuid(), position);
+            activeEffect.repeat.repeatInstances.push(newInstance);
+          }
+        } else if (difference < 0) {
+          for (let b = difference; b < 0; b++) {
+            if (activeEffect.repeat.repeatInstances.length > 0) {
+              activeEffect.repeat.repeatInstances.pop();
+            }
           }
         }
+      } else {
+        activeEffect.repeat.instances = oldN;
       }
-    } else {
-      this.drawingService.file.activeCollectionEffect.repeat.instances = oldN;
+      this.updateCollectionEffect();
     }
-    this.updateCollectionEffect();
   }
 
   updateRepeatInstanceXValue(id: string) {
+    const activeEffect = this.drawingService.file.activeCollectionEffect;
     const value = (this.document.getElementById('r-' + id) as HTMLInputElement).value;
-    this.drawingService.file.activeCollectionEffect.repeat.repeatInstances.filter(r => r.id === id)[0].x = parseFloat(value);
-    this.updateCollectionEffect();
+
+    if (activeEffect !== undefined) {
+      activeEffect.repeat.repeatInstances.filter(r => r.id === id)[0].x = parseFloat(value);
+      this.updateCollectionEffect();
+    }
   }
 
   countDecimals(value: number) {
@@ -419,22 +451,30 @@ export class EffectsComponent implements OnInit, AfterViewInit {
   }
 
   updateQuality() {
-    if (this.drawingService.file.activeCollectionEffect.quality < 1) {
-      this.drawingService.file.activeCollectionEffect.quality = 1;
-    } else {
-      this.drawingService.file.activeCollectionEffect.quality = Math.round(this.drawingService.file.activeCollectionEffect.quality);
-    }
-    for (const collEffect of this.drawingService.file.activeCollection.effects) {
-      if (collEffect.effectID === this.drawingService.file.activeCollectionEffect.effectID) {
-        collEffect.quality = this.drawingService.file.activeCollectionEffect.quality;
+    const activeCollection = this.drawingService.file.activeCollection;
+    const activeEffect = this.drawingService.file.activeCollectionEffect;
+    
+    if (activeCollection !== undefined && activeEffect !== undefined) {
+      if (activeEffect.quality < 1) {
+        activeEffect.quality = 1;
+      } else {
+        activeEffect.quality = Math.round(activeEffect.quality);
       }
-    }
-    if (this.drawingService.file.activeCollection.effectDataList.length > 0) {
-      this.document.getElementById('render-' + this.drawingService.file.activeCollection.id).click();
-      this.document.getElementById('render-' + this.drawingService.file.activeCollection.id).click();
-    }
+      for (const collEffect of activeCollection.effects) {
+        if (collEffect.effectID === activeEffect.effectID) {
+          collEffect.quality = activeEffect.quality;
+        }
+      }
+      if (activeCollection.effectDataList.length > 0) {
+        const renderObj = this.document.getElementById('render-' + activeCollection.id);
+        if (renderObj) {
+          renderObj.click();
+          renderObj.click();
+        }
+      }
 
-    this.fileService.updateCollection(this.drawingService.file.activeCollection);
+      this.fileService.updateCollection(activeCollection);
+    }
   }
 
 
@@ -442,17 +482,13 @@ export class EffectsComponent implements OnInit, AfterViewInit {
     this.fileService.sortEffects(this.drawingService.file.configuration.sortType);
   }
 
-  sortItems(sortType: string) {
-    this.effectLibraryService.sortLibraryEffectsBy(sortType, this.drawingService.file.configuration.sortDirection);
+  sortItems() {
+    this.effectLibraryService.sortLibraryEffectsBy(this.drawingService.file.configuration.sortType, this.drawingService.file.configuration.sortDirection);
     this.sortItemsEffectList();
   }
 
   toggleSortDirection() {
     this.drawingService.file.configuration.sortDirection = this.drawingService.file.configuration.sortDirection === 'first-last' ? 'last-first' : 'first-last';
-    this.sortItems(this.drawingService.file.configuration.sortType);
+    this.sortItems();
   }
-
-
-
-
 }

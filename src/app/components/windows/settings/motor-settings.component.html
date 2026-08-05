@@ -8,16 +8,19 @@
 
 <!-- tabs for each microcontroller -->
 <ul class="tabsContainer-vertical">
-  <li *ngFor="let microcontroller of this.microcontrollers">
-    <div [ngClass]="{ active: selectedMicrocontroller !== null && microcontroller.serialPort.path === selectedMicrocontroller.serialPort.path }"
+  @for (microcontroller of this.microcontrollers; track microcontroller) {
+  <li>
+    <div [ngClass]="{ active: selectedMicrocontroller !== null && microcontroller.serialPort.path === selectedMicrocontroller?.serialPort.path }"
       (click)="selectMicrocontroller(microcontroller)">{{ microcontroller.name }}</div>
   </li>
   <li (click)="addNewMicrocontroller()" title="add microcontroller"><div class="add-button">+</div></li>
+  }
 </ul>
 
 <!-- microcontroller settings of selected microcontroller -->
 <div class="tabContent-motorSettings">
-  <div class="innerContent-details motorsettings" id="inner" *ngIf="selectedMicrocontroller !== null && !showSelectMicrocontroller">
+  @if (selectedMicrocontroller !== undefined && !showSelectMicrocontroller) {
+  <div class="innerContent-details motorsettings" id="inner">
 
     <div class="form-group">
       <label class="labelRow motorsettings">Port</label>
@@ -26,7 +29,8 @@
 
     <div class="form-group">
       <label class="labelRow motorsettings">Name</label>
-      <input type="text" class="blue" id="name" name="name" [(ngModel)]="selectedMicrocontroller.name" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
+      <input type="text" class="blue" id="name" name="name" [(ngModel)]="selectedMicrocontroller.name" 
+             (change)="updateMicrocontroller(this.selectedMicrocontroller)">
     </div>
 
     <div class="form-group">
@@ -36,8 +40,12 @@
 
     <div class="form-group">
       <label class="labelRow select motorsettings">Microcontroller</label>
-      <select class="form-control playWindow" id="select-controller-type" [(ngModel)]="selectedMicrocontroller.vendor" name="controller" (change)="updateMicrocontroller(this.selectedMicrocontroller)">
-        <option *ngFor="let vendor of vendors" [ngValue]="vendor">{{ vendor }}</option>
+      <select class="form-control playWindow" id="select-controller-type" [(ngModel)]="selectedMicrocontroller.vendor" name="controller" 
+              (change)="updateMicrocontroller(this.selectedMicrocontroller)">
+
+        @for (vendor of vendors; track vendor) {
+        <option [ngValue]="vendor">{{ vendor }}</option>
+        }
       </select>
     </div>
 
@@ -175,7 +183,8 @@
               </div>
               <div class="row-slider">
                 <div class="slider">
-                  <input type="range" class="html-slider" [min]="6" [max]="24" step="0.5" name="frequencyMotor" [(ngModel)]="motor.config.supplyVoltage" (change)="updateSupplyVoltage(selectedMicrocontroller)">
+                  <input type="range" class="html-slider" [min]="6" [max]="24" step="0.5" name="supply-voltage-slider-{{ selectedMicrocontroller.serialPort.path }}-{{ motor.id }}" 
+                          [(ngModel)]="motor.config.supplyVoltage" (change)="updateSupplyVoltage(motor.id)">
                 </div>
               </div>
             </div>
@@ -528,21 +537,28 @@
     </ul>
 
   </div>
-
+  }
+  
   <!-- add new microcontroller -->
   <div class="innerContent-details motorsettings" id="inner" *ngIf="selectedMicrocontroller === null || showSelectMicrocontroller">
     <div class="form-group">
       <label class="labelRow select motorsettings">Port</label>
       <select class="form-control playWindow" id="COMPortList" [(ngModel)]="this.selectedPort" name="comportList" (change)="updateSelectedController()">
-        <option selected="selected" *ngIf="comports.length === 0" [ngValue]="undefined">-- select a comport --</option>
-        <option *ngFor="let port of comports" [ngValue]="port">{{ port.serialPort.path }} - {{ port.vendor }}</option>
+        @if (comports.length === 0) {
+          <option selected="selected" [ngValue]="undefined">-- select a comport --</option>
+          @for (port of comports; track port) {
+            <option [ngValue]="port">{{ port.serialPort.path }} - {{ port.vendor }}</option>
+          }
+        }
       </select>
       <div (click)="getComports()" class="image-button" title="search for open ports"><img src="./assets/icons/buttons/return.svg"></div>
     </div>
     <div class="form-group" *ngIf="this.selectedPort && this.selectedPort !== undefined">
       <label class="labelRow select motorsettings">Microcontroller</label>
-      <select class="form-control playWindow" id="controllerTypeSelect" [ngValue]="this.selectedPort.vendor" name="controllerType">
-          <option *ngFor="let vendor of vendors" [ngValue]="vendor">{{ vendor }}</option>
+      <select class="form-control playWindow" id="controllerTypeSelect" [(ngModel)]="this.selectedPort.vendor" name="controllerType">
+          @for (vendor of vendors; track vendor) {
+          <option [ngValue]="vendor">{{ vendor }}</option>
+          }
       </select>
     </div>
     <div class="form-row buttons">

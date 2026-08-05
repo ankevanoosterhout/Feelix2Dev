@@ -1,19 +1,22 @@
 import { Injectable, Inject } from '@angular/core';
-import { DrawingPlaneConfig } from '../models/drawing-plane-config.model';
-import { NodeService } from './node.service';
-import * as d3 from 'd3';
 import { DOCUMENT } from '@angular/common';
-import { File } from '../models/file.model';
+
+import * as d3 from 'd3';
+
+import { NodeService } from './node.service';
 import { BBoxService } from './bbox.service';
 import { DataService } from './data.service';
 import { BezierService } from './bezier.service';
-import { EffectType } from '../models/configuration.model';
 
+import { File } from '../models/file.model';
+import { EffectType } from '../models/configuration.model';
+import { DrawingPlaneConfig } from '../models/drawing-plane-config.model';
+import { Coords } from '../models/node.model';
 
 @Injectable()
 export class DrawElementsService {
 
-  public file = new File(null, null, null);
+  public file = new File(undefined, undefined, undefined);
   public config: DrawingPlaneConfig;
 
   constructor(@Inject(DOCUMENT) private document: Document, private bezierService: BezierService,
@@ -24,7 +27,8 @@ export class DrawElementsService {
 
   setCursor(cursor: string) {
     if (this.document.body.style.cursor !== 'wait') {
-      this.document.getElementById('field-inset').style.cursor = cursor;
+      const fieldObj = this.document.getElementById('field-inset');
+      if (fieldObj) fieldObj.style.cursor = cursor;
     }
   }
 
@@ -32,8 +36,10 @@ export class DrawElementsService {
   drawPath(path: string, type = 'pos') {
     const paths = this.nodeService.returnPathAsString(path, type);
 
-    let dragStart = { x: null, y: null };
-    let dragUpdate = { x: null, y: null };
+    let dragStart: { x: number | undefined, y: number | undefined } = { x: undefined, y: undefined };
+    let dragUpdate: { x: number | undefined, y: number | undefined } = { x: undefined, y: undefined };
+
+     const marginTop = this.config.margin.top ?? 0;
 
     if (paths) {
 
@@ -46,7 +52,7 @@ export class DrawElementsService {
         .attr('id', 'pathSVG_' + path + '_' + type)
         .attr('class', 'pathSVG')
         .attr('clip-path', 'url(#clip)')
-        .attr('transform', 'translate(0, ' + this.config.margin.top + ')');
+        .attr('transform', 'translate(0, ' + marginTop + ')');
 
       const dragPath = d3
         .drag()
@@ -59,8 +65,9 @@ export class DrawElementsService {
 
             if (this.config.cursor.slug === 'dsel') {
               this.config.svg.selectAll('.cpSVG, .bbox').remove();
-              dragStart = { x: event.sourceEvent.pageX, y: event.sourceEvent.pageY - this.config.margin.top };
-              dragUpdate = { x: event.sourceEvent.pageX, y: event.sourceEvent.pageY - this.config.margin.top };
+             
+              dragStart = { x: event.sourceEvent.pageX, y: event.sourceEvent.pageY - marginTop };
+              dragUpdate = { x: event.sourceEvent.pageX, y: event.sourceEvent.pageY - marginTop };
             }
 
             if (this.config.cursor.slug === 'sel') {
@@ -77,18 +84,21 @@ export class DrawElementsService {
               y: this.nodeService.scale.scaleY.invert(this.config.closestCoords.y)
             };
             const newNodesOnPath = this.bezierService.splitPath(nodes, d.parent, mouse);
-            this.nodeService.insertPathSegment(newNodesOnPath.nodes, d.parent);
+            if (newNodesOnPath !== undefined) {
+              this.nodeService.insertPathSegment(newNodesOnPath.nodes, d.parent);
 
-            if (this.config.cursor.slug === 'scis') {
-              const newPaths = this.nodeService.splitPathInTwo(newNodesOnPath._newNode.id, d.parent);
-              for (const newPath of newPaths) {
-                this.bboxService.getBBox(newPath);
+              if (this.config.cursor.slug === 'scis') {
+                const newPaths = this.nodeService.splitPathInTwo(newNodesOnPath._newNode.id, d.parent);
+                for (const newPath of newPaths) {
+                  this.bboxService.getBBox(newPath);
+                }
+              } else if (this.config.cursor.slug === 'pen') {
+                this.nodeService.selectedNodes = [ newNodesOnPath._newNode.id ];
+                this.nodeService.selectedPaths = [ d.parent ];
+                const cpPoints = this.nodeService.getCP(newNodesOnPath._newNode);
+
+                if (cpPoints !== undefined) this.drawControlPoints(cpPoints);
               }
-            } else if (this.config.cursor.slug === 'pen') {
-              this.nodeService.selectedNodes = [ newNodesOnPath._newNode.id ];
-              this.nodeService.selectedPaths = [ d.parent ];
-              const cpPoints = this.nodeService.getCP(newNodesOnPath._newNode);
-              this.drawControlPoints(cpPoints);
             }
             this.redrawElements();
           }
@@ -103,8 +113,8 @@ export class DrawElementsService {
                         '#pathSVG_' + d.parent + '_pos,' +
                         '#planeSVG_' + d.parent + ',' +
                         '#nodesSVG_' + d.parent).attr('transform', () => {
-                return 'translate(' + [ this.config.margin.left + (coords.x - dragStart.x),
-                                        this.config.margin.top + (coords.y - dragStart.y) ] + ')'; });
+                return 'translate(' + [ this.config.margin.left + (coords.x - (dragStart.x ?? 0)),
+                                        this.config.margin.top + (coords.y - (dragStart.y ?? 0)) ] + ')'; });
             } else {
               const translate = {
                 x: this.nodeService.scale.scaleX.invert(coords.x) - this.nodeService.scale.scaleX.invert(dragUpdate.x),
@@ -180,7 +190,7 @@ export class DrawElementsService {
         })
         .on('mouseout', (d: any) => {
           if (this.config.cursor.selectedSubcursor === 'add' && this.config.cursor.slug === 'pen') {
-            this.config.cursor.selectedSubcursor = null;
+            this.config.cursor.selectedSubcursor = undefined;
             this.setCursor(this.config.cursor.cursor);
           } else if (this.config.cursor.slug === 'thick' || this.config.cursor.slug === 'anchor' ||
                       this.config.cursor.slug === 'scis' || this.config.cursor.slug === 'dsel') {
@@ -201,17 +211,19 @@ export class DrawElementsService {
 
   updatePointPath(mouse: { x: number, y: number }, parent: string, path: string) {
     const nodes = this.nodeService.getNodesOfPathSegment(path, parent);
-    this.config.closestCoords = this.bezierService.findClosestPointOnPath(mouse, nodes, path);
-    if (this.config.closestCoords !== null) {
-      this.drawClosestPointOnPath(this.config.closestCoords);
+    if (nodes !== undefined) {
+      this.config.closestCoords = this.bezierService.findClosestPointOnPath(mouse, nodes, path);
+      if (this.config.closestCoords !== undefined) {
+        this.drawClosestPointOnPath(this.config.closestCoords);
+      }
     }
   }
 
 
-  drawClosestPointOnPath(coords: { x: number, y: number }) {
+  drawClosestPointOnPath(coords: Coords) {
     this.config.svg.selectAll('.closestPoint').remove();
 
-    if (coords.x !== null && coords.y !== null) {
+    if (coords.x && coords.y) {
       for (let i = -1; i < 2; i += 2) {
         const closestPointOnPath = this.config.pathSVG.append('line')
             .attr('x1', coords.x - 3)
@@ -251,7 +263,7 @@ export class DrawElementsService {
 
           if (!event.sourceEvent.shiftKey) {
             const cpPoints = this.nodeService.getCP(d);
-            this.drawControlPoints(cpPoints);
+            if (cpPoints !== undefined) this.drawControlPoints(cpPoints);
           } else {
             this.config.svg.select('.cpSVG').remove();
           }
@@ -260,7 +272,7 @@ export class DrawElementsService {
           this.nodeService.selectNode(d.id, event.sourceEvent.shiftKey);
 
           this.config.nodesSVG.selectAll('.fn_' + d.path).style('fill', this.file.configuration.colors.filter(c => c.type === EffectType.position)[0].hash[1]);
-          this.dataService.selectElement(d.id, d.pos.x, d.pos.y, null, null);
+          this.dataService.selectElement(d.id, d.pos.x, d.pos.y, undefined, undefined);
 
         } else if (this.config.cursor.slug === 'pen' || this.config.cursor.slug === 'anchor') {
 
@@ -273,7 +285,7 @@ export class DrawElementsService {
           } else if (this.config.cursor.selectedSubcursor === 'remove' && this.config.cursor.slug === 'pen') {
             this.nodeService.deleteNode(d.id, d.path);
             this.config.svg.select('.cpSVG').remove();
-            this.config.cursor.selectedSubcursor = null;
+            this.config.cursor.selectedSubcursor = undefined;
 
           } else if (this.config.cursor.selectedSubcursor === 'remove-cp' && this.config.cursor.slug === 'pen') {
             if (this.nodeService.selectedNodes.includes(d.id)) {
@@ -296,7 +308,7 @@ export class DrawElementsService {
               this.config.cursor.slug === 'pen' && this.config.cursor.selectedSubcursor !== 'start' &&
               this.config.cursor.selectedSubcursor !== 'remove') {
             const cpPoints = this.nodeService.getCP(d);
-            this.drawControlPoints(cpPoints);
+            if (cpPoints !== undefined) this.drawControlPoints(cpPoints);
           }
           this.redrawElements();
 
@@ -330,39 +342,44 @@ export class DrawElementsService {
       .on('drag', (event: any, d: any) => {
 
         if ( this.config.cursor.slug === 'thick' || this.config.cursor.slug === 'dsel' || this.config.cursor.slug === 'anchor' ) {
-          const coords = {
-            x: event.sourceEvent.pageX - this.config.margin.left,
-            y: event.sourceEvent.pageY - this.config.margin.top - this.config.margin.offsetTop };
+          const coords = new Coords(event.sourceEvent.pageX - this.config.margin.left,
+                                    event.sourceEvent.pageY - this.config.margin.top - this.config.margin.offsetTop);
 
-          if (coords.y < 0) { coords.y = 0; }
-          if (coords.y > this.config.chartDy) { coords.y = this.config.chartDy; }
-
-          let invertedCoords = {
-            x: this.nodeService.scale.scaleX.invert(coords.x),
-            y: this.nodeService.scale.scaleY.invert(coords.y)
-          };
-
-          if (this.config.cursor.slug !== 'thick') {
-            invertedCoords = this.nodeService.calculateSnapPoint(invertedCoords);
-
-            if (invertedCoords.x < this.config.editBounds.xMin) { invertedCoords.x = this.config.editBounds.xMin; }
-            if (invertedCoords.x > this.config.editBounds.xMax) { invertedCoords.x = this.config.editBounds.xMax; }
+          if (coords.y !== undefined) {
+            if (coords.y < 0) { coords.y = 0; }
+            if (coords.y > this.config.chartDy) { coords.y = this.config.chartDy; }
           }
 
-          const diff = { x: invertedCoords.x - d.pos.x, y: invertedCoords.y - d.pos.y };
+          let invertedCoords = new Coords(this.nodeService.scale.scaleX.invert(coords.x),
+                                          this.nodeService.scale.scaleY.invert(coords.y));
+
+          if (this.config.cursor.slug !== 'thick') {
+            if (invertedCoords !== undefined) {
+              invertedCoords = this.nodeService.calculateSnapPoint(invertedCoords);
+            }
+
+            if (invertedCoords.x !== undefined && invertedCoords.x < (this.config.editBounds.xMin ?? 0)) { invertedCoords.x = this.config.editBounds.xMin; }
+            if (invertedCoords.x !== undefined && invertedCoords.x > (this.config.editBounds.xMax ?? 360)) { invertedCoords.x = this.config.editBounds.xMax; }
+          }
+
+          const diff = { x: (invertedCoords.x ?? 0) - d.pos.x, y: (invertedCoords.y ?? 0) - d.pos.y };
 
           if (this.config.cursor.slug === 'dsel' || this.config.cursor.slug  === 'anchor') {
 
             this.nodeService.moveAllSelectedNodes(diff, event.sourceEvent.shiftKey);
-            this.dataService.selectElement(d.id, d.pos.x, d.pos.y, null, null);
+            this.dataService.selectElement(d.id, d.pos.x, d.pos.y, undefined, undefined);
             this.redrawElements();
+
             if (this.nodeService.selectedNodes.length === 1) {
-              this.drawControlPoints(this.nodeService.getCP(d));
+               const controlPoint = this.nodeService.getCP(d);
+               if (controlPoint !== undefined) this.drawControlPoints(controlPoint);
             }
 
           } else if (this.config.cursor.slug === 'thick') {
+
             if (this.nodeService.selectedNodes.length === 1) {
-              this.drawControlPoints(this.nodeService.getCP(d), 'angle');
+              const controlPoint = this.nodeService.getCP(d);
+               if (controlPoint !== undefined) this.drawControlPoints(controlPoint, 'angle');
             }
             this.nodeService.updateForceAngle(d.id, d.path, diff.x, (d.pos.x + diff.x), this.config.newControlPoints);
             this.redrawElements();
@@ -388,8 +405,6 @@ export class DrawElementsService {
           }
           this.config.newControlPoints = [];
         }
-
-
       });
 
 
@@ -405,8 +420,9 @@ export class DrawElementsService {
           this.nodeService.moveNodeAngle(d, diffX);
           this.redrawElements();
           d.angle.x = invertX;
-          this.drawControlPoints(this.nodeService.getCP(d), 'angle');
 
+          const cpPoints = this.nodeService.getCP(d);
+          if (cpPoints !== undefined) this.drawControlPoints(cpPoints, 'angle');
         }
       })
       .on('end', (d: any) => {
@@ -439,7 +455,9 @@ export class DrawElementsService {
       .on('mousedown', (event: any, d: any) => {
         this.nodeService.addSelectedNode(d.id);
         this.nodeService.addSelectedPath(d.path);
-        this.drawControlPoints(this.nodeService.getCP(d), 'angle');
+        
+        const cpPoints = this.nodeService.getCP(d);
+        if (cpPoints !== undefined) this.drawControlPoints(cpPoints, 'angle');
       })
       .on('mouseleave', (event: any, d: { id: string, path: string }) => {
         if (this.nodeService.selectedPaths.indexOf(d.path) < 0) {
@@ -474,19 +492,23 @@ export class DrawElementsService {
       .style('shape-rendering', 'crispEdges')
       .on('mouseenter', (event: any, d: any) => {
         if (this.config.cursor.slug === 'pen' && this.nodeService.selectedNodes.indexOf(d.id) < 0) {
+
           endNode = this.nodeService.checkIfNodeIsAtTheEndOfArray(d);
-          if (endNode > -1) {
-            if (!d3.select('.cursorConnection').empty()) {
-              this.config.cursor.selectedSubcursor = 'close';
-              this.drawActiveCursorConnClose(d);
-            } else if (d3.select('.cursorConnection').empty()) {
-              this.config.cursor.selectedSubcursor = 'start';
+
+          if (endNode !== undefined) {
+            if (endNode > -1) {
+              if (!d3.select('.cursorConnection').empty()) {
+                this.config.cursor.selectedSubcursor = 'close';
+                this.drawActiveCursorConnClose(d);
+              } else if (d3.select('.cursorConnection').empty()) {
+                this.config.cursor.selectedSubcursor = 'start';
+              }
+            } else if (endNode === -1 && d3.select('.cursorConnection').empty()) {
+              this.config.cursor.selectedSubcursor = 'remove';
             }
-          } else if (endNode === -1 && d3.select('.cursorConnection').empty()) {
-            this.config.cursor.selectedSubcursor = 'remove';
-          }
-          if (this.config.cursor.selectedSubcursor !== null) {
-            this.setCursor(this.config.cursor.subcursor.filter(c => c.name === this.config.cursor.selectedSubcursor)[0].cursor);
+            if (this.config.cursor.selectedSubcursor !== null) {
+              this.setCursor(this.config.cursor.subcursor.filter(c => c.name === this.config.cursor.selectedSubcursor)[0].cursor);
+            }
           }
         }
 
@@ -514,7 +536,7 @@ export class DrawElementsService {
       .on('mouseleave', (event: any, d: { id: string; path: string; pos: { x: number; y: number; };  }) => {
 
         if (this.config.cursor.slug === 'pen' && !event.altKey) {
-          this.config.cursor.selectedSubcursor = null;
+          this.config.cursor.selectedSubcursor = undefined;
           this.setCursor(this.config.cursor.cursor);
           this.config.svg.select('.cursorConnectionClose').remove();
         }
@@ -568,15 +590,15 @@ export class DrawElementsService {
 
         if ((this.config.cursor.slug === 'dsel' && type === 'pos') || (this.config.cursor.slug === 'thick' && type === 'angle') ||
              this.config.cursor.slug === 'anchor') {
-          let coords = {
-            x: this.nodeService.scale.scaleX.invert(event.x),
-            y: this.nodeService.scale.scaleY.invert(event.sourceEvent.pageY - this.config.margin.top - this.config.margin.offsetTop)
-          };
+
+          let coords = new Coords(this.nodeService.scale.scaleX.invert(event.x),
+                                  this.nodeService.scale.scaleY.invert(event.sourceEvent.pageY - this.config.margin.top - this.config.margin.offsetTop));
+
           if (this.file.activeEffect.grid.snap && this.file.activeEffect.grid.visible && this.config.cursor.slug !== 'thick') {
             coords = this.nodeService.calculateSnapPoint(coords);
           }
-          let diff = { x: coords.x - d.cp.pos.x, y: coords.y - d.cp.pos.y };
-          diff = type === 'pos' ? diff : { x: coords.x - d.cp.angle.x, y: coords.y - d.cp.angle.y };
+          let diff = { x: (coords.x ?? 0) - d.cp.pos.x, y: (coords.y ?? 0) - d.cp.pos.y };
+          diff = type === 'pos' ? diff : { x: (coords.x ?? 0) - d.cp.angle.x, y: (coords.y ?? 0) - d.cp.angle.y };
 
           const single = (this.config.cursor.slug === 'anchor' || this.config.cursor.slug === 'thick') ? true : false;
           const updatedCP = this.nodeService.getUpdatedCP(d.cp, diff, single, type);
@@ -773,10 +795,12 @@ export class DrawElementsService {
       const node = this.nodeService.getNodeByID(this.nodeService.selectedNodes[0]);
       if (node !== undefined) {
         const cpPoints = this.nodeService.getCP(node);
-        if (this.config.cursor.slug === 'thick') {
-          this.drawControlPoints(cpPoints, 'angle');
-        } else if (this.config.cursor.slug !== 'sel' && this.config.cursor.slug !== 'brush') {
-          this.drawControlPoints(cpPoints);
+        if (cpPoints !== undefined) {
+          if (this.config.cursor.slug === 'thick') {
+            this.drawControlPoints(cpPoints, 'angle');
+          } else if (this.config.cursor.slug !== 'sel' && this.config.cursor.slug !== 'brush') {
+            this.drawControlPoints(cpPoints);
+          }
         }
       } else {
         this.nodeService.deselectAll();

@@ -114,11 +114,11 @@ export class DragControlsService {
 
   onDeselect(object: any) {
 
-    if (object !== null && object.name !== 'no-pointer-events') {
+    if (object !== undefined && object.name !== 'no-pointer-events') {
       this.kinematicDrawingService.setObjectColor(object);
       if (!this.kinematicDrawingService.config.move) {
         this.kinematicDrawingService.config.control.detach();
-        this.c.drag.selected = null;
+        this.c.drag.selected = undefined;
         this.kinematicService.deselectFrame(object.parent.name);
       }
     }
@@ -184,69 +184,75 @@ export class DragControlsService {
       toRay.at(this.c.drag.hitDistance, this.c.drag.newHitPoint);
 
       let delta = 0;
-      const frame = this.kinematicService.getFrame(this.c.drag.manipulating.parent.name);
-      // console.log(frame, this.c.drag.manipulating.parent);
+      const parent = this.c.drag.manipulating.parent;
+      if (parent !== undefined) {
+        const frame = this.kinematicService.getFrame(parent.name);
+        // console.log(frame, this.c.drag.manipulating.parent);
 
-      if (frame) {
+        if (frame) {
 
-        // this.kinematicService.selectFrame(frame);
+          // this.kinematicService.selectFrame(frame);
 
-        if (this.kinematicDrawingService.config.move) {
+          if (this.kinematicDrawingService.config.move) {
 
-          if (frame.type === JointType.revolute || frame.type === JointType.continuous) {
+            if (frame.type === JointType.revolute || frame.type === JointType.continuous) {
 
-              delta = this.getRevoluteDelta(this.c.drag.manipulating.parent, frame.axis, this.c.drag.prevHitPoint, this.c.drag.newHitPoint);
-              // console.log(delta);
+                delta = this.getRevoluteDelta(parent, frame.axis, this.c.drag.prevHitPoint, this.c.drag.newHitPoint);
+                // console.log(delta);
 
-          } else if (frame.type === JointType.prismatic) {
+            } else if (frame.type === JointType.prismatic) {
 
-              // delta = this.getPrismaticDelta(manipulating, prevHitPoint, newHitPoint);
+                // delta = this.getPrismaticDelta(manipulating, prevHitPoint, newHitPoint);
 
-          }
-
-          if (delta !== 0) {
-
-            // this.c.drag.manipulating.parent.angle += delta;
-            // this.ikService.updateAngle(this.c.drag.manipulating.parent.name, frame.angle);
-
-            if (frame.axis.y === 1) {
-              // const rotationMatrix = new THREE.Matrix4().makeRotationAxis(frame.axis, delta);
-              this.c.drag.manipulating.parent.rotateY(delta);
-            } else if (frame.axis.z === 1) {
-              this.c.drag.manipulating.parent.rotateZ(delta);
-              // this.c.drag.manipulating.parent.rotation.z += delta;
             }
-            this.c.drag.manipulating.parent.updateMatrixWorld();
 
-            if (frame) {
-              // const linkedObject = this.kinematicDrawingService.getObjectFromScene((frame instanceof URFD_Joint ? frame.id + '-link' : frame.id.slice(0,-5)));
-              // console.log(linkedObject);
-              // if (linkedObject) {
-              //   this.kinematicService.updateAngle(this.c.drag.manipulating.parent.name, this.c.drag.manipulating.parent.rotation.z, linkedObject.rotation.z);
-              // }
-              // const framePosition = new THREE.Vector3();
-              // this.c.drag.manipulating.getWorldPosition(framePosition);
-              // const frameQuaternion = new THREE.Quaternion();
-              // this.c.drag.manipulating.parent.getWorldQuaternion(frameQuaternion);
+            if (delta !== 0) {
 
-              // console.log(frameQuaternion);
+              // this.c.drag.manipulating.parent.angle += delta;
+              // this.ikService.updateAngle(this.c.drag.manipulating.parent.name, frame.angle);
 
-              // if (frameQuaternion.x !== NaN && frameQuaternion.x !== undefined) {
-              //   this.ikService.updateAngle(frame.id, frameQuaternion);
-              // }
-              // this.updateAngle(frame, this.c.drag.manipulating.parent.rotation.z);
+              if (frame.axis.y === 1) {
+                // const rotationMatrix = new THREE.Matrix4().makeRotationAxis(frame.axis, delta);
+                this.c.drag.manipulating.parent.rotateY(delta);
+              } else if (frame.axis.z === 1) {
+                this.c.drag.manipulating.parent.rotateZ(delta);
+                // this.c.drag.manipulating.parent.rotation.z += delta;
+              }
+              this.c.drag.manipulating.parent.updateMatrixWorld();
+
+              if (frame) {
+                // const linkedObject = this.kinematicDrawingService.getObjectFromScene((frame instanceof URFD_Joint ? frame.id + '-link' : frame.id.slice(0,-5)));
+                // console.log(linkedObject);
+                // if (linkedObject) {
+                //   this.kinematicService.updateAngle(this.c.drag.manipulating.parent.name, this.c.drag.manipulating.parent.rotation.z, linkedObject.rotation.z);
+                // }
+                // const framePosition = new THREE.Vector3();
+                // this.c.drag.manipulating.getWorldPosition(framePosition);
+                // const frameQuaternion = new THREE.Quaternion();
+                // this.c.drag.manipulating.parent.getWorldQuaternion(frameQuaternion);
+
+                // console.log(frameQuaternion);
+
+                // if (frameQuaternion.x !== NaN && frameQuaternion.x !== undefined) {
+                //   this.ikService.updateAngle(frame.id, frameQuaternion);
+                // }
+                // this.updateAngle(frame, this.c.drag.manipulating.parent.rotation.z);
+              }
+              // this.updateJoint(selectedJoint, selectedJoint.angle + delta);
+              // console.log(this.c.drag.manipulating.parent.name);
+
+              this.kinematicDrawingService.animate();
             }
-            // this.updateJoint(selectedJoint, selectedJoint.angle + delta);
-            // console.log(this.c.drag.manipulating.parent.name);
-
-            this.kinematicDrawingService.animate();
           }
         }
-      } else {
-        if (this.c.drag.selected) {
-          this.onDeselect(this.c.drag.selected);
+      
+        if (frame === undefined) {
+          if (this.c.drag.selected) {
+            this.onDeselect(this.c.drag.selected);
+          }
         }
       }
+    
     }
     this.c.drag.rayCaster.ray.copy(toRay);
     this.update();

@@ -1,17 +1,24 @@
 import { Component, HostListener, AfterViewInit, OnInit } from '@angular/core';
-import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
-import { ElectronService } from 'src/app/services/electron.service';
-import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
-import { Classifier, DataSet, TrimSection} from 'src/app/models/tensorflow.model';
-import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
-import { TensorFlowConfig } from 'src/app/models/tensorflow-config.model';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+
 import { v4 as uuid } from 'uuid';
-import { TensorFlowRecordService } from 'src/app/services/tensorflow-record.service';
+
+import { TensorFlowMainService } from '../../../services/tensorflow-main.service';
+import { ElectronService } from '../../../services/electron.service';
+import { TensorFlowDrawService } from '../../../services/tensorflow-draw.service';
+import { Classifier, DataSet, TrimSection} from '../../../models/tensorflow.model';
+import { TensorFlowData } from '../../../models/tensorflow-data.model';
+import { TensorFlowConfig } from '../../../models/tensorflow-config.model';
+import { TensorFlowRecordService } from '../../../services/tensorflow-record.service';
+import { GraphComponent } from "../../tensorflowJS/graph.component";
+import { SidebarComponent } from "../../tensorflowJS/sidebar.component";
 
 
 @Component({
   selector: 'app-tensorflow-data',
-  standalone: false,
+  standalone: true,
+  imports: [ CommonModule, FormsModule, GraphComponent, SidebarComponent ],
   templateUrl: 'tensorflow-data.component.html',
   styleUrls: ['../../windows/effects/effects.component.css', './../tensorflow.component.scss'],
 })
@@ -64,7 +71,10 @@ export class TensorflowDataComponent implements OnInit, AfterViewInit {
 
 
         this.tensorflowDrawService.redrawGraphData.subscribe(res => {
-          this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, this.d.trimLinesVisible ? this.d.trimLines : null, this.graphID);
+          if (this.d.selectedDataset) this.tensorflowDrawService.drawTensorFlowGraphData(this.d.selectedDataset, 
+                                                                                        (this.d.trimLinesVisible ? this.d.trimLines : undefined), 
+                                                                                        this.graphID
+                                                                                        );
         });
       }
 
@@ -76,7 +86,7 @@ export class TensorflowDataComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     if (this.d.dataSets.length === 0) {
-      this.d.dataSets.push(new DataSet(uuid(), 'Data set ' + (this.d.dataSets.length + 1), this.d.selectedMicrocontrollers, this.d.selectedModel.outputs));
+      this.d.dataSets.push(new DataSet(uuid(), 'Data set ' + (this.d.dataSets.length + 1), this.d.selectedMicrocontrollers, this.d.selectedModel?.outputs));
       this.d.dataSets[0].open = true;
       this.d.selectedDataset = this.d.dataSets[0];
     }
@@ -111,17 +121,18 @@ export class TensorflowDataComponent implements OnInit, AfterViewInit {
 
   addTrimLine(index: number) {
 
-    const line = index < this.d.trimLines.length ? this.d.trimLines[index] : null;
+    const line = index < this.d.trimLines.length ? this.d.trimLines[index] : undefined;
 
-    const min = index - 1 >= 0  && line ? this.d.trimLines[index - 1].values.max  : !line ? this.d.trimLines[this.d.trimLines.length - 1].values.max : 0;
+    const min = index - 1 >= 0 && line && this.d.trimLines[index - 1] ? this.d.trimLines[index - 1].values.max : !line ? this.d.trimLines[this.d.trimLines.length - 1].values.max : 0;
 
     const size = this.tensorflowRecordService.getSize();
     const offset = Math.abs(this.config.scaleX.invert((size.width - size.margin) * 0.05));
     const max = line ? line.values.min : this.config.scaleX.invert(size.width - size.margin);
 
-    this.d.trimLines.splice(index, 0, new TrimSection(uuid(), { min: min + offset, max: max - offset}));
+    this.d.trimLines.splice(index, 0, new TrimSection(uuid(), { min: (min ?? 0) + offset, max: max - offset}));
 
-    this.d.trimLines.sort((a: TrimSection, b: TrimSection) => a.values.min - b.values.min);
+    this.d.trimLines.sort((a: TrimSection, b: TrimSection) => 
+      a.values.min !== undefined && b.values.min !== undefined ? a.values.min - b.values.min : 0);
     this.tensorflowDrawService.drawTrimLines(true, this.d.trimLines, this.tensorflowRecordService.getSize());
   }
 
@@ -149,9 +160,9 @@ export class TensorflowDataComponent implements OnInit, AfterViewInit {
 
   addClassifier(classifier: Classifier) {
     console.log('add classifier', classifier);
-    const outputClassifierInModel = this.d.selectedModel.outputs.filter(o => o.id === classifier.id)[0];
+    const outputClassifierInModel = this.d.selectedModel?.outputs.filter(o => o.id === classifier.id)[0];
     if (!outputClassifierInModel) {
-      this.d.selectedModel.outputs.push(classifier);
+      this.d.selectedModel?.outputs.push(classifier);
       this.tensorflowService.selectClassifier(classifier.id);
     }
   }

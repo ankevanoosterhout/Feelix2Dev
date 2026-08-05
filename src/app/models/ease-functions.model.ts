@@ -1,6 +1,6 @@
 export class Point {
-  x: number = null;
-  y: number = null;
+  x: number;
+  y: number;
 
   constructor(x: number, y: number) {
     this.x = x;
@@ -9,10 +9,10 @@ export class Point {
 }
 
 export class Curve {
-  id: string = null;
-  name: string = null;
-  type: string = null;
-  points: Array<Point> = null;
+  id?: string;
+  name: string;
+  type: string ;
+  points: Array<Point> = [];
 
   constructor(name: string, type: string, p0X: number,  p0Y: number, p1X: number, p1Y: number,
               p2X: number, p2Y: number, p3X: number, p3Y: number) {

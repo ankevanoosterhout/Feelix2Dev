@@ -1,5 +1,5 @@
 export class Tab {
-  el: string = null;
+  el: string;
   name = 'untitled';
   selected = false;
   id: any;

@@ -1,9 +1,13 @@
 import { Component, OnInit } from '@angular/core';
-import { ElectronService } from 'src/app/services/electron.service';
+import { ElectronService } from '../services/electron.service';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-info-page',
-  standalone: false,
+  standalone: true,
+  imports: [
+    FormsModule
+  ],
   template: `
   <div class="image-bg" style="background-image: url('./assets/images/info-window-bg.png');"></div>
   <div class="window-content">

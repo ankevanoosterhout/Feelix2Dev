@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { LibraryEffect } from '../models/effect.model';
 import { v4 as uuid } from 'uuid';
-import { LocalStorageService } from 'src/app/services/local-storage-fallback.service';
+import { LocalStorageService } from '../services/local-storage-fallback.service';
 import { Subject } from 'rxjs';
 import { CloneService } from './clone.service';
 
@@ -20,7 +20,9 @@ export class EffectLibraryService {
     window.addEventListener('storage', event => {
         if (event.storageArea === localStorage) {
           if (event.key === EffectLibraryService.LIBRARY_LOCATION) {
-            const effectLib: LibraryEffect[] = JSON.parse(localStorage.getItem(EffectLibraryService.LIBRARY_LOCATION));
+
+            const lib = localStorage.getItem(EffectLibraryService.LIBRARY_LOCATION);
+            const effectLib: Array<LibraryEffect> = lib ? JSON.parse(lib) : [];
             this.effectLibrary = effectLib;
           }
         }

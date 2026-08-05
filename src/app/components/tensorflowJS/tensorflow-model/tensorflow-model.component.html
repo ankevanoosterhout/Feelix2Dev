@@ -31,10 +31,11 @@
 
 
     <!-- input -->
+    @for (layer of this.d.selectedModel?.layers; track layer; let i = $index) {
+    <li [attr.data-index]="i" [ngClass]="{ small: layer.hidden }">
 
-    <li *ngFor="let layer of this.d.selectedModel.layers; let i = index" [attr.data-index]="i" [ngClass]="{ small: layer.hidden }">
-
-      <div class="layer-settings"  *ngIf="i === 0">
+      @if (i === 0) {
+      <div class="layer-settings">
         <div class="layer-name">{{ layer.name }}</div>
 
         <div class="layer-buttons">
@@ -44,11 +45,15 @@
         <div class="layer-content scrollDiv">
 
           <ul class="column-list-items">
-            <li *ngFor="let input of this.d.selectedModel.inputs; let i = index" [attr.data-index]="i" [ngClass]="{ spaceBetween: i >= 5 }">
+            @for (input of this.d.selectedModel?.inputs; track input; let i = $index) {
+            <li [attr.data-index]="i" [ngClass]="{ spaceBetween: i >= 5 }">
               <label class="radio-container">
-                <span *ngIf="i < 5" id="label-{{ input.slug }}">{{ input.name }} ({{ input.slug }})</span>
 
-                <input type="checkbox" class="type" id="{{ input.id }}" name="{{ input.id }}" [(ngModel)]="input.active" [checked]="input.active" (change)="this.updateInputUnits()">
+                @if (i < 5) {
+                <span id="label-{{ input.slug }}">{{ input.name }} ({{ input.slug }})</span>
+                }
+
+                <input type="checkbox" class="type" id="{{ input.name }}" name="{{ input.name }}" [(ngModel)]="input.active" [checked]="input.active" (change)="this.updateInputUnits()">
                 <span class="checkmark radio tensorflow"></span>
               </label>
 
@@ -60,6 +65,7 @@
 
               <div class="variableType" (click)="this.updateInputType(i, $event)">{{ VariableTypeMapping[input.type] }}</div>
             </li>
+            }
           </ul>
 
 
@@ -67,20 +73,24 @@
           <button class="add left noMarginTop" id="addInputItem" (click)="this.addInputItem()" title="add input variable">add variable</button>
 
 
-
-          <div class="form-group" *ngIf="layer.options.inputLength">
+          @if (layer.options.inputLength !== undefined) { 
+          <div class="form-group">
             <label class="label"><div class="question-mark" title="When the length of the input sequences is constant, it must be given. If you want to link Flatten and Dense layers upstream, you’ll need this parameter">?</div>Input length</label>
             <input type="number" class="number small blue" id="inputLength" [(ngModel)]="layer.options.inputLength.value" name="inputLength">
           </div>
+          }
 
-          <div class="form-group" *ngIf="layer.options.sparse !== undefined">
+          @if (layer.options.sparse !== undefined) { 
+          <div class="form-group">
             <label class="radio-container">Sparse data <div class="question-mark" title="Sparse tensors enable efficient storage and processing of tensors that contain a lot of zero values.">?</div>
               <input type="checkbox" class="type" id="sparse" name="sparse" [(ngModel)]="layer.options.sparse.value" [checked]="layer.options.sparse.value">
               <span class="checkmark radio tensorflow"></span>
             </label>
           </div>
+          }
 
-          <div class="form-group" *ngIf="layer.options.inputDimension && this.multipleActuators()">
+          @if (layer.options.inputDimension && this.multipleActuators()) {
+          <div class="form-group">
             <label class="label"><div class="question-mark" title="Dimension of input variables">?</div>Input dimension</label>
             <select class="form-control playWindow small" id="inputDimension" name="inputDimension" [(ngModel)]="layer.options.inputDimension" (change)="this.updateNetworkVisualization()">
               <option [ngValue]="1">1D</option>
@@ -88,6 +98,7 @@
               <!-- <option *ngIf="this.d.selectedMicrocontrollers.length > 1" [ngValue]="3">3D</option> -->
             </select>
           </div>
+          }
 
           <div class="horizontalSeparator"></div>
 
@@ -98,17 +109,23 @@
           <div class="form-group microcontroller">
             <select class="form-control playWindow" id="microcontroller" name="microcontroller" [(ngModel)]="this.d.selectOptionMicrocontroller">
               <option class="placeholder" [ngValue]="undefined" selected="selected">-- select microcontroller --</option>
-              <option *ngFor="let item of this.hardwareService.microcontrollers" [ngValue]="item">{{ item.name }}</option>
+
+              @for (item of this.hardwareService.microcontrollers; track item) {
+              <option [ngValue]="item">{{ item.name }}</option>
+              }
             </select>
             <button class="add left" (click)="this.addMicrocontroller()" title="add microcontroller">add</button>
           </div>
 
           <ul class="microcontroller-list">
-            <li *ngFor="let microcontroller of this.d.selectedMicrocontrollers">
+
+            @for (microcontroller of this.d.selectedMicrocontrollers; track microcontroller) {
+            <li>
               <div class="row">
                 <div class="opencloseArrow open microcontroller" id="open_{{ microcontroller.serialPort.path }}" (click)="openCloseItem(microcontroller.serialPort.path)"><div></div></div>
                 <label class="labelRow nextToArrow">{{ microcontroller.name }}</label>
-                <div class="buttonPlayWindow dataSetList delete mcu" (click)="this.tensorflowService.deleteMicrocontroller(microcontroller.serialPort.path)" title="delete">
+                <div class="buttonPlayWindow dataSetList delete mcu" 
+                     (click)="this.tensorflowService.deleteMicrocontroller(microcontroller.serialPort.path)" title="delete">
                   <img src="./assets/icons/buttons/bin.svg">
                 </div>
               </div>
@@ -123,20 +140,25 @@
                 </div>
                 <div class="row">
                   <ul class="motor-list">
-                    <li *ngFor="let motor of microcontroller.motors">
+
+                    @for (motor of microcontroller.motors; track motor) {
+                    <li>
                       <label class="radio-container">{{ motor.id }}
                         <input type="checkbox" class="type" id="motor-{{ motor.id }}" name="motor-{{ motor.id }}" [(ngModel)]="motor.record" [checked]="motor.record"
                           (change)="toggleRecordMotor(microcontroller.serialPort.path, motor)">
                         <span class="checkmark radio tensorflow"></span>
                       </label>
                     </li>
+                    }
                   </ul>
                 </div>
               </div>
             </li>
+            }
           </ul>
         </div>
       </div>
+      }
 
 
 
@@ -146,72 +168,115 @@
 
 <!-- hidden layers -->
 
+      @if (i > 0 && this.d.selectedModel?.layers !== undefined && this.d.selectedModel?.layers.length - 1) {
+      <div class="layer-settings">
 
-      <div class="layer-settings" *ngIf="i > 0 && i < this.d.selectedModel.layers.length - 1">
-
-        <div *ngIf="layer.type" class="layer-name {{ layer.type.subgroup }}">{{ !layer.hidden ? layer.type.subgroup : '' }}</div>
-        <div *ngIf="!layer.type" class="layer-name">{{ !layer.hidden ? layer.name : '' }}</div>
+        @if (layer.type) {
+        <div class="layer-name {{ layer.type.subgroup }}">{{ !layer.hidden ? layer.type.subgroup : '' }}</div>
+        }
+        @if (!layer.type) {
+        <div class="layer-name">{{ !layer.hidden ? layer.name : '' }}</div>
+        }
 
         <div class="layer-buttons" [ngClass]="{ small: layer.hidden }">
           <div class="button-round hide" id="hideLayer" (click)="this.hideLayer(i)">
+            @if (layer.hidden) {
             <img src="./assets/icons/layers/non-visible-icon-black.svg" *ngIf="layer.hidden">
+            }
+            @if (!layer.hidden) {
             <img src="./assets/icons/layers/visible-icon-black.svg" *ngIf="!layer.hidden">
+            }
           </div>
+          @if (!layer.hidden) {
           <div class="button-round" id="deleteLayer" (click)="this.deleteLayer(i)" *ngIf="!layer.hidden">-</div>
+          }
           <div class="button-round" id="addLayer" (click)="this.addLayer(i)">+</div>
         </div>
 
-
+        @if (!layer.hidden) {
         <div class="layer-content scrollDiv" *ngIf="!layer.hidden">
 
           <div class="form-group">
-            <label class="label"><div *ngIf="layer.type" class="question-mark" title="{{ layer.type.description }}">?</div>Layer type</label>
-            <select class="form-control playWindow" id="type" name="type" [(ngModel)]="layer.type" [compareWith]="compareFunction" (change)="this.updateLayerOptions(i)">
-              <option *ngFor="let type of this.LayerTypes" [ngValue]="type">{{ type.name }}</option>
+            @if (layer.type !== undefined) {
+            <label class="label"><div class="question-mark" title="{{ layer.type.description }}">?</div>Layer type</label>
+            }
+            <select class="form-control playWindow" id="type" name="type" [(ngModel)]="layer.type" [compareWith]="compareFunction" 
+              (change)="this.updateLayerOptions(i)">
+
+              @for (type of this.LayerTypes; track type) {
+              <option [ngValue]="type">{{ type.name }}</option>
+              }
             </select>
           </div>
 
 
-          <div class="form-group" *ngIf="layer.options.units && layer.type && layer.type.subgroup !== 'normalization' && layer.type.name !== 'dropout'">
+          @if (layer.options.units && layer.type && layer.type.subgroup !== 'normalization' && layer.type.name !== 'dropout') {
+          <div class="form-group">
             <label class="label"><div class="question-mark" title="Positive integer, dimensionality of the output space.">?</div>Units</label>
-            <input type="number" class="number small blue" id="layerUnits" [(ngModel)]="layer.options.units.value" name="layerUnits" (change)="this.updateUnits(i)">
+            <input type="number" class="number small blue" id="layerUnits" [(ngModel)]="layer.options.units.value" name="layerUnits" 
+                  (change)="this.updateUnits(i)">
           </div>
+          }
 
 
-
-          <div class="form-group" *ngIf="layer.options.kernelSize && layer.type.args">
+          @if (layer.options.kernelSize && layer.type?.args) {
+          <div class="form-group">
             <label class="label"><div class="question-mark" title="Size of the window to pool over, should be an integer.">?</div>Kernel size</label>
-            <div class="inline" *ngFor="let value of layer.options.kernelSize.value; let n=index">
-              <input type="number" class="number extra small blue" id="kernelSize{{ n }}" [(ngModel)]="layer.options.kernelSize.value[n]" name="kernelSize{{ n }}" (change)="this.updateUnits(i)">
-              <label *ngIf="n < layer.options.kernelSize.value.length - 1" class="label auto">x</label>
+
+            @for (value of layer.options.kernelSize.value; track value; let n = $index) {
+            <div class="inline">
+              <input type="number" class="number extra small blue" id="kernelSize{{ n }}" [(ngModel)]="layer.options.kernelSize.value[n]" 
+                     name="kernelSize{{ n }}" (change)="this.updateUnits(i)">
+              
+              @if (n < layer.options.kernelSize.value.length - 1) {
+              <label class="label auto">x</label>
+              }
             </div>
+            }
           </div>
+          }
 
 
              <!-- pooling layers -->
-          <div class="form-group" *ngIf="layer.type && layer.type.subgroup === 'pooling' && layer.type.args">
+          @if (layer.type && layer.type.subgroup === 'pooling' && layer.type.args) {
+          <div class="form-group">
             <label class="label"><div class="question-mark" title="Size of the window to pool over, should be an integer.">?</div>Pool size</label>
 
-            <div class="inline" *ngFor="let value of layer.options.poolSize.value; let n=index">
-              <input type="number" class="number extra small blue" id="poolSize{{ n }}" [(ngModel)]="layer.options.poolSize.value[n]" name="poolSize{{ n }}" (change)="this.updateUnits(i)">
-              <label *ngIf="n < layer.options.poolSize.value.length - 1" class="label auto">x</label>
+            @for (value of layer.options.poolSize.value; track value; let n = $index) {
+            <div class="inline">
+              <input type="number" class="number extra small blue" id="poolSize{{ n }}" [(ngModel)]="layer.options.poolSize.value[n]" 
+                     name="poolSize{{ n }}" (change)="this.updateUnits(i)">
+              
+              @if (n < layer.options.poolSize.value.length - 1) {
+              <label class="label auto">x</label>
+              }
             </div>
+            }
           </div>
+          }
 
-
-          <div class="form-group" *ngIf="layer.options.filters && layer.options.filters.value !== undefined">
+          @if (layer.options.filters && layer.options.filters.value !== undefined) {
+          <div class="form-group">
             <label class="label"><div class="question-mark" title="The dimensionality of the output space (i.e. the number of filters in the convolution).">?</div>Filters</label>
             <input type="number" class="number small blue" id="layerFilters" [(ngModel)]="layer.options.filters.value" name="layerFilters">
           </div>
+          }
 
-
-          <div class="form-group" *ngIf="layer.options.targetShape">
+          @if (layer.options.targetShape) {
+          <div class="form-group">
             <label class="label"><div class="question-mark" title="The target shape. Does not include the batch axis.">?</div>Target shape</label>
-            <div class="inline" *ngFor="let value of layer.options.targetShape.value; let n=index">
+
+            @for (value of layer.options.targetShape.value; track value; let n = $index) {
+            <div class="inline">
               <input type="number" class="number extra small blue" id="targetShape{{ n }}" [(ngModel)]="layer.options.targetShape.value[n]" name="targetShape{{ n }}">
-              <label *ngIf="n < layer.options.targetShape.value.length - 1" class="label auto">x</label>
+              
+              @if (n < layer.options.targetShape.value.length - 1) {
+              <label class="label auto">x</label>
+              }
             </div>
+            }
           </div>
+          }
 
 
 
@@ -696,7 +761,9 @@
 
           <!-- <button class="add" id="deleteLayer" (click)="this.deleteLayer(i)" title="delete layer">delete layer</button> -->
         </div>
+        }
       </div>
+      }
 
 
 
@@ -707,7 +774,7 @@
 
 
 
-      <div class="layer-settings" *ngIf="i === this.d.selectedModel.layers.length - 1">
+      <div class="layer-settings" *ngIf="this.d.selectedModel?.layers !== undefined && i === this.d.selectedModel.layers.length - 1">
 
         <div class="layer-name">{{ layer.name }}</div>
 
@@ -715,7 +782,7 @@
 
 
           <ul class="column-list-items">
-            <li class="column" *ngFor="let output of this.d.selectedModel.outputs; let i = index" [attr.data-index]="i">
+            <li class="column" *ngFor="let output of this.d.selectedModel?.outputs; let i = index" [attr.data-index]="i">
 
               <div class="flexbox-row-even">
                 <label class="radio-container">
@@ -764,5 +831,6 @@
       </div>
 
     </li>
+    }
   </ul>
 </div>

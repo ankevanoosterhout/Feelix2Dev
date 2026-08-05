@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { ElectronService } from 'src/app/services/electron.service';
+import { ElectronService } from '../../services/electron.service';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-zigzag',
-  standalone: false,
+  standalone: true,
+  imports: [ FormsModule],
   template: `
     <div class="window-body"></div>
     <div class="window-title-bar">Zig Zag</div>

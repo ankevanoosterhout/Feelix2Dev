@@ -45,9 +45,9 @@ import { Component, Input } from '@angular/core';
 })
 export class TfWarningComponent {
 
-    public _title = null;
-    public _body = null;
-    public _show = true;
+    public _title: string = '';
+    public _body: string = '';
+    public _show: boolean = true;
 
 
     showWarning(show: boolean) {

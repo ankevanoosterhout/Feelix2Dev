@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { Component, Inject, AfterViewInit } from '@angular/core';
-import { KinematicsDrawingService } from 'src/app/services/kinematics-drawing.service';
+import { KinematicsDrawingService } from './../../../services/kinematics-drawing.service';
 
 @Component({
     selector: 'app-kinematics-cursor',
@@ -14,7 +14,7 @@ import { KinematicsDrawingService } from 'src/app/services/kinematics-drawing.se
               </div>
             </li>
             <li *ngFor="let camera of this.cameras">
-              <div class="cursor" id="camera-{{ camera.id }}" (click)="selectCamera(camera.name)" *ngIf="camera.visible">
+              <div class="cursor" id="camera-{{ camera.id }}" (click)="selectCamera()" *ngIf="camera.visible">
                 <img src="./assets/icons/buttons/{{ camera.icon }}" title="{{ camera.shortkey }}">
               </div>
             </li>
@@ -99,11 +99,13 @@ export class KinematicsCursorComponent implements AfterViewInit {
     for (let cursor of this.cursors) {
       cursor.selected = cursor.name === name ? true : false;
       if (cursor.selected) {
-        this.document.getElementById('cursor-' + cursor.id).classList.add('active');
+        const cursorObj = this.document.getElementById('cursor-' + cursor.id);
+        if(cursorObj) cursorObj.classList.add('active');
         this.kinematicDrawingService.updateControlMode(cursor.name);
 
       } else if (!cursor.selected) {
-        this.document.getElementById('cursor-' + cursor.id).classList.remove('active');
+        const cursorObj = this.document.getElementById('cursor-' + cursor.id);
+        if(cursorObj) cursorObj.classList.remove('active');
       }
     }
   }

@@ -1,11 +1,12 @@
 import { Component, OnInit, Input, Inject } from '@angular/core';
-import { ElectronService } from 'src/app/services/electron.service';
-import { DOCUMENT } from '@angular/common';
+import { DOCUMENT, CommonModule } from '@angular/common';
+import { ElectronService } from './../../services/electron.service';
 import { IpcRendererEvent } from 'electron';
 
 @Component({
   selector: 'app-statusbar',
-  standalone: false,
+  standalone: true,
+  imports: [ CommonModule ],
   template: `
 
     <div class="statusbar {{ this._page }}">
@@ -14,7 +15,7 @@ import { IpcRendererEvent } from 'electron';
         <div id="progress" class="inner-bar" [ngStyle]="{'width': (244 * (this._progress/100)) + 'px' }"></div>
       </div>
 
-      <div class="version">version B3.1.3</div>
+      <div class="version">version B3.1.4</div>
       <div class="logo"><img src="./assets/icons/logo/feelix-logo-gray.svg"></div>
     </div>
 
@@ -116,18 +117,22 @@ export class StatusbarComponent implements OnInit {
     this.electronService.ipcRenderer.on('updateProgress', (event: IpcRendererEvent, data: any) => {
       this._progress = data.progress;
       this.updateProgressBar(this._progress);
-      this._status = data.str;
-      this.document.getElementById('msg').innerHTML = this._status;
+      this.updateMsgObj(this._status);
     });
 
     this.electronService.ipcRenderer.on('statusMsg', (event: IpcRendererEvent, msg: any) => {
       this._status = msg;
-      this.document.getElementById('msg').innerHTML = this._status;
+      this.updateMsgObj(this._status);
     });
 
     // this.electronService.ipcRenderer.on('updateProgress_ml5', (event: Event, data: any) => {
     //   this.updateProgressBar(data.progress);
     // });
+  }
+
+  private updateMsgObj(msg: string) {
+    const msgObj = this.document.getElementById('msg');
+    if (msgObj) msgObj.innerHTML = msg;
   }
 
   private updateProgressBar(progress: number) {
@@ -137,14 +142,17 @@ export class StatusbarComponent implements OnInit {
     }
     const width = 244 * (progress / 100);
     const progressDiv = this.document.getElementById('progress');
-    progressDiv.style.transition = 'all 0.5s ease-in';
-    progressDiv.style.width = width + 'px';
+    if (progressDiv) {
+      progressDiv.style.transition = 'all 0.5s ease-in';
+      progressDiv.style.width = width + 'px';
 
-    if (progress === 100) {
-      this.progressRefresh = setTimeout(() => {
-        progressDiv.style.transition = 'none';
-        progressDiv.style.width = '0px';
-      }, 3000);
+
+      if (progress === 100) {
+        this.progressRefresh = setTimeout(() => {
+          progressDiv.style.transition = 'none';
+          progressDiv.style.width = '0px';
+        }, 3000);
+      }
     }
   }
 

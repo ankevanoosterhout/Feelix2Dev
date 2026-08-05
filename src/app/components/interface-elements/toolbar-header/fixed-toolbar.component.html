@@ -10,6 +10,7 @@
       </ul>
     </div>
 
+
     <div class="form-row" *ngIf="this.drawingService.file.activeEffect" title="change color">
       <span>
         <input type="color" id="color-picker" name="color-picker" [(ngModel)]="this.dataService.color" (change)="updateColor()">
@@ -20,39 +21,50 @@
 
       <label class="select color-picker t{{ this.drawingService.file.activeEffect.type }}" title="select effect visualization type"></label>
       <select class="form-control" id="select" (change)="this.updateEffectType()" [(ngModel)]="this.drawingService.file.activeEffect.type" name="type" title="select effect visualization type">
-          <option *ngFor="let type of typeOptions" [ngValue]="type">{{ EffectTypeLabelMapping[type] }}</option>
+        @for (type of typeOptions; track type) { 
+          <option [ngValue]="type">{{ EffectTypeLabelMapping[type] }}</option>
+        }
       </select>
     </div>
-
 
 
     <div class="form-row" *ngIf="this.drawingService.file.activeEffect && (this.drawingService.file.activeEffect.type < 2 || this.drawingService.file.activeEffect.type >= 4)" title="select units x-axis">
       <label class="select axes">x </label>
       <select class="form-control small" id="select" value="{{ this.drawingService.file.activeEffect.grid.xUnit.name }}"
-        (change)="this.drawingService.updateUnitsActiveEffect($event.target.value)" name="x-axis">
-          <option *ngFor="let type of this.drawingService.config.xAxisOptions" [ngValue]="type">{{ type.name }}</option>
+        (change)="this.drawingService.updateUnitsActiveEffect($event.target)" name="x-axis">
+          
+          @for (type of this.drawingService.config.xAxisOptions; track type) {
+          <option [ngValue]="type">{{ type.name }}</option>
+          }
+
       </select>
     </div>
 
     <div class="form-row" *ngIf="this.drawingService.file.activeEffect && (this.drawingService.file.activeEffect.type === 2 || this.drawingService.file.activeEffect.type === 3)" title="select units x-axis">
       <label class="select axes">x </label>
       <select class="form-control small" id="select" value="{{ this.drawingService.file.activeEffect.grid.xUnit.name }}"
-          (change)="this.drawingService.updateUnitsActiveEffect($event.target.value)" name="x-axis">
-          <option *ngFor="let type of this.drawingService.config.xAxisOptions_velocity" [ngValue]="type">{{ type.name }}</option>
+          (change)="this.drawingService.updateUnitsActiveEffect($event.target)" name="x-axis">
+
+          @for (type of this.drawingService.config.xAxisOptions_velocity; track type) {
+          <option [ngValue]="type">{{ type.name }}</option>
+          }
       </select>
     </div>
 
     <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type < 2" title="units y-axis: % of max voltage">
       <label class="select axes">y </label>
       <select class="form-control small" id="select" [(ngModel)]="this.drawingService.file.activeEffect.grid.yUnit" name="y-axis" [compareWith]="compareUnits">
-          <option *ngFor="let type of this.drawingService.config.yAxisOptions" [ngValue]="type">{{ type.name }}</option>
+          
+        @for (type of this.drawingService.config.yAxisOptions; track type) {
+        <option [ngValue]="type">{{ type.name }}</option>
+        }
       </select>
     </div>
 
     <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type === 2" title="units y-axis: degrees or % of max velocity">
       <label class="select axes">y </label>
       <select class="form-control small" id="select" [(ngModel)]="this.drawingService.file.activeEffect.grid.yUnit" name="y-axis" [compareWith]="compareUnits"
-          (change)="this.drawingService.updateYunitsActiveEffect($event.target.value)">
+          (change)="this.drawingService.updateYunitsActiveEffect($event.target)">
           <option *ngFor="let type of this.drawingService.config.yAxisOptions_velocity" [ngValue]="type">{{ type.name }}</option>
       </select>
     </div>
@@ -60,7 +72,7 @@
     <div class="form-row" *ngIf="this.drawingService.file.activeEffect && (this.drawingService.file.activeEffect.type === 3 || this.drawingService.file.activeEffect.type === 6)" title="units y-axis: % of max pressure">
       <label class="select axes">y </label>
       <select class="form-control small" id="select" [(ngModel)]="this.drawingService.file.activeEffect.grid.yUnit" name="y-axis"
-          (change)="this.drawingService.updateYunitsActiveEffect($event.target.value)" [compareWith]="compareUnits">
+          (change)="this.drawingService.updateYunitsActiveEffect($event.target)" [compareWith]="compareUnits">
           <option *ngFor="let type of this.drawingService.config.yAxisOptions_pressure" [ngValue]="type">{{ type.name }}</option>
       </select>
     </div>
@@ -68,7 +80,7 @@
     <div class="form-row" *ngIf="this.drawingService.file.activeEffect && this.drawingService.file.activeEffect.type < 2" title="select rotation type of effect">
       <label class="select"></label>
       <select class="form-control" id="select" [(ngModel)]="this.drawingService.file.activeEffect.rotation"
-        (change)="this.drawingService.saveEffect(this.drawingService.file.activeEffect)" name="rotation-type">
+        (change)="this.drawingService.saveEffect()" name="rotation-type">
           <option *ngFor="let type of rotationType" [ngValue]="type">{{ type }}</option>
       </select>
     </div>
@@ -169,8 +181,8 @@
         <label class="coordinates-label">h</label>
         <input type="number" id="h-value" name="points-h" (change)="onChange('h-value')" [(ngModel)]="toolbar.points.h"
         (click)="focus()">
-        <div class="arrows"><div class="arrow up h" id="upH" name="upH" (click)="transform('h', 1, toolbar.points.h);"></div>
-        <div class="arrow down h" id="downH" name="downH" (click)="transform('h', -1, toolbar.points.h);"></div></div>
+        <div class="arrows"><div class="arrow up h" id="upH" name="upH" (click)="transform('h', 1);"></div>
+        <div class="arrow down h" id="downH" name="downH" (click)="transform('h', -1);"></div></div>
       </li>
     </ul>
   </div>

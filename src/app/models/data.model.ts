@@ -1,9 +1,9 @@
 export class Points {
-  x: number = null;
-  y: number = null;
-  w: number = null;
-  h: number = null;
-  cc: number = null;
+  x?: number;
+  y?: number;
+  w?: number;
+  h?: number;
+  cc?: number;
 }
 
 export class ReferencePoint {

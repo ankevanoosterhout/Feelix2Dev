@@ -1,16 +1,23 @@
 import { AfterViewInit, ChangeDetectorRef, Component, HostListener } from '@angular/core';
-import { ElectronService } from 'src/app/services/electron.service';
-import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
-import { Classifier, InputColor, InputItem, Label, MLDataSet, MotorEl } from 'src/app/models/tensorflow.model';
-import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
-import { TensorFlowRecordService } from 'src/app/services/tensorflow-record.service';
-import { TensorFlowTrainService } from 'src/app/services/tensorflow-train.service';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
 import { v4 as uuid } from 'uuid';
+
+import { ElectronService } from '../../../services/electron.service';
+import { TensorFlowData } from '../../../models/tensorflow-data.model';
+import { Classifier, InputColor, InputItem, Label, MLDataSet, MotorEl } from '../../../models/tensorflow.model';
+import { TensorFlowMainService } from '../../../services/tensorflow-main.service';
+import { TensorFlowRecordService } from '../../../services/tensorflow-record.service';
+import { TensorFlowTrainService } from '../../../services/tensorflow-train.service';
+import { GraphComponent } from "../../tensorflowJS/graph.component";
+import { SidebarComponent } from "../../tensorflowJS/sidebar.component";
 
 
 @Component({
   selector: 'app-tensorflow-deploy',
-  standalone: false,
+  standalone: true,
+  imports: [ CommonModule, FormsModule, GraphComponent, SidebarComponent ],
   templateUrl: 'tensorflow-deploy.component.html',
   styleUrls: ['../../windows/effects/effects.component.css', './../tensorflow.component.scss'],
 })
@@ -29,7 +36,7 @@ export class TensorflowDeployComponent implements AfterViewInit {
 
     this.tensorflowService.updateGraph.subscribe((data) => {
       if (data) {
-        this.tensorflowRecordService.redraw(data.set, null, this.graphID, false);
+        this.tensorflowRecordService.redraw(data.set, undefined, this.graphID, false);
         // this.tensorflowDrawService.drawTensorFlowGraphData(data.set, null);
       }
     });
@@ -53,7 +60,7 @@ export class TensorflowDeployComponent implements AfterViewInit {
 
   @HostListener('window:resize', ['$event'])
   onResize(event: Event) {
-    this.tensorflowRecordService.redraw(this.d.selectedMLDataset, null, this.graphID, false);
+    this.tensorflowRecordService.redraw(this.d.selectedMLDataset, undefined, this.graphID, false);
   }
 
 
@@ -92,7 +99,7 @@ export class TensorflowDeployComponent implements AfterViewInit {
 
               let nrOfMotors = dataSequence[0].length;
               for (let m = 0; m < nrOfMotors; m++) {
-                const motorEl = new MotorEl('actuator-' + (m + 1), 'actuator-' + (m + 1), null, null, m);
+                const motorEl = new MotorEl('actuator-' + (m + 1), 'actuator-' + (m + 1), undefined, undefined, m);
                 motorEl.record = true;
                 motorEl.visible = true;
                 motorEl.colors = [ new InputColor('pressure', this.d.colorOptions[m]) ];
@@ -145,7 +152,7 @@ export class TensorflowDeployComponent implements AfterViewInit {
           }
 
 
-          if (dataSets.length > 0 && !this.d.selectedModel.outputs.filter(c => c.id === tmpID)[0]) {
+          if (dataSets.length > 0 && !this.d.selectedModel?.outputs.filter(c => c.id === tmpID)[0]) {
 
             const newClassifier = new Classifier(tmpID, 'Output', false);
 
@@ -154,7 +161,7 @@ export class TensorflowDeployComponent implements AfterViewInit {
             }
             newClassifier.active = true;
 
-            this.d.selectedModel.outputs.push(newClassifier);
+            this.d.selectedModel?.outputs.push(newClassifier);
           }
         }
       }

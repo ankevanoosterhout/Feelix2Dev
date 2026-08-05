@@ -20,7 +20,7 @@ import { MidiDataService } from './midi-data.service';
 export class DrawingService {
 
   public config: DrawingPlaneConfig;
-  public file = new File(null, null, null);
+  public file = new File(undefined, undefined, undefined);
 
 
   drawFile: Subject<any> = new Subject<void>();
@@ -57,7 +57,7 @@ export class DrawingService {
     }
 
     const field = this.config.svg.append('rect')
-      .attr('width', this.config.svgDx - this.config.margin.left)
+      .attr('width', this.config.svgDx - (this.config.margin.left?? 0))
       .attr('height', this.config.chartDy)
       .attr('transform', 'translate(0, ' + this.config.margin.top + ')')
       .attr('class', 'drawAreaContainer')
@@ -68,7 +68,7 @@ export class DrawingService {
       .append('svg:rect')
       .attr('class', 'clipPath')
       .attr('width', this.config.chartDx)
-      .attr('height', this.config.svgDy - this.config.margin.bottom - this.config.margin.top);
+      .attr('height', this.config.svgDy - (this.config.margin.bottom ?? 0) - (this.config.margin.top ?? 0));
 
     const clipPathLarge = this.config.svg.append('clipPath')
       .attr('id', 'clipLarge')
@@ -91,7 +91,7 @@ export class DrawingService {
         // .attr('stroke', '#1c1c1c')
         .attr('shape-rendering', 'crispEdges')
         .attr('fill', () => this.audioVisualization() ? '#222' : '#fff')
-        .on('click', (event) => {
+        .on('click', (event: { altKey: any; }) => {
           if (this.config.cursor.slug === 'zoom') {
             let direction = 1;
             if (event.altKey) {
@@ -124,7 +124,8 @@ export class DrawingService {
 
   setCursor(cursor: string) {
     if (this.document.body.style.cursor !== 'wait') {
-      this.document.getElementById('field-inset').style.cursor = cursor;
+      const fieldInsetObj = this.document.getElementById('field-inset');
+      if (fieldInsetObj) fieldInsetObj.style.cursor = cursor;
     }
   }
 
@@ -169,7 +170,7 @@ export class DrawingService {
 
   deleteSelectedBlocks() {
     for (const block of this.midiDataService.selectedBlocks) {
-      const blockItem = this.file.activeEffect.data.filter(b => b.id === block)[0];
+      const blockItem = this.file.activeEffect.data.filter((b: { id: string; }) => b.id === block)[0];
       if (blockItem) {
         const index = this.file.activeEffect.data.indexOf(blockItem);
         if (index > -1) {
@@ -195,8 +196,8 @@ export class DrawingService {
       offsetTop: window.innerHeight * this.file.configuration.horizontalScreenDivision/100 + 2
     };
 
-    this.config.chartDx = this.config.svgDx - this.config.margin.left - this.config.margin.right;
-    this.config.chartDy = this.config.svgDy - this.config.margin.bottom - this.config.margin.top;
+    this.config.chartDx = this.config.svgDx - (this.config.margin.left ?? 0) - (this.config.margin.right ?? 0);
+    this.config.chartDy = this.config.svgDy - (this.config.margin.bottom ?? 0) - (this.config.margin.top ?? 0);
     if ( this.audioVisualization() && this.config.chartDy < 1270) {
       this.config.chartDy = 1270;
       this.getSliderDrawplanePosition('y', this.config.sliderDrawplaneVertical);
@@ -213,12 +214,12 @@ export class DrawingService {
 
     this.config.yScale = d3
       .scaleLinear()
-      .domain([this.config.editBounds.yMax, this.config.editBounds.yMin])
+      .domain([this.config.editBounds.yMax ?? 100, this.config.editBounds.yMin ?? 0])
       .range([0, this.config.chartDy]);
 
     this.config.xScale = d3
       .scaleLinear()
-      .domain([this.config.editBounds.xMin, this.config.editBounds.xMax])
+      .domain([this.config.editBounds.xMin ?? 0, this.config.editBounds.xMax ?? 1])
       .range([this.audioVisualization() ? 80 : 0, this.config.chartDx]);
 
     if (!this.file.activeEffect || (this.file.activeEffect && !this.file.activeEffect.scale)) {
@@ -393,31 +394,31 @@ export class DrawingService {
 
   updateSliderOnDrag(axis: string, currentPos: number, slider: SliderDrawplane) {
 
-    if (slider.inner.min + (currentPos - slider.dragPos) >= slider.outer.min && slider.inner.max + (currentPos - slider.dragPos) <= slider.outer.max) {
-      slider.inner.min += (currentPos - slider.dragPos);
-      slider.inner.max += (currentPos - slider.dragPos);
+    if (slider.dragPos !== undefined) {
+      if (slider.inner.min + (currentPos - slider.dragPos) >= slider.outer.min && slider.inner.max + (currentPos - slider.dragPos) <= slider.outer.max) {
+        slider.inner.min += (currentPos - slider.dragPos);
+        slider.inner.max += (currentPos - slider.dragPos);
 
-      slider.dragPos = currentPos;
-    } else {
-      if (slider.inner.min + (currentPos - slider.dragPos) < slider.outer.min) {
-        const difference = slider.outer.min - slider.inner.min;
-        slider.inner.min = slider.outer.min;
-        slider.inner.max += difference;
-      } else if (slider.inner.max + (currentPos - slider.dragPos) > slider.outer.max) {
-        const difference = slider.outer.max - slider.inner.max;
-        slider.inner.max = slider.outer.max;
-        slider.inner.min += difference;
+        slider.dragPos = currentPos;
+      } else {
+        if (slider.inner.min + (currentPos - slider.dragPos) < slider.outer.min) {
+          const difference = slider.outer.min - slider.inner.min;
+          slider.inner.min = slider.outer.min;
+          slider.inner.max += difference;
+        } else if (slider.inner.max + (currentPos - slider.dragPos) > slider.outer.max) {
+          const difference = slider.outer.max - slider.inner.max;
+          slider.inner.max = slider.outer.max;
+          slider.inner.min += difference;
+        }
+      }
+      if (axis === 'x') {
+        this.translateDrawplane(slider, this.config.chartDx, axis);
+        d3.select('.innerRoundRectSlider-x').attr('x', slider.inner.min - 6);
+      } else {
+        this.translateDrawplane(slider, this.config.chartDy, axis);
+        d3.select('.innerRoundRectSlider-y').attr('y', slider.inner.min - 6);
       }
     }
-    if (axis === 'x') {
-      this.translateDrawplane(slider, this.config.chartDx, axis);
-      d3.select('.innerRoundRectSlider-x').attr('x', slider.inner.min - 6);
-    } else {
-      this.translateDrawplane(slider, this.config.chartDy, axis);
-      d3.select('.innerRoundRectSlider-y').attr('y', slider.inner.min - 6);
-    }
-
-
   }
 
 
@@ -435,7 +436,7 @@ export class DrawingService {
         this.updateSliderOnDrag(axis, (axis === 'x' ? event.x : event.y), slider);
       })
       .on('end', () => {
-        slider.dragPos = null;
+        slider.dragPos = undefined;
       });
 
 
@@ -533,13 +534,13 @@ export class DrawingService {
 
   deselectCollectionEffects() {
     if (this.file.activeCollectionEffect && this.file.activeCollection) {
-      const collection = this.file.collections.filter(c => c.id === this.file.activeCollection.id)[0];
+      const collection = this.file.collections.filter(c => c.id === this.file.activeCollection?.id)[0];
       if (collection && collection.config.svg) {
         collection.config.svg.selectAll('#coll-effect-' + this.file.activeCollectionEffect.id).style('opacity', 0.3);
       }
     }
-    this.file.activeCollectionEffect = null;
-    this.file.activeCollection = null;
+    this.file.activeCollectionEffect = undefined;
+    this.file.activeCollection = undefined;
   }
 
 
@@ -565,13 +566,13 @@ export class DrawingService {
     let division: number;
     if (this.file.configuration.verticalScreenDivision >= (100 / window.innerWidth) * (window.innerWidth - 18)) {
       division = 70;
-      if (this.document.getElementById('toggleLibraryWindow').classList.contains('hidden')) {
-        this.document.getElementById('toggleLibraryWindow').classList.remove('hidden');
+      if (this.document.getElementById('toggleLibraryWindow')?.classList.contains('hidden')) {
+        this.document.getElementById('toggleLibraryWindow')?.classList.remove('hidden');
       }
     } else {
       division = this.file.configuration.verticalScreenDivision = (100 / window.innerWidth) * (window.innerWidth - 18);
-      if (!this.document.getElementById('toggleLibraryWindow').classList.contains('hidden')) {
-        this.document.getElementById('toggleLibraryWindow').classList.add('hidden');
+      if (!this.document.getElementById('toggleLibraryWindow')?.classList.contains('hidden')) {
+        this.document.getElementById('toggleLibraryWindow')?.classList.add('hidden');
       }
     }
     this.updateResize(division, 'vertical');
@@ -581,13 +582,13 @@ export class DrawingService {
   toggleDrawPlane() {
     let division: number;
     if (this.file.configuration.horizontalScreenDivision >= (100 / window.innerHeight) * (window.innerHeight - 40)) {
-      if (this.document.getElementById('toggleDrawPlane').classList.contains('hidden')) {
-        this.document.getElementById('toggleDrawPlane').classList.remove('hidden');
+      if (this.document.getElementById('toggleDrawPlane')?.classList.contains('hidden')) {
+        this.document.getElementById('toggleDrawPlane')?.classList.remove('hidden');
       }
       division = 35;
     } else {
-      if (!this.document.getElementById('toggleDrawPlane').classList.contains('hidden')) {
-        this.document.getElementById('toggleDrawPlane').classList.add('hidden');
+      if (!this.document.getElementById('toggleDrawPlane')?.classList.contains('hidden')) {
+        this.document.getElementById('toggleDrawPlane')?.classList.add('hidden');
       }
       division = (100 / window.innerHeight) * (window.innerHeight - 38);
     }
@@ -596,30 +597,46 @@ export class DrawingService {
   }
 
   setDivToScreenDivision() {
-    this.document.getElementById('top-section').style.height = ((window.innerHeight * this.file.configuration.horizontalScreenDivision / 100) - 23) + 'px';
-    this.document.getElementById('bottom-section').style.height = ((window.innerHeight * (100-this.file.configuration.horizontalScreenDivision) / 100) - 20) + 'px';
-    this.document.getElementById('field-inset').style.height = ((window.innerHeight * (100-this.file.configuration.horizontalScreenDivision) / 100) - 20) + 'px';
-    this.document.getElementById('motor-control').style.width = (window.innerWidth * this.file.configuration.verticalScreenDivision / 100) + 'px';
-    this.document.getElementById('library').style.width = ((window.innerWidth * (100-this.file.configuration.verticalScreenDivision) / 100) - 1) + 'px';
+    const topSectionObj = this.document.getElementById('top-section');
+    if (topSectionObj) topSectionObj.style.height = ((window.innerHeight * this.file.configuration.horizontalScreenDivision / 100) - 23) + 'px';
+
+    const bottomSectionObj = this.document.getElementById('bottom-section');
+    if (bottomSectionObj) bottomSectionObj.style.height = ((window.innerHeight * (100-this.file.configuration.horizontalScreenDivision) / 100) - 20) + 'px';
+
+    const fieldInsetObj = this.document.getElementById('field-inset');
+    if(fieldInsetObj) fieldInsetObj.style.height = ((window.innerHeight * (100-this.file.configuration.horizontalScreenDivision) / 100) - 20) + 'px';
+
+    const motorControlObj = this.document.getElementById('motor-control');
+    if(motorControlObj) motorControlObj.style.width = (window.innerWidth * this.file.configuration.verticalScreenDivision / 100) + 'px';
+
+    const libraryObj = this.document.getElementById('library');
+    if (libraryObj) libraryObj.style.width = ((window.innerWidth * (100-this.file.configuration.verticalScreenDivision) / 100) - 1) + 'px';
+
     if (this.file.configuration.horizontalScreenDivision >= (100 / window.innerHeight) * (window.innerHeight - 40)) {
-      this.document.getElementById('toggleDrawPlane').classList.add('hidden');
+      this.document.getElementById('toggleDrawPlane')?.classList.add('hidden');
     }
     if (this.file.configuration.verticalScreenDivision >= (100 / window.innerWidth) * (window.innerWidth - 18)) {
-      this.document.getElementById('toggleLibraryWindow').classList.add('hidden');
+      this.document.getElementById('toggleLibraryWindow')?.classList.add('hidden');
     }
   }
 
   updateResize(division: number, orientation: string) {
     if (orientation === 'horizontal') {
-      this.document.getElementById('top-section').style.height = ((window.innerHeight * division / 100) - 23) + 'px';
-      this.document.getElementById('bottom-section').style.height = ((window.innerHeight * (100-division) / 100) - 20) + 'px';
-      this.document.getElementById('field-inset').style.height = ((window.innerHeight * (100-division) / 100) - 20) + 'px';
+      const topSectionObj = this.document.getElementById('top-section');
+      if (topSectionObj) topSectionObj.style.height = ((window.innerHeight * division / 100) - 23) + 'px';
+
+      const bottomSectionObj = this.document.getElementById('bottom-section');
+      if (bottomSectionObj) bottomSectionObj.style.height = ((window.innerHeight * (100-division) / 100) - 20) + 'px';
+
+      const fieldInsetObj = this.document.getElementById('field-inset');
+      if (fieldInsetObj) fieldInsetObj.style.height = ((window.innerHeight * (100-division) / 100) - 20) + 'px';
+
       this.file.configuration.horizontalScreenDivision = division;
       if (this.file.configuration.horizontalScreenDivision >= (100 / window.innerHeight) * (window.innerHeight - 40)) {
-        this.document.getElementById('toggleDrawPlane').classList.add('hidden');
+        this.document.getElementById('toggleDrawPlane')?.classList.add('hidden');
       } else {
-        if (this.document.getElementById('toggleLibraryWindow').classList.contains('hidden')) {
-          this.document.getElementById('toggleDrawPlane').classList.remove('hidden');
+        if (this.document.getElementById('toggleLibraryWindow')?.classList.contains('hidden')) {
+          this.document.getElementById('toggleDrawPlane')?.classList.remove('hidden');
         }
         this.config.svgDy = window.innerHeight * (100 - this.file.configuration.horizontalScreenDivision)/100 - 20;
         if (this.config.svgDy < 250) { this.config.svgDy = 250; }
@@ -628,16 +645,20 @@ export class DrawingService {
       this.updateConfigActiveFile(this.file.configuration);
 
     } else if (orientation === 'vertical') {
-      this.document.getElementById('motor-control').style.width = (window.innerWidth * division / 100) + 'px';
-      this.document.getElementById('library').style.width = ((window.innerWidth * (100-division) / 100) - 1) + 'px';
+      const motorControlObj = this.document.getElementById('motor-control');
+      if (motorControlObj) motorControlObj.style.width = (window.innerWidth * division / 100) + 'px';
+
+      const libraryObj = this.document.getElementById('library');
+      if (libraryObj) libraryObj.style.width = ((window.innerWidth * (100-division) / 100) - 1) + 'px';
+      
       this.file.configuration.verticalScreenDivision = division;
       if (this.file.configuration.verticalScreenDivision >= (100 / window.innerWidth) * (window.innerWidth - 18)) {
-        if (!this.document.getElementById('toggleLibraryWindow').classList.contains('hidden')) {
-          this.document.getElementById('toggleLibraryWindow').classList.add('hidden');
+        if (!this.document.getElementById('toggleLibraryWindow')?.classList.contains('hidden')) {
+          this.document.getElementById('toggleLibraryWindow')?.classList.add('hidden');
         }
       } else {
-        if (this.document.getElementById('toggleLibraryWindow').classList.contains('hidden')) {
-          this.document.getElementById('toggleLibraryWindow').classList.remove('hidden');
+        if (this.document.getElementById('toggleLibraryWindow')?.classList.contains('hidden')) {
+          this.document.getElementById('toggleLibraryWindow')?.classList.remove('hidden');
         }
       }
       this.updateConfigActiveFile(this.file.configuration);
@@ -660,17 +681,21 @@ export class DrawingService {
     this.redraw();
   }
 
-  updateUnitsActiveEffect(value: string) {
-    if (this.file.activeEffect) {
-      const newXUnits = this.file.activeEffect.type >= 2 ? this.config.xAxisOptions_velocity.filter(o => o.name === value)[0] : this.config.xAxisOptions.filter(o => o.name === value)[0];
+
+  //fix!!!!!!!!!!!!!!!!!
+  updateUnitsActiveEffect(value: any | null) {
+    if (this.file.activeEffect && value) {
+      const newXUnits = this.file.activeEffect.type >= 2 ? 
+        this.config.xAxisOptions_velocity.filter(o => o.name === value)[0] : 
+        this.config.xAxisOptions.filter(o => o.name === value)[0];
       if (newXUnits) {
         this.fileService.updateUnits(this.file.activeEffect.grid.xUnit, newXUnits, 'x');
       }
     }
   }
 
-  updateYunitsActiveEffect(value: string) {
-    if (this.file.activeEffect) {
+  updateYunitsActiveEffect(value: any | null) {
+    if (this.file.activeEffect && value) {
       if (this.file.activeEffect.type === EffectType.pneumatic || this.file.activeEffect.type === EffectType.hydraulic  || this.file.activeEffect.type === EffectType.velocity) {
         const newYunits = this.file.activeEffect.type === EffectType.velocity ? this.config.xAxisOptions_velocity.filter(o => o.name === value)[0] :
         this.config.yAxisOptions_pressure.filter(p => p.name === value)[0];
@@ -757,7 +782,7 @@ export class DrawingService {
     this.nodeService.reset();
   }
 
-  compareDateModified(a, b) {
+  compareDateModified(a: any, b: any) {
     if ( a.date.modified < b.date.modified ) { return -1; }
     if ( a.date.modified > b.date.modified ) { return 1; }
     return 0;
@@ -942,12 +967,17 @@ export class DrawingService {
 
     this.drawCursorPosition(e.clientX, e.clientY);
 
-    if (this.config.mouseDown.y !== null && this.config.mouseDown.x !== null) {
+    if (this.config.mouseDown.y !== undefined && this.config.mouseDown.x !== undefined) {
 
-      let yRef = { y1: this.config.margin.offsetTop + 65, y2: window.innerHeight - 40 };
-      let yRef2 = { y1: this.config.margin.offsetTop + 65, y2: this.config.margin.offsetTop + 65 + this.config.rulerWidth };
+      const offsetTop = this.config.margin?.offsetTop ?? 0;
+      const marginLeft = this.config.margin?.left ?? 0;
+      const marginRight = this.config.margin?.right ?? 0;
+      const marginTop = this.config.margin?.top ?? 0;
 
-      let xRef = { x1: this.config.margin.left, x2: window.innerWidth - this.config.margin.right };
+      let yRef = { y1: (offsetTop + 65), y2: window.innerHeight - 40 };
+      let yRef2 = { y1: (offsetTop + 65), y2: (offsetTop + 65 + this.config.rulerWidth) };
+
+      let xRef = { x1: marginLeft, x2: window.innerWidth - marginRight};
       let xRef2 = { x1: window.innerWidth - this.config.rulerWidth, x2: window.innerWidth };
 
       if (this.config.mouseDown.x > xRef2.x1 &&
@@ -956,9 +986,9 @@ export class DrawingService {
           this.config.mouseDown.y < yRef.y2) {
 
         this.config.drawRulerAxis = 'y';
-        this.drawGuide(this.config.drawRulerAxis, e.clientX - this.config.margin.left, e.clientY - this.config.margin.offsetTop, 'guide');
+        this.drawGuide(this.config.drawRulerAxis, e.clientX - marginLeft, e.clientY - offsetTop, 'guide');
         this.dataService.updatePoints(
-          this.nodeService.scale.scaleX.invert(e.clientX - this.config.margin.left), null, null, null);
+          this.nodeService.scale.scaleX.invert(e.clientX - marginLeft), undefined, undefined, undefined);
 
         this.config.newGuide = true;
       } else if (this.config.mouseDown.x > xRef.x1 &&
@@ -967,8 +997,8 @@ export class DrawingService {
                  this.config.mouseDown.y < yRef2.y2) {
 
           this.config.drawRulerAxis = 'x';
-          this.drawGuide(this.config.drawRulerAxis, e.clientX - this.config.margin.left, e.clientY - this.config.margin.offsetTop, 'guide');
-          this.dataService.updatePoints(null, this.nodeService.scale.scaleY.invert(e.clientY - this.config.margin.top), null, null);
+          this.drawGuide(this.config.drawRulerAxis, e.clientX - marginLeft, e.clientY - offsetTop, 'guide');
+          this.dataService.updatePoints(undefined, this.nodeService.scale.scaleY.invert(e.clientY - marginTop), undefined, undefined);
           this.config.newGuide = true;
       }
     }
@@ -1019,37 +1049,36 @@ export class DrawingService {
         // tslint:disable-next-line: variable-name
         const dragGuide = d3
           .drag()
-          .on('start', (event: any, d: { id: string; axis: string; coords: { x: number; y: number; }; }) => {
+          .on('start', (event: any, d: any) => {
               if (!this.file.activeEffect.grid.lockGuides && (this.config.cursor.slug === 'sel' || this.config.cursor.slug === 'dsel')) {
                 d3.select('#id_' + d.id).classed('selected', true);
                 if (d.axis === 'x') {
                   this.dataService
-                   .updatePoints(null, this.nodeService.scale.scaleY.invert(event.y - this.config.margin.top), null, null);
+                   .updatePoints(undefined, this.nodeService.scale.scaleY.invert(event.y - (this.config.margin?.top?? 0)), undefined, undefined);
                 } else if (d.axis === 'y') {
                   this.dataService.updatePoints(
-                    this.nodeService.scale.scaleX.invert(event.x - this.config.rulerWidth), null, null, null);
+                    this.nodeService.scale.scaleX.invert(event.x - this.config.rulerWidth), undefined, undefined, undefined);
                 }
               }
           })
-          .on('drag', (event: any, d: { id: string; axis: string; coords: { x: number; y: number; }; }) => {
+          .on('drag', (event: any, d: any) => {
               if (!this.file.activeEffect.grid.lockGuides && (this.config.cursor.slug === 'sel' || this.config.cursor.slug === 'dsel')) {
                 if (d.axis === 'x' && event.y < this.config.svgDy - 22) {
                   d3.select('#id_' + d.id).attr('y', event.y);
-                  this.dataService.updatePoints(
-                    null, this.nodeService.scale.scaleY.invert(event.y - this.config.margin.top + this.config.rulerWidth), null, null);
-                } else if (d.axis === 'y' && event.x > this.config.margin.left && event.x < this.config.svgDx - this.config.rulerWidth) {
+                  this.dataService.updatePoints(undefined, this.nodeService.scale.scaleY.invert(event.y - (this.config.margin?.top ?? 0) + this.config.rulerWidth), undefined, undefined);
+                } else if (d.axis === 'y' && event.x > (this.config.margin?.left ?? 0) && event.x < this.config.svgDx - this.config.rulerWidth) {
                   d3.select('#id_' + d.id).attr('x', event.x);
                   this.dataService.updatePoints(
-                    this.nodeService.scale.scaleX.invert(event.x - this.config.margin.left), null, null, null);
+                    this.nodeService.scale.scaleX.invert(event.x - (this.config.margin?.left ?? 0)), undefined, undefined, undefined);
                 }
               }
           })
-          .on('end', (event: any, d: { id: string; axis: string; coords: { x: number; y: number; }; }) => {
+          .on('end', (event: any, d: any) => {
             if (!this.file.activeEffect.grid.lockGuides && (this.config.cursor.slug === 'sel' || this.config.cursor.slug === 'dsel')) {
               d3.select('#id_' + d.id).classed('selected', false);
-              this.file.activeEffect.grid.guides.filter(g => g.id === d.id)[0].coords = {
-                x: this.nodeService.scale.scaleX.invert(event.x - this.config.margin.left),
-                y: this.nodeService.scale.scaleY.invert(event.y - this.config.margin.top)
+              this.file.activeEffect.grid.guides.filter((g: { id: string; }) => g.id === d.id)[0].coords = {
+                x: this.nodeService.scale.scaleX.invert(event.x - (this.config.margin?.left ?? 0)),
+                y: this.nodeService.scale.scaleY.invert(event.y - (this.config.margin?.top ?? 0))
               };
             }
           });
@@ -1084,10 +1113,10 @@ export class DrawingService {
                   this.dataService.addSelectedElement(d.id);
                 } else if (d.axis === 'x') {
                   this.dataService
-                    .selectElement(d.id, null, this.nodeService.scale.scaleY.invert(event.y - this.config.margin.top), null, null);
+                    .selectElement(d.id, undefined, this.nodeService.scale.scaleY.invert(event.y - (this.config.margin?.top ?? 0)), undefined, undefined);
                 } else if (d.axis === 'y') {
                   this.dataService
-                    .selectElement(d.id, this.nodeService.scale.scaleX.invert(event.x - this.config.margin.left), null, null, null);
+                    .selectElement(d.id, this.nodeService.scale.scaleX.invert(event.x - this.config.margin.left), undefined, undefined, undefined);
                 }
                 if (!event.shiftKey) { d3.selectAll('.guide.selected').classed('selected', false); }
                 d3.select('#id_' + d.id).classed('selected', true);
@@ -1110,7 +1139,7 @@ export class DrawingService {
   }
 
   updateGuide(points: any, selection: any) {
-    const guide = this.file.activeEffect.grid.guides.filter(g => g.id === selection[0])[0];
+    const guide = this.file.activeEffect.grid.guides.filter((g: { id: any; }) => g.id === selection[0])[0];
     if (guide) {
       if (guide.axis === 'x') {
         guide.coords.y = points.y;
@@ -1166,9 +1195,16 @@ export class DrawingService {
 
     // console.log(this.config.editBounds);
 
-    if (this.config.editBounds.yMin < 0 && (this.file.activeEffect.type === EffectType.position || this.file.activeEffect.type === EffectType.pneumatic)) {
+    if (this.config.editBounds.yMin !== undefined && 
+      this.config.editBounds.yMin < 0 && 
+      (this.file.activeEffect.type === EffectType.position || this.file.activeEffect.type === EffectType.pneumatic)) {
+
       this.scaleActiveEffectFromTorqueToPosition(0.5, 100);
-    } else if (this.config.editBounds.yMin >= 0 && (this.file.activeEffect.type === EffectType.velocity || this.file.activeEffect.type === EffectType.torque)) {
+
+    } else if (this.config.editBounds.yMin !== undefined && 
+      this.config.editBounds.yMin >= 0 && 
+      (this.file.activeEffect.type === EffectType.velocity || this.file.activeEffect.type === EffectType.torque)) {
+
       this.scaleActiveEffectFromTorqueToPosition(2, 100);
     }
     const effectColor = this.file.configuration.colors.filter(c => c.type === this.file.activeEffect.type)[0];

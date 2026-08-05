@@ -1,9 +1,10 @@
 import { Component } from '@angular/core';
-import { Model, ModelType} from 'src/app/models/tensorflow.model';
-import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
-import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
 import { v4 as uuid } from 'uuid';
-import { TensorFlowConfig } from 'src/app/models/tensorflow-config.model';
+
+import { Model, ModelType} from '../../../models/tensorflow.model';
+import { TensorFlowMainService } from '../../../services/tensorflow-main.service';
+import { TensorFlowData } from '../../../models/tensorflow-data.model';
+import { TensorFlowConfig } from '../../../models/tensorflow-config.model';
 
 @Component({
   selector: 'app-tensorflow-default-model',
@@ -14,7 +15,7 @@ import { TensorFlowConfig } from 'src/app/models/tensorflow-config.model';
 export class TensorflowDefaultModelComponent {
 
   public d: TensorFlowData;
-  public config: TensorFlowConfig;
+  public config?: TensorFlowConfig;
 
 
 
@@ -99,13 +100,19 @@ export class TensorflowDefaultModelComponent {
     }
 
     if (overwrite) {
-      const firstLayer = this.d.selectedModel.layers[0];
-      const inputs = this.d.selectedModel.inputs;
-      const outputs = this.d.selectedModel.outputs;
+      const firstLayer = this.d.selectedModel?.layers[0];
+      const inputs = this.d.selectedModel?.inputs;
+      const outputs = this.d.selectedModel?.outputs;
 
-      newModel.layers[0] = firstLayer;
-      newModel.inputs = inputs;
-      newModel.outputs = outputs;
+      if (newModel.layers && newModel.layers.length >= 0) {
+        const sourceLayer = this.d.selectedModel?.layers?.[0];
+        const modelInputs = this.d.selectedModel?.inputs;
+        const modelOutputs = this.d.selectedModel?.outputs;
+
+        if (sourceLayer) newModel.layers[0] = sourceLayer;  
+        if (modelInputs) newModel.inputs = modelInputs;
+        if (modelOutputs) newModel.outputs = modelOutputs; 
+      }
     }
 
     this.d.selectedModel = newModel;

@@ -1,12 +1,10 @@
-import { Injectable, Inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { DrawingPlaneConfig } from '../models/drawing-plane-config.model';
 import { NodeService } from './node.service';
 import * as d3 from 'd3';
 import { DrawingService } from './drawing.service';
 import { BezierService } from './bezier.service';
-import { DOCUMENT } from '@angular/common';
 import { DataService } from './data.service';
-import { Subject } from 'rxjs';
 
 
 
@@ -16,8 +14,7 @@ export class BBoxService {
 
 
 
-  constructor(@Inject(DOCUMENT) private document: Document, public dataService: DataService,
-              public nodeService: NodeService, private bezierService: BezierService, public drawingService: DrawingService) {
+  constructor(public dataService: DataService, public nodeService: NodeService, private bezierService: BezierService, public drawingService: DrawingService) {
 
                 this.config = this.drawingService.config;
 
@@ -162,16 +159,16 @@ export class BBoxService {
 
 
       for (const path of allSelectedPaths) {
-        const pathBox = this.getBBox(path);
+        this.getBBox(path);
 
-        let nodes = [];
+        let nodes: Array<any> = [];
         if (path.nodes) {
           for (const node of path.nodes) {
             nodes.push(node);
 
             if (node.type === 'node') {
 
-              if (nodes.filter(n => n.type === 'node').length > 1) {
+              if (nodes !== undefined && nodes.filter(n => n.type === 'node').length > 1) {
                 const rectangle = this.bezierService.getBBoxSize(nodes);
 
                 this.config.bbox.append('rect')
@@ -292,7 +289,7 @@ export class BBoxService {
   }
 
 
-  private dragHandleResize(event, d: any) {
+  private dragHandleResize(event: any, d: any) {
 
     const handleID = d.id;
     const dX = Math.max(0, Math.min(this.config.chartDx, event.x - this.config.margin.left));
@@ -386,65 +383,85 @@ export class BBoxService {
       const allSelectedPaths = this.nodeService.getAllSelectedPaths();
       if (allSelectedPaths.length > 1) {
       if (direction === 'left' || direction === 'center' || direction === 'right') {
-        allSelectedPaths.sort((a, b) => a.box.left - b.box.left );
+        allSelectedPaths.sort((a, b) => (a.box.left ?? 0) - (b.box.left ?? 0));
       }
       const numberOfPaths = allSelectedPaths.length;
 
-      const dimensions = { xMin: allSelectedPaths[0].box.left, xMax: allSelectedPaths[0].box.right,
-                        yMin: allSelectedPaths[0].box.top, yMax: allSelectedPaths[0].box.bottom };
+      const dimensions = { xMin: allSelectedPaths[0].box.left,   xMax: allSelectedPaths[0].box.right,
+                           yMin: allSelectedPaths[0].box.top,    yMax: allSelectedPaths[0].box.bottom };
 
-      for (const path of allSelectedPaths) {
-        dimensions.xMin = dimensions.xMin < path.box.left ? dimensions.xMin : path.box.left;
-        dimensions.xMax = dimensions.xMax > path.box.right ? dimensions.xMax : path.box.right;
-        dimensions.yMax = dimensions.yMax > path.box.top ? dimensions.yMax : path.box.top;
-        dimensions.yMin = dimensions.yMin < path.box.bottom ? dimensions.yMin : path.box.bottom;
-      }
+      if (dimensions.xMin !== undefined && dimensions.xMax !== undefined && dimensions.yMin !== undefined && dimensions.yMax !== undefined) {
 
-      let reference: number;
-
-      if (direction === 'left') {
-        dimensions.xMax -= allSelectedPaths[allSelectedPaths.length - 1].box.width;
-      } else if (direction === 'right') {
-        dimensions.xMin += allSelectedPaths[0].box.width;
-      } else if (direction === 'center') {
-        dimensions.xMin += (allSelectedPaths[0].box.width / 2);
-        dimensions.xMax -= (allSelectedPaths[allSelectedPaths.length - 1].box.width / 2);
-      } else if (direction === 'top') {
-        reference = dimensions.yMax;
-      } else if (direction === 'bottom') { reference = dimensions.yMin;
-      } else if (direction === 'middle') { reference = ((dimensions.yMax - dimensions.yMin) / 2) + dimensions.yMin; }
-
-      const divisions = (dimensions.xMax - dimensions.xMin) / (numberOfPaths - 1);
-      let n = 0;
-
-      for (const path of allSelectedPaths) {
-
-        const translate = {
-          horizontal: 0,
-          vertical: 0,
-          width: 0,
-          height: 0
-        };
-
-        if (direction === 'bottom') { translate.vertical = reference - path.box.bottom;
-        } else if (direction === 'top') { translate.vertical = reference - path.box.top;
-        } else if (direction === 'middle') { translate.vertical = reference - (path.box.bottom + (path.box.height / 2)); }
-
-        if (n > 0 && n < allSelectedPaths.length - 1) {
-          if (direction === 'left') { translate.horizontal = dimensions.xMin + (n * divisions) - path.box.left; }
-          if (direction === 'right') { translate.horizontal = dimensions.xMin + (n * divisions) - path.box.right; }
-          if (direction === 'center') {
-            translate.horizontal = dimensions.xMin + (n * divisions) - (path.box.left + (path.box.width / 2)); }
+        for (const path of allSelectedPaths) {
+          // 1. Ensure you fallback to a number so undefined is never assigned back into dimensions
+          dimensions.xMin = dimensions.xMin < (path.box.left ?? 0) ? dimensions.xMin : (path.box.left ?? 0);
+          dimensions.xMax = dimensions.xMax > (path.box.right ?? 0) ? dimensions.xMax : (path.box.right ?? 0);
+          dimensions.yMax = dimensions.yMax > (path.box.top ?? 0) ? dimensions.yMax : (path.box.top ?? 0);
+          dimensions.yMin = dimensions.yMin < (path.box.bottom ?? 0) ? dimensions.yMin : (path.box.bottom ?? 0);
         }
-        if (translate.horizontal !== 0 || translate.vertical !== 0) {
-          this.nodeService.translatePath(path.id, translate);
+
+        let reference: number = 0;
+
+        if (direction === 'left') {
+          dimensions.xMax -= allSelectedPaths[allSelectedPaths.length - 1].box.width ?? 0;
+        } else if (direction === 'right') {
+          dimensions.xMin += allSelectedPaths[0].box.width ?? 0;
+        } else if (direction === 'center') {
+          dimensions.xMin += ((allSelectedPaths[0].box.width ?? 0) / 2);
+          dimensions.xMax -= ((allSelectedPaths[allSelectedPaths.length - 1].box.width ?? 0) / 2);
+        } else if (direction === 'top') {
+          reference = dimensions.yMax;
+        } else if (direction === 'bottom') { 
+          reference = dimensions.yMin;
+        } else if (direction === 'middle') { 
+          reference = ((dimensions.yMax - dimensions.yMin) / 2) + dimensions.yMin; 
         }
-        n++;
+
+        const divisions = (dimensions.xMax - dimensions.xMin) / (numberOfPaths - 1);
+        let n = 0;
+
+        for (const path of allSelectedPaths) {
+          const translate = {
+            horizontal: 0,
+            vertical: 0,
+            width: 0,
+            height: 0
+          };
+
+          const boxLeft = path.box.left ?? 0;
+          const boxRight = path.box.right ?? 0;
+          const boxWidth = path.box.width ?? 0;
+
+          if (direction === 'bottom') { 
+            translate.vertical = reference - (path.box.bottom ?? 0);
+          } else if (direction === 'top') { 
+            translate.vertical = reference - (path.box.top ?? 0);
+          } else if (direction === 'middle') { 
+            translate.vertical = reference - ((path.box.bottom ?? 0) + ((path.box.height ?? 0) / 2)); 
+          }
+
+          if (n > 0 && n < allSelectedPaths.length - 1) {
+            if (direction === 'left') { 
+              translate.horizontal = dimensions.xMin + (n * divisions) - boxLeft; 
+            }
+            if (direction === 'right') { 
+              translate.horizontal = dimensions.xMin + (n * divisions) - boxRight; 
+            }
+            if (direction === 'center') {
+              translate.horizontal = dimensions.xMin + (n * divisions) - (boxLeft + (boxWidth / 2)); 
+            }
+          }
+          
+          if (translate.horizontal !== 0 || translate.vertical !== 0) {
+            this.nodeService.translatePath(path.id, translate);
+          }
+          n++;
+        }
+        
+        this.getBBoxSelectedPaths();
+        this.drawBoundingBox();
       }
-      this.getBBoxSelectedPaths();
-      this.drawBoundingBox();
     }
-
   }
 
 
@@ -455,7 +472,7 @@ export class BBoxService {
       top: this.nodeService.scale.scaleY.invert(boxPosition.top - this.config.margin.top - this.config.margin.offsetTop),
       width: this.nodeService.scale.scaleX.invert(boxPosition.left - this.config.margin.left + boxPosition.width) -
               this.nodeService.scale.scaleX.invert(boxPosition.left - this.config.margin.left),
-      height: this.config.editBounds.yMax - this.nodeService.scale.scaleY.invert(boxPosition.height)
+      height: (this.config.editBounds.yMax ?? 100) - this.nodeService.scale.scaleY.invert(boxPosition.height)
     };
     this.dataService.calculateInputBoxes(boxPos);
   }
@@ -463,9 +480,9 @@ export class BBoxService {
   updateInputBoxes(start: number, end: number) {
     const boxPos = {
       left: start,
-      top: null,
+      top: undefined,
       width: end - start,
-      height: null
+      height: undefined
     };
     this.dataService.calculateInputBoxes(boxPos);
   }
@@ -473,12 +490,12 @@ export class BBoxService {
 
   getBBox(path: any) {
     if (path && path.nodes) {
-      if (path.nodes.filter(n => n.type === 'node').length > 1) {
+      if (path.nodes.filter((n: { type: string; }) => n.type === 'node').length > 1) {
         const bboxSize = this.bezierService.getBBoxSizePath(path);
         return bboxSize;
       }
     }
-    return null;
+    return;
   }
 
   getBBoxSelectedPaths() {
@@ -494,8 +511,8 @@ export class BBoxService {
     for (const id of this.nodeService.selectedPaths) {
       let path = this.nodeService.getPath(id);
       const mirrorLine = {
-        x: (path.box.width / 2) + path.box.left,
-        y: (path.box.height / 2) + path.box.bottom,
+        x: ((path.box.width ?? 0) / 2) + (path.box.left ?? 0),
+        y: ((path.box.height ?? 0) / 2) + (path.box.bottom ?? 0),
       };
       path = this.nodeService.mirrorPath(path, mirrorLine, (direction === 'horizontal' ? true : false), (direction === 'vertical' ? true : false) );
     }
@@ -506,8 +523,8 @@ export class BBoxService {
     for (const pathID of this.nodeService.selectedPaths) {
       const path = this.nodeService.getPath(pathID);
       if (path && path.box.left !== null) {
-        if (coords.x >= path.box.left && coords.x <= path.box.right &&
-            coords.y >= path.box.top && coords.y <= path.box.bottom) {
+        if (coords.x >= (path.box.left ?? 0) && coords.x <= (path.box.right ?? 0) &&
+            coords.y >= (path.box.top ?? 0) && coords.y <= (path.box.bottom ?? 0)) {
           return false;
         }
       }

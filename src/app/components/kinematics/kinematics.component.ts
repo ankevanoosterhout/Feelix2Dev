@@ -1,12 +1,14 @@
 import { Component, OnInit, HostListener, Inject } from '@angular/core';
-import { ElectronService } from 'src/app/services/electron.service';
-import * as THREE from 'three';
-import { KinematicsConfig } from 'src/app/models/kinematics-config.model';
-import { KinematicsDrawingService } from 'src/app/services/kinematics-drawing.service';
 import { DOCUMENT } from '@angular/common';
-import { DragControlsService } from 'src/app/services/drag-controls.service';
+
+import * as THREE from 'three';
 import { Raycaster } from 'three';
 import { IpcRendererEvent } from 'electron';
+
+import { ElectronService } from '../../services/electron.service';
+import { KinematicsConfig } from '../../models/kinematics-config.model';
+import { KinematicsDrawingService } from '../../services/kinematics-drawing.service';
+import { DragControlsService } from '../../services/drag-controls.service';
 // import { ClosedChainIKService } from 'src/app/services/closed-chain-ik.service';
 
 @Component({
@@ -93,9 +95,12 @@ export class KinematicsComponent implements OnInit {
     this.kinematicsDrawingService.updateKinematicsProgress.subscribe(data => {
       this.progress = data.progress;
       this.status = data.status;
-      this.document.getElementById('msg').innerHTML = this.status;
+      const msgObj = this.document.getElementById('msg');
+      if (msgObj) msgObj.innerHTML = this.status;
       const width = 244 * (this.progress / 100);
-      this.document.getElementById('progress').style.width = width + 'px';
+
+      const progress = this.document.getElementById('progress');
+      if (progress) progress.style.width = width + 'px';
     });
 
 
@@ -151,11 +156,10 @@ export class KinematicsComponent implements OnInit {
     this.config.cameraOrtho.updateProjectionMatrix();
 
     this.config.renderer.setSize( window.innerWidth, window.innerHeight );
-
     this.kinematicsDrawingService.animate();
   }
 
-  updateMouse(e) {
+  updateMouse(e: MouseEvent) {
     this.dragControlsService.c.drag.mousePosition.x = (e.clientX / this.config.width) * 2 - 1;
     this.dragControlsService.c.drag.mousePosition.y = - (e.clientY / this.config.height) * 2 + 1;
   }

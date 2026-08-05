@@ -1,10 +1,11 @@
 import { Component, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 
 
 @Component({
   selector: 'app-dialog',
-  standalone: false,
+  standalone: true,
+  imports: [ MatDialogModule ],
   template: `
   <div mat-dialog-title class="window-title-bar">Feelix</div>
     <div class="window-content">
@@ -13,9 +14,13 @@ import { MAT_DIALOG_DATA } from '@angular/material/dialog';
             <p class="message">{{ message }}</p>
           </div>
           <div class="form-row buttons">
-            <div class="dialogBtn" *ngFor="let btn of buttons">
+
+            @for (btn of buttons; track btn) {
+            <div class="dialogBtn">
               <button mat-button [mat-dialog-close]="btn">{{ btn }}</button>
             </div>
+            }
+            
           </div>
       </div>
   </div>
@@ -62,7 +67,7 @@ export class DialogComponent {
 
   buttons = ['cancel', 'no', 'yes'];
 
-  constructor(@Inject(MAT_DIALOG_DATA) data) {
+  constructor(@Inject(MAT_DIALOG_DATA) data: any) {
     this.message = data.message;
     this.buttons = data.buttons;
   }

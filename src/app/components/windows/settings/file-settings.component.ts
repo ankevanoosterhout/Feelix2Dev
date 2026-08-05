@@ -1,24 +1,28 @@
 import { Component, OnInit, Inject } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
-import { ElectronService } from 'src/app/services/electron.service';
-import { FileService } from 'src/app/services/file.service';
-import { File } from 'src/app/models/file.model';
+import { FormsModule } from '@angular/forms';
+import { ElectronService } from '../../../services/electron.service';
+import { FileService } from '../../../services/file.service';
+import { File } from '../../../models/file.model';
 import { v4 as uuid } from 'uuid';
 import { Router } from '@angular/router';
-import { DrawingService } from 'src/app/services/drawing.service';
-import { Collection } from 'src/app/models/collection.model';
-import { Effect } from 'src/app/models/effect.model';
-import { ModelFile } from 'src/app/models/kinematic.model';
-import { EffectType } from 'src/app/models/configuration.model';
+import { DrawingService } from '../../../services/drawing.service';
+import { Collection } from '../../../models/collection.model';
+import { Effect } from '../../../models/effect.model';
+import { ModelFile } from '../../../models/kinematic.model';
+import { EffectType } from '../../../models/configuration.model';
+
 
 
 @Component({
   selector: 'app-file-settings',
-  standalone: false,
+  standalone: true,
+  imports: [ 
+    FormsModule
+  ],
   template: `
-  <div class="window-title-bar" *ngIf="!this.updateMode">New File</div>
-  <div class="window-title-bar" *ngIf="this.updateMode">Update File</div>
-  <div class="window-content">
+  <div class="window-title-bar">{{ returnTitle() }}</div>
+    <div class="window-content">
       <form>
           <div class="inputfield">
               <div class="form-row">
@@ -28,8 +32,7 @@ import { EffectType } from 'src/app/models/configuration.model';
           </div>
           <div class="form-row buttons settings">
               <button (click)="close()">Cancel</button>
-              <button id="submit" autofocus (click)="submit()" *ngIf="this.updateMode">Update</button>
-              <button id="submit" autofocus (click)="submit()" *ngIf="!this.updateMode">Create</button>
+              <button id="submit" autofocus (click)="submit()">{{ returnButtonName() }}</button>
           </div>
       </form>
     </div>
@@ -123,6 +126,14 @@ export class FileSettingsComponent implements OnInit {
       this.newFileCount = this.type === 'file' ? this.fileService.getFileCount() : 1;
       this.file = this.type === 'file' ? new File('Untitled-' + this.newFileCount, uuid(), false) : new ModelFile(uuid(), 'Untitled-' + this.newFileCount);
     }
+  }
+
+  public returnTitle() {
+    return this.updateMode ? 'Update File' : 'New File';
+  }
+
+  public returnButtonName() {
+    return this.updateMode ? 'Update' : 'Create';
   }
 }
 

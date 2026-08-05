@@ -38,7 +38,7 @@ export const ScaleLabelMapping: Record<scaleOption, string> = {
 
 
 export class Scale {
-  value: scaleOption = null;
+  value: scaleOption = scaleOption.scale100;
   graphD3: any = null;
 
   constructor(value: scaleOption) {
@@ -65,7 +65,7 @@ export class Config {
 }
 
 export class Layer {
-  name: string = null;
+  name: string = '';
   visible = true;
   locked = false;
 
@@ -79,20 +79,39 @@ export class motorid {
   index: number = 0;
 }
 
+
+export class MicrocontrollerUploadItem { 
+  id: string; 
+  mcu: string;
+  motorID: string; 
+  name: string; 
+  time: number = 0; 
+  type: EffectType;
+
+  constructor(id: string, mcu: string, motorID: string, name: string, type: EffectType, time: number = 0) {
+    this.id = id;
+    this.mcu = mcu;
+    this.motorID = motorID;
+    this.name = name;
+    this.type = type;
+    this.time = time;
+  }
+}
+
 export class Collection {
   id: string = '';
   name: string = 'Sequence-1';
   effects: Array<Details> = [];
   midiEffects: Array<Details> = [];
-  microcontroller: MicroController | undefined;
+  microcontroller?: MicroController;
   motorID = new motorid();
   rotation = new Rotation();
   config = new Config();
   visualizationType: EffectType = EffectType.torque;
   layers = [ new Layer('CW'), new Layer('CCW') ];
-  overlappingData: any[] = [];
-  effectDataList: any[] = [];
-  renderedData = [];
+  overlappingData: Array<any> = [];
+  effectDataList: Array<any> = [];
+  renderedData: Array<any> = [];
   playing = false;
   returnToStart = false;
   offsetAngle = 0;

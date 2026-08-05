@@ -1,21 +1,28 @@
-import { Component, OnInit, Inject, HostListener } from '@angular/core';
-import { DOCUMENT } from '@angular/common';
-import { ElectronService } from 'src/app/services/electron.service';
-import { Cursor } from 'src/app/models/tool.model';
-import { KinematicsDrawingService } from 'src/app/services/kinematics-drawing.service';
+import { Component, OnInit, Inject } from '@angular/core';
+import { CommonModule, DOCUMENT } from '@angular/common';
+import { ElectronService } from '../../services/electron.service';
+import { Cursor } from '../../models/tool.model';
+import { KinematicsDrawingService } from '../../services/kinematics-drawing.service';
 import { IpcRendererEvent } from 'electron';
 
 @Component({
     selector: 'app-kinematics-toolbar',
-    standalone: false,
+    standalone: true,
+    imports: [ CommonModule ],
     template: `
 
       <div class="toolbar-menu-section" id="toolbar-kinematic-control">
-        <div class="attach-toolbar"><div class="attach-arrow" [ngClass]="{ hidden: this.hidden }" (click)="this.hidden = !this.hidden"></div><div class="label title">tools</div></div>
+        <div class="attach-toolbar">
+          <div class="attach-arrow" [ngClass]="{ hidden: this.hidden }" (click)="this.hidden = !this.hidden"></div>
+          <div class="label title">tools</div>
+        </div>
         <ul class="toolbar-menu" [ngClass]="{ hide: this.hidden }" >
-          <li *ngFor="let item of this.toolList" (click)="selectTool(item.id)">
+
+          @for (item of this.toolList; track item) {
+          <li (click)="selectTool(item.id)">
             <img class="tool-icon" id="tool-kinematic-control-{{ item.id }}" src="./assets/icons/tools/{{ item.icon }}" title="{{ item.name }}">
           </li>
+          }
         </ul>
       </div>
           `,
@@ -164,7 +171,7 @@ import { IpcRendererEvent } from 'electron';
 })
 export class KinematicsToolbarComponent implements OnInit {
 
-  selectedTool: number;
+  selectedTool?: number;
   hidden = false;
 
 

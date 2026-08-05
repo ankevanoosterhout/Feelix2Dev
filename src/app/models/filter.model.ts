@@ -15,20 +15,20 @@ export class FilterType {
 }
 
 export class VariableObject {
-  label: string;
+  label?: string;
   value: Array<number> = [ 0,0,0,0,0,0,0,0,0,0,0,0 ];
-  prevValue: number;
-  frequency: number;
+  prevValue?: number;
+  frequency?: number;
 }
 
 
 export class Filter {
   id: string;
   type: FilterType;
-  controlVariable: string;
-  classifier: Classifier;
-  motor_id: string;
-  microcontrollerPath: string;
+  controlVariable?: string;
+  classifier?: Classifier;
+  motor_id?: string;
+  microcontrollerPath?: string;
   open = true;
   functionVariable = new VariableObject();
 

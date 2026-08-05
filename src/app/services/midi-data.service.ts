@@ -1,10 +1,12 @@
-import { DOCUMENT } from '@angular/common';
 import { Injectable, Inject } from '@angular/core';
-import * as d3 from 'd3';
-import { MidiDataBlock, MidiBlockVisualization, MidiNote } from '../models/audio.model';
+// import { DOCUMENT } from '@angular/common';
+// import * as d3 from 'd3';
 import { v4 as uuid } from 'uuid';
+
+import { MidiDataBlock, MidiBlockVisualization, MidiNote } from '../models/audio.model';
 import { Range, Size } from '../models/effect.model';
 import { EffectType } from '../models/configuration.model';
+
 
 @Injectable()
 export class MidiDataService {
@@ -54,8 +56,11 @@ export class MidiDataService {
   }
 
   getSize(blockList: Array<MidiDataBlock>): Size {
-    if (blockList && blockList.length > 0) {
-      let xMin = blockList[0].vis.x, xMax = blockList[0].vis.x + blockList[0].vis.width;
+    if (blockList !== undefined && blockList.length > 0) {
+      const firstItem = blockList[0];
+      
+      let xMin = firstItem?.vis.x ?? 0; 
+      let xMax = firstItem?.vis.x + firstItem?.vis.width;
       let size = new Size(xMin,xMax,0,128);
 
       for (const block of blockList) {

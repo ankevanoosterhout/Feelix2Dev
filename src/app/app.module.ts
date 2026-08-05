@@ -1,9 +1,12 @@
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common'; 
+import { FormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 import { RouterModule } from '@angular/router'; 
-import { CommonModule } from '@angular/common'; 
-import { NgModule } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { AppComponent } from 'src/app/app.component';
+import { MatDialogModule } from '@angular/material/dialog';
+// import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+
+import { AppComponent } from './app.component';
 import { InfoPageComponent } from './pages/info-page.component';
 import { ToolbarComponent } from './components/interface-elements/toolbars/toolbar.component';
 import { ToolbarInsetComponent } from './components/interface-elements/toolbars/toolbar-inset.component'
@@ -22,8 +25,6 @@ import { NodeService } from './services/node.service';
 import { BezierService } from './services/bezier.service';
 import { MotorControlService } from './services/motor-control.service';
 import { DialogComponent } from './components/windows/dialog.component';
-import { MatDialogModule } from '@angular/material/dialog';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FileSaverModule } from 'ngx-filesaver';
 import { GridSettingsComponent } from './components/windows/settings/grid-settings.component';
 import { ZigZagComponent } from './components/windows/zigzag-effect.component';
@@ -46,12 +47,6 @@ import { ExportDialogComponent } from './components/windows/export-dialog.compon
 import { CloneService } from './services/clone.service';
 import { GridService } from './services/grid.service';
 import { FilterService } from './services/filter.service';
-import { KinematicsComponent } from './components/kinematics/kinematics.component';
-import { KinematicService } from './services/kinematic.service';
-import { KinematicsToolbarComponent } from './components/kinematics/kinematics-toolbar.component';
-import { KinematicsControlComponent } from './components/kinematics/control/kinematics-controls.component';
-import { KinematicsDrawingService } from './services/kinematics-drawing.service';
-import { KinematicsCursorComponent } from './components/kinematics/control/kinematics-cursor.component';
 import { DragControlsService } from './services/drag-controls.service';
 import { IKService } from './services/IK.service';
 import { PlaySequenceComponent } from './components/windows/play-sequence.component';
@@ -60,24 +55,38 @@ import { MidiDataService } from './services/midi-data.service';
 import { TensorflowModule } from './components/tensorflowJS/tensorflow.module';
 import { StatusbarModule } from './components/interface-elements/statusbar.module';
 import { AntiCoggingComponent } from './components/windows/settings/anti-cogging.component';
-import { LocalStorageService } from 'src/app/services/local-storage-fallback.service';
+import { LocalStorageService } from './services/local-storage-fallback.service';
+import { KinematicsModule } from './components/kinematics/kinematics.module';
+
 
 
 
 @NgModule({
     declarations: [
         AppComponent,
-        InfoPageComponent,
         MainPageComponent,
-        DrawingPlaneComponent,
         FixedToolbarComponent,
-        ToolbarComponent,
-        ToolbarInsetComponent,
-        EffectsComponent,
-        FileComponent,
+        FileComponent
+    ],
+    imports: [
+        CommonModule,
+        FormsModule,
+        BrowserModule,
+        RouterModule,
+        AppRoutingModule,
+        FileSaverModule,
+        MatDialogModule,
+        StatusbarModule,
+        KinematicsModule,
+        TensorflowModule,
         FileListComponent,
-        FileSettingsComponent,
+        MotorControlToolbarInsetComponent,
+        MotorControlComponent,
+        ToolbarInsetComponent,
         EffectListComponent,
+        DrawingPlaneComponent,
+        EffectsComponent,
+        FileSettingsComponent,
         EffectSettingsComponent,
         GridSettingsComponent,
         DialogComponent,
@@ -85,29 +94,13 @@ import { LocalStorageService } from 'src/app/services/local-storage-fallback.ser
         ZigZagComponent,
         TransformComponent,
         MotorSettingsComponent,
-        MotorControlComponent,
-        MotorControlToolbarInsetComponent,
         MotorControlToolbarComponent,
         PlaySequenceComponent,
-        KinematicsComponent,
-        KinematicsControlComponent,
-        KinematicsToolbarComponent,
-        KinematicsCursorComponent,
         AntiCoggingComponent,
-        ExportDialogComponent 
-    ],
-    imports: [
-        BrowserModule,
-        CommonModule,
-        RouterModule,
-        AppRoutingModule,
-        FormsModule,
-        MatDialogModule,
-        BrowserAnimationsModule,
-        FileSaverModule,
-        StatusbarModule,
-        TensorflowModule,
-        
+        ExportDialogComponent,
+        InfoPageComponent,
+        DrawingPlaneComponent,
+        ToolbarComponent
     ],
     providers: [
         FileService,
@@ -127,17 +120,11 @@ import { LocalStorageService } from 'src/app/services/local-storage-fallback.ser
         MotorControlService,
         CloneService,
         FilterService,
-        KinematicService,
-        KinematicsDrawingService,
         DragControlsService,
         IKService,
         DrawAudioService,
         MidiDataService,
         LocalStorageService
-        // importProvidersFrom(
-        //     provideNgxWebstorage()
-        // )
-        // FullIKService
     ],
     bootstrap: [
         AppComponent

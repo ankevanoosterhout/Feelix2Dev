@@ -1,13 +1,14 @@
 import { Component, OnInit, Inject, HostListener } from '@angular/core';
-import { DOCUMENT } from '@angular/common';
-import { ElectronService } from 'src/app/services/electron.service';
-import { ToolService } from 'src/app/services/tool.service';
-import { EffectType } from 'src/app/models/configuration.model';
+import { CommonModule, DOCUMENT } from '@angular/common';
+import { ElectronService } from '../../../services/electron.service';
+import { ToolService } from '../../../services/tool.service';
+import { EffectType } from '../../../models/configuration.model';
 import { IpcRendererEvent } from 'electron';
 
 @Component({
     selector: 'app-toolbar',
-    standalone: false,
+    standalone: true,
+    imports: [ CommonModule ],
     template: `
         <div class="wrapper">
             <div class="window-body"></div>
@@ -128,7 +129,7 @@ import { IpcRendererEvent } from 'electron';
 })
 export class ToolbarComponent implements OnInit {
 
-  selectedTool: number;
+  selectedTool?: number;
   toolList = this.toolService.getTools();
 
   // tslint:disable-next-line: variable-name
@@ -167,7 +168,10 @@ export class ToolbarComponent implements OnInit {
 
   @HostListener('document:mouseleave', ['$event'])
   onMouseLeave(e: MouseEvent) {
-    if (e.target[0].className !== '' && e.target[0].className !== 'tool-icon' ) {
+    const targetElement = e.target as HTMLElement | null;
+    const className = targetElement?.className;
+
+    if (className && className !== 'tool-icon') {
       for (const tool of this.toolList) {
         this.deselectTool(tool.id);
       }
@@ -190,14 +194,16 @@ export class ToolbarComponent implements OnInit {
   }
 
   highlightTool(id: number) {
-    if (!this.document.getElementById('tool-' + id).classList.contains('hover')) {
-      this.document.getElementById('tool-' + id).classList.add('hover');
+    const toolObj = this.document.getElementById('tool-' + id);
+    if (toolObj && !toolObj.classList.contains('hover')) {
+      toolObj.classList.add('hover');
     }
   }
 
   deselectTool(id: number) {
-    if (this.document.getElementById('tool-' + id).classList.contains('hover')) {
-      this.document.getElementById('tool-' + id).classList.remove('hover');
+    const toolObj = this.document.getElementById('tool-' + id);
+    if (toolObj && toolObj.classList.contains('hover')) {
+      toolObj.classList.remove('hover');
     }
   }
 

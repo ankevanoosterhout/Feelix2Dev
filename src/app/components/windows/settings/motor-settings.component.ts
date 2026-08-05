@@ -1,19 +1,24 @@
 import { Component, OnInit, Inject } from '@angular/core';
-import { ElectronService } from 'src/app/services/electron.service';
-import { HardwareService } from 'src/app/services/hardware.service';
-import { FileService } from 'src/app/services/file.service';
-import { UploadService } from 'src/app/services/upload.service';
-import { Router } from '@angular/router';
-import { DOCUMENT } from '@angular/common';
-import { ActuatorLabelMapping, ActuatorType, BLDCConfig, HydraulicConfig, MicroController, Motor, PneuConfig, SensorCommunication, SensorCommunicationMapping, StepperConfig, TorqueTunerConfig, Unit } from 'src/app/models/hardware.model';
-import { MagneticSensor, Encoder } from 'src/app/models/position-sensors.model';
+import { CommonModule, DOCUMENT } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
 import { IpcRendererEvent } from 'electron';
+
+import { ElectronService } from '../../../services/electron.service';
+import { HardwareService } from '../../../services/hardware.service';
+import { UploadService } from '../../../services/upload.service';
+
+import { ActuatorLabelMapping, ActuatorType, BLDCConfig, HydraulicConfig, MicroController, Motor, PneuConfig, SensorCommunication, SensorCommunicationMapping, StepperConfig, TorqueTunerConfig, Unit } from '../../../models/hardware.model';
+import { MagneticSensor, Encoder } from '../../../models/position-sensors.model';
+
+
 
 
 
 @Component({
   selector: 'app-motor-settings',
-  standalone: false,
+  standalone: true,
+  imports: [ CommonModule, FormsModule ],
   templateUrl: './motor-settings.component.html',
   styleUrls: ['../../windows/effects/effects.component.css'],
 })
@@ -25,9 +30,9 @@ export class MotorSettingsComponent implements OnInit {
   public motorTypes = Object.values(ActuatorType).filter(value => typeof value === 'number');
   public sensorCommunicationTypes = Object.values(SensorCommunication).filter(value => typeof value === 'number');
 
-  comports = [];
-  microcontrollers: MicroController[] = [];
-  selectedMicrocontroller: MicroController = null;
+  comports: Array<any> = [];
+  microcontrollers: Array<MicroController> = [];
+  public selectedMicrocontroller?: MicroController;
 
   selectedPort: any = null;
   showSelectMicrocontroller = false;
@@ -89,7 +94,7 @@ export class MotorSettingsComponent implements OnInit {
 
 
   constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService, private uploadService: UploadService,
-              private hardwareService: HardwareService, private fileService: FileService, private router: Router ) {
+              private hardwareService: HardwareService) {
 
 
 
@@ -221,8 +226,8 @@ export class MotorSettingsComponent implements OnInit {
   deleteMicrocontroller(microcontroller: any) {
     if (microcontroller) {
       const port = microcontroller.serialPort.path;
-      if (this.selectedMicrocontroller.id === microcontroller.id) {
-        this.selectedMicrocontroller = null;
+      if (this.selectedMicrocontroller?.id === microcontroller.id) {
+        this.selectedMicrocontroller = undefined;
       }
       this.hardwareService.deleteMicroController(port);
       this.electronService.ipcRenderer.send('deleteMicrocontrollerCollections', microcontroller);
@@ -237,17 +242,32 @@ export class MotorSettingsComponent implements OnInit {
 
     this.hardwareService.updateMicroController(microcontroller);
 
-    const uploadModel = this.uploadService.createUploadModel(null, this.selectedMicrocontroller);
-    const motor = this.selectedMicrocontroller.motors.filter(m => m.id === motor_id)[0];
-    const newSensorOffset = (this.document.getElementById('sensorOffset-' + this.selectedMicrocontroller.serialPort.path + '-' + motor_id) as HTMLInputElement).value;
-    const newStartValue = motor.state.position.start + parseFloat(newSensorOffset);
-    const newEndValue = motor.state.position.end + parseFloat(newSensorOffset);
-    (this.document.getElementById('startPosition-offset-' + this.selectedMicrocontroller.serialPort.path + '-' + motor_id) as HTMLInputElement).value = newStartValue.toString();
-    (this.document.getElementById('endPosition-offset-' + this.selectedMicrocontroller.serialPort.path + '-' + motor_id) as HTMLInputElement).value = newEndValue.toString();
-    // motor.state.position.start -= sensorOffset;
-    // motor.state.position.end -= sensorOffset;
-    uploadModel.config.motors = [ motor ];
-    if (this.selectedMicrocontroller && motor.type !== ActuatorType.pneumatic) {
+    const uploadModel = this.uploadService.createUploadModel(undefined, this.selectedMicrocontroller);
+    const motor = this.selectedMicrocontroller?.motors.filter(m => m.id === motor_id)[0];
+    const newSensorOffset = (this.document.getElementById('sensorOffset-' + this.selectedMicrocontroller?.serialPort.path + '-' + motor_id) as HTMLInputElement).value;
+
+    if (motor !== undefined) { 
+      const newStartValue = motor.state.position.start + parseFloat(newSensorOffset);
+      const newEndValue = motor.state.position.end + parseFloat(newSensorOffset);
+      (this.document.getElementById('startPosition-offset-' + this.selectedMicrocontroller?.serialPort.path + '-' + motor_id) as HTMLInputElement).value = newStartValue.toString();
+      (this.document.getElementById('endPosition-offset-' + this.selectedMicrocontroller?.serialPort.path + '-' + motor_id) as HTMLInputElement).value = newEndValue.toString();
+      // motor.state.position.start -= sensorOffset;
+      // motor.state.position.end -= sensorOffset;
+      if (uploadModel?.config !== undefined) {
+      uploadModel.config.motors = [ motor ];
+        if (this.selectedMicrocontroller && motor.type !== ActuatorType.pneumatic) {
+          this.electronService.ipcRenderer.send('updateMotorSetting', uploadModel);
+        }
+      }
+    }
+  }
+
+  updateSupplyVoltage(motor_id: string) {
+    const uploadModel = this.uploadService.createUploadModel(undefined, this.selectedMicrocontroller);
+    const motor = this.selectedMicrocontroller?.motors.filter(m => m.id === motor_id)[0];
+    const newSupplyVOltage = (this.document.getElementById('supply-voltage-slider' + this.selectedMicrocontroller?.serialPort.path + '-' + motor_id) as HTMLInputElement).value;
+    (this.document.getElementById('supply-voltage-' + this.selectedMicrocontroller?.serialPort.path + '-' + motor_id) as HTMLInputElement).value = newSupplyVOltage.toString();
+    if (this.selectedMicrocontroller && motor !== undefined && motor.type !== ActuatorType.pneumatic) {
       this.electronService.ipcRenderer.send('updateMotorSetting', uploadModel);
     }
   }
@@ -302,14 +322,17 @@ export class MotorSettingsComponent implements OnInit {
     this.searchRange = 1;
     this.hardwareService.updateMicroController(microcontroller);
 
-    const uploadModel = this.uploadService.createUploadModel(null, this.selectedMicrocontroller);
-    const motor = this.selectedMicrocontroller.motors.filter(m => m.id === motor_id)[0];
-    uploadModel.config.motors = [ motor ];
-    if (this.selectedMicrocontroller) {
-      this.electronService.ipcRenderer.send('updateMotorSetting', uploadModel);
-      (this.document.getElementById('find-range-2') as HTMLElement).classList.add('hidden');
-      (this.document.getElementById('find-range') as HTMLElement).classList.remove('hidden');
-      this.electronService.ipcRenderer.send('run', { motor_id: motor_id, port: microcontroller.serialPort.path, run: 1 });
+    const uploadModel = this.uploadService.createUploadModel(undefined, this.selectedMicrocontroller);
+    const motor = this.selectedMicrocontroller?.motors.filter(m => m.id === motor_id)[0];
+
+    if (uploadModel?.config !== undefined && motor !== undefined) {
+      uploadModel.config.motors = [ motor ];
+      if (this.selectedMicrocontroller) {
+        this.electronService.ipcRenderer.send('updateMotorSetting', uploadModel);
+        (this.document.getElementById('find-range-2') as HTMLElement).classList.add('hidden');
+        (this.document.getElementById('find-range') as HTMLElement).classList.remove('hidden');
+        this.electronService.ipcRenderer.send('run', { motor_id: motor_id, port: microcontroller.serialPort.path, run: 1 });
+      }
     }
 
   }
@@ -352,15 +375,17 @@ export class MotorSettingsComponent implements OnInit {
   }
 
   createCalibrationModel(motor_id: string) {
-    const uploadModel = this.uploadService.createUploadModel(null, this.selectedMicrocontroller);
-    const motor = this.selectedMicrocontroller.motors.filter(m => m.id === motor_id)[0];
-    uploadModel.config.motors = [ motor ];
-    return uploadModel;
+    const uploadModel = this.uploadService.createUploadModel(undefined, this.selectedMicrocontroller);
+    const motor = this.selectedMicrocontroller?.motors.filter(m => m.id === motor_id)[0];
+    if (uploadModel?.config !== undefined && motor !== undefined) {
+      uploadModel.config.motors = [ motor ];
+      return uploadModel;
+    }
   }
 
   createencoder(motor_id: string) {
-    const motor = this.selectedMicrocontroller.motors.filter(m => m.id === motor_id)[0];
-    if (motor) {
+    const motor = this.selectedMicrocontroller?.motors.filter(m => m.id === motor_id)[0];
+    if (motor !== undefined) {
       if (motor.config.encoderType === 'Magnetic sensor') {
         motor.config.encoder = new MagneticSensor();
       } else if (motor.config.encoderType === 'Encoder') {
@@ -371,16 +396,18 @@ export class MotorSettingsComponent implements OnInit {
   }
 
   addNewMicrocontroller() {
-    this.selectedMicrocontroller = null;
+    this.selectedMicrocontroller = undefined;
     this.showSelectMicrocontroller = true;
   }
 
   updateNrOfMotors() {
-    const nr = (this.document.getElementById('numberOfMotors-' + this.selectedMicrocontroller.id) as HTMLInputElement).value;
-    if (parseInt(nr) > 0) {
-      this.hardwareService.addActuators(this.selectedMicrocontroller, parseInt(nr));
-    } else {
-      (this.document.getElementById('numberOfMotors-' + this.selectedMicrocontroller.id) as HTMLInputElement).value = this.selectedMicrocontroller.motors.length.toString();
+    const nr = (this.document.getElementById('numberOfMotors-' + this.selectedMicrocontroller?.id) as HTMLInputElement).value;
+    if (this.selectedMicrocontroller !== undefined) {
+      if (parseInt(nr) > 0) {
+        this.hardwareService.addActuators(this.selectedMicrocontroller, parseInt(nr));
+      } else {
+        (this.document.getElementById('numberOfMotors-' + this.selectedMicrocontroller.id) as HTMLInputElement).value = this.selectedMicrocontroller?.motors.length.toString();
+      }
     }
   }
 
@@ -422,7 +449,7 @@ export class MotorSettingsComponent implements OnInit {
     this.hardwareService.microcontrollerObservable.subscribe(microcontrollers => {
       this.microcontrollers = microcontrollers;
       if (this.selectedMicrocontroller) {
-        this.selectedMicrocontroller = this.microcontrollers.filter(m => m.id === this.selectedMicrocontroller.id)[0];
+        this.selectedMicrocontroller = this.microcontrollers.filter(m => m.id === this.selectedMicrocontroller?.id)[0];
       }
     });
 

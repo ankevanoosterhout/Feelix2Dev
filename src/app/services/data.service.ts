@@ -8,13 +8,23 @@ import { Color } from '../models/colors.model';
 export class DataService {
 
   toolbar = new Toolbar();
-  color: string;
-  color2: string;
+  color: string | undefined;
+  color2: string | undefined;
   public dataObservable = new Subject<Toolbar>();
   // public colorObservable = new Subject<any>();
-  public config: DrawingPlaneConfig;
+  public config: DrawingPlaneConfig | undefined;
 
-  box: { left: number; top: number; width: number; height: number };
+  private box: { 
+    left: number | undefined; 
+    top: number | undefined; 
+    width: number | undefined; 
+    height: number | undefined; 
+  } = { 
+    left: undefined, 
+    top: undefined, 
+    width: undefined, 
+    height: undefined 
+  };
 
 
   public selection: Array<string> = [];
@@ -44,12 +54,13 @@ export class DataService {
     this.saveToolbar();
   }
 
-  updatePoints(x: number, y: number, w: number, h: number) {
-    if (x !== null) { this.toolbar.points.x = Math.round(x * 100) / 100; } else { this.toolbar.points.x = null; }
-    if (y !== null) { this.toolbar.points.y = Math.round(y * 100) / 100; } else { this.toolbar.points.y = null; }
-    if (w !== null) { this.toolbar.points.w = Math.round(w * 100) / 100; } else { this.toolbar.points.w = null; }
-    if (h !== null) { this.toolbar.points.h = Math.round(h * 100) / 100; } else { this.toolbar.points.h = null; }
-    if (w === null && h === null) {
+  updatePoints(x: number | undefined, y: number | undefined, w: number | undefined, h: number | undefined) {
+    this.toolbar.points.x = x ? this.toolbar.points.x = Math.round(x * 100) / 100 : undefined;
+    this.toolbar.points.y = y ? this.toolbar.points.y = Math.round(y * 100) / 100 : undefined;
+    this.toolbar.points.w = w ? this.toolbar.points.w = Math.round(w * 100) / 100 : undefined;
+    this.toolbar.points.h = h ? this.toolbar.points.h = Math.round(h * 100) / 100 : undefined;
+
+    if (w === undefined && h === undefined) {
       this.toolbar.boxSelection = false;
     } else {
       this.toolbar.boxSelection = true;
@@ -94,7 +105,7 @@ export class DataService {
     this.dataObservable.next(this.toolbar);
   }
 
-  selectElement(id: string, x: number, y: number, w: number, h: number) {
+  selectElement(id: string, x: number | undefined, y: number | undefined, w: number | undefined, h: number | undefined) {
     this.selection = [ id ];
     this.updatePoints(x, y, w, h);
     this.saveToolbar();
@@ -105,7 +116,7 @@ export class DataService {
       this.selection.push(id);
     }
     if (this.selection.length > 1) {
-      this.updatePoints(null, null, null, null);
+      this.updatePoints(undefined, undefined, undefined, undefined);
     }
     this.saveToolbar();
   }
@@ -118,7 +129,7 @@ export class DataService {
         this.selection = elements;
       }
       if (this.selection.length > 1) {
-        this.updatePoints(null, null, null, null);
+        this.updatePoints(undefined, undefined, undefined, undefined);
       }
       this.saveToolbar();
     }
@@ -134,10 +145,10 @@ export class DataService {
 
   deselectAll() {
     this.selection = [];
-    this.toolbar.points.x = null;
-    this.toolbar.points.y = null;
-    this.toolbar.points.w = null;
-    this.toolbar.points.h = null;
+    this.toolbar.points.x = undefined;
+    this.toolbar.points.y = undefined;
+    this.toolbar.points.w = undefined;
+    this.toolbar.points.h = undefined;
     this.toolbar.boxSelection = false;
     this.forceStepSelection = [];
     this.saveToolbar();
@@ -145,48 +156,48 @@ export class DataService {
 
 
 
-  calculateInputBoxes(box: { left: number; top: number; width: number; height: number }) {
+  calculateInputBoxes(box: { left: number | undefined; top: number | undefined; width: number | undefined; height: number | undefined}) {
 
     this.box = box;
 
     this.toolbar.points.w = box.width;
     this.toolbar.points.h = box.height;
 
-    if (this.toolbar.referencePoint.name === 'center') {
+    if (this.toolbar.referencePoint.name === 'center' && box.left && box.width) {
       this.toolbar.points.x = box.left + (box.width / 2);
-      if (box.top !== null) { this.toolbar.points.y = box.top - (box.height / 2); }
+      if (box.top && box.height) { this.toolbar.points.y = box.top - (box.height / 2); }
 
     } else if (this.toolbar.referencePoint.id >= 0 && this.toolbar.referencePoint.id <= 2) {
-      if (box.top !== null) { this.toolbar.points.y = box.top; }
+      if (box.top) { this.toolbar.points.y = box.top; }
 
-      if (this.toolbar.referencePoint.name === 'n') {
+      if (this.toolbar.referencePoint.name === 'n' && box.left && box.width) {
         this.toolbar.points.x = box.left + (box.width / 2);
-      } else if (this.toolbar.referencePoint.name === 'nw') {
+      } else if (this.toolbar.referencePoint.name === 'nw' && box.left) {
         this.toolbar.points.x = box.left;
-      } else if (this.toolbar.referencePoint.name === 'ne') {
+      } else if (this.toolbar.referencePoint.name === 'ne' && box.left && box.width) {
         this.toolbar.points.x = box.left + box.width;
       }
 
-    } else if (this.toolbar.referencePoint.name === 'e') {
+    } else if (this.toolbar.referencePoint.name === 'e' && box.left && box.width) {
       this.toolbar.points.x = box.left + box.width;
-      if (box.top !== null) { this.toolbar.points.y = box.top - (box.height / 2); }
+      if (box.top && box.height) { this.toolbar.points.y = box.top - (box.height / 2); }
 
     } else if (this.toolbar.referencePoint.name === 'w') {
       this.toolbar.points.x = box.left;
-      if (box.top !== null) {  this.toolbar.points.y = box.top - (box.height / 2); }
+      if (box.top && box.height) {  this.toolbar.points.y = box.top - (box.height / 2); }
 
     } else if (this.toolbar.referencePoint.id >= 6 && this.toolbar.referencePoint.id <= 8) {
-      if (box.top !== null) { this.toolbar.points.y = box.top - box.height; }
+      if (box.top && box.height) { this.toolbar.points.y = box.top - box.height; }
 
-      if (this.toolbar.referencePoint.name === 's') {
+      if (this.toolbar.referencePoint.name === 's' && box.left && box.width) {
         this.toolbar.points.x = box.left + box.width / 2;
       } else if (this.toolbar.referencePoint.name === 'sw') {
         this.toolbar.points.x = box.left;
-      } else if (this.toolbar.referencePoint.name === 'se') {
+      } else if (this.toolbar.referencePoint.name === 'se' && box.left && box.width) {
         this.toolbar.points.x = box.left + box.width;
       }
 
-      if (box.top === null) { this.toolbar.points.y = null; }
+      if (box.top === undefined) { this.toolbar.points.y = undefined; }
     }
     this.updatePoints(this.toolbar.points.x, this.toolbar.points.y, this.toolbar.points.w, this.toolbar.points.h);
   }

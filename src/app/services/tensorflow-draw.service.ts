@@ -6,6 +6,25 @@ import { DataSet, Bounds, MinMax, TrimSection, TrainingSet } from '../models/ten
 import { v4 as uuid } from 'uuid';
 
 
+interface TrainingDataPoint {
+  epoch: number;
+  log: {
+    loss: number;
+    metric: number;
+  };
+}
+
+
+interface ValidationDataPoint {
+  epoch: number;
+  log: {
+    val_loss: number;
+    val_metric: number;
+  };
+}
+
+
+
 @Injectable()
 export class TensorFlowDrawService {
 
@@ -15,6 +34,7 @@ export class TensorFlowDrawService {
   // updateTrimSize: Subject<any> = new Subject<void>();
   updateBoundsGraph: Subject<any> = new Subject<void>();
   addOrRemoveSection: Subject<any> = new Subject<void>();
+
 
   constructor() {
     this.config = new TensorFlowConfig();
@@ -65,7 +85,8 @@ export class TensorFlowDrawService {
 
 
 
-  setScale(svg: any, bounds = new Bounds(), index = 0, size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
+  setScale(svg: any, bounds = new Bounds(undefined, undefined, undefined,  undefined), 
+           index = 0, size = { width: this.config.width, height: this.config.height, margin: this.config.margin }) {
 
     this.config.scaleY[index] = d3.scaleLinear()
       .domain([bounds.yMax, bounds.yMin])
@@ -206,16 +227,16 @@ export class TensorFlowDrawService {
   }
 
 
-  redrawGraph(file: TrainingSet, size: any) {
-    const bounds_loss = file ? file.bounds_loss : new Bounds(0, 100, 0, 1);
-    const bounds_metric = file ? file.bounds_metric : new Bounds(0, 100, 0, 1);
+  redrawGraph(file: TrainingSet| undefined, size: any) {
+    if (file !== undefined) {
+      const bounds_loss = file ? file.bounds_loss : new Bounds(0, 100, 0, 1);
+      const bounds_metric = file ? file.bounds_metric : new Bounds(0, 100, 0, 1);
 
-    this.updateBounds(bounds_loss, 'svg_graph_training_A', size);
-    this.updateBounds(bounds_metric, 'svg_graph_training_B', size);
-    this.drawGraph('svg_graph_training_A', bounds_loss, size);
-    this.drawGraph('svg_graph_training_B', bounds_metric, size);
+      this.updateBounds(bounds_loss, 'svg_graph_training_A', size);
+      this.updateBounds(bounds_metric, 'svg_graph_training_B', size);
+      this.drawGraph('svg_graph_training_A', bounds_loss, size);
+      this.drawGraph('svg_graph_training_B', bounds_metric, size);
 
-    if (file) {
       this.drawTensorflowTrainingProgress(file.data);
     }
   }
@@ -231,10 +252,19 @@ export class TensorFlowDrawService {
 
   drawTrainingData(dataGroup: any, logs: Array<any>, index: number) {
 
-    const training = d3.line()
-      .x((d: { epoch: number; }) => this.config.scaleX(d.epoch))
-      .y((d: { log: any; }) => { return index === 0 ? (isNaN(this.config.scaleY[index](d.log.loss)) ? 0 : this.config.scaleY[index](d.log.loss)) :
-                                                      (isNaN(this.config.scaleY[index](d.log.metric)) ? 0 : this.config.scaleY[index](d.log.metric)); });
+    const training = d3.line<TrainingDataPoint>()
+      .x((d) => this.config.scaleX(d.epoch))
+      .y((d) => {
+        // Determine the raw value based on index
+        const rawValue = index === 0 ? d.log.loss : d.log.metric;
+        
+        // Select the appropriate Y scale mapping function
+        const scaleFn = this.config.scaleY[index];
+        const scaledValue = scaleFn(rawValue);
+
+        // Fallback safely to 0 if the math results in NaN
+        return isNaN(scaledValue) ? 0 : scaledValue;
+    });
 
     if (training) {
       dataGroup.append('path')
@@ -246,12 +276,19 @@ export class TensorFlowDrawService {
             .text(() => 'results training data');
     }
 
-    if (logs.length > 0 && logs[0].log.val_loss !== undefined && logs[0].log.val_loss !== null) {
+    if (logs.length > 0 && logs[0].val_log.loss !== undefined && logs[0].log.val_metric !== null) {
 
-      const validation = d3.line()
-        .x((d: { epoch: number; }) => this.config.scaleX(d.epoch))
-        .y((d: { log: any }) => { return index === 0 ? (isNaN(this.config.scaleY[index](d.log.val_loss)) ? 0 : this.config.scaleY[index](d.log.val_loss)) :
-                                                  (isNaN(this.config.scaleY[index](d.log.val_metric)) ? 0 : this.config.scaleY[index](d.log.val_metric)); })
+      const validation = d3.line<ValidationDataPoint>()
+      .x((d) => this.config.scaleX(d.epoch))
+      .y((d) => {
+        const rawValue = index === 0 ? d.log.val_loss : d.log.val_metric; //prev d.log.val_loss d.log.val_metric
+        
+        const scaleFn = this.config.scaleY[index];
+        const scaledValue = scaleFn(rawValue);
+
+        // 3. Prevent NaN layout bugs with a fallback
+        return isNaN(scaledValue) ? 0 : scaledValue;
+      });
 
       if (validation) {
         dataGroup.append('path')
@@ -288,11 +325,19 @@ export class TensorFlowDrawService {
 
             if (colorData && colorData.visible) {
 
-              const line = d3.line()
-                .x((d: { time: number; }) => isNaN(this.config.scaleX(d.time)) ? d.time : this.config.scaleX(d.time))
-                .y((d: { inputs: { value: any; name: string }[]; }) => {
-                  const inputItem = d.inputs.filter(n => n.name === input.name)[0];
-                  return isNaN(this.config.scaleY[0](inputItem.value)) ? 0 : this.config.scaleY[0](inputItem.value);
+
+
+              const line = d3.line<{ time: number; inputs: { value: any; name: string }[] }>()
+                .x((d) => {
+                  const timeValue = d.time ?? 0; 
+                  const scaledX = this.config.scaleX(timeValue);
+                  return isNaN(scaledX) ? timeValue : scaledX;
+                })
+                .y((d) => {
+                  const inputItem = d.inputs.find(n => n.name === input.name);
+                  if (!inputItem) return 0;
+                  const scaledY = this.config.scaleY[0](inputItem.value);
+                  return isNaN(scaledY) ? 0 : scaledY;
                 });
 
 
@@ -302,7 +347,7 @@ export class TensorFlowDrawService {
                   .attr('fill', 'none')
                   .attr('stroke', colorData.hash)
                   .attr('stroke-width', 1.4)
-                  .attr('d', line(m.d))
+                  .attr('d', line(m.d as any) || '')
                     .append('svg:title')
                       .text(() => m.mcu.name + '-' + m.id + ' ' + input.name);
 
@@ -313,9 +358,9 @@ export class TensorFlowDrawService {
                     .enter()
                     .append('circle')
                     .attr('r', 1.5)
-                    .attr('cx', (d: { time: number; }) => isNaN(this.config.scaleX(d.time)) ? d.time : this.config.scaleX(d.time))
-                    .attr('cy', (d: { inputs: { value: any; name: string }[]; }) => {
-                                    const inputItem = d.inputs.filter(n => n.name === input.name)[0];
+                    .attr('cx', (d: any) => isNaN(this.config.scaleX(d.time)) ? d.time : this.config.scaleX(d.time))
+                    .attr('cy', (d: any) => {
+                                    const inputItem = d.inputs.filter((n: { name: string; }) => n.name === input.name)[0];
                                     return isNaN(this.config.scaleY[0](inputItem.value)) ? 0 : this.config.scaleY[0](inputItem.value)})
                     .attr('class', 'm-' + m.id + '-' + m.mcu.id + '-' + input.name)
                     .attr('fill', '#4a4a4a')
@@ -323,7 +368,7 @@ export class TensorFlowDrawService {
                     .attr('stroke-width', 1)
                       .append('svg:title')
                         .text((d: any) => {
-                          const inputItem = d.inputs.filter(n => n.name === input.name)[0];
+                          const inputItem = d.inputs.filter((n: { name: string; }) => n.name === input.name)[0];
                           return 'x ' + d.time + ' y ' + inputItem.value
                         });
 
@@ -335,7 +380,7 @@ export class TensorFlowDrawService {
         }
       }
 
-      if (trimLines) {
+      if (trimLines !== undefined) {
         this.drawTrimLines(true, trimLines, size);
       }
     }
@@ -362,7 +407,7 @@ export class TensorFlowDrawService {
 
       const dragLineLeft = d3
         .drag()
-        .on('drag', (event: any, d: { id: number, values: MinMax, width: number }) => {
+        .on('drag', (event: any, d: any) => {
 
           const index = lines.indexOf(d);
           const prevItemMax = index > 0 ? this.config.scaleX(lines[index - 1].values.max) : this.config.scaleX(0);
@@ -389,7 +434,7 @@ export class TensorFlowDrawService {
 
       const dragLineRight = d3
         .drag()
-        .on('drag', (event: any, d: { id: number, values: MinMax, width: number }) => {
+        .on('drag', (event: any, d: any) => {
 
           const index = lines.indexOf(d);
           const nextItemMax = index < lines.length - 1 ? this.config.scaleX(lines[index + 1].values.min) : size.width - size.margin;
@@ -420,8 +465,8 @@ export class TensorFlowDrawService {
           .enter()
           .append('rect')
           .attr('class', 'trimblock')
-          .attr('id', (d: {}, i: number) => 'trimblock-' + i)
-          .attr('x', (d: {}, i: number) => i > 0 ? this.config.scaleX(lines[i - 1].values.max) : this.config.scaleX(0))
+          .attr('id', (d: any, i: number) => 'trimblock-' + i)
+          .attr('x', (d: any, i: number) => i > 0 ? this.config.scaleX(lines[i - 1].values.max) : this.config.scaleX(0))
           .attr('y', 0)
           .attr('width', (d: any, i: number) => this.config.scaleX(d.values.min) - this.config.scaleX((i > 0 ? lines[i - 1].values.max : 0)))
           .attr('height', size.height - (2 * size.margin))
@@ -459,9 +504,9 @@ export class TensorFlowDrawService {
         .data(data)
         .enter()
         .append('rect')
-        .attr('class', (d, i) => name)
+        .attr('class', () => name)
         .attr('id', (d: { id: number }) => name + '_' + d.id)
-        .attr('x', (d: { values: MinMax; }) => this.config.scaleX((name === 'trimLeft' ? d.values.min : d.values.max) - 0.5))
+        .attr('x', (d: { values: MinMax; }) => this.config.scaleX((name === 'trimLeft' ? d.values.min : (d.values.max ?? 0) - 0.5)))
         .attr('y', 0)
         .attr('width', 1)
         .attr('height', size.height - (2 * size.margin))
@@ -499,12 +544,12 @@ export class TensorFlowDrawService {
       .attr('r', 7)
       .style('stroke', '#1c1c1c')
       .style('stroke-width', 0.5)
-      .style('fill', (d, i) => name === 'add' && ((i === 0 && d.values.min < 40) ||(i > 0 && d.values.min - data[i - 1].values.max < 40)) ? 'transparent' : '#df9b08')
+      .style('fill', (d: { values: { min: number; }; }, i: number) => name === 'add' && ((i === 0 && d.values.min < 40) ||(i > 0 && d.values.min - data[i - 1].values.max < 40)) ? 'transparent' : '#df9b08')
       .on('mousedown', (event: any, d: any) => {
         this.addOrRemoveSection.next({ add: (name === 'add' ? true : false), id: d.id, index: data.indexOf(d) });
       })
       .append('svg:title')
-        	.text((d, i) => name + '-' + i);
+        	.text((d: any, i: string) => name + '-' + i);
 
 
       svg.selectAll('text.' + name + 'Section')
@@ -525,7 +570,7 @@ export class TensorFlowDrawService {
         .attr('y', name === 'add' ? size.margin / 2 + 7 : size.margin / 2 + 6)
         .attr('text-anchor', 'middle')
         .text(name === 'add' ? '+' : '-')
-        .style('fill', (d, i) => name === 'add' && ((i === 0 && d.values.min < 40) ||( i > 0 && d.values.min - data[i - 1].values.max < 40)) ? 'transparent' : '#1c1c1c')
+        .style('fill', (d: { values: { min: number; }; }, i: number) => name === 'add' && ((i === 0 && d.values.min < 40) ||( i > 0 && d.values.min - data[i - 1].values.max < 40)) ? 'transparent' : '#1c1c1c')
         .style('font-family', 'Open Sans, Arial, sans-serif')
         .style('font-size', 20)
         .style('font-weight', 800)

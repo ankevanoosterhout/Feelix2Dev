@@ -1,5 +1,5 @@
 export class HistoryEffects {
-  id: string = null;
+  id?: string;
   effects: Array<any> = [];
   index = 0;
 
@@ -11,10 +11,10 @@ export class HistoryEffects {
 
 
 export class HistoryListElement {
-  fileId: string = null;
+  fileId?: string;
   list: Array<HistoryEffects> = [];
 
-  constructor(fileId: string, list: Array<HistoryEffects>) {
+  constructor(fileId: string | undefined, list: Array<HistoryEffects>) {
     this.fileId = fileId;
     this.list = list;
   }

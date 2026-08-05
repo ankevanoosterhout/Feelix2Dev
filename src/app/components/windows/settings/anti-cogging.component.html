@@ -10,16 +10,28 @@
   <div id="svg_graph_cogging"></div>
 
   <div class="form-group microcontroller">
-      <select class="form-control wide" id="microcontroller" name="microcontroller" [(ngModel)]="this.microcontroller" (change)="this.selectMicrocontroller">
-          <option class="placeholder" [ngValue]="undefined" selected="selected">-- select microcontroller --</option>
-          <option *ngFor="let item of this.hardwareService.microcontrollers" [ngValue]="item">{{ item.name }}</option>
+      <select class="form-control wide" 
+        id="microcontroller" 
+        name="microcontroller" 
+        [(ngModel)]="microcontroller" 
+        (change)="selectMicrocontroller()">
+          
+      <option class="placeholder" [ngValue]="undefined" selected="selected">-- select microcontroller --</option>
+      
+      @for (item of hardwareService.microcontrollers; track item) { 
+      <option [ngValue]="item">
+        {{ item.name }}
+      </option>
+      }
       </select>
-
-      <span *ngIf="this.microcontroller && this.microcontroller.motors.length > 1">
+    
+      @if (this.microcontroller && this.microcontroller.motors.length > 1) {
+      <span>
         <select class="form-control small" id="motors" name="motors" [(ngModel)]="this.motor_id">
-          <option *ngFor="let item of this.microcontroller.motors" [ngValue]="item.id">{{ item.id }}</option>
+          <option *ngFor="let item of microcontroller.motors" [ngValue]="item.id">{{ item.id }}</option>
         </select>
       </span>
+      }
 
       <button class="inline height30" (click)="startTest()">Test</button>
   </div>

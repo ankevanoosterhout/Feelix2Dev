@@ -1,14 +1,14 @@
 import { DOCUMENT } from '@angular/common';
 import { Component, Inject, ChangeDetectorRef } from '@angular/core';
-import { ElectronService } from 'src/app/services/electron.service';
-import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
+import { ElectronService } from '../../services/electron.service';
+import { TensorFlowMainService } from '../../services/tensorflow-main.service';
 import { v4 as uuid } from 'uuid';
-import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
-import { TensorFlowConfig } from 'src/app/models/tensorflow-config.model';
-import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
-import { Model, ModelType } from 'src/app/models/tensorflow.model';
-import { TensorFlowModelDrawService } from 'src/app/services/tensorflow-model-draw.service';
-import { TensorFlowRecordService } from 'src/app/services/tensorflow-record.service';
+import { TensorFlowDrawService } from '../../services/tensorflow-draw.service';
+import { TensorFlowConfig } from '../../models/tensorflow-config.model';
+import { TensorFlowData } from '../../models/tensorflow-data.model';
+import { Model, ModelType } from '../../models/tensorflow.model';
+import { TensorFlowModelDrawService } from '../../services/tensorflow-model-draw.service';
+import { TensorFlowRecordService } from '../../services/tensorflow-record.service';
 import { IpcRendererEvent } from 'electron';
 
 @Component({
@@ -34,9 +34,14 @@ export class TensorflowComponent {
     this.tensorflowService.updateTrainingProgress.subscribe(data => {
       this.config.progress = data.progress;
       this.config.status = data.status;
-      this.document.getElementById('msg').innerHTML = this.config.status;
-      const width = 244 * (this.config.progress / 100);
-      this.document.getElementById('progress').style.width = width + 'px';
+      const msgObj = this.document.getElementById('msg');
+      if(msgObj) msgObj.innerHTML = this.config.status;
+      
+      const progress = this.document.getElementById('progress');
+      if (progress) {
+        const width = 244 * (this.config.progress / 100);
+        progress.style.width = width + 'px';
+      }
 
     });
 
@@ -77,7 +82,8 @@ export class TensorflowComponent {
     });
 
     this.tensorflowService.redraw.subscribe((res) => {
-      this.tensorFlowRecordService.redraw((res.page === 'data' ? this.d.selectedDataset : this.d.selectedMLDataset), this.d.trimLines, (res.page === 'data' ? 'svg_graph_data' : 'svg_graph_deploy'));
+      const dataSet = res.page === 'data' ? this.d.selectedDataset : this.d.selectedMLDataset;
+      this.tensorFlowRecordService.redraw(dataSet, this.d.trimLines, (res.page === 'data' ? 'svg_graph_data' : 'svg_graph_deploy'));
       if (res.page === 'deploy' && this.d.selectedMLDataset === null) {
         this.changeDetection.detectChanges();
       }
@@ -123,12 +129,25 @@ export class TensorflowComponent {
       }
       break;
       case(2): {
-        this.tensorflowDrawService.redrawGraph(this.d.trainingData.length > 0 ? this.d.trainingData.filter(t => t.open || (this.d.selectedTrainingSet && t.id === this.d.selectedTrainingSet.id))[0] : null,
-          { width: innerWidth - (this.d.sidebarWidth + 450), height: (innerHeight - 240) / 2, margin: innerWidth * 0.035 });
+        const activeTrainingSet = this.d.trainingData.length > 0 
+          ? this.d.trainingData.find((t: { open: any; id: any; }) => t.open || (this.d.selectedTrainingSet && t.id === this.d.selectedTrainingSet.id))
+          : undefined;
+
+        // Only trigger the draw engine if a valid training set actually exists
+        if (activeTrainingSet) {
+          this.tensorflowDrawService.redrawGraph(
+            activeTrainingSet,
+            { 
+              width: innerWidth - (this.d.sidebarWidth + 450), 
+              height: (innerHeight - 240) / 2, 
+              margin: innerWidth * 0.035 
+            }
+          );
+        }
       }
       break;
       case(3): {
-        this.tensorFlowRecordService.redraw(this.d.selectedMLDataset, null, 'svg_graph_deploy');
+        this.tensorFlowRecordService.redraw(this.d.selectedMLDataset, undefined, 'svg_graph_deploy');
       }
       break;
       default:

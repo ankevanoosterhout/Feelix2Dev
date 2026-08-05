@@ -1,5 +1,4 @@
-import { DOCUMENT } from '@angular/common';
-import { Injectable, Inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { DrawingPlaneConfig } from '../models/drawing-plane-config.model';
 import * as d3 from 'd3';
 import { DrawingService } from './drawing.service';
@@ -8,13 +7,11 @@ import { MidiDataService } from './midi-data.service';
 import { DataService } from './data.service';
 import { Range } from '../models/effect.model';
 import { EffectType } from '../models/configuration.model';
-import { ElectronService } from 'src/app/services/electron.service';
+import { ElectronService } from '../services/electron.service';
 
 
 @Injectable()
 export class DrawAudioService {
-
-
 
   config: DrawingPlaneConfig;
 
@@ -196,7 +193,7 @@ export class DrawAudioService {
 
       const dragBlock = d3.drag()
         .on('start', (event: any, d: any) => {
-          this.dataService.selectElement(d.id, d.vis.x, d.vis.y, d.vis.width, null);
+          this.dataService.selectElement(d.id, d.vis.x, d.vis.y, d.vis.width, undefined);
         })
         .on('drag', (event: any, d: any) => {
           const coords = this.drawingService.calculateBlockSnapPoint(this.nodeService.scale.scaleX.invert(event.x + 80), this.nodeService.scale.scaleY.invert(event.y));
@@ -204,12 +201,12 @@ export class DrawAudioService {
             d.vis.x = coords.x;
             d.vis.y = coords.y;
             d3.select('#block_id_' + d.id).attr('x', this.nodeService.scale.scaleX(d.vis.x) - 79).attr('y', this.nodeService.scale.scaleY(d.vis.y + 1) + 1);
-            d3.select('#left_block_id_' + d.id).attr('y', (d: { vis: { y: number; }; }) => this.nodeService.scale.scaleY(d.vis.y + 1) + 1)
-              .attr('x', (d: { vis: { x: number; width: number; }; }) => this.nodeService.scale.scaleX(d.vis.x) - 85)
-            d3.select('#right_block_id_' + d.id).attr('x', (d: { vis: { x: number; width: number; }; }) => this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - 85)
-              .attr('y', (d: { vis: { y: number; }; }) => this.nodeService.scale.scaleY(d.vis.y + 1) + 1);
+            d3.select('#left_block_id_' + d.id).attr('y', (d:any) => this.nodeService.scale.scaleY(d.vis.y + 1) + 1)
+              .attr('x', (d: any) => this.nodeService.scale.scaleX(d.vis.x) - 85)
+            d3.select('#right_block_id_' + d.id).attr('x', (d:any) => this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - 85)
+              .attr('y', (d: any) => this.nodeService.scale.scaleY(d.vis.y + 1) + 1);
 
-            this.dataService.selectElement(d.id, d.vis.x, d.vis.y, d.vis.width, null);
+            this.dataService.selectElement(d.id, d.vis.x, d.vis.y, d.vis.width, undefined);
           }
         })
         .on('end', (event: any, d: any) => {
@@ -267,7 +264,7 @@ export class DrawAudioService {
         .on('start', (event: any, d: any) => {
           // event.stopPropagation();
           this.midiDataService.selectBlock(d.id);
-          this.dataService.selectElement(d.id, d.vis.x, d.vis.y, d.vis.width, null);
+          this.dataService.selectElement(d.id, d.vis.x, d.vis.y, d.vis.width, undefined);
         })
         .on('drag', (event: any, d: any) => {
           const coords = this.drawingService.calculateBlockSnapPoint(this.nodeService.scale.scaleX.invert(event.x + 80), this.nodeService.scale.scaleY.invert(event.y));
@@ -279,9 +276,9 @@ export class DrawAudioService {
             d3.select('#block_id_' + d.id)
               .attr('x', this.nodeService.scale.scaleX(d.vis.x) - 79)
               .attr('width', (this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - this.nodeService.scale.scaleX(d.vis.x)));
-            d3.select('#left_block_id_' + d.id).attr('x', (d: { vis: { x: number; width: number; }; }) => this.nodeService.scale.scaleX(d.vis.x) - 85);
+            d3.select('#left_block_id_' + d.id).attr('x', (d: any) => this.nodeService.scale.scaleX(d.vis.x) - 85);
 
-            this.dataService.selectElement(d.id, d.vis.x, d.vis.y, d.vis.width, null);
+            this.dataService.selectElement(d.id, d.vis.x, d.vis.y, d.vis.width, undefined);
           }
         })
         .on('end', (event: any, d:any) => {
@@ -293,7 +290,7 @@ export class DrawAudioService {
 
         .on('start', (event: any, d: any) => {
           this.midiDataService.selectBlock(d.id);
-          this.dataService.selectElement(d.id, d.vis.x, d.vis.y, d.vis.width, null);
+          this.dataService.selectElement(d.id, d.vis.x, d.vis.y, d.vis.width, undefined);
         })
         .on('drag', (event: any, d: any) => {
           const coords = this.drawingService.calculateBlockSnapPoint(this.nodeService.scale.scaleX.invert(event.x + 80), this.nodeService.scale.scaleY.invert(event.y));
@@ -301,9 +298,9 @@ export class DrawAudioService {
           if (coords.x !== d.vis.x + d.vis.width && d.vis.width - difference > 0) {
             d.vis.width -= difference;
             d3.select('#block_id_' + d.id).attr('width', (this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - this.nodeService.scale.scaleX(d.vis.x)));
-            d3.select('#right_block_id_' + d.id).attr('x', (d: { vis: { x: number; width: number; }; }) => this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - 85);
+            d3.select('#right_block_id_' + d.id).attr('x', (d: any) => this.nodeService.scale.scaleX(d.vis.x + d.vis.width) - 85);
           }
-          this.dataService.selectElement(d.id, d.vis.x, d.vis.y, d.vis.width, null);
+          this.dataService.selectElement(d.id, d.vis.x, d.vis.y, d.vis.width, undefined);
         })
         .on('end', (event: any, d:any) => {
           d.effect.range = new Range(0, d.vis.width);

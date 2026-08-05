@@ -1,6 +1,4 @@
 <div class="fixed-toolbar" id="fixed-toolbar">
-
-
   <div class="row right" id="toolbar-content">
 
     <div id="trimlines-input-data" *ngIf="this.d.trimLinesVisible">
@@ -53,7 +51,7 @@
         </div>
       </div>
 
-      <app-graph [id]="this.graphID" [size]="this.tensorflowRecordService.size"></app-graph>
+      <app-graph [id]="graphID" [size]="tensorflowRecordService.size"></app-graph>
 
       <div class="sidebar-graph">
         <app-sidebar [page]="'data'" [inputDataVisible]="true" [outputDataVisible]="false"></app-sidebar>

@@ -18,7 +18,8 @@
       </div>
 
       <div class="form-row list-item" *ngFor="let item of this.data; let i = index;" (click)="this.selectDataSet(item.id, $event)"
-        [ngClass]="{ selected: (!this.multipleSelect.active && this.multipleSelect.min === i) || (this.multipleSelect.active && i >= this.multipleSelect.min && i <= this.multipleSelect.max) }">
+        [ngClass]="{ selected: (!this.multipleSelect.active && this.multipleSelect.min === i) || 
+                               (this.multipleSelect.active && i >= (this.multipleSelect.min ?? 0) && i <= (this.multipleSelect.max ?? 0)) }">
 
         <ul class="data-columns" [ngClass]="{ folder: item.content }">
           <li class="cb" *ngIf="!item.content">

@@ -1,8 +1,10 @@
 import { Injectable } from '@angular/core';
-import { MicroController, Motor, ConnectedDevice, OtherDevices, ActuatorType } from '../models/hardware.model';
-import { LocalStorageService } from 'src/app/services/local-storage-fallback.service';
 import { v4 as uuid } from 'uuid';
 import { Subject } from 'rxjs';
+
+import { MicroController, Motor, ConnectedDevice, OtherDevices, ActuatorType } from '../models/hardware.model';
+import { LocalStorageService } from '../services/local-storage-fallback.service';
+
 
 
 @Injectable()
@@ -39,12 +41,14 @@ export class HardwareService {
     window.addEventListener('storage', event => {
         if (event.storageArea === localStorage) {
           if (event.key === HardwareService.MICROCONTROLLER_LOCATION) {
-            const microcontrollers: MicroController[] = JSON.parse(localStorage.getItem(HardwareService.MICROCONTROLLER_LOCATION));
+            const mcuLocation = localStorage.getItem(HardwareService.MICROCONTROLLER_LOCATION);
+            const microcontrollers: MicroController[] = mcuLocation ? JSON.parse(mcuLocation) : [];
             this.microcontrollers = microcontrollers;
             this.microcontrollerObservable.next(this.microcontrollers);
           }
           if (event.key === HardwareService.DEVICE_LOCATION) {
-            const registeredDevices: ConnectedDevice[] = JSON.parse(localStorage.getItem(HardwareService.DEVICE_LOCATION));
+            const connDeviceLocation = localStorage.getItem(HardwareService.DEVICE_LOCATION);
+            const registeredDevices: ConnectedDevice[] = connDeviceLocation ? JSON.parse(connDeviceLocation) : [];
             this.registeredDevices = registeredDevices;
             this.registeredDevicesObservable.next(this.registeredDevices);
           }
@@ -70,7 +74,7 @@ export class HardwareService {
 
   }
 
-  addMicroController(COM: any, vendor: string, id = null) {
+  addMicroController(COM: any, vendor: string, id: string | undefined = undefined) {
     if (COM && COM.serialPort) {
       if (this.microcontrollers.length > 0) {
         let controller = this.microcontrollers.filter(m => m.serialPort.path === COM.serialPort.path)[0];
@@ -231,7 +235,7 @@ export class HardwareService {
 
   getDataSendTime(microControllerID: string): number {
     const microController = this.microcontrollers.filter(m => m.id === microControllerID)[0];
-    return microController.lastDataSend;
+    return microController.lastDataSend ?? -1;
   }
 
 
@@ -330,7 +334,4 @@ export class HardwareService {
     this.registeredDevicesObservable.next(this.registeredDevices);
     this.localSt.store('registereddevices', this.registeredDevices);
   }
-
-
-
 }

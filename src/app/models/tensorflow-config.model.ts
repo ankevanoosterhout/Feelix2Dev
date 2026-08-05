@@ -19,7 +19,7 @@ export class TensorFlowConfig {
   width = window.innerWidth - 385;
   height = window.innerHeight - 70;
 
-  recording = { active: false, starttime: null };
+  recording : { active: boolean, starttime: number | undefined } = { active: false, starttime: undefined };
 
 
   margin = 50;

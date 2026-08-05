@@ -1,28 +1,36 @@
 import { Component, Input, OnInit, Inject } from '@angular/core';
-import { FileService } from 'src/app/services/file.service';
+import { CommonModule, DOCUMENT } from '@angular/common';
+
+import { FileService } from './../../services/file.service';
+import { ElectronService } from './../../services/electron.service';
+import { DataService } from './../../services/data.service';
+
+import { EffectType } from './../../models/configuration.model';
 import { File } from '../../models/file.model';
-import { MatDialog } from '@angular/material/dialog';
-import { DOCUMENT } from '@angular/common';
-import { ElectronService } from 'src/app/services/electron.service';
-import { DataService } from 'src/app/services/data.service';
-import { EffectType } from 'src/app/models/configuration.model';
 
 
 @Component({
     selector: 'app-effect-list',
-    standalone: false,
+    standalone: true,
+    imports: [ CommonModule ],
     template: `
       <div class="open-tabs effects" id="effect-tabs">
         <ul class="tabs effects" id="effect-list">
-          <li *ngFor="let tab of file.configuration.openTabs" [ngClass]="{ active: tab.isActive }" (click)="selectTab(tab)">
-            <div class="filename-tab">{{ tab.name }}</div>
-            <div class="close closeTab effects" (click)="closeTab(tab)"><div></div></div>
-          </li>
+          @if (file?.configuration !== undefined) {
+            @for (tab of file.configuration.openTabs; track tab) {
+            <li [ngClass]="{ active: tab.isActive }" (click)="selectTab(tab)">
+              <div class="filename-tab">{{ tab.name }}</div>
+              <div class="close closeTab effects" (click)="closeTab(tab)"><div></div></div>
+            </li>
+            }
+          }
         </ul>
-        <div class="scroll-arrows" *ngIf="this.scrollTab">
+        @if (this.scrollTab) {
+        <div class="scroll-arrows">
           <div (click)="scroll(-1)" class="arrow-left"><div class="arrow left"></div></div>
           <div (click)="scroll(1)" class="arrow-right"><div class="arrow right"></div></div>
         </div>
+        }
       </div>
     `,
     styleUrls: ['./file-list.component.css'],
@@ -41,7 +49,7 @@ export class EffectListComponent implements OnInit {
 
   public scrollTab = false;
 
-  constructor(@Inject(DOCUMENT) private document: Document, public fileService: FileService, public dialog: MatDialog, private electronService: ElectronService,
+  constructor(@Inject(DOCUMENT) private document: Document, public fileService: FileService, private electronService: ElectronService,
     private dataService: DataService) {}
 
   @Input()

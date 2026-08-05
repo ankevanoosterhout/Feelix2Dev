@@ -1,14 +1,14 @@
 import { Cursor } from './tool.model';
-import { Node } from './node.model';
+import { Node, Coords } from './node.model';
 import { Unit } from './effect.model';
 
 
 export class Margin {
-  top: number | undefined;
-  right: number | undefined;
-  bottom: number | undefined;
-  left: number | undefined;
-  offsetTop: number | undefined;
+  top: number = 0;
+  right: number = 0;
+  bottom: number = 0;
+  left: number = 0;
+  offsetTop: number = 0;
 }
 
 export class EditBounds {
@@ -25,19 +25,14 @@ export class EditBounds {
   }
 }
 
-export class Coords {
-  x: number | undefined;
-  y: number | undefined;
-}
-
 export class Clipboard {
   empty = true;
   guides: Array<string> = [];
 }
 
 export class Slider {
-  min: number | undefined;
-  max: number | undefined;
+  min: number = 0;
+  max: number = 100;
 }
 
 export class ReferenceBox {
@@ -50,7 +45,7 @@ export class SliderDrawplane {
   inner = new Slider();
   outer = new Slider();
   ratio = 0.8;
-  dragPos = null;
+  dragPos?: number;
 }
 
 

@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
 import { Solver, Link,	Joint, IKRootsHelper, Goal, findRoots, DOF, setIKFromUrdf, urdfRobotToIKRoot, SOLVE_STATUS_NAMES } from 'closed-chain-ik/src';
-import { LocalStorageService } from 'src/app/services/local-storage-fallback.service';
+import { LocalStorageService } from '../services/local-storage-fallback.service';
 import { Subject } from 'rxjs';
 import { IKConfig } from '../models/ik-config.model';
 import { URFD_Joint, URFD_Link } from '../models/kinematic.model';
+import { Frame } from 'closed-chain-ik/src/core/Frame';
 
 
 @Injectable()
@@ -52,32 +53,31 @@ export class IKService {
 
     const selectedName = joint !== null ? joint.parent.name : urfd_link.id.slice(0, -5);
 
-    if (this.ikConfig.ikRoot !== null) {
-      for (const root of this.ikConfig.ikRoot) {
-        root.traverse( c => {
+    for (const root of this.ikConfig.ikRoot) {
+      root.traverse( (c: Frame) => {
 
-          if (c.isJoint) {
+        // if (c.isJoint) {
 
-            const name = c.name;
-            if (name === selectedName) {
+          const name = c.name;
+          if (name === selectedName) {
 
-              if (!parent) {
+            if (!parent) {
 
-                c.attachChild(link);
+              c.attachChild(link);
 
-              } else {
+            } else {
 
-                if (c.parent === null) {
-                  link.attachChild(c);
-                  this.ikConfig.ikRoot = null;
-                }
+              if (c.parent === null) {
+                link.attachChild(c);
+                this.ikConfig.ikRoot = [];
               }
             }
           }
-        });
-        this.createRootsHelper(root);
-      }
+        // }
+      });
+      this.createRootsHelper(root);
     }
+    
     this.ikFrames.push(link);
     this.findRootsFromFrames();
   }
@@ -102,7 +102,7 @@ export class IKService {
 
     if (this.ikConfig.ikRoot !== null) {
       for (const root of this.ikConfig.ikRoot) {
-        root.traverse( c => {
+        root.traverse( (c: Link) => {
 
           if (c.isLink) {
 
@@ -115,7 +115,7 @@ export class IKService {
 
                 if (c.parent === null) {
                   joint.attachChild(c);
-                  this.ikConfig.ikRoot = null;
+                  this.ikConfig.ikRoot = [];
                 }
               }
             }
@@ -151,7 +151,7 @@ export class IKService {
   updateAngle(id: string, quaternion: any) {
     console.log('update root angles ', id, quaternion);
     for (const root of this.ikConfig.ikRoot) {
-      root.traverse( c => {
+      root.traverse( (c: { name: any; setWorldQuaternion: (arg0: any, arg1: any, arg2: any, arg3: any) => void; updateMatrix: () => void; }) => {
 
         // if ( c.isJoint ) {
 
@@ -198,7 +198,7 @@ export class IKService {
   }
 
   showRootsHelper(visible: boolean) {
-    this.ikConfig.ikHelper.traverse( c => {
+    this.ikConfig.ikHelper.traverse( (c: { material: { color: { setHex: (arg0: number) => void; }; }; visible: boolean; }) => {
       if (c.material) {
         c.material.color.setHex( 0xe91e63 );
       }
@@ -216,7 +216,7 @@ export class IKService {
   updateObjectQuaternion(id: string, quaternion: any, updateChildren = false) {
     // console.log('update quaternion ', id);
     for (const root of this.ikConfig.ikRoot) {
-      root.traverse( c => {
+      root.traverse( (c: { name: any; setQuaternion: (arg0: any, arg1: any, arg2: any, arg3: any) => void; updateMatrix: () => void; }) => {
 
         // if ( c.isJoint ) {
 
@@ -229,6 +229,7 @@ export class IKService {
         // }
       });
     }
+    
   }
 
 

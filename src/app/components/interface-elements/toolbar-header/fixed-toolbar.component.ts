@@ -1,15 +1,15 @@
 import { Component, OnInit, Inject, HostListener } from '@angular/core';
-import { DataService } from 'src/app/services/data.service';
+import { DataService } from './../../../services/data.service';
 import { Toolbar } from '../../../models/data.model';
-import { DrawingService } from 'src/app/services/drawing.service';
+import { DrawingService } from './../../../services/drawing.service';
 import { DOCUMENT } from '@angular/common';
-import { BezierService } from 'src/app/services/bezier.service';
-import { ElectronService } from 'src/app/services/electron.service';
-import { EffectLibraryService } from 'src/app/services/effect-library.service';
-import { Unit } from 'src/app/models/effect.model';
-import { CloneService } from 'src/app/services/clone.service';
-import { EffectType, EffectTypeLabelMapping } from 'src/app/models/configuration.model';
-import { MidiDataType, MidiDataTypeLabelMapping } from 'src/app/models/audio.model';
+import { BezierService } from './../../../services/bezier.service';
+import { ElectronService } from './../../../services/electron.service';
+import { EffectLibraryService } from './../../../services/effect-library.service';
+import { Unit } from './../../../models/effect.model';
+import { CloneService } from './../../../services/clone.service';
+import { EffectType, EffectTypeLabelMapping } from './../../../models/configuration.model';
+import { MidiDataType, MidiDataTypeLabelMapping } from './../../../models/audio.model';
 import { IpcRendererEvent } from 'electron';
 
 @Component({
@@ -33,7 +33,7 @@ export class FixedToolbarComponent implements OnInit {
   // rotationType = 'dependent';
   // actuationType = 'pneumatic';
 
-  transformData: object;
+  transformData: object | undefined;
   activeSelection = this.dataService.activeBoxSelection();
 
   pointsCopy: any;
@@ -103,8 +103,8 @@ export class FixedToolbarComponent implements OnInit {
   public transform(type: string, diff: number) {
     this.unFocusAll();
 
-    if (this.toolbar.points.w < 1) { this.toolbar.points.w = 1; }
-    if (this.toolbar.points.h < 1) { this.toolbar.points.h = 1; }
+    if (this.toolbar.points.w && this.toolbar.points.w < 1) { this.toolbar.points.w = 1; }
+    if (this.toolbar.points.h && this.toolbar.points.h < 1) { this.toolbar.points.h = 1; }
 
     const translate = {
         width: 1,
@@ -115,24 +115,24 @@ export class FixedToolbarComponent implements OnInit {
         offsetY: 0
     };
 
-    if (type === 'x') {
+    if (type === 'x' && this.toolbar.points.x) {
       const newValue = Math.round(this.toolbar.points.x + diff);
       translate.horizontal = newValue - this.toolbar.points.x;
       this.toolbar.points.x = newValue;
 
-    } else if (type === 'y') {
+    } else if (type === 'y' && this.toolbar.points.y) {
       const newValue = Math.round(this.toolbar.points.y + diff);
       translate.vertical = newValue - this.toolbar.points.y;
       this.toolbar.points.y = newValue;
 
-    } else if (type === 'w') {
+    } else if (type === 'w' && this.toolbar.points.w) {
       const newValue = Math.round(this.toolbar.points.w + diff);
       translate.width = this.getPercentage(this.toolbar.points.w, newValue);
       this.toolbar.points.w = newValue;
       if (this.toolbar.linked && this.toolbar.points.w !== null)  {
         translate.height = translate.width;
       }
-    } else if (type === 'h') {
+    } else if (type === 'h' && this.toolbar.points.h) {
       const newValue = Math.round(this.toolbar.points.h + diff);
       translate.height = this.getPercentage(this.toolbar.points.h, newValue);
       this.toolbar.points.h = newValue;
@@ -196,17 +196,17 @@ export class FixedToolbarComponent implements OnInit {
       offsetY: 0
     };
     const original = this.pointsCopy;
-    if (id === 'x-value') {
+    if (id === 'x-value' && this.toolbar.points.x) {
       translate.horizontal = this.toolbar.points.x - original.x;
-    } else if (id === 'y-value') {
+    } else if (id === 'y-value' && this.toolbar.points.y) {
       translate.vertical = this.toolbar.points.y - original.y;
-    } else if (id === 'w-value') {
+    } else if (id === 'w-value' && this.toolbar.points.w) {
       translate.width = this.getPercentage(original.w, this.toolbar.points.w);
       if (this.toolbar.linked && this.toolbar.points.w !== null)  {
         translate.height = translate.width;
       }
 
-    } else if (id === 'h-value') {
+    } else if (id === 'h-value' && this.toolbar.points.h) {
       translate.height = this.getPercentage(original.h, this.toolbar.points.h);
       if (this.toolbar.linked && this.toolbar.points.w !== null) {
         translate.width = translate.height;
@@ -221,22 +221,22 @@ export class FixedToolbarComponent implements OnInit {
 
   unFocusAll() {
     this.drawingService.setInputFieldsActive(false);
-    this.document.getElementById('x-value').blur();
-    this.document.getElementById('y-value').blur();
-    this.document.getElementById('w-value').blur();
-    this.document.getElementById('h-value').blur();
+    this.document.getElementById('x-value')?.blur();
+    this.document.getElementById('y-value')?.blur();
+    this.document.getElementById('w-value')?.blur();
+    this.document.getElementById('h-value')?.blur();
     const ccValue = this.document.getElementById('cc-value');
     if (ccValue) ccValue.blur();
   }
 
   updateColor() {
-    this.drawingService.file.configuration.colors.filter(c => c.type === this.drawingService.file.activeEffect.type)[0].hash[0] = this.dataService.color;
+    this.drawingService.file.configuration.colors.filter(c => c.type === this.drawingService.file.activeEffect.type)[0].hash[0]? this.dataService.color : '';
     // this.drawingService.saveFile(this.drawingService.file);
     this.drawingService.updateConfigActiveFile(this.drawingService.file.configuration);
   }
 
   updateColor2() {
-    this.drawingService.file.configuration.colors.filter(c => c.type === EffectType.position)[0].hash[1] = this.dataService.color2;
+    this.drawingService.file.configuration.colors.filter(c => c.type === EffectType.position)[0].hash[1]? this.dataService.color2 : '';
     // this.drawingService.saveFile(this.drawingService.file);
     this.drawingService.updateConfigActiveFile(this.drawingService.file.configuration);
   }

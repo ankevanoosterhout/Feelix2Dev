@@ -4,11 +4,11 @@ import { Details, Effect } from './effect.model';
 import { MicroController, Motor } from './hardware.model';
 
 export class Linear {
-  Ymin: number = null;
-  Ymax: number = null;
-  Xmin: number = null;
-  Xmax: number = null;
-  dYdX: number = null;
+  Ymin?: number;
+  Ymax?: number;
+  Xmin?: number;
+  Xmax?: number;
+  dYdX?: number;
 }
 
 // export class PID {
@@ -32,22 +32,22 @@ export class Model {
 export class ConfigModel {
   serialPort: any;
   motors: Array<Motor>;
-  vendor: string;
+  vendor?: string;
   updateSpeed: number;
   baudrate: number;
-  collection: string;
-  range: number;
-  constrain_range: number;
-  loop: number;
+  collection?: string;
+  range?: number;
+  constrain_range?: number;
+  loop?: number;
   motorID: string;
 
 
-  constructor(collection: Collection, microcontroller: MicroController) {
+  constructor(collection: Collection | undefined, microcontroller: MicroController) {
     this.serialPort = microcontroller.serialPort;
     this.vendor = microcontroller.vendor;
     this.updateSpeed = microcontroller.updateSpeed;
     this.baudrate = microcontroller.baudrate;
-    if (collection !== null) {
+    if (collection !== undefined) {
       this.motors = [ microcontroller.motors.filter(m => m.id === collection.motorID.name)[0] ];
       this.collection = collection.id;
       this.range = collection.rotation.end - collection.rotation.start;
@@ -67,21 +67,21 @@ export class ConfigModel {
 }
 
 export class EffectModel {
-  id: string = null;
-  motorID: string = null;
-  position: Model = null;
-  angle: Model = null;
-  scale: Model = null;
-  flip: Model = null;
-  direction: Model = null;
-  infinite: Model = null;
-  repeat: Model = null;
-  vis_type: Model = null;
-  effect_type: Model = null;
-  datasize: Model = null;
-  pointer: number = null;
-  quality: Model = null;
-  midi_config: Model = null;
+  id: string = '';
+  motorID: string = '';
+  position?: Model;
+  angle?: Model;
+  scale?: Model;
+  flip?: Model;
+  direction?: Model;
+  infinite?: Model;
+  repeat?: Model;
+  vis_type?: Model;
+  effect_type?: Model;
+  datasize?: Model;
+  pointer?: number;
+  quality?: Model ;
+  midi_config?: Model;
 
   constructor(collEffect: Details, effect: any, units: string, motorID: string) {
 
@@ -154,12 +154,12 @@ export class DataModel {
 
 export class FilterModel {
   filters: Array<any> = [];
-  config: ConfigModel = null;
-  vendor: string = null;
+  config: ConfigModel;
+  vendor?: string;
 
   constructor(filters: Array<any>, microcontroller: MicroController) {
     this.filters = filters;
-    this.config = new ConfigModel(null, microcontroller);
+    this.config = new ConfigModel(undefined, microcontroller);
     this.vendor = microcontroller.vendor;
   }
 }
@@ -167,15 +167,15 @@ export class FilterModel {
 
 export class UploadModel {
   effects: Array<EffectModel> = [];
-  config: ConfigModel = null;
-  vendor: string = null;
-  data: DataModel = null;
+  config?: ConfigModel;
+  vendor?: string;
+  data?: DataModel;
   newMCU = true;
-  returnToStart: number = null;
+  returnToStart?: number;
   run: number = 0;
 
-  constructor(collection: Collection, microcontroller: MicroController) {
-    if (collection) {
+  constructor(collection: Collection | undefined, microcontroller: MicroController) {
+    if (collection !== undefined) {
       for (const collEffect of collection.effects) {
         const effectData = collection.effectDataList.filter(e => e.id === collEffect.effectID)[0];
         if (effectData && effectData.data.length > 0) {
@@ -214,7 +214,7 @@ export class UploadModel {
 export class ConfigModel_TT {
   serialPort: any;
   motors: Array<Motor>;
-  vendor: string;
+  vendor?: string;
   updateSpeed: number;
   baudrate: number;
   motorID: string;
@@ -232,8 +232,8 @@ export class ConfigModel_TT {
 
 export class UploadModel_TT {
   message = '';
-  config: ConfigModel_TT = null;
-  vendor: string = null;
+  config?: ConfigModel_TT;
+  vendor?: string;
   newMCU = true;
 
   constructor(message: string, microcontroller: MicroController) {
@@ -249,13 +249,13 @@ export class UploadModel_TT {
 
 
 export class UploadStringModel {
-  config: ConfigModel = null;
-  vendor: string = null;
+  config: ConfigModel;
+  vendor?: string;
   dataString: string;
 
   constructor(microcontroller: MicroController, dataStr: string) {
     this.dataString = dataStr;
-    this.config = new ConfigModel(null, microcontroller);
+    this.config = new ConfigModel(undefined, microcontroller);
   }
 }
 
@@ -263,13 +263,11 @@ export class UploadStringModel {
 
 
 export class ConnectModel {
-
-  config: ConfigModel = null;
-  vendor: string = null;
+  config: ConfigModel;
+  vendor?: string;
 
   constructor(microcontroller: MicroController) {
-
-    this.config = new ConfigModel(null, microcontroller);
+    this.config = new ConfigModel(undefined, microcontroller);
     this.vendor = microcontroller.vendor;
   }
 }

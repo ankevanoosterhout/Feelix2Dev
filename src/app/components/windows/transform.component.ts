@@ -1,11 +1,13 @@
 import { Component, OnInit } from '@angular/core';
-import { ElectronService } from 'src/app/services/electron.service';
-import { FileService } from 'src/app/services/file.service';
-import { File } from 'src/app/models/file.model';
+import { ElectronService } from '../../services/electron.service';
+import { FileService } from '../../services/file.service';
+import { File } from '../../models/file.model';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-transform',
-  standalone: false,
+  standalone: true,
+  imports: [ FormsModule ],
   template: `
   <div class="window-title-bar">Move</div>
   <div class="window-content">
@@ -38,7 +40,7 @@ import { File } from 'src/app/models/file.model';
 })
 export class TransformComponent implements OnInit {
 
-  file: File;
+  file?: File;
   units = { name: 'deg', PR: 360 };
   moved = false;
 

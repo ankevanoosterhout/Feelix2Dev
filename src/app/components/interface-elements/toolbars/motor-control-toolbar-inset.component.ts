@@ -1,21 +1,29 @@
 import { Component, OnInit, Inject } from '@angular/core';
-import { DOCUMENT } from '@angular/common';
-import { ElectronService } from 'src/app/services/electron.service';
-import { DrawingPlaneConfig } from 'src/app/models/drawing-plane-config.model';
-import { DrawingService } from 'src/app/services/drawing.service';
-import { MotorControlService } from 'src/app/services/motor-control.service';
+import { CommonModule, DOCUMENT } from '@angular/common';
+
 import { IpcRendererEvent } from 'electron';
+
+import { ElectronService } from '../../../services/electron.service';
+import { DrawingPlaneConfig } from '../../../models/drawing-plane-config.model';
+import { DrawingService } from '../../../services/drawing.service';
+import { MotorControlService } from '../../../services/motor-control.service';
+
 
 @Component({
     selector: 'app-motor-control-toolbar-inset',
-    standalone: false,
+    standalone: true,
+    imports: [ CommonModule ], 
     template: `
           <div class="toolbar-menu-section" id="toolbar-motor-control">
             <div class="detach-toolbar" (click)="detachToolbar()"><div></div></div>
             <ul class="toolbar-menu">
-              <li *ngFor="let item of this.motorControlService.toolList" (click)="this.selectTool(item.id, item.disabled)">
-                <img class="tool-icon" [ngClass]="{ disabled: item.disabled }" id="tool-motor-control-{{ item.id }}" src="{{ item.icon }}" title="{{ item.name }}">
+
+              @for (item of this.motorControlService.toolList; track item) {
+              <li (click)="this.selectTool(item.id, item.disabled)">
+                <img class="tool-icon" [ngClass]="{ disabled: item.disabled }" id="tool-motor-control-{{ item.id }}" 
+                     src="{{ item.icon }}" title="{{ item.name }}">
               </li>
+              }
             </ul>
           </div>
           `,
@@ -120,7 +128,7 @@ import { IpcRendererEvent } from 'electron';
 })
 export class MotorControlToolbarInsetComponent implements OnInit {
 
-  selectedTool: number;
+  selectedTool?: number;
 
   public config: DrawingPlaneConfig;
 
@@ -139,7 +147,7 @@ export class MotorControlToolbarInsetComponent implements OnInit {
   selectTool(id: number, disabled: boolean) {
     if (!disabled) {
       if (id === 0) {
-        this.motorControlService.addCollection();
+        this.motorControlService.addCollection(true);
       } else if (id === 1) {
         this.electronService.ipcRenderer.send('motorSettings');
       } else if (id === 2) {
@@ -164,15 +172,15 @@ export class MotorControlToolbarInsetComponent implements OnInit {
     this.document.body.style.cursor = 'wait';
     this.config.motorControlToolbarOffset = 0;
     this.electronService.ipcRenderer.send('showToolbarMotor');
-    this.document.getElementById('toolbar-motor-control').classList.add('hide');
-    this.document.getElementById('motor-control-section').classList.add('wide');
+    this.document.getElementById('toolbar-motor-control')?.classList.add('hide');
+    this.document.getElementById('motor-control-section')?.classList.add('wide');
     this.motorControlService.drawCollections();
   }
 
   attachToolbar() {
     this.config.motorControlToolbarOffset = 45;
-    this.document.getElementById('toolbar-motor-control').classList.remove('hide');
-    this.document.getElementById('motor-control-section').classList.remove('wide');
+    this.document.getElementById('toolbar-motor-control')?.classList.remove('hide');
+    this.document.getElementById('motor-control-section')?.classList.remove('wide');
   }
 
   ngOnInit(): void {

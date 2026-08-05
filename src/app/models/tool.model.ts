@@ -12,7 +12,7 @@ export class Cursor {
   acceleration = 'p';
   cursor = 'url(./assets/icons/tools/cursor-zoom.png), none';
   subcursor: Array<Subcursor> = [];
-  selectedSubcursor: string = '';
+  selectedSubcursor?: string;
 
   constructor(id: number = 0, name: string = '', slug: string = '', disabled: boolean = false, icon: string = '', acceleration: string = '',
               cursor: string = '', subcursor: Array<Subcursor> = []) {

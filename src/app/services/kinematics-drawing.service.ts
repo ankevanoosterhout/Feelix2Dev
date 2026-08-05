@@ -4,8 +4,8 @@ import { Subject } from 'rxjs';
 import { Point, JointLink } from '../models/kinematic.model';
 import { KinematicsConfig } from '../models/kinematics-config.model';
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { TransformControls } from 'three/examples/jsm/controls/TransformControls';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import { KinematicService } from './kinematic.service';
 import { Raycaster } from 'three';
 
@@ -42,7 +42,7 @@ export class KinematicsDrawingService {
   }
 
   save() {
-    this.kinematicService.save(null);
+    this.kinematicService.save(undefined);
   }
 
   newModel(modelFile: any) {
@@ -84,7 +84,7 @@ export class KinematicsDrawingService {
     this.config.canvas = this.document.getElementById('canvas');
     this.config.renderer.setPixelRatio( window.devicePixelRatio );
     this.config.renderer.setSize(this.config.width, this.config.height);
-    this.config.renderer.outputEncoding = THREE.sRGBEncoding;
+    //this.config.renderer.outputEncoding = THREE.sRGBEncoding;
     this.config.canvas.appendChild( this.config.renderer.domElement );
 
     this.config.scene = new THREE.Scene();
@@ -347,7 +347,7 @@ export class KinematicsDrawingService {
 
 
 
-  setObjectColor(object: any, color = null) {
+  setObjectColor(object: any, color: any = undefined) {
     // console.log(object);
     object.traverse( ( child: any ) => {
       if (child.isGroup) {
@@ -568,24 +568,26 @@ export class KinematicsDrawingService {
       for (const joint of this.kinematicService.selectedFrames) {
         const copySceneObject = joint.sceneObject.clone();
         const newJoint = this.kinematicService.copyJoint(joint.id, copySceneObject);
-        newSelectedJoints.push(newJoint);
-        this.config.scene.add(newJoint.sceneObject);
+        if (newJoint) {
+          newSelectedJoints.push(newJoint);
+          this.config.scene.add(newJoint.sceneObject);
 
-        const sceneObject = this.config.scene.filter(newJoint.id);
+          const sceneObject = this.config.scene.filter(newJoint.id);
 
-        // for (const connector of newJoint.connectors) {
-        //   // console.log(newJoint.sceneObject.children);
-        //   // console.log(connector);
-        //   sceneObject.traverse( (child: any) => {
-        //     // console.log(child);
-        //     if (child instanceof THREE.Mesh) {
-        //       // this.updateObjectDetails(child, newJoint.id, connector.name);
-        //       this.kinematicService.updateSelectionPointID(newJoint.id, connector.name, child.uuid);
-        //     }
-        //   });
-        // }
-        newJoint.sceneObject = sceneObject;
-        // console.log(newJoint.sceneObject);
+          // for (const connector of newJoint.connectors) {
+          //   // console.log(newJoint.sceneObject.children);
+          //   // console.log(connector);
+          //   sceneObject.traverse( (child: any) => {
+          //     // console.log(child);
+          //     if (child instanceof THREE.Mesh) {
+          //       // this.updateObjectDetails(child, newJoint.id, connector.name);
+          //       this.kinematicService.updateSelectionPointID(newJoint.id, connector.name, child.uuid);
+          //     }
+          //   });
+          // }
+          newJoint.sceneObject = sceneObject;
+          // console.log(newJoint.sceneObject);
+        }
       }
       // this.deselectAllObjects();
       // this.kinematicService.selectedJoints = newSelectedJoints;
@@ -636,11 +638,11 @@ export class KinematicsDrawingService {
     }
   }
 
-  updateChildren(model: JointLink, diffTranslation: any, prevModel = null) {
+  updateChildren(model: JointLink, diffTranslation: any, prevModel : JointLink | undefined) {
     // console.log(model.connectors);
     for (const item of model.connectors) {
       if (item.connected) {
-        if (prevModel === null || prevModel.id !== item.object) {
+        if (prevModel === undefined || prevModel.id !== item.object) {
           const connectedObject = this.kinematicService.frames.filter(j => j.id === item.object)[0];
           if (connectedObject) {
             // console.log('translate children ', diffTranslation);
@@ -693,12 +695,15 @@ export class KinematicsDrawingService {
     let rotation: THREE.Vector3;
     if (!origin.includes('Y') && !target.includes('Y')) {
       rotation = new THREE.Vector3(0,1,0);
+      return rotation;
     } else if (!origin.includes('X') && !target.includes('X')) {
       rotation = new THREE.Vector3(1,0,0);
+      return rotation;
     } else if (!origin.includes('Z') && !target.includes('Z')) {
       rotation = new THREE.Vector3(0,0,1);
+      return rotation;
     }
-    return rotation;
+    
   }
 
 
@@ -747,8 +752,8 @@ export class KinematicsDrawingService {
 
 
 
-  identifyOrigin(items: Array<JointLink>) {
-    const newList = [];
+  identifyOrigin(items: Array<JointLink>): Array<JointLink> {
+    const newList : Array<JointLink> = [];
     let tmp = 0;
     // for (const item of items) {
     //   const value = this.kinematicLinkService.getNrOfLinksObject(item.id);

@@ -2,18 +2,18 @@
 import { Component, HostListener, Inject, OnInit } from '@angular/core';
 import { Activation, ActivationLabelMapping, Basic_options, Classifier, Constraint, ConstraintLabelMapping, Convolutional_options,
          DataFormat, DataFormatMapping, Layer, LayerType, Model, ModelType, ModelTypeMapping, Normalization_options, Options, Padding,
-         PaddingMapping, Pooling_options, Recurrent_options, VariableType, VariableTypeMapping } from 'src/app/models/tensorflow.model';
-import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
-import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
+         PaddingMapping, Pooling_options, Recurrent_options, VariableType, VariableTypeMapping } from '../../../models/tensorflow.model';
+import { TensorFlowMainService } from '../../../services/tensorflow-main.service';
+import { TensorFlowData } from '../../../models/tensorflow-data.model';
 import { v4 as uuid } from 'uuid';
-import { ElectronService } from 'src/app/services/electron.service';
-import { TensorFlowModelDrawService } from 'src/app/services/tensorflow-model-draw.service';
-import { HardwareService } from 'src/app/services/hardware.service';
-import { ActuatorType, Motor } from 'src/app/models/hardware.model';
-import { UploadService } from 'src/app/services/upload.service';
+import { ElectronService } from '../../../services/electron.service';
+import { TensorFlowModelDrawService } from '../../../services/tensorflow-model-draw.service';
+import { HardwareService } from '../../../services/hardware.service';
+import { ActuatorType, Motor } from '../../../models/hardware.model';
+import { UploadService } from '../../../services/upload.service';
 import * as tf from '@tensorflow/tfjs';
 import { DOCUMENT } from '@angular/common';
-import { TensorFlowTrainService } from 'src/app/services/tensorflow-train.service';
+import { TensorFlowTrainService } from '../../../services/tensorflow-train.service';
 import { IpcRendererEvent } from 'electron';
 
 @Component({
@@ -97,7 +97,7 @@ export class TensorflowModelComponent implements OnInit {
 
 
 
-  constructor(@Inject(DOCUMENT) private document: Document, private tensorflowService: TensorFlowMainService, private tensorflowModelDrawService: TensorFlowModelDrawService,
+  constructor(@Inject(DOCUMENT) private document: Document, public tensorflowService: TensorFlowMainService, private tensorflowModelDrawService: TensorFlowModelDrawService,
     private electronService: ElectronService, public hardwareService: HardwareService, private uploadService: UploadService, private tensorflowTrainService: TensorFlowTrainService) {
 
       this.d = this.tensorflowService.d;
@@ -134,7 +134,7 @@ export class TensorflowModelComponent implements OnInit {
 
 
   ngOnInit(): void {
-    if (this.d.selectedModel.outputs.length === 0) {
+    if (this.d.selectedModel?.outputs.length === 0) {
       this.tensorflowService.addOutput(true);
     }
     this.updateOutputUnits();
@@ -177,11 +177,11 @@ export class TensorflowModelComponent implements OnInit {
 
 
   updateNetworkVisualization() {
-    this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
+    if (this.d.selectedModel !== undefined) this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
   }
 
   updateUnits(index: number) {
-    const nextLayer = this.d.selectedModel.layers[index + 1];
+    const nextLayer = this.d.selectedModel?.layers[index + 1];
     if (nextLayer && nextLayer.type && (nextLayer.type.subgroup === 'normalization' || nextLayer.type.name === 'dropout')) {
       nextLayer.options.units.value = this.getUnits(index);
     }
@@ -194,7 +194,7 @@ export class TensorflowModelComponent implements OnInit {
   }
 
   updateInputType(index: number, event: Event) {
-    if (index >= 5) {
+    if (index >= 5 && this.d.selectedModel !== undefined) {
       this.d.selectedModel.inputs[index].type += 1;
       if (this.d.selectedModel.inputs[index].type >= 3) {
         this.d.selectedModel.inputs[index].type = 0;
@@ -242,7 +242,7 @@ export class TensorflowModelComponent implements OnInit {
 
   updateOutputUnits() {
     const nrOfActiveClassifiers = this.tensorflowService.getNrOfActiveClassifiers();
-    if (nrOfActiveClassifiers) {
+    if (nrOfActiveClassifiers && this.d.selectedModel !== undefined) {
       this.d.selectedModel.layers[this.d.selectedModel.layers.length - 1].options.units.value = nrOfActiveClassifiers.total;
       this.d.labels = nrOfActiveClassifiers.labels;
       this.updateNetworkVisualization();
@@ -251,8 +251,10 @@ export class TensorflowModelComponent implements OnInit {
 
   updateInputUnits() {
     const nrOfActiveInputs = this.tensorflowService.getNrOfActiveInputs();
-    this.d.selectedModel.layers[0].options.units.value = nrOfActiveInputs > 1 ? nrOfActiveInputs : 1;
-    this.updateNetworkVisualization();
+    if (nrOfActiveInputs && this.d.selectedModel !== undefined) {
+      this.d.selectedModel.layers[0].options.units.value = nrOfActiveInputs > 1 ? nrOfActiveInputs : 1;
+      this.updateNetworkVisualization();
+    }
   }
 
   updateClassifier(i: number, pos: number) {
@@ -265,26 +267,28 @@ export class TensorflowModelComponent implements OnInit {
 
   addMicrocontroller() {
     this.tensorflowService.addMicrocontroller();
-    this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
+    if (this.d.selectedModel !== undefined) this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
   }
 
   deleteMicrocontroller(port: string) {
     this.tensorflowService.deleteMicrocontroller(port);
-    this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
+    if (this.d.selectedModel !== undefined) this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
   }
 
   toggleRecordMotor(serialPath: string, motor: Motor) {
-    this.d.selectedModel.layers[0].options.actuators.value = 0;
-    for (const set of this.d.dataSets) {
-      for (const m of set.m) {
-        if (m.mcu.serialPath === serialPath && m.id === motor.id) {
-          m.record = motor.record;
-          m.visible = true;
+    if (this.d.selectedModel !== undefined) {
+      this.d.selectedModel.layers[0].options.actuators.value = 0;
+      for (const set of this.d.dataSets) {
+        for (const m of set.m) {
+          if (m.mcu.serialPath === serialPath && m.id === motor.id) {
+            m.record = motor.record;
+            m.visible = true;
+          }
         }
       }
+      this.d.selectedModel.layers[0].options.actuators.value = this.tensorflowService.getNrOfActiveMotors();
+      this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
     }
-    this.d.selectedModel.layers[0].options.actuators.value = this.tensorflowService.getNrOfActiveMotors();
-    this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
   }
 
   openCloseItem(id: string) {
@@ -310,11 +314,12 @@ export class TensorflowModelComponent implements OnInit {
 
       // console.log(uploadModel);
       if (microcontroller.motors[0].type !== ActuatorType.pneumatic) {
-        const uploadModel = this.uploadService.createUploadModel(null, microcontroller);
-        uploadModel.config.motors = microcontroller.motors;
-        this.electronService.ipcRenderer.send('updateMotorSetting', uploadModel);
+        const uploadModel = this.uploadService.createUploadModel(undefined, microcontroller);
+        if (uploadModel !== undefined && uploadModel.config !== undefined) {
+          uploadModel.config.motors = microcontroller.motors;
+          this.electronService.ipcRenderer.send('updateMotorSetting', uploadModel);
+        }
       }
-
       // console.log(microcontroller.updateSpeed);
     }
   }
@@ -323,58 +328,64 @@ export class TensorflowModelComponent implements OnInit {
   addLayer(index: number) {
     const newLayer = new Layer('HL-'+ uuid());
     newLayer.type = this.LayerTypes[0];
-    this.d.selectedModel.layers.splice((index + 1), 0, newLayer);
+    this.d.selectedModel?.layers.splice((index + 1), 0, newLayer);
     this.updateLayerOptions(index + 1);
-    this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
+    if (this.d.selectedModel !== undefined) this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
   }
 
   deleteLayer(index: number) {
-    this.d.selectedModel.layers.splice(index, 1);
-    this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
+    this.d.selectedModel?.layers.splice(index, 1);
+    if (this.d.selectedModel !== undefined) this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
   }
 
   hideLayer(index: number) {
-    this.d.selectedModel.layers[index].hidden = !this.d.selectedModel.layers[index].hidden;
-    this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
+    if (this.d.selectedModel !== undefined) {
+      this.d.selectedModel.layers[index].hidden = !this.d.selectedModel.layers[index].hidden;
+      this.tensorflowModelDrawService.drawModel(this.d.selectedModel);
+    }
   }
 
   getUnits(index: number) {
-    return this.d.selectedModel.layers[index].options.units !== undefined ? this.d.selectedModel.layers[index].options.units.value :
-    this.d.selectedModel.layers[index].options.kernelSize ? this.d.selectedModel.layers[index].options.kernelSize.value[0] :
-    this.d.selectedModel.layers[index].options.poolSize ? this.d.selectedModel.layers[index].options.poolSize.value[0] : 1;
+    if (this.d.selectedModel !== undefined) {
+      return this.d.selectedModel.layers[index].options.units !== undefined ? this.d.selectedModel.layers[index].options.units.value :
+      this.d.selectedModel.layers[index].options.kernelSize ? this.d.selectedModel.layers[index].options.kernelSize.value[0] :
+      this.d.selectedModel.layers[index].options.poolSize ? this.d.selectedModel.layers[index].options.poolSize.value[0] : 1;
+    }
   }
 
   updateLayerOptions(index: number) {
 
-    const layer = this.d.selectedModel.layers[index];
+    const layer = this.d.selectedModel?.layers[index];
 
-    switch(layer.type.subgroup) {
-      case 'convolutional':
-        layer.options = new Convolutional_options(layer.type);
-        break;
-      case 'recurrent':
-        layer.options = new Recurrent_options(layer.type);
-        break;
-      case 'pooling':
-        layer.options = new Pooling_options(layer.type);
-        break;
-      case 'basic':
-        layer.options = new Basic_options(layer.type);
-        if (layer.type.name == 'dropout') {
-          layer.options.units.value = this.getUnits(index - 1);
-        }
-        break;
-      case 'normalization': {
-          layer.options = new Normalization_options(layer.type);
-          layer.options.units.value = this.getUnits(index - 1);
-        }
-        break;
-      default:
-        layer.options = new Options();
+    if (layer !== undefined && layer.type) {
+
+      switch(layer.type.subgroup) {
+        case 'convolutional':
+          layer.options = new Convolutional_options(layer.type);
+          break;
+        case 'recurrent':
+          layer.options = new Recurrent_options(layer.type);
+          break;
+        case 'pooling':
+          layer.options = new Pooling_options(layer.type);
+          break;
+        case 'basic':
+          layer.options = new Basic_options(layer.type);
+          if (layer.type.name == 'dropout') {
+            layer.options.units.value = this.getUnits(index - 1);
+          }
+          break;
+        case 'normalization': {
+            layer.options = new Normalization_options(layer.type);
+            layer.options.units.value = this.getUnits(index - 1);
+          }
+          break;
+        default:
+          layer.options = new Options();
+      }
+
+      this.updateNetworkVisualization();
     }
-
-    this.updateNetworkVisualization();
-
   }
 
 

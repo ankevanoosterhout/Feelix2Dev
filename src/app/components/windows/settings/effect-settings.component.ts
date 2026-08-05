@@ -1,17 +1,20 @@
 import { Component, OnInit, Inject } from '@angular/core';
-import { DOCUMENT } from '@angular/common';
-import { ElectronService } from 'src/app/services/electron.service';
-import { FileService } from 'src/app/services/file.service';
+import { CommonModule, DOCUMENT } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ElectronService } from '../../../services/electron.service';
+import { FileService } from '../../../services/file.service';
 import { v4 as uuid } from 'uuid';
 import { Router } from '@angular/router';
-import { Effect, Unit } from 'src/app/models/effect.model';
-import { Midi, MidiNote } from 'src/app/models/audio.model';
-import { EffectType, EffectTypeLabelMapping } from 'src/app/models/configuration.model';
+import { Effect, Unit } from '../../../models/effect.model';
+import { Midi, MidiNote } from '../../../models/audio.model';
+import { EffectType, EffectTypeLabelMapping } from '../../../models/configuration.model';
+
 
 
 @Component({
   selector: 'app-effect-settings',
-  standalone: false,
+  standalone: true,
+  imports: [ FormsModule, CommonModule ],
   template: `
   <div class="window-title-bar" *ngIf="!this.updateMode">New Effect</div>
   <div class="window-title-bar" *ngIf="this.updateMode">Update Effect</div>
@@ -79,7 +82,7 @@ import { EffectType, EffectTypeLabelMapping } from 'src/app/models/configuration
 })
 
 export class EffectSettingsComponent implements OnInit {
-  effect: Effect;
+  effect = new Effect('', EffectType.torque);
   updateMode = false;
   effectCount = 2;
   buttonText = 'Create';
@@ -119,49 +122,54 @@ export class EffectSettingsComponent implements OnInit {
 
 
   updateRotationRange() {
-    this.effect.range.end *= (this.effect.grid.xUnit.PR / this.prevUnits.PR);
-    this.effect.range.start *= (this.effect.grid.xUnit.PR / this.prevUnits.PR);
-    // this.effect.grid.translation = units.PR;
-    this.prevUnits = this.effect.grid.xUnit;
+    if (this.effect) {
+      this.effect.range.end *= (this.effect.grid.xUnit.PR / this.prevUnits.PR);
+      this.effect.range.start *= (this.effect.grid.xUnit.PR / this.prevUnits.PR);
+      // this.effect.grid.translation = units.PR;
+      this.prevUnits = this.effect.grid.xUnit;
+    }
   }
 
   updateControlType() {
+    if (this.effect) {
     this.prevUnits = this.effect.grid.xUnit;
-    if ((this.effect.type === EffectType.velocity || this.effect.type === EffectType.pneumatic  || this.effect.type === EffectType.hydraulic) && this.effect.grid.xUnit.name !== 'ms') {
-      // this.prevUnits = this.effect.grid.xUnit;
-      this.effect.grid.xUnit = { name: 'ms', PR: 1000 };
-      this.updateRotationRange();
-    } else if (this.effect.type !== EffectType.velocity && this.effect.type !== EffectType.pneumatic && this.effect.type !== EffectType.hydraulic && this.effect.grid.xUnit.name === 'ms') {
-      // this.prevUnits = { name: 'ms', PR: 1000 };
-      this.effect.grid.xUnit = { name: 'deg', PR: 360 };
-      this.updateRotationRange();
-    } else if (this.effect.type === EffectType.midi || this.effect.type === EffectType.midiNote) {
-      this.effect = this.effect.type === EffectType.midi ? new Midi(this.effect.id, EffectType.midi) : new MidiNote(this.effect.id, EffectType.midiNote);
-      this.effect.grid.yUnit = { name: 'v', PR: 128 };
-      this.effect.range_y.start = 0;
-      this.effect.range_y.end = 128;
+      if ((this.effect.type === EffectType.velocity || this.effect.type === EffectType.pneumatic  || this.effect.type === EffectType.hydraulic) && this.effect.grid.xUnit.name !== 'ms') {
+        // this.prevUnits = this.effect.grid.xUnit;
+        this.effect.grid.xUnit = { name: 'ms', PR: 1000 };
+        this.updateRotationRange();
+      } else if (this.effect.type !== EffectType.velocity && this.effect.type !== EffectType.pneumatic && this.effect.type !== EffectType.hydraulic && this.effect.grid.xUnit.name === 'ms') {
+        // this.prevUnits = { name: 'ms', PR: 1000 };
+        this.effect.grid.xUnit = { name: 'deg', PR: 360 };
+        this.updateRotationRange();
+      } else if (this.effect.type === EffectType.midi || this.effect.type === EffectType.midiNote) {
+        this.effect = this.effect.type === EffectType.midi ? new Midi(this.effect.id, EffectType.midi) : new MidiNote(this.effect.id, EffectType.midiNote);
+        this.effect.grid.yUnit = { name: 'v', PR: 128 };
+        this.effect.range_y.start = 0;
+        this.effect.range_y.end = 128;
+      }
     }
   }
 
   public submit() {
-
-    if (!this.updateMode) {
-      if ((this.effect.type === EffectType.velocity && this.effect.grid.yUnit.name === '%') || this.effect.type === EffectType.torque) {
-        this.effect.grid.yUnit = new Unit('%', 100);
-        this.effect.range_y.start = -100;
-        this.effect.range_y.end = 100;
-      } else if (this.effect.type === EffectType.position || this.effect.type === EffectType.pneumatic || this.effect.type === EffectType.hydraulic || 
-                 this.effect.type === EffectType.midi || this.effect.type === EffectType.midiNote) {
-        this.effect.range_y.start = 0;
-        if (this.effect.type === EffectType.midi || this.effect.type === EffectType.midiNote) {
-          this.effect.range_y.end = 128;
+    if (this.effect) {
+      if (!this.updateMode) {
+        if ((this.effect.type === EffectType.velocity && this.effect.grid.yUnit.name === '%') || this.effect.type === EffectType.torque) {
+          this.effect.grid.yUnit = new Unit('%', 100);
+          this.effect.range_y.start = -100;
+          this.effect.range_y.end = 100;
+        } else if (this.effect.type === EffectType.position || this.effect.type === EffectType.pneumatic || this.effect.type === EffectType.hydraulic || 
+                  this.effect.type === EffectType.midi || this.effect.type === EffectType.midiNote) {
+          this.effect.range_y.start = 0;
+          if (this.effect.type === EffectType.midi || this.effect.type === EffectType.midiNote) {
+            this.effect.range_y.end = 128;
+          }
         }
+        this.fileService.addEffect(this.effect);
+      } else {
+        this.fileService.updateEffect(this.effect);
       }
-      this.fileService.addEffect(this.effect);
-    } else {
-      this.fileService.updateEffect(this.effect);
+      this.electronService.ipcRenderer.send('updateToolbar', { type: this.effect.type });
     }
-    this.electronService.ipcRenderer.send('updateToolbar', { type: this.effect.type });
     this.close();
   }
 
@@ -178,8 +186,10 @@ export class EffectSettingsComponent implements OnInit {
     if (this.updateMode) {
       if (file.activeEffect) {
         this.effect = file.activeEffect;
-        this.initialUnits = this.effect.grid.xUnit;
-        this.prevUnits = this.effect.grid.xUnit;
+        if (this.effect !== undefined) {
+          this.initialUnits = this.effect.grid.xUnit;
+          this.prevUnits = this.effect.grid.xUnit;
+        }
       }
     } else {
       if (this.electronService.isElectronApp) {

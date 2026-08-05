@@ -1,35 +1,35 @@
 import { Component, OnInit, OnChanges, HostListener, Inject, ViewEncapsulation, AfterViewInit } from '@angular/core';
-import { ElectronService } from 'src/app/services/electron.service';
+import { DOCUMENT } from '@angular/common';
+import { ElectronService } from '../../../services/electron.service';
 import { NodeService } from '../../../services/node.service';
 import { DataService } from '../../../services/data.service';
 import { FileService } from '../../../services/file.service';
 import { File } from '../../../models/file.model';
-import { DOCUMENT } from '@angular/common';
 import * as d3 from 'd3';
 import { v4 as uuid } from 'uuid';
-import { DrawingPlaneConfig } from 'src/app/models/drawing-plane-config.model';
-import { DrawingService } from 'src/app/services/drawing.service';
-import { DrawElementsService } from 'src/app/services/draw-elements.service';
-import { BBoxService } from 'src/app/services/bbox.service';
-import { HistoryService } from 'src/app/services/history.service';
-import { MatDialog } from '@angular/material/dialog';
-import { DialogComponent } from 'src/app/components/windows/dialog.component';
-import { ExportDialogComponent } from 'src/app/components/windows/export-dialog.component';
-import { EffectLibraryService } from 'src/app/services/effect-library.service';
-import { MotorControlService } from 'src/app/services/motor-control.service';
-import { HardwareService } from 'src/app/services/hardware.service';
-import { CloneService } from 'src/app/services/clone.service';
-import { GridService } from 'src/app/services/grid.service';
+import { DrawingPlaneConfig } from '../../../models/drawing-plane-config.model';
+import { DrawingService } from '../../../services/drawing.service';
+import { DrawElementsService } from '../../../services/draw-elements.service';
+import { BBoxService } from '../../../services/bbox.service';
+import { HistoryService } from '../../../services/history.service';
+import { MatDialogModule, MatDialog  } from '@angular/material/dialog';
+import { DialogComponent } from '../../../components/windows/dialog.component';
+import { ExportDialogComponent } from '../../../components/windows/export-dialog.component';
+import { EffectLibraryService } from '../../../services/effect-library.service';
+import { MotorControlService } from '../../../services/motor-control.service';
+import { HardwareService } from '../../../services/hardware.service';
+import { CloneService } from '../../../services/clone.service';
+import { GridService } from '../../../services/grid.service';
 import { PlaySequenceComponent } from '../../windows/play-sequence.component';
 //import { EffectType } from 'src/app/models/configuration.model';
-import { DrawAudioService } from 'src/app/services/draw-audio.service';
+import { DrawAudioService } from '../../../services/draw-audio.service';
 //import { MidiDataType } from 'src/app/models/audio.model';
-import { MidiDataService } from 'src/app/services/midi-data.service';
+import { MidiDataService } from '../../../services/midi-data.service';
 import { IpcRendererEvent } from 'electron';
 
 @Component({
   selector: 'app-drawing-plane',
-  standalone: false,
+  //standalone: true,
   template: `
     <div id="field-inset"></div>
   `,
@@ -38,7 +38,7 @@ import { IpcRendererEvent } from 'electron';
 })
 export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
-  public file: File;
+  public file: File = new File(undefined, undefined, undefined);
   public config: DrawingPlaneConfig;
 
 
@@ -47,7 +47,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
   constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService,
               public nodeService: NodeService, private fileService: FileService, private dataService: DataService,
               private drawingService: DrawingService, private drawElements: DrawElementsService, private bboxService: BBoxService,
-              private effectLibraryService: EffectLibraryService, public dialog: MatDialog, private cloneService: CloneService,
+              private effectLibraryService: EffectLibraryService, @Inject(MatDialog) public dialog: MatDialog, private cloneService: CloneService,
               private motorControlService: MotorControlService, private hardwareService: HardwareService, private historyService: HistoryService,
               private gridService: GridService, private drawAudioService: DrawAudioService, private midiDataService: MidiDataService) {
 
@@ -81,6 +81,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
     this.electronService.ipcRenderer.on('rulers:toggle', (event: IpcRendererEvent, visible: boolean) => {
       if (!visible) {
+        
         this.config.rulerWidth = 0;
         this.config.rulerVisible = false;
         this.file.activeEffect.grid.guidesVisible = false;
@@ -235,7 +236,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       this.nodeService.loadFile(this.file.activeEffect.paths);
       const activeEffectInFile = this.file.configuration.colors.filter(c => c.type === this.file.activeEffect.type)[0];
       if (activeEffectInFile) {
-        this.dataService.setColor(activeEffectInFile.hash[0], activeEffectInFile.hash.length > 1 ? activeEffectInFile.hash[1] : null);
+        this.dataService.setColor(activeEffectInFile.hash[0], activeEffectInFile.hash[1] ?? undefined);
       }
       this.nodeService.setGridLayer(this.file.activeEffect.grid);
       this.updateGridSettingsInMenu(this.file);
@@ -258,7 +259,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
         }
         const activeEffectColor = newFile.configuration.colors.filter(c => c.type === newFile.activeEffect.type)[0];
         if (activeEffectColor) {
-          this.dataService.setColor(activeEffectColor.hash[0], activeEffectColor.hash.length > 1 ? activeEffectColor.hash[1] : null);
+          this.dataService.setColor(activeEffectColor.hash[0], activeEffectColor.hash[1] ?? undefined);
         }
         this.nodeService.setGridLayer(newFile.activeEffect.grid);
       } else {
@@ -325,17 +326,18 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
         this.nodeService.loadFile(this.file.activeEffect.paths);
         this.fileService.updateEffect(this.file.activeEffect, false);
       }
-      if (data.file.activeCollection) {
+      if (this.file.activeCollection) {
         this.fileService.updateCollection(this.file.activeCollection);
-        if (data.file.activeCollectionEffect) {
+        if (this.file.activeCollectionEffect) {
           this.fileService.updateCollectionEffect(this.file.activeCollection, this.file.activeCollectionEffect);
         }
       }
 
-    } else if (data) {
+    } 
+    // else if (data) {
       // console.log(data.type, data.enable);
       // this.electronService.ipcRenderer.send(data.type, data.enable);
-    }
+    // }
   }
 
 
@@ -363,14 +365,14 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       // e.preventDefault();
 
       const coords = {
-        x: this.nodeService.scale.scaleX.invert(e.clientX - this.config.margin.left),
-        y: this.nodeService.scale.scaleY.invert(e.clientY - this.config.margin.top - this.config.margin.offsetTop)
+        x: this.nodeService.scale.scaleX.invert(e.clientX - (this.config.margin.left ?? 0)),
+        y: this.nodeService.scale.scaleY.invert(e.clientY - (this.config.margin.top ?? 0) - (this.config.margin.offsetTop ?? 0))
       };
 
       if (this.config.rulerVisible && this.file.activeEffect) { this.drawingService.rulerFunctions(e); }
 
-      if (this.config.newNode !== null && this.config.cursor.slug === 'pen') {
-        if (Math.abs(this.config.newNode.pos.x - coords.x) > 0.5 || Math.abs(this.config.newNode.pos.y - coords.y) > 0.5) {
+      if (this.config.newNode !== undefined && this.config.cursor.slug === 'pen') {
+        if (Math.abs((this.config.newNode.pos.x ?? 0) - coords.x) > 0.5 || Math.abs((this.config.newNode.pos.y ?? 0) - coords.y) > 0.5) {
           const cpPoints = this.nodeService.calculateCP(this.config.newNode, coords);
           this.drawElements.drawControlPoints(cpPoints);
         }
@@ -381,13 +383,13 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
         this.config.svg.select('.cursorConnection').remove();
         this.drawingService.setCursor('url(./assets/icons/tools/cursor-drag.png), none');
 
-      } else if (this.config.newNode !== null && this.config.cursor.slug === 'brush') {
+      } else if (this.config.newNode !== undefined && this.config.cursor.slug === 'brush') {
 
         // if the path is longer then 1 and the x or y distance of the mouse is far enough, add a new node
-        if (coords.y >= this.config.editBounds.yMin && coords.y <= this.config.editBounds.yMax &&
-            coords.x >= this.config.editBounds.xMin && coords.x <= this.config.editBounds.xMax) {
+        if (coords.y >= (this.config.editBounds.yMin ?? 0) && coords.y <= (this.config.editBounds.yMax ?? 0) &&
+            coords.x >= (this.config.editBounds.xMin ?? 0) && coords.x <= (this.config.editBounds.xMax ?? 0)) {
 
-          if (Math.abs(coords.x - this.config.newNode.pos.x) > 0.3 || Math.abs(coords.y - this.config.newNode.pos.y) > 0.3) {
+          if (Math.abs(coords.x - (this.config.newNode.pos.x ?? 0)) > 0.3 || Math.abs(coords.y - (this.config.newNode.pos.y ?? 0)) > 0.3) {
             this.config.newNode = this.nodeService.newNode('node', coords, coords, e.shiftKey);
             if (this.config.newNode) { this.drawFileData(); }
           }
@@ -395,11 +397,13 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
       } else if (this.config.cursor.slug === 'pen' && this.nodeService.selectedNodes.length === 1 && this.config.newNode === null &&
                 this.nodeService.checkIfNodeIsAtTheEndOfArrayFromID(this.nodeService.selectedNodes[0])) {
-        this.drawElements.drawActiveCursorConn( { x: e.clientX - this.config.margin.left, y: e.clientY - this.config.margin.top - this.config.margin.offsetTop });
+        this.drawElements.drawActiveCursorConn( { x: e.clientX - (this.config.margin.left ?? 0), 
+                                                  y: e.clientY - (this.config.margin.top ?? 0) - (this.config.margin.offsetTop ?? 0) });
 
       } else if (this.config.cursor.slug === 'sel' || this.config.cursor.slug === 'dsel') {
         if (this.config.activeSelection && !this.config.newGuide) {
-          this.drawElements.drawSelectionBox({ x: e.clientX - this.config.margin.left, y: e.clientY - this.config.margin.offsetTop });
+          this.drawElements.drawSelectionBox({ x: e.clientX - (this.config.margin.left ?? 0),
+                                               y: e.clientY - (this.config.margin.offsetTop ?? 0) });
         }
       }
     }
@@ -408,78 +412,123 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
 
   @HostListener('document:mousedown', ['$event'])
   onMousedown(e: MouseEvent) {
-    if (!this.config.zoomable) {
-      this.config.mouseDown = { x: e.clientX, y: e.clientY };
+    // 1. Guard Clause: Skip entirely if the element is zoomable
+    if (this.config.zoomable) return;
 
-      if (e.clientY > this.config.margin.offsetTop + 65 && e.clientX > this.config.margin.left && e.clientY < window.innerHeight - 45 && this.nodeService.scale.scaleX !== null) {
+    this.config.mouseDown = { x: e.clientX, y: e.clientY };
 
-        const coords = {
-          x: this.nodeService.scale.scaleX.invert(e.clientX - this.config.margin.left),
-          y: this.nodeService.scale.scaleY.invert(e.clientY - this.config.margin.top - this.config.margin.offsetTop)
-        };
+    const offsetTop = this.config.margin.offsetTop ?? 0;
+    const marginLeft = this.config.margin.left ?? 0;
+    const marginTop = this.config.margin.top ?? 0;
 
-        if (this.config.newNode === null && ((this.config.cursor.slug === 'pen' && this.config.cursor.selectedSubcursor !== 'add') || this.config.cursor.slug === 'brush') && !this.drawingService.audioVisualization()) {
+    // 2. Extracted Flag: Verify mouse clicked inside the valid rendering viewport
+    const isInViewport = 
+      e.clientY > offsetTop + 65 && 
+      e.clientX > marginLeft && 
+      e.clientY < window.innerHeight - 45 && 
+      this.nodeService.scale.scaleX !== undefined;
+
+    if (!isInViewport) return;
+
+    // Calculate dynamic inverted map coordinates
+    const coords = {
+      x: this.nodeService.scale.scaleX.invert(e.clientX - marginLeft),
+      y: this.nodeService.scale.scaleY.invert(e.clientY - marginTop - offsetTop)
+    };
+
+    const slug = this.config.cursor.slug;
+    const editBounds = this.config.editBounds;
+
+    // 3. Extracted Flag: Confirm explicit boundaries exist and coordinates are inside them
+    const isWithinBounds = 
+      editBounds.xMin !== undefined && editBounds.xMax !== undefined && 
+      editBounds.yMin !== undefined && editBounds.yMax !== undefined &&
+      coords.x > editBounds.xMin && coords.x < editBounds.xMax && 
+      coords.y > editBounds.yMin && coords.y < editBounds.yMax;
 
 
-          if (coords.x > this.config.editBounds.xMin && coords.x < this.config.editBounds.xMax && coords.y > this.config.editBounds.yMin && coords.y < this.config.editBounds.yMax) {
+    // PATH A: Adding nodes via Drawing Tools (Pen or Brush)
+    const isDrawingTool = (slug === 'pen' && this.config.cursor.selectedSubcursor !== 'add') || slug === 'brush';
+    
+    if (this.config.newNode === undefined && isDrawingTool && !this.drawingService.audioVisualization()) {
+      if (!isWithinBounds) return;
 
-            if (this.config.cursor.slug === 'pen') {
+      if (slug === 'pen') {
+        this.electronService.ipcRenderer.send('disable', { type: 0, enabled: true });
+      }
 
-              this.electronService.ipcRenderer.send('disable', { type: 0, enabled: true });
-            }
+      this.config.newNode = this.nodeService.newNode('node', coords, coords, e.shiftKey);
 
-            this.config.newNode = this.nodeService.newNode('node', coords, coords, e.shiftKey);
-
-            if (this.config.newNode && this.config.cursor.slug === 'pen') {
-              const path = this.nodeService.getPath(this.nodeService.selectedPaths[0]);
-              if (path.nodes.length > 1) {
-                const bboxSize = this.bboxService.getBBox(path);
-              }
-              this.drawFileData();
-              this.dataService.selectElement(this.config.newNode.id, coords.x, coords.y, null, null);
-            }
-
-          }
-        } else if (this.config.cursor.slug === 'sel' || this.config.cursor.slug === 'dsel' || this.config.cursor.slug === 'note') {
-          if (coords.x >= this.config.editBounds.xMin && coords.x < this.config.editBounds.xMax && this.config.mouseDown.y > this.config.margin.offsetTop &&
-              this.config.mouseDown.y < window.innerHeight - 45) {
-
-            if (this.config.cursor.slug === 'note') {
-
-              const blockWidth = this.file.activeEffect.grid.settings.spacingX / this.file.activeEffect.grid.settings.subDivisionsX;
-              const newBlock = this.midiDataService.createNewDataBlock(Math.floor(coords.x / blockWidth) * blockWidth, Math.floor(coords.y), blockWidth, this.file.activeEffect.name);
-              newBlock.effect.name = this.file.activeEffect.name + '-CC-' + Math.floor(coords.y);
-              this.file.activeEffect.data.push(newBlock);
-              this.fileService.updateEffect(this.file.activeEffect);
-              this.drawFileData();
-
-            } else {
-
-              this.config.selectionStartPoint = { x: this.config.mouseDown.x - this.config.margin.left, y: this.config.mouseDown.y - this.config.margin.offsetTop };
-              this.config.activeSelection = true;
-            }
-          }
+      if (this.config.newNode && slug === 'pen') {
+        const path = this.nodeService.getPath(this.nodeService.selectedPaths[0]);
+        if (path.nodes.length > 1) {
+          this.bboxService.getBBox(path);
         }
+        this.drawFileData();
+        this.dataService.selectElement(this.config.newNode.id, coords.x, coords.y, undefined, undefined);
+      }
+      return; // Exit handler early
+    }
+
+
+    // PATH B: Selection and Note Creation Utilities
+    const isSelectionTool = slug === 'sel' || slug === 'dsel' || slug === 'note';
+    
+    if (isSelectionTool) {
+      // Confirm horizontal clip boundaries and vertical constraints match
+      const isValidSelectionClick = 
+        editBounds.xMin !== undefined && editBounds.xMax !== undefined && this.config.mouseDown.y !== undefined &&
+        coords.x >= editBounds.xMin && coords.x < editBounds.xMax && 
+        this.config.mouseDown.y > offsetTop && this.config.mouseDown.y < window.innerHeight - 45;
+
+      if (!isValidSelectionClick) return;
+
+      if (slug === 'note') {
+        // Handle MIDI data note block assignments
+        const activeEffect = this.file.activeEffect;
+        const gridSettings = activeEffect.grid.settings;
+        const blockWidth = gridSettings.spacingX / gridSettings.subDivisionsX;
+        
+        const blockX = Math.floor(coords.x / blockWidth) * blockWidth;
+        const blockY = Math.floor(coords.y);
+
+        const newBlock = this.midiDataService.createNewDataBlock(blockX, blockY, blockWidth, activeEffect.name);
+        newBlock.effect.name = this.file.activeEffect.name + '-CC-' + Math.floor(coords.y);
+        
+        activeEffect.data.push(newBlock);
+        this.fileService.updateEffect(activeEffect);
+        this.drawFileData();
+        
+      } else if (this.config.mouseDown.x !== undefined && this.config.mouseDown.y !== undefined) {
+        // Handle bounding box click-drag selection triggers
+        this.config.selectionStartPoint = { x: this.config.mouseDown.x - marginLeft, y: this.config.mouseDown.y - offsetTop };
+        this.config.activeSelection = true;
       }
     }
   }
+
 
   @HostListener('document:mouseup', ['$event'])
   onMouseUp(e: MouseEvent) {
 
     if (!this.config.zoomable) {
 
+      const offsetTop = this.config.margin.offsetTop ?? 0;
+      const marginLeft = this.config.margin.left ?? 0;
+      const marginTop = this.config.margin.top ?? 0;
+
       const coords = {
-        x: this.nodeService.scale.scaleX.invert(e.clientX - this.config.margin.left),
-        y: this.nodeService.scale.scaleY.invert(e.clientY - this.config.margin.top - this.config.margin.offsetTop)
+        x: this.nodeService.scale.scaleX.invert(e.clientX - marginLeft),
+        y: this.nodeService.scale.scaleY.invert(e.clientY - marginTop - offsetTop)
       };
 
       if (this.config.newGuide) {
         this.config.newGuide = false;
         this.config.svg.selectAll('.guide.new').remove();
-        this.config.mouseDown = { x: null, y: null };
+        this.config.mouseDown.x = undefined;
+        this.config.mouseDown.y = undefined;
 
-        if (e.clientY - this.config.margin.offsetTop < this.config.svgDy - 22 && e.clientY > this.config.margin.offsetTop + 65 + this.config.rulerWidth
+        if (e.clientY - offsetTop < this.config.svgDy - 22 && e.clientY > offsetTop + 65 + this.config.rulerWidth
            && e.clientX < this.config.svgDx - this.config.rulerWidth) {
 
           const obj = {
@@ -494,7 +543,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       } else if (this.config.cursor.slug === 'sel' || this.config.cursor.slug === 'dsel' || this.config.cursor.slug === 'anchor' ||
                 this.config.cursor.slug === 'thick' || this.config.cursor.slug === 'drag') {
 
-        if (e.clientY > this.config.margin.offsetTop + 65) {
+        if (e.clientY > offsetTop + 65) {
           if (!d3.select('#selectionBox').empty() && this.config.activeSelection) {
             const selectionBoxSize = this.config.svg.select('#selectionBox').node().getBoundingClientRect();
             // this.motorControlService.deselectCollectionEffects();
@@ -502,10 +551,10 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
               (this.config.cursor.slug === 'sel' || this.config.cursor.slug === 'dsel')) {
 
               const boxSize = {
-                x1: this.nodeService.scale.scaleX.invert(selectionBoxSize.left - this.config.margin.left),
-                y1: this.nodeService.scale.scaleY.invert(selectionBoxSize.bottom - this.config.margin.top - this.config.margin.offsetTop),
-                x2: this.nodeService.scale.scaleX.invert(selectionBoxSize.right - this.config.margin.left),
-                y2: this.nodeService.scale.scaleY.invert(selectionBoxSize.top - this.config.margin.top - this.config.margin.offsetTop)
+                x1: this.nodeService.scale.scaleX.invert(selectionBoxSize.left - marginLeft),
+                y1: this.nodeService.scale.scaleY.invert(selectionBoxSize.bottom - marginTop - offsetTop),
+                x2: this.nodeService.scale.scaleX.invert(selectionBoxSize.right - marginLeft),
+                y2: this.nodeService.scale.scaleY.invert(selectionBoxSize.top - marginTop - offsetTop)
               };
               this.nodeService.getSelectedElementsInBox(boxSize, this.config.cursor.slug, e.shiftKey, e.altKey);
               if (!this.file.activeEffect.grid.lockGuides && this.config.rulerVisible && this.file.activeEffect.grid.guidesVisible) {
@@ -521,10 +570,10 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
                 }
               }
             } else {
-              this.bboxService.checkIfOutsideBBox({ x: e.clientX - this.config.margin.left, y: e.clientY - this.config.margin.top - this.config.margin.offsetTop });
+              this.bboxService.checkIfOutsideBBox({ x: e.clientX - marginLeft, y: e.clientY - marginTop - offsetTop });
             }
           } else {
-            this.bboxService.checkIfOutsideBBox({ x: e.clientX - this.config.margin.left, y: e.clientY - this.config.margin.top - this.config.margin.offsetTop });
+            this.bboxService.checkIfOutsideBBox({ x: e.clientX - marginLeft, y: e.clientY - marginTop - offsetTop });
           }
         }
       } else if (this.config.cursor.slug === 'pen') {
@@ -535,8 +584,8 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
         this.smoothenBrushPath();
 
       }
-      if (this.config.newNode) {
-        this.config.newNode = null;
+      if (this.config.newNode !== undefined) {
+        this.config.newNode = undefined;
         this.bboxService.getBBoxSelectedPaths();
       }
       this.config.activeSelection = false;
@@ -553,9 +602,14 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
   }
 
   resize() {
-    this.document.getElementById('top-section').style.height = ((window.innerHeight * this.file.configuration.horizontalScreenDivision / 100) - 23) + 'px';
-    this.document.getElementById('bottom-section').style.height = ((window.innerHeight * (100-this.file.configuration.horizontalScreenDivision) / 100) - 20) + 'px';
-    this.document.getElementById('field-inset').style.height = ((window.innerHeight * (100-this.file.configuration.horizontalScreenDivision) / 100) - 20) + 'px';
+    const topSectionObj = this.document.getElementById('top-section');
+    if (topSectionObj) topSectionObj.style.height = ((window.innerHeight * this.file.configuration.horizontalScreenDivision / 100) - 23) + 'px';
+
+    const bottomSectionObj = this.document.getElementById('bottom-section');
+    if (bottomSectionObj) bottomSectionObj.style.height = ((window.innerHeight * (100-this.file.configuration.horizontalScreenDivision) / 100) - 20) + 'px';
+
+    const fieldInsetObj = this.document.getElementById('field-inset');
+    if (fieldInsetObj) fieldInsetObj.style.height = ((window.innerHeight * (100-this.file.configuration.horizontalScreenDivision) / 100) - 20) + 'px';
     this.drawingService.redraw();
     this.motorControlService.onResize();
   }
@@ -601,7 +655,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
             if (this.nodeService.selectedNodes.length === 1) {
               const selectedNode = this.nodeService.getNodeByID(this.nodeService.selectedNodes[0]);
               if (selectedNode) {
-                this.dataService.updatePoints(selectedNode.pos.x, selectedNode.pos.y, null, null);
+                this.dataService.updatePoints(selectedNode.pos.x, selectedNode.pos.y, undefined, undefined);
               }
             }
             this.drawFileData();
@@ -674,9 +728,11 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
         const nrSelectedNodes = this.nodeService.selectedNodes.length;
 
         if (this.file.activeCollectionEffect !== null && activeSelection.length === 0 && this.nodeService.selectedPaths.length === 0) {
-          if (!this.file.activeCollection.playing) {
-            this.motorControlService.deleteCollectionEffect(this.file.activeCollectionEffect.id);
-            this.file.activeCollectionEffect = null;
+          if (!this.file.activeCollection?.playing) {
+            if (this.file.activeCollectionEffect !== undefined) {
+              this.motorControlService.deleteCollectionEffect(this.file.activeCollectionEffect.id);
+              this.file.activeCollectionEffect = undefined;
+            }
           }
         } else {
 
@@ -710,14 +766,14 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       this.nodeService.selectedNodes = [];
       this.config.svg.select('.cursorConnection').remove();
     }
-    if (this.config.cursor.selectedSubcursor !== null) {
-      this.config.cursor.selectedSubcursor = null;
+    if (this.config.cursor.selectedSubcursor !== undefined) {
+      this.config.cursor.selectedSubcursor = undefined;
       this.drawingService.setCursor(this.config.cursor.cursor);
     }
   }
 
-  showMessage(msg: string, type: string, action: string, d: any = null) {
-    let btns = [];
+  showMessage(msg: string, type: string, action: string, d: any = undefined) {
+    let btns: Array<any> = [];
     if (type === 'verification') {
       btns = ['yes', 'cancel'];
     } else if (type === 'message') {
@@ -810,7 +866,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       this.nodeService.deselectAll();
       this.drawFileData();
     }
-    this.config.newNode = null;
+    this.config.newNode = undefined;
   }
 
 

@@ -1,33 +1,49 @@
 import { Component, Input, OnInit, Inject } from '@angular/core';
-import { ElectronService } from 'src/app/services/electron.service';
-import { FileService } from 'src/app/services/file.service';
-import { File } from '../../models/file.model';
+import { DOCUMENT, CommonModule   } from '@angular/common';
+import { ElectronService } from './../../services/electron.service';
+import { FileService } from './../../services/file.service';
+import { KinematicService } from './../../services/kinematic.service';
+// import { File } from '../../models/file.model';
+import { v4 as uuid } from 'uuid';
 import { MatDialog } from '@angular/material/dialog';
 import { DialogComponent } from '../windows/dialog.component';
-import { DOCUMENT } from '@angular/common';
-import { v4 as uuid } from 'uuid';
-import { KinematicService } from 'src/app/services/kinematic.service';
 import { IpcRendererEvent } from 'electron';
 
 @Component({
     selector: 'app-file-list',
-    standalone: false,
+    standalone: true,
+    imports: [
+      CommonModule 
+    ],
     template: `
       <div class="open-tabs {{ _list }}">
         <ul class="tabs {{ _list }}" id="file-list">
-          <li *ngFor="let file of files" [ngClass]="{ active: file.isActive }"  (click)="selectTab(file);">
-            <div class="filename-tab">
-              {{ file.name }}
-              <div class="saved" *ngIf="file.date.changed"> *</div>
-            </div>
-            <div class="close closeTab" (click)="closeTab(file);"><div></div></div>
-          </li>
+          
+          <!-- Modern Native Loop Syntax -->
+          @for (file of files; track file.id) {
+            <li [ngClass]="{ active: file.isActive }" (click)="selectTab(file);">
+              <div class="filename-tab">
+                {{ file.name }}
+                
+                <!-- Modern Native Condition Syntax -->
+                @if (file.date.changed) {
+                  <div class="saved"> *</div>
+                }
+              </div>
+              <div class="close closeTab" (click)="closeTab(file);"><div></div></div>
+            </li>
+          }
+
         </ul>
-        <div class="scroll-arrows" *ngIf="this.scrollTab">
-          <div (click)="scroll(-1)" class="arrow-left"><div class="arrow left"></div></div>
-          <div (click)="scroll(1)" class="arrow-right"><div class="arrow right"></div></div>
-        </div>
+
+        @if (this.scrollTab) {
+          <div class="scroll-arrows">
+            <div (click)="scroll(-1)" class="arrow-left"><div class="arrow left"></div></div>
+            <div (click)="scroll(1)" class="arrow-right"><div class="arrow right"></div></div>
+          </div>
+        }
       </div>
+
     `,
     styleUrls: ['./file-list.component.css'],
 })
@@ -37,16 +53,16 @@ export class FileListComponent implements OnInit {
   // tslint:disable-next-line: variable-name
   public _list = '';
 
-  public files = [];
-  delete: boolean;
+  public files: Array<any> = [];
+  delete?: boolean;
 
-  folder: string[];
+  folder: string[] = [];
   rulerVisible = false;
 
   public scrollTab = false;
 
   constructor(@Inject(DOCUMENT) private document: Document, public fileService: FileService,
-              private electronService: ElectronService, public dialog: MatDialog, private kinematicService: KinematicService) {
+              private electronService: ElectronService, @Inject(MatDialog) public dialog: MatDialog, private kinematicService: KinematicService) {
 
     this.electronService.ipcRenderer.on('saveActiveFile', (event: IpcRendererEvent, type: any) => {
       const activeFile = this._list === 'designFiles' ? this.fileService.getAllFileData() : this.kinematicService.getActiveModel();
@@ -115,7 +131,7 @@ export class FileListComponent implements OnInit {
     });
 
     dialogConfig.afterClosed().subscribe(
-        data => {
+      (data: string) => {
           if (data === 'no') {
 
             this._list === 'designFiles' ? this.fileService.delete(file) : this.kinematicService.deleteModel(file);
@@ -136,11 +152,12 @@ export class FileListComponent implements OnInit {
 
 
   scroll(direction: number) {
-    const offset = this.document.getElementById('file-list').offsetLeft;
-    const newOffset = offset + (75 * direction);
+    const offset = this.document.getElementById('file-list')?.offsetLeft;
+    const newOffset = (offset ?? 0) + (75 * direction);
     const availableSpace = Math.floor(window.innerWidth / 155);
     if (newOffset <= 0 && newOffset > (this.files.length - availableSpace) * -155) {
-      this.document.getElementById('file-list').style.marginLeft = newOffset + 'px';
+      const fileListObj = this.document.getElementById('file-list');
+      if (fileListObj) fileListObj.style.marginLeft = newOffset + 'px';
     }
   }
 

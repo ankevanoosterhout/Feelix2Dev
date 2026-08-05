@@ -1,12 +1,15 @@
 import { Component, OnInit } from '@angular/core';
-import { ElectronService } from 'src/app/services/electron.service';
-import { FileService } from 'src/app/services/file.service';
-import { File } from 'src/app/models/file.model';
-import { DrawingService } from 'src/app/services/drawing.service';
+import { FormsModule } from '@angular/forms'
+import { ElectronService } from '../../../services/electron.service';
+import { FileService } from '../../../services/file.service';
+import { File } from '../../../models/file.model';
+;
+// import { DrawingService } from '../../../services/drawing.service';
 
 @Component({
   selector: 'app-grid-settings',
-  standalone: false,
+  standalone: true,
+  imports: [ FormsModule ],
   template: `<div class="window-body"></div>
   <div class="window-title-bar">Grid size</div>
   <div class="window-content">
@@ -14,7 +17,10 @@ import { DrawingService } from 'src/app/services/drawing.service';
         <div class="form-row">
             <label class="select color">Color</label>
             <select class="form-control" [(ngModel)]="file.activeEffect.grid.settings.color.hash" name="color">
+
+              @for (item of colors; track item) {
                 <option *ngFor="let item of colors" [ngValue]="item.hash">{{ item.name }}</option>
+              }
             </select>
         </div>
 
@@ -36,8 +42,12 @@ import { DrawingService } from 'src/app/services/drawing.service';
           <div class="form-row">
               <label>grid line every</label>
               <input type="number" [(ngModel)]="file.activeEffect.grid.settings.spacingY" name="grid-spacingY">
-              <span class="span-text" *ngIf="file.activeEffect.grid.yUnit.name !== 'deg'"> %</span>
-              <span class="span-text" *ngIf="file.activeEffect.grid.yUnit.name === 'deg'"> deg</span>
+              @if (file.activeEffect.grid.yUnit.name !== 'deg') {
+              <span class="span-text"> %</span>
+              }
+              @if (file.activeEffect.grid.yUnit.name === 'deg') {
+              <span class="span-text"> deg</span>
+              }
           </div>
           <div class="form-row">
               <label>subdivision</label>
@@ -67,7 +77,7 @@ import { DrawingService } from 'src/app/services/drawing.service';
   `]
 })
 export class GridSettingsComponent implements OnInit {
-  file: File;
+  file: File = new File(undefined, undefined, undefined);
 
   units = [
     { name: 'deg', PR: 360 },
@@ -97,7 +107,7 @@ export class GridSettingsComponent implements OnInit {
     //   this.drawingService.setEditBounds(this.file.mode);
     //   this.fileService.updateUnits(oldUnits, this.selectedUnit, this.file);
     // }
-    this.fileService.update(this.file);
+    if (this.file !== undefined) this.fileService.update(this.file);
     this.close();
   }
 

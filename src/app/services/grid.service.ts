@@ -35,8 +35,8 @@ export class GridService {
         .enter()
         .append('line')
         .attr('class', 'gridX')
-        .attr('x1', (d) => this.nodeService.scale.scaleX(d) - 0.25)
-        .attr('x2', (d) => this.nodeService.scale.scaleX(d) - 0.25)
+        .attr('x1', (d: any) => this.nodeService.scale.scaleX(d) - 0.25)
+        .attr('x2', (d: any) => this.nodeService.scale.scaleX(d) - 0.25)
         .attr('y1', this.nodeService.scale.scaleY(this.config.editBounds.yMin))
         .attr('y2', this.nodeService.scale.scaleY(this.config.editBounds.yMax))
         .style('stroke', gridSettings.color.hash)
@@ -53,8 +53,8 @@ export class GridService {
           .attr('class', 'gridY')
           .attr('x1', this.nodeService.scale.scaleX(this.config.editBounds.xMin))
           .attr('x2', this.nodeService.scale.scaleX(this.config.editBounds.xMax))
-          .attr('y1', (d) => this.nodeService.scale.scaleY(d))
-          .attr('y2', (d) => this.nodeService.scale.scaleY(d))
+          .attr('y1', (d: any) => this.nodeService.scale.scaleY(d))
+          .attr('y2', (d: any) => this.nodeService.scale.scaleY(d))
           .style('stroke', gridSettings.color.hash)
           .style('stroke-width', 0.5)
           .style('shape-rendering', 'crispEdges')
@@ -71,8 +71,8 @@ export class GridService {
           .enter()
           .append('line')
           .attr('class', 'gridX')
-          .attr('x1', (d) => this.nodeService.scale.scaleX(d))
-          .attr('x2', (d) => this.nodeService.scale.scaleX(d))
+          .attr('x1', (d: any) => this.nodeService.scale.scaleX(d))
+          .attr('x2', (d: any) => this.nodeService.scale.scaleX(d))
           .attr('y1', this.nodeService.scale.scaleY(this.config.editBounds.yMin))
           .attr('y2', this.nodeService.scale.scaleY(this.config.editBounds.yMax))
           .style('stroke', gridSettings.color.hash)
@@ -90,8 +90,8 @@ export class GridService {
           .attr('class', 'subDivisionY')
           .attr('x1', this.nodeService.scale.scaleX(this.config.editBounds.xMin))
           .attr('x2', this.nodeService.scale.scaleX(this.config.editBounds.xMax))
-          .attr('y', (d) => this.nodeService.scale.scaleY(d))
-          .attr('y', (d) => this.nodeService.scale.scaleY(d))
+          .attr('y', (d: any) => this.nodeService.scale.scaleY(d))
+          .attr('y', (d: any) => this.nodeService.scale.scaleY(d))
           .style('stroke', gridSettings.color.hash)
           .style('stroke-width', 0.3)
           .style('shape-rendering', 'crispEdges')
@@ -108,18 +108,18 @@ export class GridService {
     const gridX = [];
     const gridY = [];
 
-    const spacingX = (this.config.editBounds.xMax - this.config.editBounds.xMin) / gridSettings.spacingX;
+    const spacingX = ((this.config.editBounds.xMax ?? 360) - (this.config.editBounds.xMin ?? 0)) / gridSettings.spacingX;
 
     for (let i = 0; i < spacingX; i++) {
       const x = i * gridSettings.spacingX;
-      gridX.push((this.config.editBounds.xMin + x));
+      gridX.push((this.config.editBounds.xMin ?? 0) + x);
     }
 
-    const spacingY = (this.config.editBounds.yMax - this.config.editBounds.yMin) / gridSettings.spacingY;
+    const spacingY = ((this.config.editBounds.yMax ?? 100) - (this.config.editBounds.yMin ?? 0)) / gridSettings.spacingY;
 
     for (let i = 0; i < spacingY; i++) {
       const y = i * gridSettings.spacingY;
-      gridY.push((this.config.editBounds.yMin + y));
+      gridY.push((this.config.editBounds.yMin ?? 0) + y);
     }
 
     return { x: gridX, y: gridY };
@@ -130,22 +130,22 @@ export class GridService {
     const gridX = [];
     const gridY = [];
 
-    const spacingX = (this.config.editBounds.xMax - this.config.editBounds.xMin) / gridSettings.spacingX;
+    const spacingX = ((this.config.editBounds.xMax ?? 360) - (this.config.editBounds.xMin ?? 0)) / gridSettings.spacingX;
     const subX = gridSettings.spacingX / (gridSettings.subDivisionsX);
     for (let i = 0; i < spacingX; i++) {
       for (let j = 1; j < gridSettings.subDivisionsX; j++) {
         const x = (j * subX) + (i * gridSettings.spacingX);
-        gridX.push((this.config.editBounds.xMin + x));
+        gridX.push((this.config.editBounds.xMin ?? 0) + x);
       }
     }
 
-    const spacingY = (this.config.editBounds.yMax - this.config.editBounds.yMin) / gridSettings.spacingY;
+    const spacingY = ((this.config.editBounds.yMax ?? 100) - (this.config.editBounds.yMin ?? 0)) / gridSettings.spacingY;
     const subY = gridSettings.spacingY / (gridSettings.subDivisionsY);
 
     for (let i = 0; i < spacingY; i++) {
       for (let j = 1; j < gridSettings.subDivisionsY; j++) {
         const y = (j * subY) + (i * gridSettings.spacingY);
-        gridY.push((this.config.editBounds.yMin + y));
+        gridY.push((this.config.editBounds.yMin ?? 0) + y);
       }
     }
 

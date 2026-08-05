@@ -1,24 +1,29 @@
 import { Component, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { FormsModule } from '@angular/forms';
+import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-play-sequence',
-  standalone: false,
+  standalone: true,
+  imports: [ FormsModule, MatDialogModule ],
   template: `
   <div mat-dialog-title class="window-title-bar">Play sequence</div>
   <div class="window-content">
 
       <div mat-dialog-content class="form-row">
         <ul>
-          <li *ngFor="let data of this.d">
+          @for (data of this.d; track data) {
+          <li>
             <div class="column wide">
               {{ data.name }}
             </div>
+      
             <div class="column small">
               <input type="number" class="small motor-settings" id="time-{{ data.id }}" name="time-{{ data.id }}" [(ngModel)]="data.time">
               <span> ms</span>
             </div>
           </li>
+          }
         </ul>
       </div>
 
@@ -100,7 +105,7 @@ import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 })
 export class PlaySequenceComponent {
 
-  public d = [];
+  public d : Array<any> = [];
 
   constructor(@Inject(MAT_DIALOG_DATA) data: { d: Array<any> }) {
     this.d = data.d;

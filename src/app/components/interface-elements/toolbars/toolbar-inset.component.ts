@@ -1,27 +1,33 @@
 import { Component, OnInit, Inject, HostListener } from '@angular/core';
-import { DOCUMENT } from '@angular/common';
-import { ElectronService } from 'src/app/services/electron.service';
-import { ToolService } from 'src/app/services/tool.service';
-import { DrawingPlaneConfig } from 'src/app/models/drawing-plane-config.model';
-import { DrawingService } from 'src/app/services/drawing.service';
-import { EffectType } from 'src/app/models/configuration.model';
+import { CommonModule, DOCUMENT } from '@angular/common';
+import { ElectronService } from '../../../services/electron.service';
+import { ToolService } from '../../../services/tool.service';
+import { DrawingPlaneConfig } from '../../../models/drawing-plane-config.model';
+import { DrawingService } from '../../../services/drawing.service';
+import { EffectType } from '../../../models/configuration.model';
 import { IpcRendererEvent } from 'electron';
 
 @Component({
     selector: 'app-toolbar-inset',
-    standalone: false,
+    standalone: true,
+    imports: [ CommonModule ],
     template: `
-          <div class="toolbar-menu-section" id="toolbar"
-          *ngIf="this.drawingService.file.configuration.horizontalScreenDivision < (100/innerHeight) * (innerHeight - 50)">
+
+          @if (this.drawingService.file.configuration.horizontalScreenDivision < (100/innerHeight) * (innerHeight - 50)) {
+          <div class="toolbar-menu-section" id="toolbar">
             <div class="detach-toolbar" (click)="detachToolbar()"><div></div></div>
             <ul class="toolbar-menu">
-              <li *ngFor="let item of toolList" (click)="selectTool(item.id)" (mouseenter)="highlightTool(item.id)"
+
+              @for (item of toolList; track item) {
+              <li (click)="selectTool(item.id)" (mouseenter)="highlightTool(item.id)"
                 (mouseleave)="deselectTool(item.id)"
                 [ngClass]="{ active: this.selectedTool === item.id, disabled: item.disabled === true }">
                 <img class="tool-icon" id="tool-{{ item.id }}" src="{{ item.icon }}" title="{{ item.name }} ({{ item.acceleration }})">
               </li>
+              }
             </ul>
           </div>
+          }
           `,
     styles: [`
             /*toolbar*/
@@ -126,7 +132,7 @@ import { IpcRendererEvent } from 'electron';
 })
 export class ToolbarInsetComponent implements OnInit {
 
-  selectedTool: number;
+  selectedTool?: number;
   toolList = this.toolService.getTools();
 
   public config: DrawingPlaneConfig;
@@ -190,17 +196,19 @@ export class ToolbarInsetComponent implements OnInit {
   }
 
   highlightTool(id: number) {
-    if (this.document.getElementById('tool-' + id)) {
-      if (!this.document.getElementById('tool-' + id).classList.contains('hover')) {
-        this.document.getElementById('tool-' + id).classList.add('hover');
+    const toolObj = this.document.getElementById('tool-' + id);
+    if (toolObj) {
+      if (!toolObj.classList.contains('hover')) {
+        toolObj.classList.add('hover');
       }
     }
   }
 
   deselectTool(id: number) {
-    if (this.document.getElementById('tool-' + id)) {
-      if (this.document.getElementById('tool-' + id).classList.contains('hover')) {
-        this.document.getElementById('tool-' + id).classList.remove('hover');
+    const toolObj = this.document.getElementById('tool-' + id);
+    if (toolObj) {
+      if (toolObj.classList.contains('hover')) {
+        toolObj.classList.remove('hover');
       }
     }
   }
@@ -210,29 +218,17 @@ export class ToolbarInsetComponent implements OnInit {
     this.electronService.ipcRenderer.send('showToolbar');
 
     this.config.toolbarOffset = 0;
-    if (this.document.getElementById('toolbar')) {
-      this.document.getElementById('toolbar').classList.add('hide');
-    }
-    if (this.document.getElementById('field-inset')) {
-      this.document.getElementById('field-inset').classList.add('toolbarInset-hidden');
-    }
-    if (this.document.getElementById('effect-tabs')) {
-      this.document.getElementById('effect-tabs').classList.add('wide');
-    }
+    this.document.getElementById('toolbar')?.classList.add('hide');
+    this.document.getElementById('field-inset')?.classList.add('toolbarInset-hidden');
+    this.document.getElementById('effect-tabs')?.classList.add('wide');
     this.drawingService.redraw();
   }
 
   attachToolbar() {
     this.config.toolbarOffset = 45;
-    if (this.document.getElementById('toolbar')) {
-      this.document.getElementById('toolbar').classList.remove('hide');
-    }
-    if (this.document.getElementById('field-inset')) {
-      this.document.getElementById('field-inset').classList.remove('toolbarInset-hidden');
-    }
-    if (this.document.getElementById('effect-tabs')) {
-      this.document.getElementById('effect-tabs').classList.remove('wide');
-    }
+    this.document.getElementById('toolbar')?.classList.remove('hide'); 
+    this.document.getElementById('field-inset')?.classList.remove('toolbarInset-hidden');
+    this.document.getElementById('effect-tabs')?.classList.remove('wide');
     this.drawingService.redraw();
   }
 

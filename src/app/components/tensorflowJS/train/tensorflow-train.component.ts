@@ -1,18 +1,10 @@
 
 import { ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/core';
-import { ElectronService } from 'src/app/services/electron.service';
-import { TensorFlowData } from 'src/app/models/tensorflow-data.model';
-// import { Bounds, TrainingSet } from 'src/app/models/tensorflow.model';
-import { TensorFlowDrawService } from 'src/app/services/tensorflow-draw.service';
-import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
-import { TensorFlowTrainService } from 'src/app/services/tensorflow-train.service';
-// import { Activation, ActivationLabelMapping, Model, ModelType, ModelTypeMapping } from 'src/app/models/tensorflow.model';
-// import { TensorFlowMainService } from 'src/app/services/tensorflow-main.service';
-
-// import { ML_Data, TensorFlowData } from 'src/app/models/tensorflow-data.model';
-// import { TensorFlowTrainService } from 'src/app/services/tensorflow-train.service';
-// import { v4 as uuid } from 'uuid';
-// import { ElectronService } from 'src/app/services/electron.service';
+import { ElectronService } from '../../../services/electron.service';
+import { TensorFlowData } from '../../../models/tensorflow-data.model';
+import { TensorFlowDrawService } from '../../../services/tensorflow-draw.service';
+import { TensorFlowMainService } from '../../../services/tensorflow-main.service';
+import { TensorFlowTrainService } from '../../../services/tensorflow-train.service';
 
 @Component({
   selector: 'app-tensorflow-train',
@@ -24,7 +16,7 @@ export class TensorflowTrainComponent implements OnInit {
 
   public graphID_A = 'svg_graph_training_A';
   public graphID_B = 'svg_graph_training_B';
-  public size: { width: number, height: number, margin: number };
+  public size: { width: number, height: number, margin: number } = { width: 0, height: 0, margin: 0};
   public d: TensorFlowData;
   training = false;
 
@@ -36,27 +28,31 @@ export class TensorflowTrainComponent implements OnInit {
     this.d = this.tensorflowService.d;
 
     this.tensorflowTrainService.updateTrainingGraph.subscribe((data) => {
-      const max = data.e * 1.2 > this.d.selectedModel.training.epochs ? this.d.selectedModel.training.epochs : data.e * 1.2;
-      const file = this.d.trainingData.filter(t => t.open)[0];
+      const epochs = this.d.selectedModel?.training.epochs;
 
-      if (file) {
-        file.bounds_loss.xMax = max;
-        file.bounds_metric.xMax = max;
-        file.bounds_loss.yMax = Math.max(file.bounds_loss.yMax, data.loss * 1.2, data.val_loss * 1.2);
-        file.bounds_metric.yMax = Math.max(file.bounds_metric.yMax, data.metric * 1.2, data.val_metric * 1.2);
+      if (epochs) {
+        const max = data.e * 1.2 > epochs ? epochs : data.e * 1.2;
+        const file = this.d.trainingData.filter(t => t.open)[0];
+
+        if (file) {
+          file.bounds_loss.xMax = max;
+          file.bounds_metric.xMax = max;
+          file.bounds_loss.yMax = Math.max(file.bounds_loss.yMax, data.loss * 1.2, data.val_loss * 1.2);
+          file.bounds_metric.yMax = Math.max(file.bounds_metric.yMax, data.metric * 1.2, data.val_metric * 1.2);
 
 
-        // this.tensorflowDrawService.updateBounds(file.bounds_loss, this.graphID_A, this.size);
-        // this.tensorflowDrawService.updateBounds(file.bounds_metric, this.graphID_B, this.size);
-        this.tensorflowDrawService.redrawGraph(file, this.size);
+          // this.tensorflowDrawService.updateBounds(file.bounds_loss, this.graphID_A, this.size);
+          // this.tensorflowDrawService.updateBounds(file.bounds_metric, this.graphID_B, this.size);
+          this.tensorflowDrawService.redrawGraph(file, this.size);
+        }
       }
     });
 
-    this.tensorflowTrainService.selectLogFile.subscribe((id) => {
+    this.tensorflowTrainService.selectLogFile.subscribe((id: string) => {
       this.selectLogFile(id);
     });
 
-    this.tensorflowService.selectLogFileTrain.subscribe((id) => {
+    this.tensorflowService.selectLogFileTrain.subscribe((id: string) => {
       this.selectLogFile(id);
     });
   }
@@ -68,18 +64,20 @@ export class TensorflowTrainComponent implements OnInit {
   }
 
   ngAfterViewInit(): void {
-    this.tensorflowDrawService.redrawGraph(this.d.trainingData.length > 0 ? this.d.trainingData.filter(t => t.open || (this.d.selectedTrainingSet && t.id === this.d.selectedTrainingSet.id))[0] : null, this.size);
+    this.tensorflowDrawService.redrawGraph(
+      this.d.trainingData.length > 0 ? (this.d.trainingData.filter((t: { open: any; id: any; }) => 
+                                        t.open || (this.d.selectedTrainingSet !== undefined && t.id === this.d.selectedTrainingSet.id))[0]) : undefined, this.size);
   }
 
 
 
   split(first: boolean = false) {
-    this.tensorflowTrainService.splitData(this.d.selectedModel.training.distribution, first);
+    if (this.d.selectedModel) this.tensorflowTrainService.splitData(this.d.selectedModel.training.distribution, first);
   }
 
 
   async train() {
-    this.d.selectedModel.model = undefined;
+    if (this.d.selectedModel) this.d.selectedModel.model = undefined;
     this.tensorflowService.updateProgess('Compiling the model', 5);
     const success = await this.compileModel();
     if (!success) { return; }
@@ -113,7 +111,7 @@ export class TensorflowTrainComponent implements OnInit {
   }
 
   deploy() {
-    if (!this.d.selectedModel.model.isTraining) {
+    if (!this.d.selectedModel?.model.isTraining) {
       this.d.classify = true;
       this.tensorflowService.createModel.next(3);
     }
@@ -138,7 +136,8 @@ export class TensorflowTrainComponent implements OnInit {
 
   resize()  {
     this.updateSize();
-    this.tensorflowDrawService.redrawGraph(this.d.trainingData.length > 0 ? this.d.trainingData.filter(t => t.open || (this.d.selectedTrainingSet && t.id === this.d.selectedTrainingSet.id))[0] : null, this.size);
+    this.tensorflowDrawService.redrawGraph(this.d.trainingData.length > 0 ? 
+      this.d.trainingData.filter(t => t.open || (this.d.selectedTrainingSet && t.id === this.d.selectedTrainingSet.id))[0] : undefined, this.size);
   }
 
 
