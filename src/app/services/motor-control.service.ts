@@ -1,9 +1,8 @@
-import { Injectable, Inject } from '@angular/core';
+import { Injectable, Inject} from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { DrawingPlaneConfig } from '../models/drawing-plane-config.model';
 import { File } from '../models/file.model';
 import * as d3 from 'd3';
-import { FileService } from './file.service';
 import { Collection, Layer, Scale, scaleOption } from '../models/collection.model';
 import { DrawingService } from './drawing.service';
 import { Details, Direction, Effect, Unit } from '../models/effect.model';
@@ -22,8 +21,9 @@ export class MotorControlService {
   playAllCollections: Subject<any> = new Subject<void>();
   playAllInSequence: Subject<any> = new Subject<void>();
   playSequence: Subject<any> = new Subject<void>();
+  updateCollection: Subject<any> = new Subject<void>();
+  updateCollectionEffect: Subject<any> = new Subject<void>(); 
   playAll: Subject<any> = new Subject<void>();
-  detectChanges: Subject<any> = new Subject<void>();
 
   public toolList = [
     { id: 0, name: 'new collection', slug: 'collection', disabled: false, icon: './assets/icons/tools/collections.svg' },
@@ -40,8 +40,7 @@ export class MotorControlService {
   midiHeight: number = 0;
 
 
-  constructor(@Inject(DOCUMENT) private document: Document, private drawingService: DrawingService, private fileService: FileService,
-              private effectVisualizationService: EffectVisualizationService) {
+  constructor(@Inject(DOCUMENT) private document: Document, private drawingService: DrawingService, private effectVisualizationService: EffectVisualizationService) {
 
     this.config = this.drawingService.config;
     this.resetWidth();
@@ -49,7 +48,8 @@ export class MotorControlService {
     this.updateToolListDisplay(this.file);
 
     this.effectVisualizationService.updateCollectionEffect.subscribe(res => {
-      this.updateCollectionEffect(res.collection, res.collEffect);
+      // this.updateCollectionEffect.next(res.collection, res.collEffect);
+      this.updateCollectionEffect.next(res);
     });
 
     this.drawingService.updateResizeMotorControlSection.subscribe(res => {
@@ -102,32 +102,6 @@ export class MotorControlService {
     this.updateViewSettings(this.file);
   }
 
-  addCollection(update = false) {
-    this.fileService.addCollection();
-    if (update) {
-      this.drawCollections();
-    }
-    // if (update) {
-    //   setTimeout(() => {
-    //     this.drawCollections();
-        
-    //   }, 1000);
-    // }
-  }
-
-  deleteCollection(collection: Collection) {
-    this.fileService.deleteCollection(collection.id);
-  }
-
-  copyCollection(collection: Collection) {
-    this.fileService.copyCollection(collection.id);
-  }
-
-  saveCollection(collection: Collection) {
-    this.fileService.updateCollection(collection);
-  }
-
-
   onResize() {
     this.resetWidth();
     const motorControlFrame = this.document.getElementById('motor-control');
@@ -145,26 +119,15 @@ export class MotorControlService {
 
   resetWidth() {
     this.width = (window.innerWidth * (this.file.configuration.verticalScreenDivision / 100)) - this.config.motorControlToolbarOffset - 28;
-    console.log(this.width);
   }
-
-  updateCollection(collection: Collection) {
-    this.fileService.updateCollection(collection);
-  }
-
-  updateCollectionEffect(collection: Collection, collEffect: Details) {
-    this.fileService.updateCollectionEffect(collection, collEffect);
-  }
-
-
-
 
   drawCollection(collection: Collection) {
+    
+    const selectedCollection = d3.select('#cID-' + collection.id);
 
-    console.log('draw ' + collection.id);
-
-    d3.select('#cID-' + collection.id).remove();
-
+    if (!selectedCollection.empty()) {
+      selectedCollection.remove();
+    } 
 
     const updatedHeight = collection.config.midi ? this.height + (this.midiHeight + 10) : this.height; // increase height for midi effects
     const frameHeight = this.height - 39;
@@ -446,7 +409,7 @@ export class MotorControlService {
     if (index > -1) {
       collection.effects.splice(index, 1);
       this.drawCollection(collection);
-      this.updateCollection(collection);
+      this.updateCollection.next(collection);
     }
   }
 
@@ -596,7 +559,7 @@ export class MotorControlService {
       .attr('x', collection.config.slider.inner.min)
       .attr('width', collection.config.slider.inner.max - collection.config.slider.inner.min);
 
-    this.updateCollection(collection);
+    this.updateCollection.next(collection);
     this.drawCollection(collection);
   }
 
@@ -776,7 +739,8 @@ export class MotorControlService {
         const effectIndex = collection.effects.indexOf(effect);
         if (effectIndex > -1) {
           collection.effects.splice(effectIndex, 1);
-          this.fileService.updateCollection(collection);
+          this.updateCollection.next(collection);
+          // this.fileService.updateCollection(collection);
           return;
         }
       }

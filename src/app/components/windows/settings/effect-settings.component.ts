@@ -1,4 +1,4 @@
-import { Component, OnInit, Inject } from '@angular/core';
+import { Component, OnInit, Inject} from '@angular/core';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ElectronService } from '../../../services/electron.service';
@@ -152,23 +152,20 @@ export class EffectSettingsComponent implements OnInit {
 
   public submit() {
     if (this.effect) {
-      if (!this.updateMode) {
-        if ((this.effect.type === EffectType.velocity && this.effect.grid.yUnit.name === '%') || this.effect.type === EffectType.torque) {
-          this.effect.grid.yUnit = new Unit('%', 100);
-          this.effect.range_y.start = -100;
-          this.effect.range_y.end = 100;
-        } else if (this.effect.type === EffectType.position || this.effect.type === EffectType.pneumatic || this.effect.type === EffectType.hydraulic || 
-                  this.effect.type === EffectType.midi || this.effect.type === EffectType.midiNote) {
-          this.effect.range_y.start = 0;
-          if (this.effect.type === EffectType.midi || this.effect.type === EffectType.midiNote) {
-            this.effect.range_y.end = 128;
-          }
+      
+      if ((this.effect.type === EffectType.velocity && this.effect.grid.yUnit.name === '%') || this.effect.type === EffectType.torque) {
+        this.effect.grid.yUnit = new Unit('%', 100);
+        this.effect.range_y.start = -100;
+        this.effect.range_y.end = 100;
+      } else if (this.effect.type === EffectType.position || this.effect.type === EffectType.pneumatic || this.effect.type === EffectType.hydraulic || 
+                this.effect.type === EffectType.midi || this.effect.type === EffectType.midiNote) {
+        this.effect.range_y.start = 0;
+        if (this.effect.type === EffectType.midi || this.effect.type === EffectType.midiNote) {
+          this.effect.range_y.end = 128;
         }
-        this.fileService.addEffect(this.effect);
-      } else {
-        this.fileService.updateEffect(this.effect);
       }
-      this.electronService.ipcRenderer.send('updateToolbar', { type: this.effect.type });
+      this.electronService.ipcRenderer.send('updateEffect',  { mode: this.updateMode, effect: this.effect });
+      this.electronService.ipcRenderer.send('updateToolbar', { type: this.effect.type });    
     }
     this.close();
   }

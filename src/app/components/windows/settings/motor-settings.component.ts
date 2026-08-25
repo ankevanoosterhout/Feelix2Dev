@@ -124,7 +124,7 @@ export class MotorSettingsComponent implements OnInit {
     });
 
     this.electronService.ipcRenderer.on('updateCurrentSenseCalibration', (event: IpcRendererEvent, data: any) => {
-      const microcontroller = this.microcontrollers.filter(m => m.serialPort.path === data.serialPath)[0];
+      const microcontroller = this.microcontrollers.find(m => m.serialPort.path === data.serialPath);
       if (microcontroller) {
         microcontroller.motors.filter(m => m.id === data.motorID)[0].config.current_sense_calibration = data.current_sense_calibration;
         this.hardwareService.updateMicroController(microcontroller);
@@ -159,7 +159,7 @@ export class MotorSettingsComponent implements OnInit {
 
     this.electronService.ipcRenderer.on('receiveData', (event: IpcRendererEvent, data: any) => {
       // console.log(data);
-      const microcontroller = this.microcontrollers.filter(m => m.serialPort.path === data.serialPath)[0];
+      const microcontroller = this.microcontrollers.find(m => m.serialPort.path === data.serialPath);
       if (microcontroller && data.type === 'A') {
         if (this.searchRange === 1) {
           this.searchRange++;
@@ -175,7 +175,7 @@ export class MotorSettingsComponent implements OnInit {
 
         } else if (this.searchRange > 1) {
           this.searchRange = 0;
-          const motor = microcontroller.motors.filter(m => m.id === data.motorID)[0];
+          const motor = microcontroller.motors.find(m => m.id === data.motorID);
           if (motor) {
             motor.state.position.end = data.value * (180/Math.PI);
             if (motor.state.position.end < motor.state.position.start) {
@@ -263,12 +263,14 @@ export class MotorSettingsComponent implements OnInit {
   }
 
   updateSupplyVoltage(motor_id: string) {
-    const uploadModel = this.uploadService.createUploadModel(undefined, this.selectedMicrocontroller);
-    const motor = this.selectedMicrocontroller?.motors.filter(m => m.id === motor_id)[0];
-    const newSupplyVOltage = (this.document.getElementById('supply-voltage-slider' + this.selectedMicrocontroller?.serialPort.path + '-' + motor_id) as HTMLInputElement).value;
-    (this.document.getElementById('supply-voltage-' + this.selectedMicrocontroller?.serialPort.path + '-' + motor_id) as HTMLInputElement).value = newSupplyVOltage.toString();
-    if (this.selectedMicrocontroller && motor !== undefined && motor.type !== ActuatorType.pneumatic) {
-      this.electronService.ipcRenderer.send('updateMotorSetting', uploadModel);
+    const microcontroller = this.microcontrollers.find(m => m.serialPort.path === this.selectedMicrocontroller?.serialPort.path);
+    if (microcontroller !== undefined) {
+      const uploadModel = this.uploadService.createUploadModel(undefined, microcontroller);
+      const motor = microcontroller.motors.find(m => m.id === motor_id);
+      if (motor !== undefined && motor.type !== ActuatorType.pneumatic) {
+        this.electronService.ipcRenderer.send('updateMotorSetting', uploadModel);
+      }
+      this.hardwareService.updateMicroController(microcontroller);
     }
   }
 

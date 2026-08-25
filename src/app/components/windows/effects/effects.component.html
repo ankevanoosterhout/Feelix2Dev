@@ -1,25 +1,36 @@
+  
+@let viewSettings = drawingService.file.configuration.libraryViewSettings;
+@let isList = viewSettings === 'list';
+
   <div class="library-content">
 
     <ul class="tabsContainer">
-      <li *ngFor="let tab of tabs" id="tab-{{ tab.id }}" [ngClass]="{ active: tab.selected, disabled: tab.disabled }"
+      @for (tab of tabs; track tab) {
+      <li id="tab-{{ tab.id }}" [ngClass]="{ active: tab.selected, disabled: tab.disabled }"
       (click)="selectTab(tab.id);">{{ tab.name }}</li>
+      }
     </ul>
 
-    <div class="row sortbutton-row" *ngIf="this.activeTab < 2">
+    @if (this.activeTab < 2) {
+    <div class="row sortbutton-row">
       <div class="display-options">
         <ul>
-          <li class="sort-list-item" *ngFor="let option of displayOptions">
+          @for (option of displayOptions; track option) {
+          <li class="sort-list-item">
             <div class="button sort" id="button-{{ option.name }}" (click)="this.display(option.slug)" title="{{ option.name }}"
               [ngClass]="{ active: this.drawingService.file.configuration.libraryViewSettings === option.slug }">
               <img src="{{ option.src }}">
             </div>
           </li>
+          }
         </ul>
       </div>
       <div class="sortDropdown">
         <label class="select small">sort by </label>
         <select class="form-control" [(ngModel)]="this.drawingService.file.configuration.sortType" name="sortType" (change)="this.sortItems()">
-          <option *ngFor="let type of sortOptions" [ngValue]="type.slug">{{ type.name }}</option>
+          @for (type of sortOptions; track type) {
+          <option [ngValue]="type.slug">{{ type.name }}</option>
+          }
         </select>
         <div class="sortDirection">
           <div class="arrow-up" [ngClass]="{ active: this.drawingService.file.configuration.sortDirection === 'last-first' }" (click)="this.toggleSortDirection()"><div></div></div>
@@ -28,94 +39,59 @@
       </div>
 
     </div>
+    }
 
     <ul class="tabContent tab-{{ this.activeTab }}" id="outer">
 
       <!-- effect tab -->
-
-      <div class="innerContent" id="inner" *ngIf="this.activeTab === 0">
-        <li class="blockContent {{ this.drawingService.file.configuration.libraryViewSettings }} file-view" *ngFor="let item of this.drawingService.file.effects">
+      @if (this.activeTab < 2) {
+      <div class="innerContent" id="inner">
+        @for (item of (this.activeTab === 0 ? drawingService.file.effects : this.effectLibraryService.effectLibrary); track item.id) {
+        <li [class]="'blockContent file-view ' + viewSettings">
+          
           <div class="rowDetails">
-            <div class="title {{ this.drawingService.file.configuration.libraryViewSettings }}">
-              <input type="text" class="form-control effect_name" id="name-{{ item.id }}" [(ngModel)]="item.name" name="name-{{ item.id }}" (change)="updateEffectName(item)">
+            <div [class]="'title ' + viewSettings">
+              <input type="text" 
+                    class="form-control effect_name" 
+                    [id]="'name-' + item.id" 
+                    [ngModel]="activeTab === 0 ? item.name : item.effect.name" 
+                    (ngModelChange)="activeTab === 0 ? item.name = $event : item.effect.name = $event"
+                    [name]="'name-' + item.id" 
+                    (change)="(activeTab === 0 ? updateEffectName(item) : updateLibEffectName(item.effect))">
             </div>
-            <div class="buttonsPlayWindow {{ this.drawingService.file.configuration.libraryViewSettings }}"
-                 *ngIf="this.drawingService.file.configuration.libraryViewSettings === 'list'">
-              <div class="buttonPlayWindow delete" (click)="editEffectItem(item.id)" title="edit">
-                <img src="./assets/icons/buttons/edit.svg">
-              </div>
-              <div class="buttonPlayWindow delete" (click)="exportEffectItem(item.id)" title="export">
-                <img src="./assets/icons/buttons/export.svg">
-              </div>
-              <div class="buttonPlayWindow delete" (click)="deleteEffectItem(item.id)" title="delete">
-                <img src="./assets/icons/buttons/bin.svg">
-              </div>
-            </div>
+            
+            <!-- Render actions inside the rowDetails ONLY if it's a list view -->
+            @if (isList) {
+              <ng-container *ngTemplateOutlet="actionButtons; context: { id: item.id }"></ng-container>
+            }
           </div>
-          <div class="row" *ngIf="this.drawingService.file.configuration.libraryViewSettings !== 'list'">
-            <div id="effectSVG-{{ item.id }}" class="effectSVG"></div>
-            <div class="buttonsPlayWindow">
-              <div class="buttonPlayWindow delete" (click)="editEffectItem(item.id)" title="edit">
-                <img src="./assets/icons/buttons/edit.svg">
-              </div>
-              <div class="buttonPlayWindow delete" (click)="exportEffectItem(item.id)" title="export">
-                <img src="./assets/icons/buttons/export.svg">
-              </div>
-              <div class="buttonPlayWindow delete" (click)="deleteEffectItem(item.id)" title="delete">
-                <img src="./assets/icons/buttons/bin.svg">
-              </div>
-            </div>
-          </div>
-          <div class="overlayEffect" id="overlayEffect-{{ item.id }}"></div>
-          <div class="dragOverlayEffect" id="dragOverlayEffect-{{ item.id }}" draggable="true"
-              (mousedown)="dragstart(item)" (dragend)="dragend(item)" (mouseup)="dragend(item)"></div>
-        </li>
-      </div>
 
-      <!-- library tab -->
+          <!-- Render full thumbnail section ONLY if it's NOT a list view -->
+          @if (!isList) {
+            <div class="row">
+              <div [id]="'effectSVG-' + (activeTab === 0? item.id : item.effect.id)" class="effectSVG"></div>
+              <ng-container *ngTemplateOutlet="actionButtons; context: { id: item.id }"></ng-container>
+            </div>
+          }
 
-      <div class="innerContent" id="inner" *ngIf="this.activeTab === 1">
-        <li class="blockContent {{ this.drawingService.file.configuration.libraryViewSettings }} file-view" *ngFor="let item of this.effectLibraryService.effectLibrary">
-          <div class="rowDetails">
-            <div class="title {{ this.drawingService.file.configuration.libraryViewSettings }}">
-              <input type="text" class="form-control" id="name-{{ item.id }}" [(ngModel)]="item.effect.name" name="name-{{ item.id }}" (change)="updateLibEffectName(item.effect)">
-            </div>
-            <div class="buttonsPlayWindow {{ this.drawingService.file.configuration.libraryViewSettings }}"
-                 *ngIf="this.drawingService.file.configuration.libraryViewSettings === 'list'">
-              <div class="buttonPlayWindow delete" (click)="importLibraryEffectItem(item.id)" title="import to file">
-                <img src="./assets/icons/buttons/import.svg">
-              </div>
-              <div class="buttonPlayWindow delete" (click)="exportLibEffectItem(item.id)" title="export">
-                <img src="./assets/icons/buttons/export.svg">
-              </div>
-              <div class="buttonPlayWindow delete" (click)="deleteLibraryItem(item.id)" title="delete">
-                <img src="./assets/icons/buttons/bin.svg">
-              </div>
-            </div>
+          @if (activeTab === 0) {
+          <div class="overlayEffect" [id]="'overlayEffect-' + item.id"></div>
+          <div class="dragOverlayEffect" 
+              [id]="'dragOverlayEffect-' + item.id" 
+              draggable="true"
+              (mousedown)="dragstart(item)" 
+              (dragend)="dragend(item)" 
+              (mouseup)="dragend(item)">
           </div>
-          <div class="row" *ngIf="this.drawingService.file.configuration.libraryViewSettings !== 'list'">
-            <div id="effectSVG-{{ item.effect.id }}" class="effectSVG"></div>
-            <div class="buttonsPlayWindow">
-              <div class="buttonPlayWindow delete" (click)="importLibraryEffectItem(item.id)" title="import to file">
-                <img src="./assets/icons/buttons/import.svg">
-              </div>
-              <div class="buttonPlayWindow delete" (click)="exportLibEffectItem(item.id)" title="export">
-                <img src="./assets/icons/buttons/export.svg">
-              </div>
-              <div class="buttonPlayWindow delete" (click)="deleteLibraryItem(item.id)" title="delete">
-                <img src="./assets/icons/buttons/bin.svg">
-              </div>
-            </div>
-          </div>
-          <!-- <div class="overlayEffect" id="overlayEffect-{{ item.effect.id }}"></div>
-          <div class="dragOverlayEffect" id="dragOverlayEffect-{{ item.effect.id }}" draggable="true"
-              (mousedown)="dragstart(item.effect)" (dragend)="dragend(item.effect)" (mouseup)="dragend(item.effect)"></div> -->
+          }
         </li>
+        }
+
       </div>
+      } @else if (activeTab === 2 && this.drawingService.file.activeCollectionEffect !== undefined) {
 
       <!-- details tab -->
-
-      <div class="innerContent-details" id="inner" *ngIf="activeTab === 2 && !this.drawingService.file.activeCollectionEffect">
+      <div class="innerContent-details" id="inner">
         <div class="form-group details">
           <div class="row">
             <label class="label" style="white-space: nowrap;">No effect selected</label>
@@ -123,33 +99,42 @@
         </div>
       </div>
 
-      <div class="innerContent-details" id="inner" *ngIf="activeTab === 2 && this.drawingService.file.activeCollectionEffect">
+      <div class="innerContent-details" id="inner">
         <div class="form-group details">
           <div class="row">
             <label class="labelRow" for="name">Name</label>
             <input type="text" class="settings" id="col-effect-name" [(ngModel)]="this.drawingService.file.activeCollectionEffect.name" name="col-effect-name"
               (change)="updateCollectionEffect()" (focusout)="hideCompleteValue()" (focus)="showCompleteValue()">
           </div>
-          <div class="row" *ngIf="this.effect">
+          @if (this.effect !== undefined) {
+          <div class="row">
             <label class="labelRow" for="name">Instance of</label>
             <input type="text" class="settings" id="effect-name" [(ngModel)]="this.effect.name" name="effect-name" disabled>
           </div>
-          <div class="row" *ngIf="this.drawingService.file.activeCollection">
+          }
+          @if (this.drawingService.file.activeCollection !== undefined) {
+          <div class="row">
             <label class="labelRow" for="name">Collection</label>
             <input type="text" class="settings" id="collection-name" [(ngModel)]="this.drawingService.file.activeCollection.name" name="collection-name" disabled>
           </div>
+          }
+          @if (this.effect !== undefined) {
           <div class="row" *ngIf="this.effect">
             <label class="labelRow" for="name">Control type</label>
             <input type="text" class="settings" id="effect-type" [(ngModel)]="EffectTypeLabelMapping[this.effect.type]" name="effect-type" disabled>
           </div>
-          <div class="row" *ngIf="this.effect && this.effect.type !== 2">
-            <label class="labelRow" for="name">Type</label>
-            <input type="text" class="settings" id="effect-rotation-type" [(ngModel)]="this.effect.rotation" name="effect-rotation-type" disabled>
-          </div>
-          <div class="row" *ngIf="this.effect && this.effect.type == 2">
-            <label class="labelRow" for="name">Mapping</label>
-            <input type="text" class="settings" id="effect-yUnit-type" [(ngModel)]="this.effect.grid.yUnit.name" name="effect-yUnit-type" disabled>
-          </div>
+            @if (this.effect.type !== 2) {
+            <div class="row">
+              <label class="labelRow" for="name">Type</label>
+              <input type="text" class="settings" id="effect-rotation-type" [(ngModel)]="this.effect.rotation" name="effect-rotation-type" disabled>
+            </div>
+            } @else if (this.effect.type == 2) {
+            <div class="row">
+              <label class="labelRow" for="name">Mapping</label>
+              <input type="text" class="settings" id="effect-yUnit-type" [(ngModel)]="this.effect.grid.yUnit.name" name="effect-yUnit-type" disabled>
+            </div>
+            }
+          }
         </div>
 
 
@@ -160,7 +145,8 @@
         <div class="form-group details">
           <div class="opencloseArrow" [ngClass]="{ open: positionVisible }" (click)="positionVisible = !positionVisible"><div></div></div>
           <label class="labelRow start nextToArrow">Position</label>
-          <div class="row-inline" *ngIf="!positionVisible">
+          @if (!positionVisible) {
+          <div class="row-inline">
             <input type="number" class="settings" id="position-x" value="{{ this.drawingService.file.activeCollectionEffect.position.x }}"
                   (focusout)="hideCompleteValue('position-x')" (focus)="showCompleteValue('position-x')" 
                   (change)="updateValue('position-x')" name="position-x">
@@ -184,7 +170,8 @@
               }
             }
           </div>
-          <div class="row" *ngIf="positionVisible">
+          } @else if (positionVisible) {
+          <div class="row">
             <div class="row">
               <label class="label" for="name"><div class="question-mark" title="Start angle effect measured from left">?</div>X</label>
               <input type="number" class="settings" id="position-x" value="{{ this.drawingService.file.activeCollectionEffect.position.x }}"
@@ -235,6 +222,7 @@
               (focusout)="hideCompleteValue('position-height')" (focus)="showCompleteValue('position-height')" (change)="updateValue('position-height')" name="position-height">
             </div>
           </div>
+          }
         </div>
 
         <div class="horizontalSeparator details"></div>
@@ -242,12 +230,16 @@
         <div class="form-group details">
           <div class="opencloseArrow" [ngClass]="{ open: transformVisible }" (click)="transformVisible = !transformVisible"><div></div></div>
           <label class="labelRow start nextToArrow">Transform</label>
-          <div class="row-inline" *ngIf="!transformVisible && this.drawingService.file.activeCollectionEffect.scale.uniform">
+
+          @if (!transformVisible && this.drawingService.file.activeCollectionEffect.scale.uniform) {
+          <div class="row-inline">
             <input type="number" class="settings" id="scale" value="{{ this.drawingService.file.activeCollectionEffect.scale.x | number:'1.2-2' }}"
               (focusout)="hideCompleteValue('scale')" (focus)="showCompleteValue('scale')" (change)="updateValue('scale')" name="scale">
             <span class="units">%</span>
           </div>
-          <div class="row-inline" *ngIf="!transformVisible && !this.drawingService.file.activeCollectionEffect.scale.uniform">
+
+          } @else if (!transformVisible && !this.drawingService.file.activeCollectionEffect.scale.uniform) {
+          <div class="row-inline">
             <input type="number" class="settings" id="scale-x" value="{{ this.drawingService.file.activeCollectionEffect.scale.x | number:'1.2-2' }}"
                (focusout)="hideCompleteValue('scale-x')" (focus)="showCompleteValue('scale-x')" (change)="updateValue('scale-x')" name="scale-x">
             <span class="units">%</span>
@@ -255,44 +247,53 @@
               (focusout)="hideCompleteValue('scale-y')"  (focus)="showCompleteValue('scale-y')" (change)="updateValue('scale-y')" name="scale-y">
             <span class="units">%</span>
           </div>
+          }
 
-          <div *ngIf="transformVisible">
+          @if (transformVisible) {
+          <div>
+            @if (this.drawingService.file.activeCollectionEffect.scale.uniform) {
             <div class="row" *ngIf="this.drawingService.file.activeCollectionEffect.scale.uniform">
               <label class="label" for="name">Scale</label>
               <input type="number" class="settings" id="scale" value="{{ this.drawingService.file.activeCollectionEffect.scale.x | number:'1.2-2' }}"
                 (focusout)="hideCompleteValue('scale')" (focus)="showCompleteValue('scale')" (change)="updateValue('scale')" name="scale">
               <span class="units">%</span>
             </div>
-            <div class="row" *ngIf="!this.drawingService.file.activeCollectionEffect.scale.uniform">
+            } @else if (!this.drawingService.file.activeCollectionEffect.scale.uniform) {
+            <div class="row">
               <label class="label" for="name"><div class="question-mark" title="Scale width of effect in % of the original effect width">?</div>Scale width</label>
               <input type="number" class="settings" id="scale-x" value="{{ this.drawingService.file.activeCollectionEffect.scale.x | number:'1.2-2' }}"
                (focusout)="hideCompleteValue('scale-x')" (focus)="showCompleteValue('scale-x')" (change)="updateValue('scale-x')" name="scale-x">
               <span class="units">%</span>
             </div>
-            <div class="row" *ngIf="!this.drawingService.file.activeCollectionEffect.scale.uniform">
+            <div class="row">
               <label class="label" for="name"><div class="question-mark" title="Scale height of effect in % of the original effect height">?</div>Scale height</label>
               <input type="number" class="settings" id="scale-y" value="{{ this.drawingService.file.activeCollectionEffect.scale.y | number:'1.2-2' }}"
               (focusout)="hideCompleteValue('scale-y')" (focus)="showCompleteValue('scale-y')" (change)="updateValue('scale-y')" name="scale-y">
               <span class="units">%</span>
             </div>
+            }
 
             <div class="row">
               <label class="radio-container details">uniform
                 <input type="checkbox" class="type" id="uniform" name="uniform"
-                [(ngModel)]="this.drawingService.file.activeCollectionEffect.scale.uniform" [checked]="this.drawingService.file.activeCollectionEffect.scale.uniform"
+                [(ngModel)]="this.drawingService.file.activeCollectionEffect.scale.uniform" 
+                [checked]="this.drawingService.file.activeCollectionEffect.scale.uniform"
                 (change)="updateUniformResize()">
                 <span class="checkmark radio"></span>
               </label>
             </div>
           </div>
+          }
         </div>
 
-        <div class="horizontalSeparator details" *ngIf="this.effect && this.effect.type < 2"></div>
+        @if (this.effect && this.effect.type < 2) {
+        <div class="horizontalSeparator details"></div>
 
-        <div class="form-group details" *ngIf="this.effect && this.effect.type < 2">
+        <div class="form-group details">
           <div class="opencloseArrow" [ngClass]="{ open: detailsVisible }" (click)="detailsVisible = !detailsVisible"><div></div></div>
           <label class="labelRow start nextToArrow">Rotation</label>
 
+          @if (!detailsVisible) {
           <div class="row-inline" *ngIf="!detailsVisible">
             <label class="radio-container inline">
               <input type="checkbox" class="type" id="direction_cw" name="direction_cw"
@@ -306,33 +307,45 @@
             </label>
           </div>
 
-          <div *ngIf="detailsVisible">
+          } @else if(detailsVisible) {
+
+          <div>
             <div class="row">
-              <label class="radio-container details">cw <div class="question-mark inline" title="Experience effect in clockwise direction.">?</div>
+              <label class="radio-container details">cw 
+                <div class="question-mark inline" title="Experience effect in clockwise direction.">?</div>
                 <input type="checkbox" class="type" id="direction_cw" name="direction_cw"
-                [(ngModel)]="this.drawingService.file.activeCollectionEffect.direction.cw" [checked]="this.drawingService.file.activeCollectionEffect.direction.cw" (change)="updateCollectionEffect()">
+                [(ngModel)]="this.drawingService.file.activeCollectionEffect.direction.cw" 
+                [checked]="this.drawingService.file.activeCollectionEffect.direction.cw" 
+                (change)="updateCollectionEffect()">
                 <span class="checkmark radio"></span>
               </label>
             </div>
 
             <div class="row">
-              <label class="radio-container details">ccw <div class="question-mark inline" title="Experience effect in counterclockwise direction.">?</div>
+              <label class="radio-container details">ccw 
+                <div class="question-mark inline" title="Experience effect in counterclockwise direction.">?</div>
                 <input type="checkbox" class="type" id="direction_ccw" name="direction_ccw"
-                [(ngModel)]="this.drawingService.file.activeCollectionEffect.direction.ccw" [checked]="this.drawingService.file.activeCollectionEffect.direction.ccw" (change)="updateCollectionEffect()">
+                [(ngModel)]="this.drawingService.file.activeCollectionEffect.direction.ccw" 
+                [checked]="this.drawingService.file.activeCollectionEffect.direction.ccw" 
+                (change)="updateCollectionEffect()">
                 <span class="checkmark radio"></span>
               </label>
             </div>
 
             <div class="row" *ngIf="this.effect && this.effect.rotation !== 'independent'">
-              <label class="radio-container details">every rotation <div class="question-mark inline" title="Experience effect once or every rotation.">?</div>
+              <label class="radio-container details">every rotation 
+                <div class="question-mark inline" title="Experience effect once or every rotation.">?</div>
                 <input type="checkbox" class="type" id="infinite" name="infinite"
-                [(ngModel)]="this.drawingService.file.activeCollectionEffect.infinite" [checked]="this.drawingService.file.activeCollectionEffect.infinite"
+                [(ngModel)]="this.drawingService.file.activeCollectionEffect.infinite" 
+                [checked]="this.drawingService.file.activeCollectionEffect.infinite"
                 (change)="updateCollectionEffect()">
                 <span class="checkmark radio"></span>
               </label>
             </div>
           </div>
+          }
         </div>
+        }
 
         <div class="horizontalSeparator details"></div>
 
@@ -352,7 +365,8 @@
             </label>
           </div>
 
-          <div *ngIf="reflectVisible">
+          @if (reflectVisible) {
+          <div>
             <div class="row">
               <label class="radio-container details">horizontal<div class="question-mark inline" title="Reflect effect horizontally">?</div>
                 <input type="checkbox" class="type" id="reflect-y" name="reflect-y"
@@ -368,6 +382,7 @@
               </label>
             </div>
           </div>
+          }
         </div>
 
         <div class="horizontalSeparator details"></div>
@@ -382,56 +397,92 @@
             <div class="question-mark" title="Render quality (increase value to reduce number of data points)">?</div>
           </div>
 
-          <div *ngIf="qualityVisible">
+          @if (qualityVisible) {
+          <div>
             <div class="row">
               <label class="label"><div class="question-mark" title="Render quality (increase value to reduce number of data points)">?</div>Quality</label>
               <input type="number" class="settings" id="render-quality" [(ngModel)]="this.drawingService.file.activeCollectionEffect.quality" name="render-quality" (change)="updateQuality()"
               (focusout)="hideCompleteValue()" (focus)="showCompleteValue()">
             </div>
           </div>
+          }
         </div>
 
 
-        <div class="horizontalSeparator details" *ngIf="this.effect && this.effect.rotation !== 'independent'"></div>
+        @if (this.effect && this.effect.rotation !== 'independent' && this.effect.type < 2) {
+        <div class="horizontalSeparator details"></div>
 
-        <div class="form-group details" *ngIf="this.effect && this.effect.rotation !== 'independent' && this.effect.type < 2">
+        <div class="form-group details">
           <div class="opencloseArrow" [ngClass]="{ open: repeatVisible }" (click)="repeatVisible = !repeatVisible"><div></div></div>
           <label class="labelRow start nextToArrow">Repeat</label>
 
-          <div class="row-inline" *ngIf="!repeatVisible">
+          @if (!repeatVisible) {
+          <div class="row-inline">
             <input type="number" class="settings inline" id="repeat-instances" [(ngModel)]="this.drawingService.file.activeCollectionEffect.repeat.instances" name="repeat-instances"
               (focusout)="hideCompleteValue()" (focus)="showCompleteValue()" (change)="updateEffectRepeat()">
             <span class="units inline">N</span>
             <div class="question-mark" title="Repeat the effect N times">?</div>
           </div>
 
-          <div *ngIf="repeatVisible">
+          } @else if (repeatVisible) {
+          <div>
             <div class="row">
               <label class="label"><div class="question-mark" title="Repeat the effect N times">?</div>Instances</label>
               <input type="number" class="settings" id="repeat-instances" [(ngModel)]="this.drawingService.file.activeCollectionEffect.repeat.instances" name="repeat-instances"
                (focusout)="hideCompleteValue()" (focus)="showCompleteValue()" (change)="updateEffectRepeat()">
               <span class="units">N</span>
             </div>
-            <div class="row" *ngFor="let item of this.drawingService.file.activeCollectionEffect.repeat.repeatInstances; let i = index" [attr.data-index]="i">
-              <label class="label" for="name"><div class="question-mark" title="Start angle effect measured from left for instance">?</div>X n{{ i + 2 }}</label>
-              <input type="number" class="settings" id="r-{{ item.id }}" value="{{ item.x | number:'1.2-2' }}" name="r-{{ item.id }}" (change)="updateRepeatInstanceXValue(item.id)"
-               (focusout)="hideCompleteValue()" (focus)="showCompleteValue()">
-              @if (this.drawingService.file.activeCollection !== undefined) {  
-                @if (this.drawingService.file.activeCollection.rotation.units.name === 'deg') {
+            @for (item of drawingService.file.activeCollectionEffect.repeat.repeatInstances; track item.id; let i = $index) {
+            <div class="row" [attr.data-index]="i">
+              <label class="label" for="name">
+                <div class="question-mark" title="Start angle effect measured from left for instance">?</div>
+                X n{{ i + 2 }}
+              </label>
+              
+              <input type="number" 
+                    class="settings" 
+                    [id]="'r-' + item.id" 
+                    [value]="item.x | number:'1.2-2'" 
+                    [name]="'r-' + item.id" 
+                    (change)="updateRepeatInstanceXValue(item.id)"
+                    (focusout)="hideCompleteValue()" 
+                    (focus)="showCompleteValue()">
+
+              @if (drawingService.file.activeCollection !== undefined) {  
+                @if (drawingService.file.activeCollection.rotation.units.name === 'deg') {
                   <span class="units">&deg;</span>
                 }
-                @if (this.drawingService.file.activeCollection.rotation.units.name === 'rad') {
+                @if (drawingService.file.activeCollection.rotation.units.name === 'rad') {
                   <span class="units">rad</span>
                 }
-                @if (this.drawingService.file.activeCollection.rotation.units.name === 'ms') {
-                <span class="units">ms</span>
+                @if (drawingService.file.activeCollection.rotation.units.name === 'ms') {
+                  <span class="units">ms</span>
                 }
               }
             </div>
+          }
           </div>
+          }
         </div>
-
+        }
       </div>
+      }
 
     </ul>
   </div>
+
+  <!-- Reusable Template Blueprint for Buttons (Deduplication) -->
+<ng-template #actionButtons let-id="id">
+  <div class="buttonsPlayWindow  {{ (isList ? viewSettings : '') }}">
+    <div class="buttonPlayWindow delete" (click)="(activeTab === 0 ? editEffectItem(id) : importLibraryEffectItem(id))" 
+         title='{{ (activeTab === 0 ? "edit" : "import") }}'>
+      <img src='{{ (activeTab === 0 ? "./assets/icons/buttons/edit.svg" : "./assets/icons/buttons/import.svg") }}' alt="edit">
+    </div>
+    <div class="buttonPlayWindow delete" (click)="(activeTab === 0 ? exportEffectItem(id) : exportLibEffectItem(id))" title="export">
+      <img src="./assets/icons/buttons/export.svg" alt="export">
+    </div>
+    <div class="buttonPlayWindow delete" (click)="(activeTab === 0 ? deleteEffectItem(id) : deleteLibraryItem(id))" title="delete">
+      <img src="./assets/icons/buttons/bin.svg" alt="delete">
+    </div>
+  </div>
+</ng-template>

@@ -1,7 +1,7 @@
 <div id="motor-control-section">
 
   <ul id="motor-list">
-    @for (collection of motorControlService.file.collections; track collection) {
+    @for (collection of motorControlService.file.collections; track collection.id) {
       <li>
         <div class="motor-control-rows" id="row-{{ collection.id }}">
 
@@ -27,7 +27,7 @@
               <!-- 3. Microcontroller Dropdowns -->
               <span class="info-column">
                 <div class="form-row" title="microcontroller">
-                  <select class="form-control" id="comport" [(ngModel)]="collection.microcontroller" (change)="saveCollection(collection)" name="comport" [compareWith]="compareCOM">
+                  <select class="form-control" id="comport" [(ngModel)]="collection.microcontroller" (change)="updateFileCollection(collection)" name="comport" [compareWith]="compareCOM">
                     @if (!collection.microcontroller) {
                       <option [ngValue]="" disabled selected="selected">-- select --</option>
                     }
@@ -58,9 +58,11 @@
                     <li id="upload" (click)="upload(collection)" title="upload collection">
                       <img class="no-pointer-events" src="./assets/icons/buttons/upload.svg">
                     </li>
-                    <li id="collection_send" *ngIf="collection.microcontroller && collection.microcontroller.motors[0].type === 3" (click)="send_collection(collection)" title="Send Collection">
+                    @if (collection.microcontroller && collection.microcontroller.motors[0].type === 3) {
+                    <li id="collection_send" (click)="send_collection(collection)" title="Send Collection">
                       <img class="no-pointer-events" src="./assets/icons/buttons/upload.svg">
                     </li>
+                    }
                     
                     @if (collection.effectDataList.length > 0 && (collection.visualizationType >= 2 || collection.playing)) {
                       <li id="play" [ngClass]="{ active: collection.renderedData && collection.renderedData.length > 0 }" (click)="play(!collection.playing, collection)" title="play or stop collection">
@@ -71,9 +73,11 @@
                         }
                       </li>
                     }
-                    <li *ngIf="collection.visualizationType !== 3 && collection.effectDataList.length > 0" id="return" (click)="returnToStart(collection)" title="move to start position">
+                    @if (collection.visualizationType !== 3 && collection.effectDataList.length > 0) {
+                    <li id="return" (click)="returnToStart(collection)" title="move to start position">
                       <img class="no-pointer-events" src="./assets/icons/buttons/return.svg">
                     </li>
+                    }
                   </ul>
                 </div>
               }
@@ -83,9 +87,9 @@
                 <div id="rangeValues" class="info-column">
                   <label>x</label>
                   @if (collection.rotation.units.name !== 'ms' && collection.rotation.units.name !== 'sec') {
-                    <input type="number" (focus)="focusInputField(true)" (focusout)="focusInputField(false)" id="range-start" name="rotation-start-{{ collection.id }}" [(ngModel)]="collection.rotation.start" (change)="motorControlService.updateCollection(collection)">
+                    <input type="number" (focus)="focusInputField(true)" (focusout)="focusInputField(false)" id="range-start" name="rotation-start-{{ collection.id }}" [(ngModel)]="collection.rotation.start" (change)="updateFileCollection(collection)">
                   }
-                  <input type="number" (focus)="focusInputField(true)" (focusout)="focusInputField(false)" id="range-end" name="rotation-end" [(ngModel)]="collection.rotation.end" (change)="motorControlService.updateCollection(collection)">
+                  <input type="number" (focus)="focusInputField(true)" (focusout)="focusInputField(false)" id="range-end" name="rotation-end" [(ngModel)]="collection.rotation.end" (change)="updateFileCollection(collection)">
 
                   @if (collection.visualizationType < 2 || (collection.visualizationType > 3 && collection.visualizationType < 6)) {
                     <select class="form-control" id="unitsDropdown" (focus)="oldUnits = collection.rotation.units" [(ngModel)]="collection.rotation.units" (change)="changeUnits(collection)" name="units-r-{{ collection.id }}" [compareWith]="compareName">
@@ -121,14 +125,16 @@
               @if (collection.microcontroller !== undefined) {
                 <div id="buttonsMotorControl">
                   <ul class="dropdown-buttons info-column">
-                    <li *ngIf="(!collection.rotation.loop && collection.visualizationType < 2) || (collection.visualizationType >= 2 && collection.rotation.units_y.name === 'deg')" id="constrain_range" [ngClass]="{ active: collection.rotation.constrain }" (click)="constrain(collection.id)" title="constrain range within which the motor can move">
+                    @if ((!collection.rotation.loop && collection.visualizationType < 2) || (collection.visualizationType >= 2 && collection.rotation.units_y.name === 'deg')) {
+                    <li id="constrain_range" [ngClass]="{ active: collection.rotation.constrain }" (click)="constrain(collection.id)" title="constrain range within which the motor can move">
                       <img class="no-pointer-events" src="./assets/icons/buttons/constrain.svg">
                     </li>
+                    }
 
                     @if ((!collection.rotation.constrain && collection.visualizationType < 2) || collection.visualizationType < 4 || collection.visualizationType === 6) {
                       <!-- Fixed: Closed title quote, finished string, and appended missing closing tags -->
                       <li id="loop" (click)="loop(collection.id)" [ngClass]="{ active: collection.rotation.loop }" title="infinite loop execution">
-                        <img class="no-pointer-events" src="./assets/icons/buttons/loop.svg">
+                        <img class="no-pointer-events" src="./assets/icons/buttons/infinite.svg">
                       </li>
                     }
                   </ul>
@@ -212,7 +218,7 @@
               }
 
               @if (collection.visualizationType < 2 && collection.microcontroller && collection.motorID && collection.microcontroller.motors[collection.motorID.index] && this.motorControlService.width > 4000) {
-              <div class="form-row left collection_pid" id="max" *ngIf=" " title="Maximum voltage (V)">
+              <div class="form-row left collection_pid" id="max" title="Maximum voltage (V)">
                 <label>max volt.</label>
                 <input type="number" id="maxVoltage" name="collection-max-vol-{{ collection.id }}" (focus)="this.focusInputField(true)" (focusout)="this.focusInputField(false)" 
                   [(ngModel)]="collection.microcontroller.motors[collection.motorID.index].config.voltageLimit" (change)="saveMotorData(collection, 'L', 
@@ -230,7 +236,7 @@
               }
 
               @if (collection.effectDataList.length === 0) {
-              <div id="visualizationType" class="form-row left" *ngIf="collection.effectDataList.length === 0">
+              <div id="visualizationType" class="form-row left">
                 <select class="form-control" id="visualizationType" [(ngModel)]="collection.visualizationType" (change)="updateVisualizationType(collection)" name="visualizationType" title="visualization type">
 
                     @for (type of visualizationTypes; track type) {
@@ -267,8 +273,8 @@
           <div class="info-column">
 
             <!-- postion, velocity and pressure information at runtime -->
-
-            <div class="form-row info-column" *ngIf="collection.playing && collection.visualizationType !== 3">
+            @if (collection.playing && collection.visualizationType !== 3) {
+            <div class="form-row info-column">
 
               <div class="motor-info" id="speed-{{ collection.id }}">0 </div>
               @if (collection.rotation.units.name === 'deg') {
@@ -296,6 +302,7 @@
               <div class="motor-info posUnits current_sense" id="current_sense_a-{{ collection.id }}"></div>
 
             </div>
+            }
 
             @if (collection.playing && (collection.visualizationType === 3 || collection.visualizationType === 6)) {
             <div class="form-row info-column">
@@ -323,6 +330,7 @@
             }
 
           </div>
+          
         </div>
 
 

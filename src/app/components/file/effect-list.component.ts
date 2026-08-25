@@ -1,8 +1,9 @@
-import { Component, Input, OnInit, Inject } from '@angular/core';
+import { Component, Input, OnInit, Inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, DOCUMENT } from '@angular/common';
 
 import { FileService } from './../../services/file.service';
 import { ElectronService } from './../../services/electron.service';
+import { IpcRendererEvent } from 'electron';
 import { DataService } from './../../services/data.service';
 
 import { EffectType } from './../../models/configuration.model';
@@ -17,7 +18,7 @@ import { File } from '../../models/file.model';
       <div class="open-tabs effects" id="effect-tabs">
         <ul class="tabs effects" id="effect-list">
           @if (file?.configuration !== undefined) {
-            @for (tab of file.configuration.openTabs; track tab) {
+            @for (tab of file.configuration.openTabs; track tab.id) {
             <li [ngClass]="{ active: tab.isActive }" (click)="selectTab(tab)">
               <div class="filename-tab">{{ tab.name }}</div>
               <div class="close closeTab effects" (click)="closeTab(tab)"><div></div></div>
@@ -50,7 +51,18 @@ export class EffectListComponent implements OnInit {
   public scrollTab = false;
 
   constructor(@Inject(DOCUMENT) private document: Document, public fileService: FileService, private electronService: ElectronService,
-    private dataService: DataService) {}
+    private dataService: DataService, private changeDetection: ChangeDetectorRef) {
+
+    this.electronService.ipcRenderer.on('updateEffect', (event: IpcRendererEvent, data: any) => {
+      !data.mode ? this.fileService.addEffect(data.effect) : this.fileService.updateEffect(data.effect);
+      this.changeDetection.detectChanges();
+    });
+
+    this.electronService.ipcRenderer.on('selectEffectTab', (event: IpcRendererEvent, data: any) => {
+      this.fileService.openEffect(data);
+      this.changeDetection.detectChanges();
+    });
+  }
 
   @Input()
   set list(list: string) {
@@ -71,6 +83,8 @@ export class EffectListComponent implements OnInit {
     let effect = this.getEffect(tab);
     if (effect) {
       this.fileService.setEffectActive(effect);
+      this.changeDetection.detectChanges();
+      
       this.dataService.deselectAll();
       if (this.electronService.isElectronApp) {
         this.electronService.ipcRenderer.send('updateMenu', {

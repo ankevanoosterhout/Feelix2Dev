@@ -5,7 +5,7 @@ const main = require('./main');
 let activePorts = [];
 let ports = [];
 let port;
-let receivingPort = null;
+let receivingPort = undefined;
 let progress = 0;
 
 const checkSerialPortTimeInterval = 60000;
@@ -115,7 +115,7 @@ function ifSerialAvailable(serialData, portlist, connect) {
   if (portlist.length > 0) {
     main.updateAvailablePortList(portlist);
     const portAvailable = portlist.filter(p => p.path === serialData.port.path);
-    let selectedPort = ports.filter(p => p.COM === serialData.port.path)[0];
+    let selectedPort = ports.find(p => p.COM === serialData.port.path);
 
     if (portAvailable.length > 0) {
       if (connect) {
@@ -491,12 +491,13 @@ function checkSoftwareVersion(d) {
         voltage: dataArray.length > 2 ? parseFloat(dataArray[3]) : -1
     };
 
-    const message = '';
+    let message = '';
 
     if (data.major !== softwareVersion.major || data.minor !== softwareVersion.minor) {
       
       message += !isNaN(data.major) && data.major != undefined ? "The version of Feelix does not match the software version on the microcontroller (v"
-        + (data.major + '.' + data.minor + '.' + data.patch) + "), update to v" + (softwareVersion.major + '.' + softwareVersion.minor + '.X') : "The microcontroller is not running the appropriate code. Please update.";
+        + (data.major + '.' + data.minor + '.' + data.patch) + "), update to v" + (softwareVersion.major + '.' + softwareVersion.minor + '.X') : 
+        "The microcontroller is not running the appropriate software version. Please update.";
                   
                     // this.sp.close();
   
@@ -506,7 +507,7 @@ function checkSoftwareVersion(d) {
     }
 
     if (data.voltage > -1 && data.voltage < 5.5) {
-      message += " The measure power supplied to the motor " + data.voltage + " is insufficient to drive the motor";
+      message += " The measured power supplied to the motor is " + data.voltage + "V, which is insufficient to drive the motor";
     }
     
     if (message !== '') {
@@ -1016,12 +1017,18 @@ function send_data_string(port, uploadContent) {
 
 
 function updateMotorSetting(uploadContent) {
-  // console.log('config: ' + uploadContent.config);
+  console.log('config: ' + uploadContent.config.serialPort.path);
+  console.log(ports.length);
+  for (let port of ports) {
+    console.log(port.COM);
+  }
   if (uploadContent.config) {
-    receivingPort = ports.filter(p => p.COM === uploadContent.config.serialPort.path)[0];
+    receivingPort = ports.find(p => p.COM === uploadContent.config.serialPort.path);
 
     // receivingPort =
-    tryToEstablishConnection(receivingPort, uploadContent, updateMotorSettingCallback);
+    if (receivingPort !== undefined) {
+      tryToEstablishConnection(receivingPort, uploadContent, updateMotorSettingCallback);
+    }
   }
 }
 
@@ -1029,6 +1036,8 @@ function updateMotorSetting(uploadContent) {
 
 function updateMotorSettingCallback(port, uploadContent) {
   receivingPort = port;
+
+  console.log(receivingPort);
 
   datalist = [];
 

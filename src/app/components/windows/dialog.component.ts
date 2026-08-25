@@ -29,6 +29,7 @@ import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 
     html, body {
       overflow: hidden;
+      background: #3a3a3a;
     }
 
     p.message {

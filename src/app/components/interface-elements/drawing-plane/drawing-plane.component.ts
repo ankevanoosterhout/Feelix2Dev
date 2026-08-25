@@ -1,31 +1,36 @@
-import { Component, OnInit, OnChanges, HostListener, Inject, ViewEncapsulation, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnChanges, HostListener, Inject, ViewEncapsulation, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { ElectronService } from '../../../services/electron.service';
+import { IpcRendererEvent } from 'electron';
+import * as d3 from 'd3';
+import { v4 as uuid } from 'uuid';
+
 import { NodeService } from '../../../services/node.service';
 import { DataService } from '../../../services/data.service';
 import { FileService } from '../../../services/file.service';
-import { File } from '../../../models/file.model';
-import * as d3 from 'd3';
-import { v4 as uuid } from 'uuid';
-import { DrawingPlaneConfig } from '../../../models/drawing-plane-config.model';
-import { DrawingService } from '../../../services/drawing.service';
-import { DrawElementsService } from '../../../services/draw-elements.service';
-import { BBoxService } from '../../../services/bbox.service';
-import { HistoryService } from '../../../services/history.service';
-import { MatDialogModule, MatDialog  } from '@angular/material/dialog';
-import { DialogComponent } from '../../../components/windows/dialog.component';
-import { ExportDialogComponent } from '../../../components/windows/export-dialog.component';
-import { EffectLibraryService } from '../../../services/effect-library.service';
-import { MotorControlService } from '../../../services/motor-control.service';
 import { HardwareService } from '../../../services/hardware.service';
 import { CloneService } from '../../../services/clone.service';
 import { GridService } from '../../../services/grid.service';
-import { PlaySequenceComponent } from '../../windows/play-sequence.component';
-//import { EffectType } from 'src/app/models/configuration.model';
+import { DrawingService } from '../../../services/drawing.service';
+import { DrawElementsService } from '../../../services/draw-elements.service';
 import { DrawAudioService } from '../../../services/draw-audio.service';
-//import { MidiDataType } from 'src/app/models/audio.model';
 import { MidiDataService } from '../../../services/midi-data.service';
-import { IpcRendererEvent } from 'electron';
+import { EffectLibraryService } from '../../../services/effect-library.service';
+import { MotorControlService } from '../../../services/motor-control.service';
+import { BBoxService } from '../../../services/bbox.service';
+import { HistoryService } from '../../../services/history.service';
+
+import { DrawingPlaneConfig } from '../../../models/drawing-plane-config.model';
+import { File } from '../../../models/file.model';
+import { Effect } from '../../../models/effect.model';
+
+import { MatDialog  } from '@angular/material/dialog';
+import { DialogComponent } from '../../../components/windows/dialog.component';
+import { ExportDialogComponent } from '../../../components/windows/export-dialog.component';
+import { PlaySequenceComponent } from '../../windows/play-sequence.component';
+
+
+
 
 @Component({
   selector: 'app-drawing-plane',
@@ -49,7 +54,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
               private drawingService: DrawingService, private drawElements: DrawElementsService, private bboxService: BBoxService,
               private effectLibraryService: EffectLibraryService, @Inject(MatDialog) public dialog: MatDialog, private cloneService: CloneService,
               private motorControlService: MotorControlService, private hardwareService: HardwareService, private historyService: HistoryService,
-              private gridService: GridService, private drawAudioService: DrawAudioService, private midiDataService: MidiDataService) {
+              private gridService: GridService, private drawAudioService: DrawAudioService, private midiDataService: MidiDataService, private changeDetection: ChangeDetectorRef) {
 
     this.config = this.drawingService.config;
 
@@ -200,6 +205,7 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
       this.showMessage('By clicking yes all data will be removed. When the application restarts, all files and effects will be lost. Do you want to proceed?', 'verification', 'clearApplicationData');
     });
 
+
     this.electronService.ipcRenderer.on('safetyMeasures', (event: IpcRendererEvent, data: any) => {
       const mcu = this.hardwareService.getMicroControllerByCOM(data.serialPath);
       const motor = mcu.motors.filter(m => m.id === data.motorID)[0];
@@ -212,11 +218,13 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
         if (motor.config.measuredSupplyVoltage < motor.config.supplyVoltage - 2.0) {
           this.showMessage('Your set supplyVoltage (' + motor.config.supplyVoltage + 'V) does not match the measured supply voltage (' + motor.config.measuredSupplyVoltage + 'V)', 'message', 'msg');
         }
-        if (motor.config.temperature > 65.0) {
+        if (motor.config.temperature > 44.0) {
           this.showMessage('The driver has been disabled due to a detected temperature of ' + motor.config.temperature + ' degrees.', 'message', 'msg');
         }
       }
     });
+
+
 
     // this.hardwareService.connectWithMicrocontroller.subscribe(res => {
     //   console.log(res);
@@ -801,9 +809,9 @@ export class DrawingPlaneComponent implements OnInit, OnChanges, AfterViewInit {
               this.electronService.ipcRenderer.send('clearAllData');
             }
           } else if (type === 'message') {
-            if (action === 'updateVersion' && d) {
+            // if (action === 'updateVersion' && d) {
               // const microcontroller = this.hardwareService.deleteMicroController(d);
-            }
+            // }
           }
           return false;
         }

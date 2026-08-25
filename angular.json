@@ -19,7 +19,7 @@
               "svd-js",
               "file-saver"
             ],
-            "outputPath": "dist/feelix/",
+            "outputPath": "dist/feelix",
             "index": "src/index.html",
             "polyfills": [
               "src/polyfills.ts"

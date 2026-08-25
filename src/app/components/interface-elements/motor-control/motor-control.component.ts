@@ -8,6 +8,7 @@ import { IpcRendererEvent } from 'electron';
 import { Collection, Layer, ScaleLabelMapping, scaleOption, MicrocontrollerUploadItem } from '../../../models/collection.model';
 import { Details } from '../../../models/effect.model';
 import { MicroController } from '../../../models/hardware.model';
+import { FileService } from '../../../services/file.service';
 import { HardwareService } from '../../../services/hardware.service';
 import { MotorControlService } from '../../../services/motor-control.service';
 import { CloneService } from '../../../services/clone.service';
@@ -64,7 +65,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
 
 
-  constructor(@Inject(DOCUMENT) private document: Document, public motorControlService: MotorControlService, public hardwareService: HardwareService,
+  constructor(@Inject(DOCUMENT) private document: Document, public motorControlService: MotorControlService, public hardwareService: HardwareService, private fileService: FileService,
               private cloneService: CloneService, private uploadService: UploadService, private electronService: ElectronService, private changeDetection: ChangeDetectorRef) {
 
 
@@ -76,6 +77,14 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
     this.motorControlService.playAllCollections.subscribe(play => {
       this.playAll(play);
+    });
+
+    this.motorControlService.updateCollection.subscribe(res => {
+      this.updateFileCollection(res);
+    });
+
+    this.motorControlService.updateCollectionEffect.subscribe(res => {
+      this.updateFileCollectionEffect(res.collection, res.collEffect);
     });
 
     this.motorControlService.playSequence.subscribe(res => {
@@ -237,7 +246,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       if (selectedCollection) {
         if (selectedCollection.rotation.units.name !== 'ms' && selectedCollection.rotation.units.name !== 'sec') {
           selectedCollection.playing = true;
-          this.motorControlService.updateCollection(selectedCollection);
+          this.updateFileCollection(selectedCollection);
         } else {
           selectedCollection.feedbackData = [];
         }
@@ -248,7 +257,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       for (const collection of this.motorControlService.file.collections) {
         if (collection.microcontroller && collection.microcontroller.id === microcontroller.id) {
           collection.microcontroller = undefined;
-          this.motorControlService.updateCollection(collection);
+          this.updateFileCollection(collection);
         }
       }
     });
@@ -261,7 +270,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
         for (const c of this.motorControlService.file.collections) {
           if (c.playing && c.microcontroller && c.microcontroller.serialPort.path === data.microcontroller.port.path) {
             c.playing = false;
-            this.motorControlService.updateCollection(c);
+            this.updateFileCollection(c);
           }
         }
         if (this.motorControlService.file.collections.filter(c => c.playing).length === 0) {
@@ -272,7 +281,9 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     });
 
     this.electronService.ipcRenderer.on('addCollection', (event: IpcRendererEvent) => {
-      this.motorControlService.addCollection(true);
+      this.fileService.addCollection();  
+      this.changeDetection.detectChanges();
+      this.motorControlService.drawCollections();    
     });
 
     this.electronService.ipcRenderer.on('uploadAll', (event: IpcRendererEvent) => {
@@ -331,12 +342,12 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
 
   toggleVisibility(collection: Collection, layer: Layer) {
     collection.layers.filter(l => l.name === layer.name)[0].visible = !collection.layers.filter(l => l.name === layer.name)[0].visible;
-    this.motorControlService.saveCollection(collection);
+    this.updateFileCollection(collection);
   }
 
   toggleLocked(collection: Collection, layer: Layer) {
     collection.layers.filter(l => l.name === layer.name)[0].locked = !collection.layers.filter(l => l.name === layer.name)[0].locked;
-    this.motorControlService.saveCollection(collection);
+    this.updateFileCollection(collection);
   }
 
   drawFeedbackDataOnPlay(loop: boolean, collection: Collection, data: number, index = 0) {
@@ -387,7 +398,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
           this.uploadService.renderCollection(collection, this.motorControlService.file.effects);
         }
       }
-      this.motorControlService.updateCollection(collection);
+      this.updateFileCollection(collection);
       if (upload && collection.effectDataList.length > 0) {
         this.upload(collection);
       }
@@ -410,7 +421,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       
           for (let pC of playingCollections) {
         pC.playing = false;
-        this.motorControlService.updateCollection(pC);
+        this.updateFileCollection(pC);
       }
       if (uploadModel !== undefined) {
         uploadModel.newMCU = newMCU;
@@ -489,7 +500,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
         }
         collection.offsetAngle = 0;
         collection.feedbackData = [];
-        this.motorControlService.saveCollection(collection);
+        this.updateFileCollection(collection);
       } else {
         this.upload(collection);
       }
@@ -576,16 +587,18 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
   }
 
   copy(collection: Collection) {
-    this.motorControlService.copyCollection(collection);
+    this.fileService.copyCollection(collection.id);
+    // this.motorControlService.copyCollection(collection);
   }
 
   delete(collection: Collection) {
-    this.motorControlService.deleteCollection(collection);
+    this.fileService.deleteCollection(collection.id);
+    // this.motorControlService.deleteCollection(collection);
   }
 
   toggleMidi(collection: Collection) {
     collection.config.midi = !collection.config.midi;
-    this.motorControlService.updateCollection(collection);
+    this.updateFileCollection(collection);
     this.motorControlService.drawCollection(collection);
   }
 
@@ -612,7 +625,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
         }
       }
       this.oldUnits = collection.rotation.units;
-      this.motorControlService.updateCollection(collection);
+      this.updateFileCollection(collection);
     }
   }
 
@@ -630,7 +643,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
         }
       }
     }
-    this.motorControlService.updateCollection(collection);
+    this.updateFileCollection(collection);
   }
 
   compareValue(val1: any, val2: any) {
@@ -656,11 +669,11 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
   // updateRangeValues(collection: Collection) {
   //   collection.rotation.start = collection.rotation.units.name !== 'ms' ? parseFloat((this.document.getElementById('range-start') as HTMLInputElement).value) : 0;
   //   collection.rotation.end = parseFloat((this.document.getElementById('range-end') as HTMLInputElement).value);
-  //   this.motorControlService.updateCollection(collection);
+  //   this.updateFileCollection(collection);
   // }
 
   // updateRangeYValues(collection: Collection) {
-    // this.motorControlService.updateCollection(collection);
+    // this.updateFileCollection(collection);
   // }
 
 
@@ -713,7 +726,7 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
       for (const motor of collection.microcontroller.motors) {
         if (collection.motorID.name === motor.id) {
           collection.motorID.index = _index;
-          this.saveCollection(collection);
+          this.updateFileCollection(collection);
           break;
         }
         _index++;
@@ -721,8 +734,12 @@ export class MotorControlComponent implements OnInit, AfterViewInit {
     }
   }
 
-  saveCollection(collection: Collection) {
-    this.motorControlService.updateCollection(collection);
+  updateFileCollection(collection: Collection) {
+    this.fileService.updateCollection(collection);
+  }
+
+  updateFileCollectionEffect(collection: Collection, collEffect: Details) {
+    this.fileService.updateCollectionEffect(collection, collEffect);
   }
 
   saveMotorData(collection: Collection, datatype: any = undefined, data: Array<any> = []) {

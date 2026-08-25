@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, Inject } from '@angular/core';
+import { Component, Input, OnInit, Inject, ChangeDetectorRef } from '@angular/core';
 import { DOCUMENT, CommonModule   } from '@angular/common';
 import { ElectronService } from './../../services/electron.service';
 import { FileService } from './../../services/file.service';
@@ -61,13 +61,13 @@ export class FileListComponent implements OnInit {
 
   public scrollTab = false;
 
-  constructor(@Inject(DOCUMENT) private document: Document, public fileService: FileService,
+  constructor(@Inject(DOCUMENT) private document: Document, public fileService: FileService, private changeDetection: ChangeDetectorRef,
               private electronService: ElectronService, @Inject(MatDialog) public dialog: MatDialog, private kinematicService: KinematicService) {
 
     this.electronService.ipcRenderer.on('saveActiveFile', (event: IpcRendererEvent, type: any) => {
       const activeFile = this._list === 'designFiles' ? this.fileService.getAllFileData() : this.kinematicService.getActiveModel();
       // console.log(activeFile);
-      if (activeFile.overwrite) { // prevent overwrite example files
+      if (activeFile !== undefined && activeFile.overwrite) { // prevent overwrite example files
         const data = {
           file: activeFile,
           overwrite: type,

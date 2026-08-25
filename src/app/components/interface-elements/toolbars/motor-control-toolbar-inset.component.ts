@@ -147,7 +147,8 @@ export class MotorControlToolbarInsetComponent implements OnInit {
   selectTool(id: number, disabled: boolean) {
     if (!disabled) {
       if (id === 0) {
-        this.motorControlService.addCollection(true);
+        // this.motorControlService.addCollection(true);
+        this.electronService.ipcRenderer.send('addCollection');
       } else if (id === 1) {
         this.electronService.ipcRenderer.send('motorSettings');
       } else if (id === 2) {

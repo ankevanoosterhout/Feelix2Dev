@@ -1,10 +1,11 @@
-import { Component, OnInit, Inject, AfterViewInit } from '@angular/core';
+import { Component, OnInit, Inject, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 import { v4 as uuid } from 'uuid';
 
 import { ElectronService } from '../../../services/electron.service';
+import { IpcRendererEvent } from 'electron';
 import { EffectLibraryService } from '../../../services/effect-library.service';
 import { EffectVisualizationService } from '../../../services/effect-visualization.service';
 import { DrawingService } from '../../../services/drawing.service';
@@ -89,25 +90,24 @@ export class EffectsComponent implements OnInit, AfterViewInit {
   // tslint:disable-next-line: variable-name
   constructor(@Inject(DOCUMENT) private document: Document, private electronService: ElectronService, public effectLibraryService: EffectLibraryService,
               private effectVisualizationService: EffectVisualizationService, public drawingService: DrawingService,
-              private fileService: FileService, private cloneService: CloneService) {
+              private fileService: FileService, private cloneService: CloneService, private changeDetection: ChangeDetectorRef) {
 
 
     this.drawingService.drawEffectsInLibrary.subscribe(res => {
-      if (this.activeTab === 0) {
-        this.drawFileEffects();
-      } else if (this.activeTab === 1) {
-        this.drawLibraryEffects();
-      } else if (this.activeTab === 2) {
-        const activeEffect = this.drawingService.file.activeCollectionEffect;
-        if (activeEffect) this.effect = this.drawingService.file.effects.filter(e => e.id === activeEffect.effectID)[0];
-      }
+      this.showTab();
     });
 
     this.effectLibraryService.showLibraryTab.subscribe(res => {
       this.selectTab(1);
     });
 
+    this.electronService.ipcRenderer.on('updateEffect', (event: IpcRendererEvent, data: any) => {
+      this.changeDetection.detectChanges();
+    });
+
   }
+
+
 
   ngOnInit(): void {
     this.document.body.classList.add('disable-scroll-body');
@@ -134,6 +134,7 @@ export class EffectsComponent implements OnInit, AfterViewInit {
   }
 
 
+
   drawScrollbar() {
     const innerObj = this.document.getElementById('inner');
     const outerObj = this.document.getElementById('outer');
@@ -157,15 +158,21 @@ export class EffectsComponent implements OnInit, AfterViewInit {
         tab.selected = true;
       }
     }
+    this.showTab();
+  }
+
+  private showTab() {
+    this.changeDetection.detectChanges();
     if (this.activeTab === 0) {
       this.drawFileEffects();
     } else if (this.activeTab === 1) {
       this.drawLibraryEffects();
     } else if (this.activeTab === 2) {
-      const activeEffectID = this.drawingService.file.activeCollectionEffect?.effectID;
-      if (activeEffectID) this.effect = this.drawingService.file.effects.filter(e => e.id === activeEffectID)[0];
+      const activeEffect = this.drawingService.file.activeCollectionEffect;
+      if (activeEffect) this.effect = this.drawingService.file.effects.filter(e => e.id === activeEffect.effectID)[0];
     }
   }
+
 
 
   drawEffects(effects: any, type: string) {
@@ -180,11 +187,14 @@ export class EffectsComponent implements OnInit, AfterViewInit {
 
   drawLibraryEffects() {
     this.effectLibraryService.getEffectsFromLocalStorage();
-    setTimeout(() => { this.drawEffects(this.effectLibraryService.effectLibrary, 'library'); }, 100);
+    this.changeDetection.detectChanges();
+    this.drawEffects(this.effectLibraryService.effectLibrary, 'library')
+    // setTimeout(() => { this.drawEffects(this.effectLibraryService.effectLibrary, 'library'); }, 100);
   }
 
   drawFileEffects() {
-    setTimeout(() => { this.drawEffects(this.drawingService.file.effects, 'file'); }, 100);
+    this.drawEffects(this.drawingService.file.effects, 'file'); 
+    // setTimeout(() => { this.drawEffects(this.drawingService.file.effects, 'file'); }, 100);
   }
 
   changeQuality(effect: any) {
@@ -228,9 +238,11 @@ export class EffectsComponent implements OnInit, AfterViewInit {
   }
 
   editEffectItem(effectID: string) {
-    const fileEffect = this.drawingService.file.effects.filter(e => e.id === effectID)[0];
-    this.fileService.openEffect(effectID);
-    this.electronService.ipcRenderer.send('updateToolbar', { type: fileEffect.type });
+    const fileEffect = this.drawingService.file.effects.find(e => e.id === effectID);
+    if (fileEffect) {
+      this.electronService.ipcRenderer.send('updateToolbar', { type: fileEffect.type });
+      this.electronService.ipcRenderer.send('selectEffectTab', effectID);
+    }
   }
 
   exportEffectItem(effectID: string) {

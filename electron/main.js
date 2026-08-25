@@ -19,7 +19,7 @@ let tmpWindow = null;
 let activeWindow = null;
 let tensorflowWindow = null;
 
-const srcURL = `dist/feelix/browser/index.html`;
+const srcURL = 'dist/feelix/browser/index.html';
 
 /****** start app *****/
 
@@ -675,7 +675,7 @@ function createWindow() {
 
   mainWindow.loadURL(
     url.format({
-      pathname: path.join(process.cwd(), srcURL),
+      pathname: path.join(app.getAppPath(), srcURL),
       protocol: "file:",
       slashes: true
     })
@@ -727,7 +727,7 @@ function createTensorFlowWindow() {
 
     tensorflowWindow.loadURL(
       url.format({
-        pathname: path.join(process.cwd(), srcURL),
+        pathname: path.join(app.getAppPath(), srcURL),
         protocol: "file:",
         slashes: true,
         hash: '/tensorflowjs'
@@ -768,8 +768,8 @@ function drawTemporaryWindow(width, minWidth, height, minHeight, title, resizabl
     backgroundColor: '#333',
     alwaysOnTop: true,
     frame: false,
-    // resizable: resizable,
-    resizable: true,
+    resizable: resizable,
+    // resizable: true,
     fullscreenable:false,
     center: false,
     movable: true,
@@ -783,7 +783,7 @@ function drawTemporaryWindow(width, minWidth, height, minHeight, title, resizabl
 
   tmpWindow.loadURL(
     url.format({
-      pathname: path.join(process.cwd(), srcURL),
+      pathname: path.join(app.getAppPath(), srcURL),
       protocol: "file:",
       slashes: true,
       hash: '/' + hash
@@ -798,7 +798,7 @@ function drawTemporaryWindow(width, minWidth, height, minHeight, title, resizabl
     mainWindow.webContents.send('resetCursor');
   })
 
-  //tmpWindow.webContents.openDevTools();
+  // tmpWindow.webContents.openDevTools();
 
   tmpWindow.on('close', () => {
     tmpWindow = null
@@ -829,7 +829,7 @@ function createInfoWindow() {
 
   infoWindow.loadURL(
     url.format({
-      pathname: path.join(process.cwd(), srcURL),
+      pathname: path.join(app.getAppPath(), srcURL),
       protocol: "file:",
       slashes: true,
       hash: '/info'
@@ -882,7 +882,7 @@ function createToolbar(hash, width, type) {
     })
     newToolbar.loadURL(
       url.format({
-        pathname: path.join(process.cwd(), srcURL),
+        pathname: path.join(app.getAppPath(), srcURL),
         protocol: "file:",
         slashes: true,
         hash: hash
@@ -932,7 +932,7 @@ function createKinematicsWindow() {
 
   kinematicWindow.loadURL(
     url.format({
-      pathname: path.join(process.cwd(), srcURL),
+      pathname: path.join(app.getAppPath(), srcURL),
       protocol: "file:",
       slashes: true,
       hash: '/kinematics'
@@ -1277,6 +1277,14 @@ ipcMain.on('updateToolbar', (event, data) => {
   } else {
     mainWindow.webContents.send('updateToolbar', data);
   }
+});
+
+ipcMain.on('updateEffect', (event, data) => {
+  mainWindow.webContents.send('updateEffect', data);
+});
+
+ipcMain.on('selectEffectTab', (event, data) => {
+  mainWindow.webContents.send('selectEffectTab', data);
 });
 
 

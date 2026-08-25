@@ -617,9 +617,9 @@ button.disabled:focus {
   overflow: hidden!important;
 }
 
-.custom-modalbox > mat-dialog-container {
-  padding: 0;
-  background: #333;
+.custom-modalbox .mat-dialog-container {
+  padding: 0 !important;
+  background-color: #3a3a3a !important;
 }
 
 
