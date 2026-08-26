@@ -160,6 +160,16 @@ export class FileService {
     }
   }
 
+  setCollectionEffectActive(collection: Collection | undefined, collEffect: Details | undefined) {
+    const activeFile = this.files.find(f => f.isActive);
+
+    if (activeFile !== undefined) {
+      activeFile.activeCollectionEffect = collEffect;
+      activeFile.activeCollection = collection;
+      this.store();
+    }
+  }
+
   copyCollection(collectionID: string) {
     const activeFile = this.files.find(f => f.isActive);
     if (activeFile) {

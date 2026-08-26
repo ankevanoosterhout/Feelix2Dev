@@ -6,7 +6,7 @@ import { Model, DataSet, Classifier, Label, MotorEl, ModelVariable, OutputItem, 
 import { HardwareService } from './hardware.service';
 import { DataSetService } from './dataset.service';
 import { Subject } from 'rxjs';
-import { TensorFlowModelService } from './tensorflow-model.service';
+import { TensorFlowModelService } from './tensorFlow-model.service';
 import { UploadStringModel } from '../models/effect-upload.model';
 import { ElectronService } from './../services/electron.service';
 import { FileSaverService } from 'ngx-filesaver';

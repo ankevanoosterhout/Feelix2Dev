@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 
 import { ElectronService } from '../../../services/electron.service';
 import { DataSetService } from '../../../services/dataset.service';
-import { TensorFlowModelService } from '../../../services/tensorflow-model.service';
+import { TensorFlowModelService } from '../../../services/tensorFlow-model.service';
 import { Folder } from '../../../models/file.model';
 
 

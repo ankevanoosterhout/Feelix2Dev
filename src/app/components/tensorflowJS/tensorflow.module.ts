@@ -11,7 +11,7 @@ import { TensorflowDeployComponent } from "./deploy/tensorflow-deploy.component"
 import { TensorflowTrainComponent } from "./train/tensorflow-train.component";
 import { LoadDataSetsComponent } from './loadData/load-datasets.component';
 import { TensorFlowModelDrawService } from './../../services/tensorflow-model-draw.service';
-import { TensorFlowModelService } from './../../services/tensorflow-model.service';
+import { TensorFlowModelService } from './../../services/tensorFlow-model.service';
 import { TensorFlowDrawService } from './../../services/tensorflow-draw.service';
 import { TensorFlowTrainService } from './../../services/tensorflow-train.service';
 import { TensorFlowMainService } from './../../services/tensorflow-main.service';

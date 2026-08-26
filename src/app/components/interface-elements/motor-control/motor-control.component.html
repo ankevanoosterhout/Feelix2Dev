@@ -27,12 +27,14 @@
               <!-- 3. Microcontroller Dropdowns -->
               <span class="info-column">
                 <div class="form-row" title="microcontroller">
-                  <select class="form-control" id="comport" [(ngModel)]="collection.microcontroller" (change)="updateFileCollection(collection)" name="comport" [compareWith]="compareCOM">
-                    @if (!collection.microcontroller) {
-                      <option [ngValue]="" disabled selected="selected">-- select --</option>
-                    }
-                    @for (mcu of microcontrollers; track mcu) {
-                      <option [ngValue]="mcu">{{ mcu.name }}</option>
+                  <select class="form-control" id="comport" [(ngModel)]="collection.microcontroller" (change)="updateFileCollection(collection)" 
+                          name="comport" [compareWith]="compareCOM">
+                    @if (microcontrollers.length === 0) {
+                      <option [ngValue]="undefined" disabled selected="selected">-- select --</option>
+                    } @else {
+                      @for (mcu of microcontrollers; track mcu) {
+                        <option [ngValue]="mcu">{{ mcu.name }}</option>
+                      }
                     }
                   </select>
                 </div>

@@ -115,7 +115,6 @@ export class EffectVisualizationService {
 
           this.nodeService.deselectAll();
           this.dataService.deselectAll();
-          this.setActiveCollectionEffect({ effect: _collEffect, collection: _collection });
           activeCollEffectID = _collEffect.id;
           d3.selectAll('#coll-effect-' + _collection.id + '-' + _collEffect.id).style('opacity', 0.6);
         })
@@ -130,6 +129,9 @@ export class EffectVisualizationService {
             _collEffect.position.x += deltaX;
           }
           this.drawCollectionEffect(svg, _collection, _collEffect, effect, pixHeight, activeCollEffectID, colors);
+        })
+        .on('end', (event: any, d: any) => { 
+          this.setActiveCollectionEffect({ effect: _collEffect, collection: _collection });
         });
 
 

@@ -88,7 +88,7 @@
         }
 
       </div>
-      } @else if (activeTab === 2 && this.drawingService.file.activeCollectionEffect !== undefined) {
+      } @else if (activeTab === 2 && this.drawingService.file.activeCollectionEffect === undefined) {
 
       <!-- details tab -->
       <div class="innerContent-details" id="inner">
@@ -99,6 +99,7 @@
         </div>
       </div>
 
+      } @else if (activeTab === 2 && this.drawingService.file.activeCollectionEffect !== undefined) {
       <div class="innerContent-details" id="inner">
         <div class="form-group details">
           <div class="row">

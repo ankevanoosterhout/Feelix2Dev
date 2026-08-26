@@ -38,7 +38,8 @@ export class DrawingService {
     this.config = new DrawingPlaneConfig();
 
     this.effectVisualizationService.setActiveEffect.subscribe(res => {
-      this.setActiveCollectionEffect(res);
+      this.fileService.setCollectionEffectActive(res.collection, res.effect);
+      // this.setActiveCollectionEffect(res);
     });
   }
 
